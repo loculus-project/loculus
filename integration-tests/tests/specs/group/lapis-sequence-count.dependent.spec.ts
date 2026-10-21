@@ -12,6 +12,7 @@ test.describe('Group page sequence counts', () => {
 
         const groupPage = new GroupPage(page);
         const groupId = await groupPage.getGroupId(readonlyGroup.name);
+        if (groupId === null) throw new Error(`User is not a member of ${readonlyGroup.name}`);
 
         await page.goto(`/group/${groupId}`);
 

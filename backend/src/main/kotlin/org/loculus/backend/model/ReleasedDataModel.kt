@@ -95,19 +95,29 @@ open class ReleasedDataModel(
     }
 
     /**
-     * Returns the timestamp of the last relevant database write, for use in ETags, taken from the
-     * most recent `last_time_updated` in the update tracker.
+     * Returns the latest tracked database-write timestamp matching the filters,
+     * or an empty string if none exists, for use in ETags.
      *
-     * When [organism] is given, the lookup is scoped to the rows that affect that organism's
-     * released data at its current pipeline version:
-     * table-wide writes (tagged with NULL organism / pipeline_version) are always
-     * included, plus the organism- and pipeline-specific preprocessed-data rows.
-     * This means preprocessing of one organism (or of a not-yet-current pipeline
-     * version) no longer invalidates the ETag of other organisms.
+     * By default, includes all tables, all organisms and all pipeline versions.
+     * [tableNames] restricts the lookup to the specified tables.
+     * [organism] restricts it to that organism and rows with no organism scope.
+     * When [organism] is supplied, uses its current pipeline version unless
+     * [pipelineVersion] overrides it, also including rows with no pipeline scope.
+     *
+     * All filters apply together: unscoped rows are included only from matching tables.
+     * [pipelineVersion] requires [organism].
      */
-    private fun getLastDatabaseWrite(tableNames: List<String>? = null, organism: Organism? = null): String {
-        val pipelineVersion = organism?.let {
-            submissionDatabaseService.getCurrentProcessingPipelineVersion(it)
+    private fun getLastDatabaseWrite(
+        tableNames: List<String>? = null,
+        organism: Organism? = null,
+        pipelineVersion: Long? = null,
+    ): String {
+        require(pipelineVersion == null || organism != null) {
+            "pipelineVersion can only be specified together with organism"
+        }
+        // For an organism, use the requested pipeline version or default to its current version.
+        val effectivePipelineVersion = organism?.let {
+            pipelineVersion ?: submissionDatabaseService.getCurrentProcessingPipelineVersion(it)
         }
         val query = UpdateTrackerTable.select(UpdateTrackerTable.lastTimeUpdatedDbColumn)
         tableNames?.let { query.andWhere { UpdateTrackerTable.tableNameColumn inList it } }
@@ -116,7 +126,7 @@ open class ReleasedDataModel(
                 UpdateTrackerTable.organismColumn.isNull() or (UpdateTrackerTable.organismColumn eq o.name)
             }
         }
-        pipelineVersion?.let { v ->
+        effectivePipelineVersion?.let { v ->
             query.andWhere {
                 UpdateTrackerTable.pipelineVersionColumn.isNull() or (UpdateTrackerTable.pipelineVersionColumn eq v)
             }
@@ -133,8 +143,12 @@ open class ReleasedDataModel(
 
     /** ETag for the last relevant database write. */
     @Transactional(readOnly = true)
-    open fun getLastDatabaseWriteETag(tableNames: List<String>? = null, organism: Organism? = null): String =
-        "\"${getLastDatabaseWrite(tableNames, organism)}\"" // ETag must be enclosed in double quotes
+    open fun getLastDatabaseWriteETag(
+        tableNames: List<String>? = null,
+        organism: Organism? = null,
+        pipelineVersion: Long? = null,
+    ): String = // ETag must be enclosed in double quotes
+        "\"${getLastDatabaseWrite(tableNames, organism, pipelineVersion)}\""
 
     /**
      * Same as [getLastDatabaseWriteETag], but also includes the current date.

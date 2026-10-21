@@ -1,10 +1,15 @@
+import io
 import logging
+import re
 import urllib.parse
+import xml.etree.ElementTree as ET
 from collections import OrderedDict
 from dataclasses import dataclass
+from enum import StrEnum
+from http import HTTPStatus
 
 import requests
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import BaseModel, Field, RootModel, ValidationError
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
@@ -17,10 +22,22 @@ from loculus_preprocessing.datatypes import (
     ProcessingAnnotation,
     RawProcessingResult,
     _internal_error_message,
+    processing_error,
     raw_internal_error,
 )
 
 logger = logging.getLogger(__name__)
+
+
+def create_retrying_session(retries: int = 5) -> requests.Session:
+    """Session that retries connection errors, read timeouts, 429 and selected 5xx responses
+    with exponential backoff. Only idempotent methods (e.g. GET, PUT) are retried."""
+    session = requests.Session()
+    retry = Retry(total=retries, backoff_factor=1, status_forcelist=[429, 500, 502, 503, 504])
+    adapter = HTTPAdapter(max_retries=retry)
+    session.mount("http://", adapter)
+    session.mount("https://", adapter)
+    return session
 
 
 class RequestCache:
@@ -33,11 +50,7 @@ class RequestCache:
     def __init__(self, max_size: int, retries=5) -> None:
         self.cache: OrderedDict[str, requests.Response] = OrderedDict()
         self.max_size = max_size
-        self.session = requests.Session()
-        retry = Retry(total=retries, backoff_factor=1, status_forcelist=[500, 502, 503, 504])
-        adapter = HTTPAdapter(max_retries=retry)
-        self.session.mount("http://", adapter)
-        self.session.mount("https://", adapter)
+        self.session = create_retrying_session(retries)
 
     def get(self, url: str) -> requests.Response | None:
         if url in self.cache:
@@ -72,16 +85,41 @@ class RequestCache:
         self.cache.clear()
 
 
-def missing_taxonomy_service_error() -> RawProcessingResult:
-    return raw_internal_error("taxonomy_service_url was not configured.")
+TAXONOMY_BROWSER_URL = "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/"
 
 
-def taxonomy_network_error(
-    subject: str,
-    action: str,
-    e: Exception,
-) -> RawProcessingResult:
-    return raw_internal_error(f"Network error while {action} '{subject}': {e}.")
+class Taxon(BaseModel):
+    """Subset of `Taxon` in the taxonomy service"""
+
+    tax_id: int
+    scientific_name: str | None = None
+    common_name: str | None = None
+    depth: int
+
+
+class TaxonomyResponse(RootModel[Taxon | list[Taxon]]):
+    def taxa(self) -> list[Taxon]:
+        # Lookup by taxon ID always return single taxon, scientific_name can map to multiple
+        return self.root if isinstance(self.root, list) else [self.root]
+
+
+class TaxonomyServiceError(Exception):
+    """The taxonomy service is not configured, unreachable, or returned an unexpected response."""
+
+
+def lookup_failed(message: str, error_if_failed: bool) -> RawProcessingResult:
+    if error_if_failed:
+        return RawProcessingResult(errors=[message])
+    return RawProcessingResult(warnings=[message])
+
+
+def ambiguous_host_warning(host: str, selected: Taxon, taxa: list[Taxon]) -> str:
+    ids = ", ".join([str(t.tax_id) for t in taxa])
+    return (
+        f"'{host}' matches {len(taxa)} taxa ({ids}). Taxon will be set to the most general one: "
+        f"{selected.tax_id}. To use a different taxon, enter its taxon ID in the `host` "
+        f"field instead. You can look up taxon IDs in NCBI taxonomy ({TAXONOMY_BROWSER_URL})."
+    )
 
 
 taxonomy_cache = RequestCache(max_size=1024)
@@ -91,127 +129,98 @@ class TaxonomyService:
     def __init__(self, taxonomy_service_url: str | None):
         self.taxonomy_service_url = taxonomy_service_url
 
-    def get_tax_id(self, unvalidated_host: str, error_if_failed: bool) -> RawProcessingResult:
-        if not self.taxonomy_service_url:
-            return missing_taxonomy_service_error()
+    def _get(self, path: str) -> list[Taxon]:
+        """GET `path` from the taxonomy service and return the taxa in the response.
 
-        if unvalidated_host.isdigit():
-            url = f"{self.taxonomy_service_url}/taxa/{unvalidated_host}"
-        else:
-            query = urllib.parse.urlencode({"scientific_name": unvalidated_host})
-            url = f"{self.taxonomy_service_url}/taxa?{query}"
+        Returns an empty list if the service responds with 404 or 422 (invalid user input).
+        Raises TaxonomyServiceError on any other non-200 status.
+        """
+        if not self.taxonomy_service_url:
+            msg = "taxonomy_service_url was not configured."
+            raise TaxonomyServiceError(msg)
+
+        url = f"{self.taxonomy_service_url.rstrip('/')}/{path.lstrip('/')}"
         try:
             response = taxonomy_cache.get_or_fetch(url)
-            body = response.json()
         except requests.exceptions.RequestException as e:
-            return taxonomy_network_error(
-                subject=f"taxon ID {unvalidated_host}",
-                action="fetching taxon info",
-                e=e,
-            )
-        if response.status_code != requests.codes.ok:
-            message = f"Host validation for '{unvalidated_host}' failed."
-            details = f"with code {response.status_code}: {body.get('detail', '')}"
-            logger.error(message + details)
-            return RawProcessingResult(
-                datum=None,
-                warnings=[message] if not error_if_failed else [],
-                errors=[message] if error_if_failed else [],
-            )
-        if isinstance(body, list):
-            # when querying by scientific name, multiple taxa may be returned
-            # - we select the most generic one
-            if not body:
-                message = (
-                    f"Host validation for '{unvalidated_host}' was successful "
-                    "but no taxa were returned."
-                )
-                return raw_internal_error(message)
-            taxon = min(body, key=lambda x: x.get("depth", float("inf")))
-        else:
-            taxon = body
+            msg = f"Network error while fetching '{url}': {e}."
+            raise TaxonomyServiceError(msg) from e
 
-        tax_id = taxon.get("tax_id")
-        if tax_id is None:
-            message = (
-                f"Host validation for '{unvalidated_host}' was successful "
-                "but response json 'tax_id' was missing."
+        if response.status_code in (requests.codes.not_found, requests.codes.unprocessable_entity):
+            logger.warning(
+                f"Taxonomy service returned {response.status_code} for '{url}': {response.text}"
             )
-            return raw_internal_error(message)
+            return []
+        if response.status_code != requests.codes.ok:
+            msg = (
+                f"Taxonomy service returned unexpected status {response.status_code} "
+                f"for '{url}': {response.text}"
+            )
+            raise TaxonomyServiceError(msg)
+
+        try:
+            return TaxonomyResponse.model_validate(response.json()).taxa()
+        except (requests.exceptions.JSONDecodeError, ValidationError) as e:
+            msg = f"Unexpected response from taxonomy service for '{url}': {e}"
+            raise TaxonomyServiceError(msg) from e
+
+    def get_tax_id(self, unvalidated_host: str, error_if_failed: bool) -> RawProcessingResult:
+        if unvalidated_host.isdigit():
+            path = f"/taxa/{unvalidated_host}"
+        else:
+            path = "/taxa?" + urllib.parse.urlencode({"scientific_name": unvalidated_host})
+        try:
+            taxa = self._get(path)
+        except TaxonomyServiceError as e:
+            return raw_internal_error(str(e))
+
+        # multiple taxa may share a scientific name - we select the most generic one
+        taxon = min(taxa, key=lambda t: t.depth, default=None)
+        if taxon is None:
+            message = (
+                f"'{unvalidated_host}' is not a recognized host. "
+                "Please provide an NCBI taxon ID or scientific name. "
+                f"Find valid hosts in NCBI Taxonomy ({TAXONOMY_BROWSER_URL}). "
+                "NOTE: only scientific names (not synonyms) and taxon IDs are supported."
+            )
+            return lookup_failed(message, error_if_failed)
+
         return RawProcessingResult(
-            datum=str(tax_id),
+            datum=str(taxon.tax_id),
+            warnings=[ambiguous_host_warning(unvalidated_host, taxon, taxa)]
+            if len(taxa) > 1
+            else [],
         )
 
     def get_scientific_name(self, tax_id: str, error_if_failed: bool) -> RawProcessingResult:
-        if not self.taxonomy_service_url:
-            return missing_taxonomy_service_error()
-
-        url = f"{self.taxonomy_service_url}/taxa/{tax_id}"
         try:
-            response = taxonomy_cache.get_or_fetch(url)
-            body = response.json()
-        except requests.exceptions.RequestException as e:
-            return taxonomy_network_error(
-                subject=f"taxon ID {tax_id}",
-                action="fetching taxon scientific name",
-                e=e,
-            )
-        if response.status_code != requests.codes.ok:
-            message = f"Could not map '{tax_id}' to scientific name."
-            details = f"Code {response.status_code}: {body.get('detail', '')}"
-            logger.error(message + details)
-            return RawProcessingResult(
-                datum=None,
-                warnings=[message] if not error_if_failed else [],
-                errors=[message] if error_if_failed else [],
-            )
+            taxa = self._get(f"/taxa/{tax_id}")
+        except TaxonomyServiceError as e:
+            return raw_internal_error(str(e))
 
-        scientific_name = body.get("scientific_name")
-        if scientific_name is None:
-            message = f"'{tax_id}' is a valid taxon ID but response json had no 'scientific_name'."
-            return raw_internal_error(message)
-
-        return RawProcessingResult(datum=scientific_name)
+        if not taxa:
+            return lookup_failed(f"Could not map '{tax_id}' to scientific name.", error_if_failed)
+        taxon = taxa[0]
+        if taxon.scientific_name is None:
+            return raw_internal_error(f"'{tax_id}' is a valid taxon ID but has no scientific name.")
+        return RawProcessingResult(datum=taxon.scientific_name)
 
     def get_common_name(self, tax_id: str) -> RawProcessingResult:
-        if not self.taxonomy_service_url:
-            return missing_taxonomy_service_error()
-
-        url = f"{self.taxonomy_service_url}/taxa/{tax_id}?find_common_name=true"
         try:
-            response = taxonomy_cache.get_or_fetch(url)
-            body = response.json()
-        except requests.exceptions.RequestException as e:
-            return taxonomy_network_error(
-                subject=f"taxon ID {tax_id}",
-                action="fetching taxon common name",
-                e=e,
-            )
-        if response.status_code != requests.codes.ok:
-            message = f"Could not map '{tax_id}' to common name."
-            details = f"Code {response.status_code}: {body.get('detail', '')}"
-            logger.error(message + details)
-            return RawProcessingResult(
-                warnings=[message],
-            )
+            taxa = self._get(f"/taxa/{tax_id}?find_common_name=true")
+        except TaxonomyServiceError as e:
+            return raw_internal_error(str(e))
 
-        common_name = body.get("common_name")
-        if common_name is None:
-            message = f"Taxonomy service indicated common name was found for hostTaxonId '{tax_id}', but failed to return it."
+        if not taxa:
+            return RawProcessingResult(warnings=[f"Could not map '{tax_id}' to common name."])
+        taxon = taxa[0]
+        if taxon.common_name is None:
+            message = (
+                "Taxonomy service indicated common name was found for "
+                f"hostTaxonId '{tax_id}', but failed to return it."
+            )
             return raw_internal_error(message)
-
-        return RawProcessingResult(datum=common_name)
-
-
-@dataclass(frozen=True)
-class ExternalServices:
-    """External services available to processing functions.
-
-    Kept separate from `ProcessingContext` since these don't vary per accession, unlike
-    `ProcessingContext`'s fields.
-    """
-
-    taxonomy_service: TaxonomyService
+        return RawProcessingResult(datum=taxon.common_name)
 
 
 FileName = str
@@ -309,3 +318,111 @@ class FileProcessingService:
         if not internal_error:
             return ProcessingAnnotation([source], [source], message)
         return ProcessingAnnotation([source], [source], _internal_error_message(message))
+
+
+# Successful ENA responses are small XML documents (a few KB). Cache hits refresh an entry's
+# position; a bioproject shared across a batch stays cached while unique biosamples and runs
+# cycle through.
+ena_cache = RequestCache(max_size=16, retries=1)
+
+
+class EnaAccessionType(StrEnum):
+    BIOPROJECT = "bioproject"
+    BIOSAMPLE = "biosample"
+    RAW_READS = "raw_reads"
+
+
+# Also guards against comma-separated lists, which the ENA browser API
+# would otherwise resolve to multiple records.
+# (see https://ena-docs.readthedocs.io/en/latest/submit/general-guide/accessions.html)
+ACCESSION_PATTERNS: dict[EnaAccessionType, re.Pattern[str]] = {
+    EnaAccessionType.BIOPROJECT: re.compile(r"PRJ[EDN][A-Z][0-9]+"),
+    EnaAccessionType.BIOSAMPLE: re.compile(r"SAM[EDN][A-Z]?[0-9]+"),
+    EnaAccessionType.RAW_READS: re.compile(r"[EDS]RR[0-9]{6,}"),
+}
+
+
+class ENAVisibilityChecker:
+    """Used to check ENA visibility
+
+    Adapted from the ENAVisibilityChecker in
+    ena-submission/src/ena_deposition/check_external_visibility.py.
+    If anything changes in that class, check whether the update needs to
+    be applied here as well.
+    """
+
+    def __init__(
+        self,
+        timeout_seconds: int = 10,
+    ):
+        self.timeout_seconds = timeout_seconds
+
+    def check_visibility(self, accession: str, accession_type_arg: str) -> RawProcessingResult:
+        try:
+            accession_type = EnaAccessionType(accession_type_arg)
+        except ValueError:
+            return raw_internal_error(
+                f"Invalid accession_type '{accession_type_arg}', expected one of "
+                f"{[t.value for t in EnaAccessionType]}."
+            )
+        accession = accession.strip().upper()
+        pattern = ACCESSION_PATTERNS[accession_type]
+        if not pattern.fullmatch(accession):
+            return processing_error(
+                f"'{accession}' is not a valid {accession_type.replace('_', ' ')} accession, "
+                f"expected a value matching '{pattern.pattern}'."
+            )
+        try:
+            response = ena_cache.get_or_fetch(
+                f"https://www.ebi.ac.uk/ena/browser/api/xml/{accession}",
+                timeout=self.timeout_seconds,
+            )
+        except requests.RequestException as e:
+            logger.warning(f"Failed to check ENA visibility of '{accession}': {e}")
+            response = None
+        if response is None or response.status_code >= HTTPStatus.INTERNAL_SERVER_ERROR:
+            return RawProcessingResult(
+                datum=accession,
+                warnings=[
+                    f"Unable to check visibility of '{accession}': could not reach ENA. Please "
+                    f"verify yourself that '{accession}' is public before proceeding or we will "
+                    "not be able to propagate your submission to the INSDC."
+                ],
+            )
+        if response.status_code != HTTPStatus.OK:
+            return RawProcessingResult(
+                datum=accession,
+                warnings=[
+                    f"Accession '{accession}' is not visible on ENA. Please make '{accession}' "
+                    "public before proceeding or we will not be able to propagate your "
+                    "submission to the INSDC."
+                ],
+            )
+        if accession_type == EnaAccessionType.BIOPROJECT and self._is_umbrella_project(
+            response.content
+        ):
+            return processing_error(
+                f"bioproject '{accession}' is an umbrella project. "
+                "Please provide the accession of a submission project instead."
+            )
+        return RawProcessingResult(datum=accession)
+
+    def _is_umbrella_project(self, xml_bytes) -> bool:
+        for _, elem in ET.iterparse(io.BytesIO(xml_bytes), events=("start",)):  # noqa: S314
+            if elem.tag == "UMBRELLA_PROJECT":
+                return True
+            if elem.tag == "SUBMISSION_PROJECT":
+                return False
+        return False
+
+
+@dataclass(frozen=True)
+class ExternalServices:
+    """External services available to processing functions.
+
+    Kept separate from `ProcessingContext` since these don't vary per accession, unlike
+    `ProcessingContext`'s fields.
+    """
+
+    taxonomy_service: TaxonomyService
+    ena_visibility_checker: ENAVisibilityChecker

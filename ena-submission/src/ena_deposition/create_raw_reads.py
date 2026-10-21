@@ -364,8 +364,10 @@ def update_raw_reads_results_with_latest_version(db_engine: Engine, seq_key: Acc
         db_engine=db_engine,
         conditions=asdict(seq_key),
         update_values={
-            "status": Status.SUBMITTED,
+            "status": last_version_entry.status,
             "result": last_version_entry.result,
+            "errors": last_version_entry.errors,
+            "finished_at": datetime.now(tz=pytz.utc),
         },
         model_class=RawReadsTableEntry,
         reraise=False,

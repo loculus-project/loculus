@@ -290,8 +290,9 @@ export const SearchForm = ({
 
     return (
         <QueryClientProvider client={queryClient}>
-            <div className='text-right -mb-10 md:hidden'>
-                <Button onClick={toggleMobileOpen} size='xs' variant='primary'>
+            <div className='md:hidden'>
+                <Button onClick={toggleMobileOpen} variant='outline' className='w-full'>
+                    <MaterialSymbolsTune className='mr-1.5 h-4 w-4' aria-hidden='true' />
                     Modify search query
                 </Button>
             </div>

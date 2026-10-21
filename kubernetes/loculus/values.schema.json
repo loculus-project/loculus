@@ -1747,6 +1747,13 @@
       "default": false,
       "description": "If true, the instance runs in read-only mode: the backend rejects write requests (POST/PUT/DELETE/PATCH) with 503 Service Unavailable, and the website hides login/submission entry points and shows a read-only banner."
     },
+    "backendExtraJvmOpts": {
+      "groups": ["services"],
+      "type": "array",
+      "items": { "type": "string" },
+      "default": [],
+      "description": "Extra JVM options for the backend, appended after the built-in JVM_OPTS so they override them, e.g. `-XX:MaxRAMPercentage=25`."
+    },
     "organisms": {
       "groups": ["organism-conf"],
       "type": "object",
@@ -2060,14 +2067,20 @@
     "images": {
       "groups": ["general"],
       "type": "object",
-      "description": "Which docker images to use. You can specify an [image spec (type)](#image-spec-type) for `lapis`, `lapisSilo`, `loculusSilo`, `website`, `backend` and `deaconIndex.`",
+      "description": "Which docker images to use. You can specify an [image spec (type)](#image-spec-type) for `lapis`, `lapisSilo`, `loculusSilo`, `website`, `backend`, `deaconIndex`, `postgres`, `keycloak`, `minio`, `busybox`, `kubectl` and `alpine`.",
       "properties": {
         "lapis": { "$ref": "#/definitions/imageSpec" },
         "lapisSilo": { "$ref": "#/definitions/imageSpec" },
         "loculusSilo": { "$ref": "#/definitions/imageSpec" },
         "website": { "$ref": "#/definitions/imageSpec" },
         "backend": { "$ref": "#/definitions/imageSpec" },
-        "deaconIndex": { "$ref": "#/definitions/imageSpec" }
+        "deaconIndex": { "$ref": "#/definitions/imageSpec" },
+        "postgres": { "$ref": "#/definitions/imageSpec" },
+        "keycloak": { "$ref": "#/definitions/imageSpec" },
+        "minio": { "$ref": "#/definitions/imageSpec" },
+        "busybox": { "$ref": "#/definitions/imageSpec" },
+        "kubectl": { "$ref": "#/definitions/imageSpec" },
+        "alpine": { "$ref": "#/definitions/imageSpec" }
       },
       "additionalProperties": false
     },
@@ -2201,6 +2214,22 @@
       "description": "TODO",
       "items": {
         "type": "string"
+      }
+    },
+    "keycloakExtraEnv": {
+      "groups": ["auth"],
+      "type": "array",
+      "default": [],
+      "description": "Extra environment variables for the Keycloak container, as a list of Kubernetes `EnvVar` objects (`name` plus `value` or `valueFrom` - see docs: https://kubernetes.io/docs/reference/kubernetes-api/core/pod-v1/#EnvVar ). Appended after the chart's own entries.",
+      "items": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": { "type": "string" },
+          "value": { "type": "string" },
+          "valueFrom": { "type": "object" }
+        },
+        "additionalProperties": false
       }
     },
     "previewDocs": {

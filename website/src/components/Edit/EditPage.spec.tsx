@@ -126,6 +126,27 @@ describe('EditPage', () => {
         expect(document.querySelector('[data-tooltip-content="warningMessage"]')).toBeTruthy();
     });
 
+    test('shows validation errors and warnings on their submitted input field', async () => {
+        const annotation = {
+            unprocessedFields: [{ name: metadataKey, type: 'Metadata' as const }],
+            processedFields: [{ name: 'hostTaxonId', type: 'Metadata' as const }],
+            message: "'Goose' is not a valid host.",
+        };
+        renderEditPage({
+            editedData: {
+                ...defaultReviewData,
+                errors: [annotation],
+                warnings: [{ ...annotation, message: 'Host warning' }],
+            },
+        });
+
+        expect(document.querySelector(`[data-tooltip-content="${annotation.message}"]`)).toBeTruthy();
+        expect(document.querySelector('[data-tooltip-content="Host warning"]')).toBeTruthy();
+        await userEvent.click(screen.getByDisplayValue(editableEntry));
+        expect(screen.getByText(annotation.message)).toBeInTheDocument();
+        expect(screen.getByText('Host warning')).toBeInTheDocument();
+    });
+
     test('should edit, show errors and undo input', async () => {
         renderEditPage();
 
@@ -145,6 +166,33 @@ describe('EditPage', () => {
 
         await userEvent.click(undoButton!);
         expectTextInSequenceData.unprocessedMetadata(defaultReviewData.submittedData.metadata);
+    });
+
+    test('should show submitted fields that are not input fields so they can be cleared', async () => {
+        const noInputKey = 'noInputField';
+        const noInputValue = 'shouldNotBeHere';
+        renderEditPage({
+            editedData: {
+                ...defaultReviewData,
+                submittedData: {
+                    ...defaultReviewData.submittedData,
+                    metadata: { ...defaultReviewData.submittedData.metadata, [noInputKey]: noInputValue },
+                },
+            },
+        });
+
+        expect(screen.getByText('Unrecognized input fields')).toBeInTheDocument();
+        expect(document.querySelector(`label[for="${noInputKey}"]`)).toBeTruthy();
+
+        await userEvent.clear(screen.getByDisplayValue(noInputValue));
+        expect(screen.queryByDisplayValue(noInputValue)).not.toBeInTheDocument();
+        expect(document.querySelector(`label[for="${noInputKey}"]`)).toBeTruthy();
+    });
+
+    test('should not show the unknown fields section when all fields are input fields', () => {
+        renderEditPage();
+
+        expect(screen.queryByText('Unrecognized input fields')).not.toBeInTheDocument();
     });
 
     test('should refuse to submit edits when the sequence was discarded', async () => {
