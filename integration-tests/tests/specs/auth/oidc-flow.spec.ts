@@ -167,7 +167,7 @@ test.describe('OIDC browser login', () => {
             const pending = (await page.context().cookies(websiteOrigin)).find(
                 (cookie) => cookie.name === transactionCookie,
             );
-            expect(pending).toBeDefined();
+            if (!pending) throw new Error(`Missing ${transactionCookie} cookie`);
             expect(Buffer.byteLength(`${pending.name}=${pending.value}`)).toBeLessThanOrEqual(3800);
         }
 
@@ -243,7 +243,7 @@ test.describe('OIDC browser login', () => {
         await submitCredentials(page, testAccount);
         await expect(page.getByText('Callback held by test', { exact: true })).toBeVisible();
         await page.unroute(authenticationRequest);
-        expect(originalCallback).toBeDefined();
+        if (!originalCallback) throw new Error('Provider callback was not captured');
         const altered = new URL(originalCallback);
         expect(altered.searchParams.get('code')).toBeTruthy();
         altered.searchParams.set('state', randomUUID());
