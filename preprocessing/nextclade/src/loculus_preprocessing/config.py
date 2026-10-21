@@ -20,6 +20,7 @@ from loculus_preprocessing.datatypes import (
     Topology,
 )
 from loculus_preprocessing.external_services import (
+    ENAVisibilityChecker,
     ExternalServices,
     FileProcessingService,
     TaxonomyService,
@@ -143,7 +144,9 @@ class Config(BaseModel):
     # External services
     taxonomy_service_url: str | None = None
     _external_services: ExternalServices = PrivateAttr(
-        default=ExternalServices(taxonomy_service=TaxonomyService(None))
+        default=ExternalServices(
+            taxonomy_service=TaxonomyService(None), ena_visibility_checker=ENAVisibilityChecker()
+        )
     )
     raw_reads_processing_service_url: str | None = None
     raw_reads_processing_service_timeout_seconds: int = 600
@@ -171,7 +174,8 @@ class Config(BaseModel):
         validate_required_when(self)
         self.processing_order = get_processing_order(self)
         self._external_services = ExternalServices(
-            taxonomy_service=TaxonomyService(self.taxonomy_service_url)
+            taxonomy_service=TaxonomyService(self.taxonomy_service_url),
+            ena_visibility_checker=ENAVisibilityChecker(),
         )
 
         return self
