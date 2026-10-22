@@ -1833,14 +1833,15 @@ class EnaAccessionCase:
     accession: str
     accession_type: str | None = "bioproject"
     # How ENA responds: an HTTP status code, or an exception raised by the session.
-    ena_response: int | Exception | None = None
+    # A list gives one status code per request, in order.
+    ena_response: int | list[int] | Exception | None = None
     ena_xml: bytes = b""
     is_insdc_ingest_group: bool = False
     expected_datum: str | None = None
     expected_error: str | None = None
     expected_warning: str | None = None
     # None means ENA must not be contacted at all.
-    expected_url: str | None = None
+    expected_url: str | list[str] | None = None
 
 
 ena_accession_cases = [
@@ -1889,6 +1890,18 @@ ena_accession_cases = [
         accession_type="raw_reads",
         is_insdc_ingest_group=True,
         expected_datum="SRR27477368,SRR27477369",
+    ),
+    EnaAccessionCase(
+        name="each_raw_reads_accession_in_list_is_checked",
+        accession="SRR27477368,SRR27477369",
+        accession_type="raw_reads",
+        ena_response=[200, 404],
+        expected_datum="SRR27477368,SRR27477369",
+        expected_warning="Accession 'SRR27477369' is not visible on ENA",
+        expected_url=[
+            "https://www.ebi.ac.uk/ena/browser/api/xml/SRR27477368",
+            "https://www.ebi.ac.uk/ena/browser/api/xml/SRR27477369",
+        ],
     ),
     EnaAccessionCase(
         name="biosample_in_bioproject_field_is_rejected",
@@ -1983,6 +1996,11 @@ def test_check_ena_accession(case: EnaAccessionCase) -> None:
     with mock.patch.object(external_services.ena_cache, "session") as mock_session:
         if isinstance(case.ena_response, Exception):
             mock_session.get.side_effect = case.ena_response
+        elif isinstance(case.ena_response, list):
+            mock_session.get.side_effect = [
+                mock.MagicMock(status_code=status, content=case.ena_xml)
+                for status in case.ena_response
+            ]
         else:
             mock_session.get.return_value = mock.MagicMock(
                 status_code=case.ena_response, content=case.ena_xml
@@ -2013,11 +2031,11 @@ def test_check_ena_accession(case: EnaAccessionCase) -> None:
             assert len(result.warnings) == 1
             assert case.expected_warning in result.warnings[0]
 
-        if case.expected_url is None:
-            assert mock_session.get.call_count == 0
+        if isinstance(case.expected_url, str):
+            expected_urls = [case.expected_url]
         else:
-            mock_session.get.assert_called_once()
-            assert mock_session.get.call_args.args[0] == case.expected_url
+            expected_urls = case.expected_url or []
+        assert [call.args[0] for call in mock_session.get.call_args_list] == expected_urls
 
 
 if __name__ == "__main__":
