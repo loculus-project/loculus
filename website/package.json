@@ -89,7 +89,7 @@
         "eslint-plugin-import": "^2.32.0",
         "eslint-plugin-react": "^7.37.5",
         "eslint-plugin-react-hooks": "^7.1.1",
-        "happy-dom": "^20.14.6",
+        "happy-dom": "^21.0.3",
         "jsdom-testing-mocks": "^1.16.0",
         "msw": "^3.0.3",
         "prettier": "3.9.10",
