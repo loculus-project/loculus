@@ -5,17 +5,17 @@ channels:
   - nodefaults
 dependencies:
   # Core Python dependencies
-  - python=3.14.8 # Pinned to 3.12.x series, check for patch updates within 3.12
+  - python=3.15.1 # Pinned to 3.12.x series, check for patch updates within 3.12
   - ca-certificates=2026.10.19 # >=2026.10.19 drops distrusted emSign ECC Root CA - G3
   - certifi=2026.10.19
   # Extra dependencies
   - biopython=1.88
   - click=8.5.0
-  - curl=8.22.0
-  - ijson=3.5.1
+  - curl=8.23.0
+  - ijson=3.6.0
   - jsonlines=4.0.0
-  - ncbi-datasets-cli=18.38.0
-  - nextclade=3.24.0
+  - ncbi-datasets-cli=18.39.0
+  - nextclade=3.25.1
   - orjsonl=1.0.0
   - pandas=3.0.6
   - psycopg2=2.9.13
@@ -23,7 +23,7 @@ dependencies:
   - pyyaml=6.0.3
   - requests=2.34.2
   - seqkit=2.14.0
-  - snakefmt=2.0.3
-  - snakemake-minimal=9.27.0
+  - snakefmt=2.1.0
+  - snakemake-minimal=9.27.1
   - unzip=6.0
   - pytest=9.1.1
