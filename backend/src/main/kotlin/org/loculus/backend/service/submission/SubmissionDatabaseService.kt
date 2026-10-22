@@ -135,6 +135,7 @@ class SubmissionDatabaseService(
     private val compressionService: CompressionService,
     private val processedDataPostprocessor: ProcessedDataPostprocessor,
     private val auditLogger: AuditLogger,
+    private val submissionLimitService: SubmissionLimitService,
     private val dateProvider: DateProvider,
     private val submissionMetrics: SubmissionMetrics,
     // A whole batch is serialized in memory before it is stored, so raising this multiplies peak heap.
@@ -1113,6 +1114,11 @@ class SubmissionDatabaseService(
                 .andThatLatestVersionsAreNotRevocations()
                 .andThatOrganismIs(organism)
         }
+        submissionLimitService.checkAndRecord(
+            RateLimitedOperation.REVOKE,
+            authenticatedUser,
+            submissionLimitService.countAccessionsByGroup(accessions),
+        )
 
         val metadata = versionComment?.let { mapOf("versionComment" to it) } ?: emptyMap()
         val submittedData = compressionService.compressSequencesInSubmittedData(
@@ -1274,6 +1280,11 @@ class SubmissionDatabaseService(
                 .andThatSequenceEntriesAreInStates(listOf(Status.PROCESSED))
                 .andThatOrganismIs(organism)
         }
+        submissionLimitService.checkAndRecord(
+            RateLimitedOperation.EDIT,
+            authenticatedUser,
+            submissionLimitService.countAccessionsByGroup(listOf(editedSequenceEntryData.accession)),
+        )
 
         val hasConsensusSequence = editedSequenceEntryData.data.unalignedNucleotideSequences.values
             .any { !it.isNullOrBlank() }

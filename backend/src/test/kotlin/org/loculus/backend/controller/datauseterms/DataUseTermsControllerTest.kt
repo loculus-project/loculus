@@ -233,6 +233,13 @@ class DataUseTermsControllerTest(
                 expectedDetailContains = "Cannot extend restricted data use period. " +
                     "Please choose a date before ${dateMonthsFromNow(6)}.",
             ),
+            DataUseTermsTestCase(
+                setupDataUseTerms = DataUseTerms.Restricted(dateMonthsFromNow(6)),
+                newDataUseTerms = DataUseTerms.Restricted(dateMonthsFromNow(6)),
+                expectedStatus = status().isUnprocessableContent,
+                expectedContentType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
+                expectedDetailContains = "The data use terms are already restricted until ${dateMonthsFromNow(6)}.",
+            ),
         )
     }
 }

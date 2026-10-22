@@ -23,6 +23,8 @@ import org.loculus.backend.service.files.FILES_TABLE_NAME
 import org.loculus.backend.service.groupmanagement.GROUPS_TABLE_NAME
 import org.loculus.backend.service.groupmanagement.USER_GROUPS_TABLE_NAME
 import org.loculus.backend.service.submission.METADATA_UPLOAD_AUX_TABLE_NAME
+import org.loculus.backend.service.submission.RATE_LIMIT_ALERTS_TABLE_NAME
+import org.loculus.backend.service.submission.RATE_LIMIT_OPERATIONS_TABLE_NAME
 import org.loculus.backend.service.submission.SEQUENCE_ENTRIES_PREPROCESSED_DATA_TABLE_NAME
 import org.loculus.backend.service.submission.SEQUENCE_ENTRIES_TABLE_NAME
 import org.loculus.backend.service.submission.SEQUENCE_UPLOAD_AUX_TABLE_NAME
@@ -221,6 +223,8 @@ private fun clearDatabaseStatement(): String = """
             $DATA_USE_TERMS_TABLE_NAME,
             $CURRENT_PROCESSING_PIPELINE_TABLE_NAME,
             $FILES_TABLE_NAME,
+            $RATE_LIMIT_OPERATIONS_TABLE_NAME,
+            $RATE_LIMIT_ALERTS_TABLE_NAME,
             external_metadata,
             seqsets,
             seqset_records,
