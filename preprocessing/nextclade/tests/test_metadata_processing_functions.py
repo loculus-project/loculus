@@ -1882,7 +1882,7 @@ ena_accession_cases = [
         name="sra_experiment_in_raw_reads_field_is_rejected",
         accession="SRX23184375",
         accession_type="raw_reads",
-        expected_error="'SRX23184375' is/are malformatted",
+        expected_error="'SRX23184375' is/are malformatted, raw reads accessions",
     ),
     EnaAccessionCase(
         name="insdc_ingested_raw_reads_list_with_sra_sample_is_accepted_unchecked",
@@ -1907,23 +1907,23 @@ ena_accession_cases = [
         name="sra_sample_in_raw_reads_field_is_rejected",
         accession="SRS12345678",
         accession_type="raw_reads",
-        expected_error="'SRS12345678' is/are malformatted",
+        expected_error="'SRS12345678' is/are malformatted, raw reads accessions",
     ),
     EnaAccessionCase(
         name="biosample_in_bioproject_field_is_rejected",
         accession="SAMN12345678",
-        expected_error="'SAMN12345678' is/are malformatted",
+        expected_error="'SAMN12345678' is/are malformatted, bioproject accessions",
     ),
     EnaAccessionCase(
         name="bioproject_in_biosample_field_is_rejected",
         accession="PRJEB12345",
         accession_type="biosample",
-        expected_error="'PRJEB12345' is/are malformatted",
+        expected_error="'PRJEB12345' is/are malformatted, biosample accessions",
     ),
     EnaAccessionCase(
         name="comma_separated_bioprojects_are_rejected",
         accession="PRJNA591860,PRJEB106529",
-        expected_error="'PRJNA591860,PRJEB106529' is/are malformatted",
+        expected_error="'PRJNA591860,PRJEB106529' is/are malformatted, bioproject accessions",
     ),
     EnaAccessionCase(
         name="lowercase_accession_is_uppercased",
@@ -1985,7 +1985,7 @@ ena_accession_cases = [
         name="insdc_ingested_accession_format_is_checked",
         accession="PRJNA123,PRJNA456",
         is_insdc_ingest_group=True,
-        expected_error="'PRJNA123,PRJNA456' is/are malformatted",
+        expected_error="'PRJNA123,PRJNA456' is/are malformatted, bioproject accessions",
     ),
 ]
 
