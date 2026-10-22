@@ -56,7 +56,13 @@ export const FileUploadComponent = <F extends ProcessedFile>({
                     },
                 );
             }
-            await setFile(processedFile);
+            try {
+                await setFile(processedFile);
+            } catch (error) {
+                toast.error(`${error instanceof Error ? error.message : error}`);
+                return;
+            }
+
             rawSetMyFile(processedFile);
             // update edited state
             if (processedFile === undefined && initialValue !== undefined) {
@@ -74,7 +80,12 @@ export const FileUploadComponent = <F extends ProcessedFile>({
         [setFile, rawSetMyFile],
     );
     const reset = async () => {
-        await setFile(initialValue);
+        try {
+            await setFile(initialValue);
+        } catch (error) {
+            toast.error(`${error instanceof Error ? error.message : error}`);
+            return;
+        }
         rawSetMyFile(initialValue);
         setIsEdited(false);
     };
