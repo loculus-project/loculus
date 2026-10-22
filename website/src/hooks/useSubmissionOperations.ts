@@ -1,9 +1,7 @@
-import { isErrorFromAlias } from '@zodios/core';
 import type { AxiosError } from 'axios';
 import { useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
 
-import { backendApi } from '../services/backendApi.ts';
 import { backendClientHooks } from '../services/serviceHooks.ts';
 import {
     type Group,
@@ -17,7 +15,7 @@ import {
 } from '../types/backend.ts';
 import type { ClientConfig } from '../types/runtimeConfig.ts';
 import { createAuthorizationHeader } from '../utils/createAuthorizationHeader.ts';
-import { stringifyMaybeAxiosError } from '../utils/stringifyMaybeAxiosError.ts';
+import { formatErrorMessage } from '../utils/formatErrorMessage.ts';
 
 export function useSubmissionOperations(
     organism: string,
@@ -113,22 +111,13 @@ export function useSubmissionOperations(
 }
 
 function deleteSequenceEntriesErrorMessage(error: unknown | AxiosError) {
-    if (isErrorFromAlias(backendApi, 'deleteSequences', error)) {
-        return 'Failed to delete sequence entries: ' + error.response.data.detail;
-    }
-    return 'Failed to delete sequence entries: ' + stringifyMaybeAxiosError(error);
+    return 'Failed to delete sequence entries: ' + formatErrorMessage(error);
 }
 
 function approveProcessedDataErrorMessage(error: unknown | AxiosError) {
-    if (isErrorFromAlias(backendApi, 'approveProcessedData', error)) {
-        return 'Failed to approve processed sequence entries: ' + error.response.data.detail;
-    }
-    return 'Failed to approve processed sequence entries: ' + stringifyMaybeAxiosError(error);
+    return 'Failed to approve processed sequence entries: ' + formatErrorMessage(error);
 }
 
 function getSequencesErrorMessage(error: unknown | AxiosError) {
-    if (isErrorFromAlias(backendApi, 'getSequences', error)) {
-        return 'Failed to query sequences: ' + error.response.data.detail;
-    }
-    return 'Failed to query sequences: ' + stringifyMaybeAxiosError(error);
+    return 'Failed to query sequences: ' + formatErrorMessage(error);
 }
