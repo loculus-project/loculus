@@ -25,17 +25,17 @@ from ena_deposition.config import (
     Config,
     EnaResultField,
 )
-from ena_deposition.ena_submission_helper import log_before_retry
+from ena_deposition.ena_client import log_before_retry
 from ena_deposition.submission_db_helper import (
     AssemblyTableEntry,
     ProjectTableEntry,
     RawReadsTableEntry,
     SampleTableEntry,
-    Status,
     db_init,
     find_conditions_in_db,
     update_db_where_conditions,
 )
+from ena_deposition.submission_types import Status
 
 logger = logging.getLogger(__name__)
 

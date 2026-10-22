@@ -2,11 +2,10 @@ import logging
 import os
 import re
 import typing
-from collections.abc import Mapping, Sequence
-from dataclasses import asdict, dataclass
+from collections.abc import Iterable, Mapping, Sequence
+from dataclasses import asdict
 from datetime import datetime, timedelta
-from enum import StrEnum
-from typing import Any, Final, cast
+from typing import Any, Final, Literal, cast
 
 import pytz
 from sqlalchemy import (
@@ -39,7 +38,8 @@ from tenacity import (
     wait_fixed,
 )
 
-from ena_deposition.config import EnaResultField
+from .config import Config, EnaResultField
+from .submission_types import Accession, AccessionVersion, ProjectId, Status, StatusAll, Version
 
 logger = logging.getLogger(__name__)
 
@@ -71,60 +71,6 @@ def db_init(db_password_default: str, db_username_default: str, db_url_default: 
         pool_size=1,
         max_overflow=1,  # max 2 connections total; 7 processes * 2 = 14 DB connections
     )
-
-
-class StatusAll(StrEnum):
-    READY_TO_SUBMIT = "READY_TO_SUBMIT"
-    SUBMITTED_PROJECT = "SUBMITTED_PROJECT"
-    SUBMITTED_SAMPLE = "SUBMITTED_SAMPLE"
-    SUBMITTED_RAW_READS = "SUBMITTED_RAW_READS"
-    SUBMITTING_ASSEMBLY = "SUBMITTING_ASSEMBLY"
-    SUBMITTED_ALL = "SUBMITTED_ALL"
-    SENT_TO_LOCULUS = "SENT_TO_LOCULUS"
-    HAS_ERRORS_EXT_METADATA_UPLOAD = "HAS_ERRORS_EXT_METADATA_UPLOAD"
-
-
-class Status(StrEnum):
-    READY = "READY"
-    SUBMITTING = "SUBMITTING"
-    SUBMITTED = "SUBMITTED"
-    HAS_ERRORS = "HAS_ERRORS"
-    WAITING = "WAITING"  # Only for assembly creation
-
-
-type Accession = str
-type Version = int
-
-
-@dataclass(frozen=True)
-class AccessionVersion:
-    accession: Accession
-    version: Version
-
-    @classmethod
-    def from_string(cls, s: str) -> "AccessionVersion":
-        if s.count(".") != 1:
-            msg = (
-                f"Invalid AccessionVersion string '{s}': "
-                "expected exactly one '.' separating accession and version"
-            )
-            raise ValueError(msg)
-        accession_str, version_str = s.split(".", 1)
-        return cls(
-            accession=accession_str,
-            version=int(version_str),
-        )
-
-    def __post_init__(self):
-        if not isinstance(self.version, int):
-            msg = "version must be an int"
-            logger.error(msg)
-            raise TypeError(msg)
-
-
-@dataclass(frozen=True)
-class ProjectId:
-    project_id: int | None
 
 
 # ---------------------------------------------------------------------------
@@ -655,3 +601,102 @@ def get_project_and_sample_results(
         )
         raise RuntimeError(error_msg)
     return cast(str, sample_accession), cast(str, study_accession)
+
+
+def set_accession_does_not_exist_error(
+    conditions: dict[str, Any],
+    accession: str,
+    accession_type: Literal["BIOPROJECT", "BIOSAMPLE", "RUN_REF"],
+    db_engine: Engine,
+):
+    error_text = f"Accession {accession} of type {accession_type} does not exist in ENA."
+    logger.error(error_text)
+
+    succeeded: bool | int | None
+    match accession_type:
+        case "BIOSAMPLE":
+            succeeded = update_db_where_conditions(
+                db_engine,
+                SampleTableEntry,
+                conditions,
+                {
+                    "status": Status.HAS_ERRORS,
+                    "errors": [error_text],
+                    "result": {
+                        EnaResultField.BIOSAMPLE: accession,
+                        "ena_sample_accession": accession,
+                    },
+                },
+            )
+        case "BIOPROJECT":
+            succeeded = update_db_where_conditions(
+                db_engine,
+                ProjectTableEntry,
+                conditions,
+                {
+                    "status": Status.HAS_ERRORS,
+                    "errors": [error_text],
+                    "result": {EnaResultField.BIOPROJECT: accession},
+                },
+            )
+        case "RUN_REF":
+            succeeded = update_db_where_conditions(
+                db_engine,
+                RawReadsTableEntry,
+                conditions,
+                {
+                    "status": Status.HAS_ERRORS,
+                    "errors": [error_text],
+                    "result": {EnaResultField.RUN: accession},
+                },
+            )
+
+    if not succeeded:
+        logger.warning(f"{accession_type} creation failed and DB update failed.")
+
+
+def retry_failed_submissions_for_matching_errors(
+    entries_with_errors: Iterable[ProjectTableEntry]
+    | Iterable[SampleTableEntry]
+    | Iterable[AssemblyTableEntry]
+    | Iterable[RawReadsTableEntry],
+    db_engine: Engine,
+    model_class: type[ProjectTableEntry]
+    | type[SampleTableEntry]
+    | type[AssemblyTableEntry]
+    | type[RawReadsTableEntry],
+    config: Config,
+    last_retry: datetime | None = None,
+) -> datetime | None:
+    if (
+        last_retry
+        and datetime.now(tz=pytz.utc) - timedelta(minutes=config.retry_threshold_min) < last_retry
+    ):
+        return last_retry
+    for entry in entries_with_errors:
+        errors = str(entry.errors or "")
+        if not any(substring in errors for substring in config.slack_retry_substrings):
+            continue
+
+        pkey = entry.pkey
+        logger.info(
+            f"Retrying submission {pkey} in {model_class.__tablename__}"
+            f" with error: '{entry.errors}'"
+        )
+
+        update_values = {
+            "status": Status.READY,
+            "errors": None,
+            "finished_at": None,
+        }
+        try:
+            update_with_retry(
+                db_engine=db_engine,
+                conditions=asdict(pkey),
+                update_values=update_values,
+                model_class=model_class,
+            )
+            last_retry = datetime.now(tz=pytz.utc)
+        except Exception as e:
+            logger.error(f"Failed to update {model_class.__tablename__} entry for retry: {e!s}")
+    return last_retry
