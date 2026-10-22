@@ -5,6 +5,8 @@ channels:
   - nodefaults
 dependencies:
   - python=3.14.8
+  - ca-certificates=2026.10.19 # >=2026.10.19 drops distrusted emSign ECC Root CA - G3
+  - certifi=2026.10.19
   - biopython=1.88
   - nextclade=3.24.0
   - pip=25.2
