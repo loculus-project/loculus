@@ -337,23 +337,28 @@ class EnaAccessionType(StrEnum):
 ACCESSION_PATTERNS: dict[EnaAccessionType, re.Pattern[str]] = {
     EnaAccessionType.BIOPROJECT: re.compile(r"PRJ[EDN][A-Z][0-9]+"),
     EnaAccessionType.BIOSAMPLE: re.compile(r"SAM[EDN][A-Z]?[0-9]+"),
-    EnaAccessionType.RAW_READS: re.compile(r"[EDS]R[RS][0-9]{6,}"),
+    EnaAccessionType.RAW_READS: re.compile(r"[EDS]RR[0-9]{6,}"),
 }
+# INSDC sometimes gives us SRA sample accessions instead of runs
+INSDC_INGEST_RAW_READS_PATTERN = re.compile(r"[EDS]R[RS][0-9]{6,}")
 
 
 def validate_accession_format(
-    accession: str, accession_type: EnaAccessionType
+    accession: str, accession_type: EnaAccessionType, is_insdc_ingest_group: bool
 ) -> tuple[list[str], RawProcessingResult | None]:
     """Return the normalised accession(s) and None, or an empty list and a RawProcessingResult
     with an error if any accession has an invalid format. Comma-separated lists are only allowed
-    for RAW_READS."""
+    for RAW_READS, and SRA sample accessions only for INSDC ingested RAW_READS."""
     if accession_type == EnaAccessionType.RAW_READS:
         accessions = list(
             dict.fromkeys(a.strip().upper() for a in accession.split(",") if a.strip())
         )
     else:
         accessions = [accession.strip().upper()]
-    pattern = ACCESSION_PATTERNS[accession_type]
+    if accession_type == EnaAccessionType.RAW_READS and is_insdc_ingest_group:
+        pattern = INSDC_INGEST_RAW_READS_PATTERN
+    else:
+        pattern = ACCESSION_PATTERNS[accession_type]
     invalid = [a for a in accessions if not pattern.fullmatch(a)]
     if invalid:
         invalid_str = ", ".join(f"'{a}'" for a in invalid)

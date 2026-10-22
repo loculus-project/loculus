@@ -1885,11 +1885,11 @@ ena_accession_cases = [
         expected_error="not a valid raw reads accession",
     ),
     EnaAccessionCase(
-        name="comma_separated_raw_reads_are_accepted",
-        accession="SRR27477368, srr27477369",
+        name="insdc_ingested_raw_reads_list_with_sra_sample_is_accepted_unchecked",
+        accession="SRR27477368, srs12345678",
         accession_type="raw_reads",
         is_insdc_ingest_group=True,
-        expected_datum="SRR27477368,SRR27477369",
+        expected_datum="SRR27477368,SRS12345678",
     ),
     EnaAccessionCase(
         name="each_raw_reads_accession_in_list_is_checked",
@@ -1902,6 +1902,12 @@ ena_accession_cases = [
             "https://www.ebi.ac.uk/ena/browser/api/xml/SRR27477368",
             "https://www.ebi.ac.uk/ena/browser/api/xml/SRR27477369",
         ],
+    ),
+    EnaAccessionCase(
+        name="sra_sample_in_raw_reads_field_is_rejected",
+        accession="SRS12345678",
+        accession_type="raw_reads",
+        expected_error="not a valid raw reads accession",
     ),
     EnaAccessionCase(
         name="biosample_in_bioproject_field_is_rejected",
@@ -1974,12 +1980,6 @@ ena_accession_cases = [
     EnaAccessionCase(
         name="missing_accession_is_not_checked",
         accession="",
-    ),
-    EnaAccessionCase(
-        name="insdc_ingested_accession_visibility_is_not_checked",
-        accession="PRJNA123456",
-        is_insdc_ingest_group=True,
-        expected_datum="PRJNA123456",
     ),
     EnaAccessionCase(
         name="insdc_ingested_accession_format_is_checked",

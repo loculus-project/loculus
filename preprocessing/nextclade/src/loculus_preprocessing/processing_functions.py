@@ -1325,7 +1325,9 @@ class ProcessingFunctions:
                 f"Invalid accession_type '{accession_type}', expected one of "
                 f"{[t.value for t in EnaAccessionType]}."
             )
-        accessions, error = validate_accession_format(accession, ena_accession_type)
+        accessions, error = validate_accession_format(
+            accession, ena_accession_type, context.is_insdc_ingest_group
+        )
         if error:
             return error
         if not accessions:
