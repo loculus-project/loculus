@@ -141,6 +141,24 @@ updates:
         update-types:
           - "minor"
           - "patch"
+  - package-ecosystem: conda
+    directory: raw-reads-processing
+    schedule:
+      interval: monthly
+    groups:
+      minorAndPatch:
+        update-types:
+          - "minor"
+          - "patch"
+  - package-ecosystem: conda
+    directory: taxonomy/taxonomy_service
+    schedule:
+      interval: monthly
+    groups:
+      minorAndPatch:
+        update-types:
+          - "minor"
+          - "patch"
   - package-ecosystem: pip
     directory: loculus-silo
     schedule:
