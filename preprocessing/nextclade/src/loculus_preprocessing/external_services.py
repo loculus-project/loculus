@@ -362,8 +362,8 @@ def validate_accession_format(
     if invalid:
         invalid_str = ", ".join(f"'{a}'" for a in invalid)
         return [], processing_error(
-            f"{invalid_str} is/are not a valid {accession_type.replace('_', ' ')} accession, "
-            f"expected a value matching '{pattern.pattern}'."
+            f"{invalid_str} is/are malformatted, "
+            f"accessions are expected to match the pattern '{pattern.pattern}'."
         )
     return accessions, None
 

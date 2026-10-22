@@ -1310,21 +1310,16 @@ class ProcessingFunctions:
         context: ProcessingContext,
         external_services: ExternalServices,
     ) -> RawProcessingResult:
-        accession_type = args.get("accession_type")
-        if not isinstance(accession_type, str):
+        try:
+            ena_accession_type = EnaAccessionType(str(args.get("accession_type")))
+        except ValueError:
             return raw_internal_error(
-                f"check_ena_accession requires an accession_type arg, got args {args}."
+                "check_ena_accession requires accession_type to be one of "
+                f"{[t.value for t in EnaAccessionType]}, got args {args}."
             )
         accession: str | None = input_data.get("accession")
         if not accession:
             return RawProcessingResult()
-        try:
-            ena_accession_type = EnaAccessionType(accession_type)
-        except ValueError:
-            return raw_internal_error(
-                f"Invalid accession_type '{accession_type}', expected one of "
-                f"{[t.value for t in EnaAccessionType]}."
-            )
         accessions, error = validate_accession_format(
             accession, ena_accession_type, context.is_insdc_ingest_group
         )
