@@ -11,12 +11,12 @@ from sqlalchemy import Engine
 
 from .config import Config
 from .submission_db_helper import (
-    AccessionVersion,
     SubmissionTableEntry,
     add_to_db,
     db_init,
     in_submission_table,
 )
+from .submission_types import AccessionVersion
 
 logger = logging.getLogger(__name__)
 
