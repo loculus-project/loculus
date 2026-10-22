@@ -16,3 +16,15 @@ fun base34Encode(sequenceNumber: Long, minLength: Int): String {
         .joinToString("")
         .padStart(minLength, '0')
 }
+
+fun base34Decode(encoded: String): Long? {
+    var value = 0L
+    for (char in encoded) {
+        val digit = CODE_POINTS.indexOf(char)
+        if (digit < 0) {
+            return null
+        }
+        value = value * 34 + digit
+    }
+    return value
+}
