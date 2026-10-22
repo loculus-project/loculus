@@ -56,7 +56,7 @@
         "react-toastify": "^11.1.0",
         "react-tooltip": "^6.0.8",
         "rsuite": "^6.2.5",
-        "sanitize-html": "^2.18.0",
+        "sanitize-html": "^2.18.1",
         "unplugin-icons": "^24.0.0",
         "winston": "^3.19.0",
         "yaml": "^2.9.1",
