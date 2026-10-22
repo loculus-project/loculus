@@ -9,7 +9,6 @@ import org.loculus.backend.auth.User
 import org.loculus.backend.service.groupmanagement.GroupManagementDatabaseService
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
-import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -20,7 +19,6 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
-import java.net.URI
 
 @RestController
 @RequestMapping("/v2")
@@ -31,23 +29,18 @@ class GroupController(private val groupManagementDatabaseService: GroupManagemen
     @ResponseStatus(HttpStatus.OK)
     @GetMapping("/groups", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun getGroups(@RequestParam(required = false) name: String?): List<GroupResponse> =
-        groupManagementDatabaseService.getGroups(name)
-            .sortedBy { it.groupId }
-            .map { it.toResponse() }
+        groupManagementDatabaseService.getGroups(name).toResponse()
 
     @Operation(description = "Create a new group. The user creating the group will be added to the group.")
+    @ResponseStatus(HttpStatus.CREATED)
     @PostMapping("/groups", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun createGroup(
         @HiddenParam authenticatedUser: AuthenticatedUser,
         @Parameter(description = "Information about the newly created group.")
         @RequestBody
         group: GroupRequest,
-    ): ResponseEntity<GroupResponse> {
-        val createdGroup = groupManagementDatabaseService.createNewGroup(group.fromRequest(), authenticatedUser)
-        return ResponseEntity
-            .created(URI.create("/v2/groups/${createdGroup.groupId}"))
-            .body(createdGroup.toResponse())
-    }
+    ): GroupResponse =
+        groupManagementDatabaseService.createNewGroup(group.fromRequest(), authenticatedUser).toResponse()
 
     @Operation(description = "Get a group. The contact email is redacted when not authenticated.")
     @ResponseStatus(HttpStatus.OK)
@@ -55,7 +48,7 @@ class GroupController(private val groupManagementDatabaseService: GroupManagemen
     fun getGroup(
         @HiddenParam user: User,
         @Parameter(description = "The id of the group.") @PathVariable groupId: Int,
-    ): GroupResponse = groupManagementDatabaseService.getDetailsOfGroup(groupId, user).group.toResponse()
+    ): GroupResponse = groupManagementDatabaseService.getDetailsOfGroup(groupId, user).toResponse()
 
     @Operation(description = "Edit a group. Only members of the group can edit it. The updated group is returned.")
     @ResponseStatus(HttpStatus.OK)
@@ -75,10 +68,8 @@ class GroupController(private val groupManagementDatabaseService: GroupManagemen
     fun getMembers(
         @HiddenParam authenticatedUser: AuthenticatedUser,
         @Parameter(description = "The id of the group.") @PathVariable groupId: Int,
-    ): List<GroupMemberResponse> = groupManagementDatabaseService.getDetailsOfGroup(groupId, authenticatedUser)
-        .users
-        .orEmpty()
-        .map { it.toResponse() }
+    ): List<GroupMemberResponse> =
+        groupManagementDatabaseService.getDetailsOfGroup(groupId, authenticatedUser).toMembersResponse()
 
     @Operation(description = "Add a user to a group.")
     @ResponseStatus(HttpStatus.NO_CONTENT)
@@ -102,7 +93,5 @@ class GroupController(private val groupManagementDatabaseService: GroupManagemen
     @ResponseStatus(HttpStatus.OK)
     @GetMapping("/me/groups", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun getMyGroups(@HiddenParam authenticatedUser: AuthenticatedUser): List<GroupResponse> =
-        groupManagementDatabaseService.getGroupsOfUser(authenticatedUser)
-            .sortedBy { it.groupId }
-            .map { it.toResponse() }
+        groupManagementDatabaseService.getGroupsOfUser(authenticatedUser).toResponse()
 }
