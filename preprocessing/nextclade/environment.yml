@@ -4,25 +4,25 @@ channels:
   - bioconda
   - nodefaults
 dependencies:
-  - python=3.14.8
+  - python=3.15.1
   - ca-certificates=2026.10.19 # >=2026.10.19 drops distrusted emSign ECC Root CA - G3
   - certifi=2026.10.19
   - biopython=1.88
-  - nextclade=3.24.0
+  - nextclade=3.25.1
   - pip=25.2
-  - uv=0.12.21
+  - uv=0.13.5
   - pyyaml=6.0.3
   - pyjwt=2.15.1
   - python-dateutil=2.9.0.post0
   - pytz=2026.5
   - requests=2.34.2
   - pandas=3.0.6
-  - ruff=0.16.10
+  - ruff=0.17.1
   - types-pyyaml=6.0.12.20260906
   - types-requests=2.33.0.20261006
   - types-python-dateutil=2.9.0.20260807
   - types-pytz=2026.5.0.20261006
   - unidecode=1.4.0
   - pytest=9.1.1
-  - pydantic=2.13.5
+  - pydantic=2.14.1
   - diamond=2.2.8
