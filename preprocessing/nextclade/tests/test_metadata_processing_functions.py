@@ -1884,6 +1884,13 @@ ena_accession_cases = [
         expected_error="not a valid raw reads accession",
     ),
     EnaAccessionCase(
+        name="comma_separated_raw_reads_are_accepted",
+        accession="SRR27477368, srr27477369",
+        accession_type="raw_reads",
+        is_insdc_ingest_group=True,
+        expected_datum="SRR27477368,SRR27477369",
+    ),
+    EnaAccessionCase(
         name="biosample_in_bioproject_field_is_rejected",
         accession="SAMN12345678",
         expected_error="not a valid bioproject accession",
@@ -1956,10 +1963,16 @@ ena_accession_cases = [
         accession="",
     ),
     EnaAccessionCase(
-        name="insdc_ingested_accession_is_not_checked",
+        name="insdc_ingested_accession_visibility_is_not_checked",
+        accession="PRJNA123456",
+        is_insdc_ingest_group=True,
+        expected_datum="PRJNA123456",
+    ),
+    EnaAccessionCase(
+        name="insdc_ingested_accession_format_is_checked",
         accession="PRJNA123,PRJNA456",
         is_insdc_ingest_group=True,
-        expected_datum="PRJNA123,PRJNA456",
+        expected_error="not a valid bioproject accession",
     ),
 ]
 
