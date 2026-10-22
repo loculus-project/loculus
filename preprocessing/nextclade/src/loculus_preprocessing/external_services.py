@@ -348,7 +348,9 @@ def validate_accession_format(
     with an error if any accession has an invalid format. Comma-separated lists are only allowed
     for RAW_READS."""
     if accession_type == EnaAccessionType.RAW_READS:
-        accessions = [a.strip().upper() for a in accession.split(",")]
+        accessions = list(
+            dict.fromkeys(a.strip().upper() for a in accession.split(",") if a.strip())
+        )
     else:
         accessions = [accession.strip().upper()]
     pattern = ACCESSION_PATTERNS[accession_type]
@@ -356,7 +358,7 @@ def validate_accession_format(
     if invalid:
         invalid_str = ", ".join(f"'{a}'" for a in invalid)
         return [], processing_error(
-            f"{invalid_str} is not a valid {accession_type.replace('_', ' ')} accession, "
+            f"{invalid_str} is/are not a valid {accession_type.replace('_', ' ')} accession, "
             f"expected a value matching '{pattern.pattern}'."
         )
     return accessions, None

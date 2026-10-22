@@ -1328,6 +1328,8 @@ class ProcessingFunctions:
         accessions, error = validate_accession_format(accession, ena_accession_type)
         if error:
             return error
+        if not accessions:
+            return RawProcessingResult()
         if context.is_insdc_ingest_group:
             return RawProcessingResult(datum=",".join(accessions))
         warnings: list[str] = []
