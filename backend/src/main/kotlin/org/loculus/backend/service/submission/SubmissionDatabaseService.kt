@@ -210,30 +210,34 @@ class SubmissionDatabaseService(
             .asSequence()
             .chunked(streamBatchSize)
             .map { chunk ->
-                val chunkOfUnprocessedData = chunk.map {
-                    val submittedData = compressionService.decompressSequencesInSubmittedData(
-                        it[table.submittedDataColumn]!!,
-                    )
+                val submittedDataOfChunk = chunk.map {
+                    compressionService.decompressSequencesInSubmittedData(it[table.submittedDataColumn]!!)
+                }
+                val externalUrls = filesDatabaseService.getExternalUrls(
+                    submittedDataOfChunk.flatMap { it.files?.fileIds.orEmpty() }.toSet(),
+                )
+                val chunkOfUnprocessedData = chunk.zip(submittedDataOfChunk).map { (row, submittedData) ->
                     val submittedDataWithFileUrls = SubmittedContentWithFileUrls(
                         submittedData.metadata,
                         submittedData.unalignedNucleotideSequences,
                         submittedData.files?.let {
                             it.mapValues {
                                 it.value.map { f ->
-                                    val presignedUrl = s3Service.createUrlToReadPrivateFile(f.fileId)
-                                    FileIdAndNameAndReadUrl(f.fileId, f.name, presignedUrl)
+                                    val readUrl = externalUrls[f.fileId]
+                                        ?: s3Service.createUrlToReadPrivateFile(f.fileId)
+                                    FileIdAndNameAndReadUrl(f.fileId, f.name, readUrl)
                                 }
                             }
                         },
                     )
                     UnprocessedData(
-                        accession = it[table.accessionColumn],
-                        version = it[table.versionColumn],
+                        accession = row[table.accessionColumn],
+                        version = row[table.versionColumn],
                         data = submittedDataWithFileUrls,
-                        submissionId = it[table.submissionIdColumn],
-                        submitter = it[table.submitterColumn],
-                        groupId = it[table.groupIdColumn],
-                        submittedAt = it[table.submittedAtTimestampColumn].toTimestamp(),
+                        submissionId = row[table.submissionIdColumn],
+                        submitter = row[table.submitterColumn],
+                        groupId = row[table.groupIdColumn],
+                        submittedAt = row[table.submittedAtTimestampColumn].toTimestamp(),
                     )
                 }
                 updateStatusToProcessing(chunkOfUnprocessedData, pipelineVersion)
@@ -342,13 +346,7 @@ class SubmissionDatabaseService(
             val releasedEntries = getReleasedAt(processedFiles.keys.toList())
                 .filter { it.value != null }
                 .keys
-            val releasedFiles = mutableSetOf<FileId>()
-            for (entry in releasedEntries) {
-                for (fileId in processedFiles[entry]!!) {
-                    s3Service.setFileToPublic(fileId)
-                    releasedFiles.add(fileId)
-                }
-            }
+            setFilesToPublic(releasedEntries.flatMap { processedFiles[it]!! })
         }
 
         log.info {
@@ -587,6 +585,14 @@ class SubmissionDatabaseService(
     }
 
     /**
+     * External files are publicly hosted elsewhere, so only files stored in S3 need to be made public.
+     */
+    private fun setFilesToPublic(fileIds: Collection<FileId>) {
+        val externalFileIds = filesDatabaseService.getExternalUrls(fileIds.toSet()).keys
+        fileIds.filterNot { it in externalFileIds }.forEach { s3Service.setFileToPublic(it) }
+    }
+
+    /**
      * Returns all files associated with the given AccessionVersions.
      * Note: Also returns files from 'future' preprocessing versions!
      */
@@ -822,10 +828,7 @@ class SubmissionDatabaseService(
             }
         }
 
-        val filesToPublish = this.selectFilesToPublishForAccessionVersions(accessionVersionsToUpdate)
-        for (fileId in filesToPublish) {
-            s3Service.setFileToPublic(fileId)
-        }
+        setFilesToPublic(this.selectFilesToPublishForAccessionVersions(accessionVersionsToUpdate))
 
         auditLogger.log(
             authenticatedUser.username,

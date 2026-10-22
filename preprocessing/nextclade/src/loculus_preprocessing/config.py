@@ -150,6 +150,8 @@ class Config(BaseModel):
     )
     raw_reads_processing_service_url: str | None = None
     raw_reads_processing_service_timeout_seconds: int = 600
+    # Files linked from URLs with these prefixes are not sent to the raw reads processing service
+    trusted_external_file_url_prefixes: list[str] = Field(default_factory=list)
     _file_processing_service: FileProcessingService = PrivateAttr(
         default=FileProcessingService(None, 600)
     )
@@ -168,7 +170,9 @@ class Config(BaseModel):
             self.backend_host = f"http://127.0.0.1:8079/{self.organism}"
 
         self._file_processing_service = FileProcessingService(
-            self.raw_reads_processing_service_url, self.raw_reads_processing_service_timeout_seconds
+            self.raw_reads_processing_service_url,
+            self.raw_reads_processing_service_timeout_seconds,
+            self.trusted_external_file_url_prefixes,
         )
 
         validate_required_when(self)

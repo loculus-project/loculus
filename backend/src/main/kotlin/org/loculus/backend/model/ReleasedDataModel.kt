@@ -22,9 +22,11 @@ import org.loculus.backend.api.MetadataMap
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.ReleasedData
 import org.loculus.backend.api.VersionStatus
+import org.loculus.backend.api.fileIds
 import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.config.FileUrlType
 import org.loculus.backend.service.datauseterms.DATA_USE_TERMS_TABLE_NAME
+import org.loculus.backend.service.files.FilesDatabaseService
 import org.loculus.backend.service.files.S3Service
 import org.loculus.backend.service.groupmanagement.GROUPS_TABLE_NAME
 import org.loculus.backend.service.submission.METADATA_UPLOAD_AUX_TABLE_NAME
@@ -65,6 +67,7 @@ open class ReleasedDataModel(
     private val backendConfig: BackendConfig,
     private val dateProvider: DateProvider,
     private val s3Service: S3Service,
+    private val filesDatabaseService: FilesDatabaseService,
     private val objectMapper: ObjectMapper,
 ) {
     @Transactional(readOnly = true)
@@ -262,15 +265,25 @@ open class ReleasedDataModel(
         accession: Accession,
         version: Version,
         filesMap: FileCategoryFilesMap,
-    ): Map<FileCategory, List<FileIdAndNameAndReadUrl>> = filesMap.mapValues { (category, fileIdandName) ->
-        fileIdandName.map { (fileId, name) ->
-            val encoded = encodePathSegment(name, StandardCharsets.UTF_8)
-            val url = when (backendConfig.fileSharing.outputFileUrlType) {
-                FileUrlType.WEBSITE -> "${backendConfig.websiteUrl}/seq/$accession.$version/$category/$encoded"
-                FileUrlType.BACKEND -> "${backendConfig.backendUrl}/files/get/$accession/$version/$category/$encoded"
-                FileUrlType.S3 -> s3Service.getPublicUrl(fileId)
+    ): Map<FileCategory, List<FileIdAndNameAndReadUrl>> {
+        // Website and backend URLs redirect to external files, S3 URLs need to be replaced by the external URL
+        val externalUrls = when (backendConfig.fileSharing.outputFileUrlType) {
+            FileUrlType.S3 -> filesDatabaseService.getExternalUrls(filesMap.fileIds)
+            else -> emptyMap()
+        }
+        return filesMap.mapValues { (category, fileIdandName) ->
+            fileIdandName.map { (fileId, name) ->
+                val encoded = encodePathSegment(name, StandardCharsets.UTF_8)
+                val url = when (backendConfig.fileSharing.outputFileUrlType) {
+                    FileUrlType.WEBSITE -> "${backendConfig.websiteUrl}/seq/$accession.$version/$category/$encoded"
+
+                    FileUrlType.BACKEND ->
+                        "${backendConfig.backendUrl}/files/get/$accession/$version/$category/$encoded"
+
+                    FileUrlType.S3 -> externalUrls[fileId] ?: s3Service.getPublicUrl(fileId)
+                }
+                FileIdAndNameAndReadUrl(fileId, name, url)
             }
-            FileIdAndNameAndReadUrl(fileId, name, url)
         }
     }
 

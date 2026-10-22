@@ -31,6 +31,11 @@ data class FileSharing(
     val outputFileUrlType: FileUrlType = FileUrlType.WEBSITE,
     val disableStrictFilenameValidation: Boolean = false,
     val maxFileSizeBytes: Long? = null,
+    /**
+     * URL prefixes of trusted archives (e.g. ENA) from which files may be linked instead of uploaded.
+     * Linking external files is disabled if empty.
+     */
+    val externalFileUrlPrefixes: List<String> = emptyList(),
 )
 
 /**
