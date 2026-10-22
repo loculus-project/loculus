@@ -1833,14 +1833,15 @@ class EnaAccessionCase:
     accession: str
     accession_type: str | None = "bioproject"
     # How ENA responds: an HTTP status code, or an exception raised by the session.
-    ena_response: int | Exception | None = None
+    # A list gives one status code per request, in order.
+    ena_response: int | list[int] | Exception | None = None
     ena_xml: bytes = b""
     is_insdc_ingest_group: bool = False
     expected_datum: str | None = None
     expected_error: str | None = None
     expected_warning: str | None = None
     # None means ENA must not be contacted at all.
-    expected_url: str | None = None
+    expected_url: str | list[str] | None = None
 
 
 ena_accession_cases = [
@@ -1881,23 +1882,48 @@ ena_accession_cases = [
         name="sra_experiment_in_raw_reads_field_is_rejected",
         accession="SRX23184375",
         accession_type="raw_reads",
-        expected_error="not a valid raw reads accession",
+        expected_error="'SRX23184375' is/are malformatted, raw reads accessions",
+    ),
+    EnaAccessionCase(
+        name="insdc_ingested_raw_reads_list_with_sra_sample_is_accepted_unchecked",
+        accession="SRR27477368, srs12345678",
+        accession_type="raw_reads",
+        is_insdc_ingest_group=True,
+        expected_datum="SRR27477368,SRS12345678",
+    ),
+    EnaAccessionCase(
+        name="each_raw_reads_accession_in_list_is_checked",
+        accession="SRR27477368,SRR27477369",
+        accession_type="raw_reads",
+        ena_response=[200, 404],
+        expected_datum="SRR27477368,SRR27477369",
+        expected_warning="Accession 'SRR27477369' is not visible on ENA",
+        expected_url=[
+            "https://www.ebi.ac.uk/ena/browser/api/xml/SRR27477368",
+            "https://www.ebi.ac.uk/ena/browser/api/xml/SRR27477369",
+        ],
+    ),
+    EnaAccessionCase(
+        name="sra_sample_in_raw_reads_field_is_rejected",
+        accession="SRS12345678",
+        accession_type="raw_reads",
+        expected_error="'SRS12345678' is/are malformatted, raw reads accessions",
     ),
     EnaAccessionCase(
         name="biosample_in_bioproject_field_is_rejected",
         accession="SAMN12345678",
-        expected_error="not a valid bioproject accession",
+        expected_error="'SAMN12345678' is/are malformatted, bioproject accessions",
     ),
     EnaAccessionCase(
         name="bioproject_in_biosample_field_is_rejected",
         accession="PRJEB12345",
         accession_type="biosample",
-        expected_error="not a valid biosample accession",
+        expected_error="'PRJEB12345' is/are malformatted, biosample accessions",
     ),
     EnaAccessionCase(
         name="comma_separated_bioprojects_are_rejected",
         accession="PRJNA591860,PRJEB106529",
-        expected_error="not a valid bioproject accession",
+        expected_error="'PRJNA591860,PRJEB106529' is/are malformatted, bioproject accessions",
     ),
     EnaAccessionCase(
         name="lowercase_accession_is_uppercased",
@@ -1919,13 +1945,13 @@ ena_accession_cases = [
         name="invalid_accession_type_is_internal_error",
         accession="PRJEB12345",
         accession_type="nucleotide",
-        expected_error="Invalid accession_type 'nucleotide'",
+        expected_error="got args {'accession_type': 'nucleotide'}",
     ),
     EnaAccessionCase(
         name="missing_accession_type_is_internal_error",
         accession="PRJEB12345",
         accession_type=None,
-        expected_error="requires an accession_type arg",
+        expected_error="requires accession_type to be one of",
     ),
     EnaAccessionCase(
         name="not_visible_accession_is_warned_about",
@@ -1956,10 +1982,10 @@ ena_accession_cases = [
         accession="",
     ),
     EnaAccessionCase(
-        name="insdc_ingested_accession_is_not_checked",
+        name="insdc_ingested_accession_format_is_checked",
         accession="PRJNA123,PRJNA456",
         is_insdc_ingest_group=True,
-        expected_datum="PRJNA123,PRJNA456",
+        expected_error="'PRJNA123,PRJNA456' is/are malformatted, bioproject accessions",
     ),
 ]
 
@@ -1970,6 +1996,11 @@ def test_check_ena_accession(case: EnaAccessionCase) -> None:
     with mock.patch.object(external_services.ena_cache, "session") as mock_session:
         if isinstance(case.ena_response, Exception):
             mock_session.get.side_effect = case.ena_response
+        elif isinstance(case.ena_response, list):
+            mock_session.get.side_effect = [
+                mock.MagicMock(status_code=status, content=case.ena_xml)
+                for status in case.ena_response
+            ]
         else:
             mock_session.get.return_value = mock.MagicMock(
                 status_code=case.ena_response, content=case.ena_xml
@@ -2000,11 +2031,11 @@ def test_check_ena_accession(case: EnaAccessionCase) -> None:
             assert len(result.warnings) == 1
             assert case.expected_warning in result.warnings[0]
 
-        if case.expected_url is None:
-            assert mock_session.get.call_count == 0
+        if isinstance(case.expected_url, str):
+            expected_urls = [case.expected_url]
         else:
-            mock_session.get.assert_called_once()
-            assert mock_session.get.call_args.args[0] == case.expected_url
+            expected_urls = case.expected_url or []
+        assert [call.args[0] for call in mock_session.get.call_args_list] == expected_urls
 
 
 if __name__ == "__main__":

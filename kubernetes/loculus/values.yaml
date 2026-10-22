@@ -1606,7 +1606,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         header: "INSDC"
       - name: insdcRawReadsAccession
         displayName: Raw reads accession
-        definition: "Accession of corresponding raw reads in the INSDC, e.g. SRR27477368."
+        definition: "Accession of corresponding raw reads in the INSDC, e.g. SRR27477368. Multiple raw reads accessions can be provided in comma-separated format, e.g. SRR27477368,SRR27477369"
         guidance: "Only add this field if you have already submitted raw reads to the INSDC, read more at https://pathoplexus.org/docs/how-to/upload-sequences."
         customDisplay:
           type: link
