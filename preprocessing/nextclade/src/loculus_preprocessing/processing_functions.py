@@ -17,7 +17,11 @@ from typing import Any
 import dateutil.parser as dateutil
 import pytz
 
-from loculus_preprocessing.external_services import ExternalServices
+from loculus_preprocessing.external_services import (
+    EnaAccessionType,
+    ExternalServices,
+    validate_accession_format,
+)
 
 from .datatypes import (
     AnnotationSourceType,
@@ -1314,9 +1318,29 @@ class ProcessingFunctions:
         accession: str | None = input_data.get("accession")
         if not accession:
             return RawProcessingResult()
+        try:
+            ena_accession_type = EnaAccessionType(accession_type)
+        except ValueError:
+            return raw_internal_error(
+                f"Invalid accession_type '{accession_type}', expected one of "
+                f"{[t.value for t in EnaAccessionType]}."
+            )
+        accessions, error = validate_accession_format(accession, ena_accession_type)
+        if error:
+            return error
         if context.is_insdc_ingest_group:
-            return RawProcessingResult(datum=accession)
-        return external_services.ena_visibility_checker.check_visibility(accession, accession_type)
+            return RawProcessingResult(datum=",".join(accessions))
+        warnings: list[str] = []
+        errors: list[str] = []
+        for acc in accessions:
+            result = external_services.ena_visibility_checker.check_visibility(
+                acc, ena_accession_type
+            )
+            warnings.extend(result.warnings)
+            errors.extend(result.errors)
+        return RawProcessingResult(
+            datum=None if errors else ",".join(accessions), warnings=warnings, errors=errors
+        )
 
 
 def single_metadata_annotation(
