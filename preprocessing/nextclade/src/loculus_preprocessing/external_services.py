@@ -332,7 +332,6 @@ class EnaAccessionType(StrEnum):
     RAW_READS = "raw_reads"
 
 
-# Patterns match a single accession.
 # (see https://ena-docs.readthedocs.io/en/latest/submit/general-guide/accessions.html)
 ACCESSION_PATTERNS: dict[EnaAccessionType, re.Pattern[str]] = {
     EnaAccessionType.BIOPROJECT: re.compile(r"PRJ[EDN][A-Z][0-9]+"),
