@@ -52,7 +52,9 @@ class GetSequencesEndpointTest(
 
     @BeforeEach
     fun setup() {
-        every { keycloakAdapter.getUsersWithName(any()) } returns listOf(UserRepresentation())
+        every { keycloakAdapter.getUsersWithName(any()) } answers {
+            listOf(UserRepresentation().apply { username = firstArg<String>().lowercase() })
+        }
     }
 
     @Test
