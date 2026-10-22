@@ -17,7 +17,11 @@ from typing import Any
 import dateutil.parser as dateutil
 import pytz
 
-from loculus_preprocessing.external_services import ExternalServices
+from loculus_preprocessing.external_services import (
+    EnaAccessionType,
+    ExternalServices,
+    validate_accession_format,
+)
 
 from .datatypes import (
     AnnotationSourceType,
@@ -1306,17 +1310,36 @@ class ProcessingFunctions:
         context: ProcessingContext,
         external_services: ExternalServices,
     ) -> RawProcessingResult:
-        accession_type = args.get("accession_type")
-        if not isinstance(accession_type, str):
+        try:
+            ena_accession_type = EnaAccessionType(str(args.get("accession_type")))
+        except ValueError:
             return raw_internal_error(
-                f"check_ena_accession requires an accession_type arg, got args {args}."
+                "check_ena_accession requires accession_type to be one of "
+                f"{[t.value for t in EnaAccessionType]}, got args {args}."
             )
         accession: str | None = input_data.get("accession")
         if not accession:
             return RawProcessingResult()
+        accessions, error = validate_accession_format(
+            accession, ena_accession_type, context.is_insdc_ingest_group
+        )
+        if error:
+            return error
+        if not accessions:
+            return RawProcessingResult()
         if context.is_insdc_ingest_group:
-            return RawProcessingResult(datum=accession)
-        return external_services.ena_visibility_checker.check_visibility(accession, accession_type)
+            return RawProcessingResult(datum=",".join(accessions))
+        warnings: list[str] = []
+        errors: list[str] = []
+        for acc in accessions:
+            result = external_services.ena_visibility_checker.check_visibility(
+                acc, ena_accession_type
+            )
+            warnings.extend(result.warnings)
+            errors.extend(result.errors)
+        return RawProcessingResult(
+            datum=None if errors else ",".join(accessions), warnings=warnings, errors=errors
+        )
 
 
 def single_metadata_annotation(

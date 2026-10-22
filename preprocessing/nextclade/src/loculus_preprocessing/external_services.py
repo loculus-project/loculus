@@ -9,7 +9,7 @@ from enum import StrEnum
 from http import HTTPStatus
 
 import requests
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import BaseModel, Field, RootModel, ValidationError
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
@@ -85,16 +85,41 @@ class RequestCache:
         self.cache.clear()
 
 
-def missing_taxonomy_service_error() -> RawProcessingResult:
-    return raw_internal_error("taxonomy_service_url was not configured.")
+TAXONOMY_BROWSER_URL = "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/"
 
 
-def taxonomy_network_error(
-    subject: str,
-    action: str,
-    e: Exception,
-) -> RawProcessingResult:
-    return raw_internal_error(f"Network error while {action} '{subject}': {e}.")
+class Taxon(BaseModel):
+    """Subset of `Taxon` in the taxonomy service"""
+
+    tax_id: int
+    scientific_name: str | None = None
+    common_name: str | None = None
+    depth: int
+
+
+class TaxonomyResponse(RootModel[Taxon | list[Taxon]]):
+    def taxa(self) -> list[Taxon]:
+        # Lookup by taxon ID always return single taxon, scientific_name can map to multiple
+        return self.root if isinstance(self.root, list) else [self.root]
+
+
+class TaxonomyServiceError(Exception):
+    """The taxonomy service is not configured, unreachable, or returned an unexpected response."""
+
+
+def lookup_failed(message: str, error_if_failed: bool) -> RawProcessingResult:
+    if error_if_failed:
+        return RawProcessingResult(errors=[message])
+    return RawProcessingResult(warnings=[message])
+
+
+def ambiguous_host_warning(host: str, selected: Taxon, taxa: list[Taxon]) -> str:
+    ids = ", ".join([str(t.tax_id) for t in taxa])
+    return (
+        f"'{host}' matches {len(taxa)} taxa ({ids}). Taxon will be set to the most general one: "
+        f"{selected.tax_id}. To use a different taxon, enter its taxon ID in the `host` "
+        f"field instead. You can look up taxon IDs in NCBI taxonomy ({TAXONOMY_BROWSER_URL})."
+    )
 
 
 taxonomy_cache = RequestCache(max_size=1024)
@@ -104,116 +129,98 @@ class TaxonomyService:
     def __init__(self, taxonomy_service_url: str | None):
         self.taxonomy_service_url = taxonomy_service_url
 
-    def get_tax_id(self, unvalidated_host: str, error_if_failed: bool) -> RawProcessingResult:
-        if not self.taxonomy_service_url:
-            return missing_taxonomy_service_error()
+    def _get(self, path: str) -> list[Taxon]:
+        """GET `path` from the taxonomy service and return the taxa in the response.
 
-        if unvalidated_host.isdigit():
-            url = f"{self.taxonomy_service_url}/taxa/{unvalidated_host}"
-        else:
-            query = urllib.parse.urlencode({"scientific_name": unvalidated_host})
-            url = f"{self.taxonomy_service_url}/taxa?{query}"
+        Returns an empty list if the service responds with 404 or 422 (invalid user input).
+        Raises TaxonomyServiceError on any other non-200 status.
+        """
+        if not self.taxonomy_service_url:
+            msg = "taxonomy_service_url was not configured."
+            raise TaxonomyServiceError(msg)
+
+        url = f"{self.taxonomy_service_url.rstrip('/')}/{path.lstrip('/')}"
         try:
             response = taxonomy_cache.get_or_fetch(url)
-            body = response.json()
         except requests.exceptions.RequestException as e:
-            return taxonomy_network_error(
-                subject=f"taxon ID {unvalidated_host}",
-                action="fetching taxon info",
-                e=e,
-            )
-        if response.status_code != requests.codes.ok:
-            message = f"Host validation for '{unvalidated_host}' failed."
-            details = f"with code {response.status_code}: {body.get('detail', '')}"
-            logger.error(message + details)
-            return RawProcessingResult(
-                datum=None,
-                warnings=[message] if not error_if_failed else [],
-                errors=[message] if error_if_failed else [],
-            )
-        if isinstance(body, list):
-            # when querying by scientific name, multiple taxa may be returned
-            # - we select the most generic one
-            if not body:
-                message = (
-                    f"Host validation for '{unvalidated_host}' was successful "
-                    "but no taxa were returned."
-                )
-                return raw_internal_error(message)
-            taxon = min(body, key=lambda x: x.get("depth", float("inf")))
-        else:
-            taxon = body
+            msg = f"Network error while fetching '{url}': {e}."
+            raise TaxonomyServiceError(msg) from e
 
-        tax_id = taxon.get("tax_id")
-        if tax_id is None:
-            message = (
-                f"Host validation for '{unvalidated_host}' was successful "
-                "but response json 'tax_id' was missing."
+        if response.status_code in (requests.codes.not_found, requests.codes.unprocessable_entity):
+            logger.warning(
+                f"Taxonomy service returned {response.status_code} for '{url}': {response.text}"
             )
-            return raw_internal_error(message)
+            return []
+        if response.status_code != requests.codes.ok:
+            msg = (
+                f"Taxonomy service returned unexpected status {response.status_code} "
+                f"for '{url}': {response.text}"
+            )
+            raise TaxonomyServiceError(msg)
+
+        try:
+            return TaxonomyResponse.model_validate(response.json()).taxa()
+        except (requests.exceptions.JSONDecodeError, ValidationError) as e:
+            msg = f"Unexpected response from taxonomy service for '{url}': {e}"
+            raise TaxonomyServiceError(msg) from e
+
+    def get_tax_id(self, unvalidated_host: str, error_if_failed: bool) -> RawProcessingResult:
+        if unvalidated_host.isdigit():
+            path = f"/taxa/{unvalidated_host}"
+        else:
+            path = "/taxa?" + urllib.parse.urlencode({"scientific_name": unvalidated_host})
+        try:
+            taxa = self._get(path)
+        except TaxonomyServiceError as e:
+            return raw_internal_error(str(e))
+
+        # multiple taxa may share a scientific name - we select the most generic one
+        taxon = min(taxa, key=lambda t: t.depth, default=None)
+        if taxon is None:
+            message = (
+                f"'{unvalidated_host}' is not a recognized host. "
+                "Please provide an NCBI taxon ID or scientific name. "
+                f"Find valid hosts in NCBI Taxonomy ({TAXONOMY_BROWSER_URL}). "
+                "NOTE: only scientific names (not synonyms) and taxon IDs are supported."
+            )
+            return lookup_failed(message, error_if_failed)
+
         return RawProcessingResult(
-            datum=str(tax_id),
+            datum=str(taxon.tax_id),
+            warnings=[ambiguous_host_warning(unvalidated_host, taxon, taxa)]
+            if len(taxa) > 1
+            else [],
         )
 
     def get_scientific_name(self, tax_id: str, error_if_failed: bool) -> RawProcessingResult:
-        if not self.taxonomy_service_url:
-            return missing_taxonomy_service_error()
-
-        url = f"{self.taxonomy_service_url}/taxa/{tax_id}"
         try:
-            response = taxonomy_cache.get_or_fetch(url)
-            body = response.json()
-        except requests.exceptions.RequestException as e:
-            return taxonomy_network_error(
-                subject=f"taxon ID {tax_id}",
-                action="fetching taxon scientific name",
-                e=e,
-            )
-        if response.status_code != requests.codes.ok:
-            message = f"Could not map '{tax_id}' to scientific name."
-            details = f"Code {response.status_code}: {body.get('detail', '')}"
-            logger.error(message + details)
-            return RawProcessingResult(
-                datum=None,
-                warnings=[message] if not error_if_failed else [],
-                errors=[message] if error_if_failed else [],
-            )
+            taxa = self._get(f"/taxa/{tax_id}")
+        except TaxonomyServiceError as e:
+            return raw_internal_error(str(e))
 
-        scientific_name = body.get("scientific_name")
-        if scientific_name is None:
-            message = f"'{tax_id}' is a valid taxon ID but response json had no 'scientific_name'."
-            return raw_internal_error(message)
-
-        return RawProcessingResult(datum=scientific_name)
+        if not taxa:
+            return lookup_failed(f"Could not map '{tax_id}' to scientific name.", error_if_failed)
+        taxon = taxa[0]
+        if taxon.scientific_name is None:
+            return raw_internal_error(f"'{tax_id}' is a valid taxon ID but has no scientific name.")
+        return RawProcessingResult(datum=taxon.scientific_name)
 
     def get_common_name(self, tax_id: str) -> RawProcessingResult:
-        if not self.taxonomy_service_url:
-            return missing_taxonomy_service_error()
-
-        url = f"{self.taxonomy_service_url}/taxa/{tax_id}?find_common_name=true"
         try:
-            response = taxonomy_cache.get_or_fetch(url)
-            body = response.json()
-        except requests.exceptions.RequestException as e:
-            return taxonomy_network_error(
-                subject=f"taxon ID {tax_id}",
-                action="fetching taxon common name",
-                e=e,
-            )
-        if response.status_code != requests.codes.ok:
-            message = f"Could not map '{tax_id}' to common name."
-            details = f"Code {response.status_code}: {body.get('detail', '')}"
-            logger.error(message + details)
-            return RawProcessingResult(
-                warnings=[message],
-            )
+            taxa = self._get(f"/taxa/{tax_id}?find_common_name=true")
+        except TaxonomyServiceError as e:
+            return raw_internal_error(str(e))
 
-        common_name = body.get("common_name")
-        if common_name is None:
-            message = f"Taxonomy service indicated common name was found for hostTaxonId '{tax_id}', but failed to return it."
+        if not taxa:
+            return RawProcessingResult(warnings=[f"Could not map '{tax_id}' to common name."])
+        taxon = taxa[0]
+        if taxon.common_name is None:
+            message = (
+                "Taxonomy service indicated common name was found for "
+                f"hostTaxonId '{tax_id}', but failed to return it."
+            )
             return raw_internal_error(message)
-
-        return RawProcessingResult(datum=common_name)
+        return RawProcessingResult(datum=taxon.common_name)
 
 
 FileName = str
@@ -325,14 +332,40 @@ class EnaAccessionType(StrEnum):
     RAW_READS = "raw_reads"
 
 
-# Also guards against comma-separated lists, which the ENA browser API
-# would otherwise resolve to multiple records.
 # (see https://ena-docs.readthedocs.io/en/latest/submit/general-guide/accessions.html)
 ACCESSION_PATTERNS: dict[EnaAccessionType, re.Pattern[str]] = {
     EnaAccessionType.BIOPROJECT: re.compile(r"PRJ[EDN][A-Z][0-9]+"),
     EnaAccessionType.BIOSAMPLE: re.compile(r"SAM[EDN][A-Z]?[0-9]+"),
     EnaAccessionType.RAW_READS: re.compile(r"[EDS]RR[0-9]{6,}"),
 }
+# INSDC sometimes gives us SRA sample accessions instead of runs
+INSDC_INGEST_RAW_READS_PATTERN = re.compile(r"[EDS]R[RS][0-9]{6,}")
+
+
+def validate_accession_format(
+    accession: str, accession_type: EnaAccessionType, is_insdc_ingest_group: bool
+) -> tuple[list[str], RawProcessingResult | None]:
+    """Return the normalised accession(s) and None, or an empty list and a RawProcessingResult
+    with an error if any accession has an invalid format. Comma-separated lists are only allowed
+    for RAW_READS, and SRA sample accessions only for INSDC ingested RAW_READS."""
+    if accession_type == EnaAccessionType.RAW_READS:
+        accessions = list(
+            dict.fromkeys(a.strip().upper() for a in accession.split(",") if a.strip())
+        )
+    else:
+        accessions = [accession.strip().upper()]
+    if accession_type == EnaAccessionType.RAW_READS and is_insdc_ingest_group:
+        pattern = INSDC_INGEST_RAW_READS_PATTERN
+    else:
+        pattern = ACCESSION_PATTERNS[accession_type]
+    invalid = [a for a in accessions if not pattern.fullmatch(a)]
+    if invalid:
+        invalid_str = ", ".join(f"'{a}'" for a in invalid)
+        return [], processing_error(
+            f"{invalid_str} is/are malformatted, {accession_type.replace('_', ' ')} "
+            f"accessions are expected to match the pattern '{pattern.pattern}'."
+        )
+    return accessions, None
 
 
 class ENAVisibilityChecker:
@@ -350,21 +383,10 @@ class ENAVisibilityChecker:
     ):
         self.timeout_seconds = timeout_seconds
 
-    def check_visibility(self, accession: str, accession_type_arg: str) -> RawProcessingResult:
-        try:
-            accession_type = EnaAccessionType(accession_type_arg)
-        except ValueError:
-            return raw_internal_error(
-                f"Invalid accession_type '{accession_type_arg}', expected one of "
-                f"{[t.value for t in EnaAccessionType]}."
-            )
-        accession = accession.strip().upper()
-        pattern = ACCESSION_PATTERNS[accession_type]
-        if not pattern.fullmatch(accession):
-            return processing_error(
-                f"'{accession}' is not a valid {accession_type.replace('_', ' ')} accession, "
-                f"expected a value matching '{pattern.pattern}'."
-            )
+    def check_visibility(
+        self, accession: str, accession_type: EnaAccessionType
+    ) -> RawProcessingResult:
+        """Check ENA visibility of a single accession whose format has already been validated."""
         try:
             response = ena_cache.get_or_fetch(
                 f"https://www.ebi.ac.uk/ena/browser/api/xml/{accession}",

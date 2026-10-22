@@ -6,6 +6,8 @@ channels:
 dependencies:
   # Core Python dependencies
   - python=3.14.8 # Pinned to 3.12.x series, check for patch updates within 3.12
+  - ca-certificates=2026.10.19 # >=2026.10.19 drops distrusted emSign ECC Root CA - G3
+  - certifi=2026.10.19
   - pip=25.2
   - uv=0.12.21
   # Extra dependencies

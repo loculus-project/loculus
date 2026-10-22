@@ -592,7 +592,7 @@ const Acknowledgement = ({
                                         className='text-primary-600 hover:underline'
                                     >
                                         access and benefit-sharing
-                                    </a>
+                                    </a>{' '}
                                     obligations.
                                 </p>
                             </div>

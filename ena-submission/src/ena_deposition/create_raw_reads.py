@@ -13,10 +13,7 @@ from sqlalchemy import Engine
 from ena_deposition import call_loculus
 
 from .config import Config, EnaResultField
-from .ena_submission_helper import (
-    CreationResult,
-    accession_exists,
-    create_ena_raw_reads,
+from .ena_builders import (
     create_manifest,
     get_alias,
     get_description,
@@ -24,8 +21,11 @@ from .ena_submission_helper import (
     manifest_fields_diff,
     resolve_manifest_field,
     resolve_required_manifest_field,
-    retry_failed_submissions_for_matching_errors,
-    set_accession_does_not_exist_error,
+)
+from .ena_client import (
+    CreationResult,
+    accession_exists,
+    create_ena_raw_reads,
 )
 from .ena_types import (
     Instrument,
@@ -37,10 +37,7 @@ from .ena_types import (
 )
 from .notifications import SlackConfig, notify, send_slack_notification, slack_conn_init
 from .submission_db_helper import (
-    AccessionVersion,
     RawReadsTableEntry,
-    Status,
-    StatusAll,
     SubmissionTableEntry,
     add_to_db,
     db_init,
@@ -51,8 +48,15 @@ from .submission_db_helper import (
     is_latest_revision,
     is_revision,
     previous_version,
+    retry_failed_submissions_for_matching_errors,
+    set_accession_does_not_exist_error,
     update_db_where_conditions,
     update_with_retry,
+)
+from .submission_types import (
+    AccessionVersion,
+    Status,
+    StatusAll,
 )
 
 logger = logging.getLogger(__name__)
