@@ -17,7 +17,7 @@ backendExtraArgs:
   - "--loculus.debug-mode=true"
 # Raw reads processing is disabled: the deacon-index image is only published for linux/amd64,
 # so it cannot run on arm64 (Apple Silicon) k3d clusters.
-disableRawReadsProcessingService: true
+disableRawReadsProcessingService: false
 disableEnaSubmission: true
 auth:
   verifyEmail: false
