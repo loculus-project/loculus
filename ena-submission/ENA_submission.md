@@ -35,7 +35,7 @@ We require the following components:
 
 - Analysis: An analysis contains secondary analysis results derived from sequence reads (e.g. a genome assembly).
 
-In contrast to ENA, Pathoplexus has no hierarchy of study/sample/sequence. Therefore the pipeline creates _one_ default study per Pathoplexus submission group and organism (we also accept user supplied studies/bioprojects). For each Pathoplexus sequence entry it creates one sample (with metadata) and one assembly (with the sequence), plus a run and experiment if raw reads are attached.
+In contrast to ENA, Pathoplexus has no hierarchy of study/sample/sequence. Therefore the pipeline creates _one_ default study per Pathoplexus submission group and organism (we also accept user supplied studies/bioprojects). For each Pathoplexus sequence entry it creates one sample (with metadata) and one assembly (with the sequence), plus a run and experiment if raw reads are attached. (We will also link assemblies to user supplied biosamples and runs where applicable).
 
 ### URLs
 
@@ -269,7 +269,7 @@ In contrast to ENA, Pathoplexus has no hierarchy of study/sample/sequence. There
 
    Topology (`linear` or `circular`) comes from the organism config.
 
-3. Create the EMBL flatfile (`create_flatfile` in `ena_submission_helper.py`), see the [flatfile example](https://ena-docs.readthedocs.io/en/latest/submit/fileprep/flat-file-example.html). Each sequence gets a `source` feature with `mol_type`, `organism`, `geo_loc_name` (country) and `collection_date`, and, when submitting as a broker, the authors as a reference. The flatfile does not yet contain gene or CDS annotations, see section 4 and [#3739](https://github.com/loculus-project/loculus/issues/3739).
+3. Create the EMBL flatfile (`create_flatfile` in `ena_submission_helper.py`), see the [flatfile example](https://ena-docs.readthedocs.io/en/latest/submit/fileprep/flat-file-example.html). Each sequence gets a `source` feature with `mol_type`, `organism`, `geo_loc_name` (country), `collection_date`, and `authors` (reformatted as the INSDC expects) as a reference. The flatfile does not yet contain gene or CDS annotations, see section 4 and [#3739](https://github.com/loculus-project/loculus/issues/3739).
 
    ENA also accepts a plain FASTA file instead.
 
@@ -318,8 +318,7 @@ ENA docs say they require pre-registration of a [locus_tag_prefix](https://ena-d
 
 The flatfiles submitted by the pipeline currently do not contain gene or CDS annotations. Adding annotations from Nextclade is tracked in [#3739](https://github.com/loculus-project/loculus/issues/3739). Options considered:
 
-- Use the `annotation` object in the `nextclade.json` output (genes with their CDS segments, ranges and qualifiers such as `product` and `protein_id`) to add features to the EMBL flatfile.
-- Generate a feature table with `nextclade run {sequence.fasta} --output-annotation-tbl annotations.tbl --dataset-name {dataset}` and convert it to EMBL features, e.g. using Biopython's `SeqFeature`.
+- Use the `annotation` object in the `nextclade.json` output (genes with their CDS segments, ranges and qualifiers such as `product` and `protein_id`) to add features to the EMBL flatfile (already done in preprocessing just needs to be used for ENA deposition).
 - [EMBLmyGFF3](https://github.com/NBISweden/EMBLmyGFF3) converts a GFF3 file into an EMBL flatfile, but on Nextclade's GFF3 output it produces errors and warnings caused by non-standard annotations (e.g. `region` and `seq_index`), and it cannot add the `country` and `collection_date` qualifiers we need. We decided against using it.
 
 ### 5. Submitting raw reads to ENA
