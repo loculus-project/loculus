@@ -420,6 +420,26 @@ ENA allows the automated revision of run and experiment metadata submitted as XM
 
 In ENA, sequences submitted with their chromosome structure are considered genome assemblies, which are Analysis objects in the metadata model. The pipeline submits them as genome assemblies (`-context genome` in the webin-cli), see [the docs](https://ena-docs.readthedocs.io/en/latest/submit/assembly/genome.html).
 
+### Why isnt the EMBL flat file I see on the INSDC the same as the one we submitted?
+
+In our current understanding ENA only keeps the sequence and annotations from the submitted flat file and rebuilds everything else from the 
+- biosample (source feature with qualifiers like `geo_loc_name` and `collection_date`). From Cornelius' research a total of 12 metadata fields that can be mapped to an assembly qualifier, they are: 
+   - collection_date (mapped)
+   - geo_loc_name (mapped)
+   - isolate (mapped)
+   - isolation_source
+   - strain
+   - serotype
+   - serovar
+   - sub_species
+   - sub_strain
+   - cell_line
+   - environmental_sample
+   - metagenome_source
+As well as 3 plant related metadata fields we will never use (variety, cultivar, ecotype).
+- manifest.tsv (authors, description, molecule type...)
+- chromosome_list.gz (segment, topology)
+
 ### What is the centre name?
 
 This is not unique, for non-brokers this is taken from the submitter metadata (i.e. it is set in our webin account) and used to autofill the center_name field in all XMLs. Brokers can change the center_name dynamically -> i.e. they can set it to anything that they want but this should be linked to the institution/lab that "owns" the data. Brokers can actually change ALL sequences even if they do not own them. Although formally brokers do not own the data they upload the data owners can only modify the data by getting in touch with the broker or alternatively getting in touch with ENA and after proving their identity ENA can modify their data. In ENA permission to modify data is defined by the WebIn account that submitted the data.
