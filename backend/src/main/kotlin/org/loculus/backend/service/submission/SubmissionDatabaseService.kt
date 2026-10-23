@@ -17,7 +17,6 @@ import kotlinx.datetime.toLocalDateTime
 import mu.KotlinLogging
 import org.jetbrains.exposed.v1.core.ArrayColumnType
 import org.jetbrains.exposed.v1.core.Count
-import org.jetbrains.exposed.v1.core.IntegerColumnType
 import org.jetbrains.exposed.v1.core.JoinType
 import org.jetbrains.exposed.v1.core.LongColumnType
 import org.jetbrains.exposed.v1.core.Op
@@ -31,7 +30,6 @@ import org.jetbrains.exposed.v1.core.booleanParam
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.greaterEq
 import org.jetbrains.exposed.v1.core.inList
-import org.jetbrains.exposed.v1.core.java.UUIDColumnType
 import org.jetbrains.exposed.v1.core.less
 import org.jetbrains.exposed.v1.core.lessEq
 import org.jetbrains.exposed.v1.core.max
@@ -340,46 +338,32 @@ class SubmissionDatabaseService(
         claimedAt: LocalDateTime,
         leaseUntil: LocalDateTime,
     ): Int {
-        val sql = """
-            WITH candidates AS (
-                SELECT accession, version, pipeline_version
-                FROM $SEQUENCE_ENTRIES_PREPROCESSED_DATA_TABLE_NAME
-                WHERE organism = ?
-                  AND pipeline_version = ?
-                  AND processing_status = '${UNPROCESSED.name}'
-                ORDER BY accession, version
-                LIMIT ?
-                FOR UPDATE SKIP LOCKED
-            ),
-            claimed AS (
-                UPDATE $SEQUENCE_ENTRIES_PREPROCESSED_DATA_TABLE_NAME queue
-                SET processing_status = '${IN_PROCESSING.name}',
-                    processing_attempt_id = ?,
-                    started_processing_at = ?,
-                    lease_until = ?
-                FROM candidates
-                WHERE queue.accession = candidates.accession
-                  AND queue.version = candidates.version
-                  AND queue.pipeline_version = candidates.pipeline_version
-                RETURNING queue.accession
-            )
-            SELECT COUNT(*) AS claimed_count FROM claimed
-        """.trimIndent()
+        val queue = SequenceEntriesPreprocessedDataTable
+        val candidates = queue
+            .select(queue.accessionColumn, queue.versionColumn, queue.pipelineVersionColumn)
+            .where {
+                (queue.organismColumn eq organism.name) and
+                    (queue.pipelineVersionColumn eq pipelineVersion) and
+                    queue.statusIs(UNPROCESSED)
+            }
+            .orderBy(queue.accessionColumn to SortOrder.ASC, queue.versionColumn to SortOrder.ASC)
+            .limit(numberOfSequenceEntries)
+            .forUpdate(ForUpdate(mode = MODE.SKIP_LOCKED))
+            .alias("candidates")
 
-        return TransactionManager.current().exec(
-            sql,
-            args = listOf(
-                VarCharColumnType() to organism.name,
-                LongColumnType() to pipelineVersion,
-                IntegerColumnType() to numberOfSequenceEntries,
-                UUIDColumnType() to processingAttemptId,
-                KotlinLocalDateTimeColumnType() to claimedAt,
-                KotlinLocalDateTimeColumnType() to leaseUntil,
-            ),
-            explicitStatementType = StatementType.SELECT,
-        ) { resultSet ->
-            if (resultSet.next()) resultSet.getInt("claimed_count") else 0
-        } ?: 0
+        // Renders as UPDATE ... FROM (candidates) WHERE <join condition>
+        return queue
+            .join(candidates, JoinType.INNER) {
+                (queue.accessionColumn eq candidates[queue.accessionColumn]) and
+                    (queue.versionColumn eq candidates[queue.versionColumn]) and
+                    (queue.pipelineVersionColumn eq candidates[queue.pipelineVersionColumn])
+            }
+            .update {
+                it[queue.processingStatusColumn] = IN_PROCESSING.name
+                it[queue.processingAttemptIdColumn] = processingAttemptId
+                it[queue.startedProcessingAtColumn] = claimedAt
+                it[queue.leaseUntilColumn] = leaseUntil
+            }
     }
 
     fun updateProcessedData(inputStream: InputStream, organism: Organism, pipelineVersion: Long) {
