@@ -215,11 +215,6 @@ open class SubmissionController(
             )
         }
 
-        // The first worker of a new pipeline version populates its queue, in two short transactions.
-        if (submissionDatabaseService.registerPreprocessingQueueVersion(organism, pipelineVersion)) {
-            submissionDatabaseService.backfillPreprocessingQueue(organism, pipelineVersion)
-        }
-
         // Scope ETag to requested pipeline version and organism
         val lastDatabaseWriteETag = releasedDataModel.getLastDatabaseWriteETag(
             organism = organism,
@@ -233,6 +228,11 @@ open class SubmissionController(
                 requestStartNanos,
             )
             return ResponseEntity.status(HttpStatus.NOT_MODIFIED).eTag(lastDatabaseWriteETag).build()
+        }
+
+        // The first worker of a new pipeline version populates its queue, in two short transactions.
+        if (submissionDatabaseService.registerPreprocessingQueueVersion(organism, pipelineVersion)) {
+            submissionDatabaseService.backfillPreprocessingQueue(organism, pipelineVersion)
         }
 
         val headers = HttpHeaders()
