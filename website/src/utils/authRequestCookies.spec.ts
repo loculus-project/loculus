@@ -128,8 +128,8 @@ describe('OIDC authentication transaction store', () => {
     });
 
     test('recovers from a nearly full legacy cookie instead of repeatedly losing the retry state', () => {
-        // Build the valid v1 cookie the old implementation could leave in the browser:
-        // two abandoned long-URL attempts, each still valid for nearly an hour.
+        // Build a valid v1 cookie that the pre-size-bounding implementation (count limit only) could leave
+        // in the browser: two abandoned long-URL attempts, each still valid for nearly an hour.
         const legacyStore = Object.fromEntries(
             [0, 1].map((index) => [
                 stateFor(index),

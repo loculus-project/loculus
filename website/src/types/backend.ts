@@ -31,15 +31,19 @@ const processingAnnotationSourceType = z.union([
 ]);
 export type ProcessingAnnotationSourceType = z.infer<typeof processingAnnotationSourceType>;
 
-const processingAnnotationSource = z.object({
-    name: z.string(),
-    type: processingAnnotationSourceType,
-});
-export type ProcessingAnnotationSource = z.infer<typeof processingAnnotationSource>;
-
 const processingAnnotation = z.object({
-    unprocessedFields: z.array(processingAnnotationSource),
-    processedFields: z.array(processingAnnotationSource),
+    unprocessedFields: z.array(
+        z.object({
+            name: z.string(),
+            type: processingAnnotationSourceType,
+        }),
+    ),
+    processedFields: z.array(
+        z.object({
+            name: z.string(),
+            type: processingAnnotationSourceType,
+        }),
+    ),
     message: z.string(),
 });
 export type ProcessingAnnotation = z.infer<typeof processingAnnotation>;
@@ -244,23 +248,19 @@ export const mapErrorsAndWarnings = (
     editedData: SequenceEntryToEdit,
     key: string,
     type: ProcessingAnnotationSourceType,
-): { errors: string[]; warnings: string[] } => {
-    const matchesField = (field: ProcessingAnnotationSource): boolean => field.name === key && field.type === type;
-    const annotationsForField = (annotations: ProcessingAnnotation[]): string[] => {
-        const annotationsFromProcessed = annotations.filter((a) => a.processedFields.some(matchesField));
-        // if no annotations are present on the processed field, check the unprocessed field
-        // (needed for e.g., `host`, which is an extraInputField without processed output)
-        const matching =
-            annotationsFromProcessed.length > 0
-                ? annotationsFromProcessed
-                : annotations.filter((a) => a.unprocessedFields.some(matchesField));
-        return matching.map((a) => a.message);
-    };
-    return {
-        errors: annotationsForField(editedData.errors ?? []),
-        warnings: annotationsForField(editedData.warnings ?? []),
-    };
-};
+): { errors: string[]; warnings: string[] } => ({
+    errors: (editedData.errors ?? [])
+        .filter(
+            (error) => error.processedFields.find((field) => field.name === key && field.type === type) !== undefined,
+        )
+        .map((error) => error.message),
+    warnings: (editedData.warnings ?? [])
+        .filter(
+            (warning) =>
+                warning.processedFields.find((field) => field.name === key && field.type === type) !== undefined,
+        )
+        .map((warning) => warning.message),
+});
 
 export const uploadFiles = z.object({
     metadataFile: z.instanceof(File),
