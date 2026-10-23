@@ -56,6 +56,7 @@ import org.loculus.backend.model.SubmissionParams
 import org.loculus.backend.model.SubmitModel
 import org.loculus.backend.service.datauseterms.DataUseTermsPreconditionValidator
 import org.loculus.backend.service.groupmanagement.GroupManagementPreconditionValidator
+import org.loculus.backend.service.submission.PreprocessingQueueState
 import org.loculus.backend.service.submission.SubmissionDatabaseService
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.FastaEntry
@@ -230,7 +231,8 @@ open class SubmissionController(
         }
 
         // The first worker of a new pipeline version populates its queue, in two short transactions.
-        if (submissionDatabaseService.registerPreprocessingQueueVersion(organism, pipelineVersion)) {
+        val queueState = submissionDatabaseService.registerPreprocessingQueueVersion(organism, pipelineVersion)
+        if (queueState == PreprocessingQueueState.NEEDS_BACKFILL) {
             submissionDatabaseService.backfillPreprocessingQueue(organism, pipelineVersion)
         }
 
