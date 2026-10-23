@@ -125,6 +125,11 @@ import org.springframework.transaction.annotation.Transactional
 
 private val log = KotlinLogging.logger { }
 
+enum class PreprocessingQueueState {
+    READY,
+    NEEDS_BACKFILL,
+}
+
 @Service
 @Transactional
 class SubmissionDatabaseService(
@@ -182,8 +187,8 @@ class SubmissionDatabaseService(
             .associate { it[table.organismColumn] to it[table.versionColumn] }
     }
 
-    // Registers the queue of a pipeline version. Returns true until the backfill has completed.
-    fun registerPreprocessingQueueVersion(organism: Organism, pipelineVersion: Long): Boolean {
+    // Registers the queue of a pipeline version. NEEDS_BACKFILL until the backfill has completed.
+    fun registerPreprocessingQueueVersion(organism: Organism, pipelineVersion: Long): PreprocessingQueueState {
         val queueVersions = PreprocessingQueueVersionsTable
         val registration = queueVersions
             .select(queueVersions.initializedAtColumn)
@@ -193,7 +198,11 @@ class SubmissionDatabaseService(
             }
             .firstOrNull()
         if (registration != null) {
-            return registration[queueVersions.initializedAtColumn] == null
+            return if (registration[queueVersions.initializedAtColumn] == null) {
+                PreprocessingQueueState.NEEDS_BACKFILL
+            } else {
+                PreprocessingQueueState.READY
+            }
         }
 
         // Blocks concurrent inserts, so every entry is either seen by the backfill or queued by the trigger.
@@ -209,7 +218,7 @@ class SubmissionDatabaseService(
             it[organismColumn] = organism.name
             it[pipelineVersionColumn] = pipelineVersion
         }
-        return true
+        return PreprocessingQueueState.NEEDS_BACKFILL
     }
 
     // Runs in its own transaction, after the registration lock has been released.
