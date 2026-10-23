@@ -999,14 +999,15 @@ class ProcessingFunctions:
         )
         if standardized_input_datum in options:
             output_datum = options[standardized_input_datum]
-        # Allow ingested data to include fields not in options
-        elif context.is_insdc_ingest_group:
-            return RawProcessingResult(datum=input_datum, warnings=[error_msg])
         else:
             suggestions = compute_suggestions(standardized_input_datum, options)
 
             if len(suggestions) > 0:
                 error_msg += f" Perhaps you meant: {', '.join(suggestions)}"
+
+            # Allow ingested data to include fields not in options
+            if context.is_insdc_ingest_group:
+                return RawProcessingResult(datum=input_datum, warnings=[error_msg])
 
             return processing_error(error_msg)
         return RawProcessingResult(datum=output_datum)
