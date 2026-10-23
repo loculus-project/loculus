@@ -38,6 +38,8 @@ object BackendSpringProperty {
     const val CLEAN_UP_RUN_EVERY_SECONDS = "loculus.cleanup.task.run-every-seconds"
     const val PIPELINE_VERSION_UPGRADE_CHECK_INTERVAL_SECONDS =
         "loculus.pipeline-version-upgrade-check.interval-seconds"
+    const val ENQUEUE_MISSING_PREPROCESSING_ENTRIES_EVERY_SECONDS =
+        "loculus.preprocessing-queue.enqueue-missing-every-seconds"
     const val STREAM_BATCH_SIZE = "loculus.stream.batch-size"
     const val DEBUG_MODE = "loculus.debug-mode"
     const val ENABLE_SEQSETS = "loculus.enable-seqsets"
