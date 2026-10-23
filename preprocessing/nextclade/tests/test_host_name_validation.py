@@ -37,17 +37,23 @@ def make_entry(metadata: dict, config: Config, *, insdc_ingest: bool) -> Unproce
     )
 
 
+AEDES_AEGYPTI = {
+    "tax_id": 7159,
+    "scientific_name": "Aedes aegypti",
+    "common_name": None,
+    "parent_id": 7158,
+    "depth": 28,
+}
+
+
 def taxonomy_service_mock(url: str, **kwargs):
     """Dispatch mock responses based on taxonomy service URL."""
     if "scientific_name=" in url:
-        return make_response(
-            200,
-            [{"tax_id": 7159, "scientific_name": "Aedes aegypti", "depth": 28}],
-        )
+        return make_response(200, [AEDES_AEGYPTI])
     if "find_common_name=true" in url:
-        return make_response(200, {"common_name": "yellow fever mosquito"})
+        return make_response(200, {**AEDES_AEGYPTI, "common_name": "yellow fever mosquito"})
     if "/taxa/" in url:
-        return make_response(200, {"tax_id": 7159, "scientific_name": "Aedes aegypti"})
+        return make_response(200, AEDES_AEGYPTI)
     return make_response(404, {"detail": "not found"})
 
 
@@ -162,7 +168,7 @@ def test_host_processing_invalid_host_insdc(mock_session: MagicMock) -> None:
     assert mock_session.get.call_count == 1
     assert result[0].processed_entry.errors == []
     assert len(result[0].processed_entry.warnings) == 1
-    assert "Host validation for" in result[0].processed_entry.warnings[0].message
+    assert "is not a recognized host" in result[0].processed_entry.warnings[0].message
 
 
 @patch.object(external_services.taxonomy_cache, "session")
@@ -191,4 +197,36 @@ def test_host_processing_invalid_host_direct(mock_session: MagicMock) -> None:
     assert mock_session.get.call_count == 1
     assert result[0].processed_entry.warnings == []
     assert len(result[0].processed_entry.errors) == 1
-    assert "Host validation for" in result[0].processed_entry.errors[0].message
+    assert "is not a recognized host" in result[0].processed_entry.errors[0].message
+
+
+@patch.object(external_services.taxonomy_cache, "session")
+def test_host_processing_ambiguous_sci_name(mock_session: MagicMock) -> None:
+    """When multiple taxa share a scientific name, the most generic one is selected
+    and a warning lists the alternatives.
+    """
+    more_specific = {**AEDES_AEGYPTI, "tax_id": 9999, "parent_id": 7159, "depth": 29}
+
+    def mock(url: str, **kwargs):
+        if "scientific_name=" in url:
+            return make_response(200, [more_specific, AEDES_AEGYPTI])
+        return taxonomy_service_mock(url, **kwargs)
+
+    mock_session.get.side_effect = mock
+    config = get_config(HOST_PROCESSING_CONFIG, ignore_args=True)
+
+    entry = make_entry(
+        metadata={"host": "Aedes aegypti"},
+        config=config,
+        insdc_ingest=False,
+    )
+
+    result = process_all([entry], "temp", config)
+    metadata = result[0].processed_entry.data.metadata
+
+    assert metadata["hostTaxonId"] == "7159"
+    assert result[0].processed_entry.errors == []
+    assert len(result[0].processed_entry.warnings) == 1
+    warning = result[0].processed_entry.warnings[0].message
+    assert "'Aedes aegypti' matches 2 taxa" in warning
+    assert "9999" in warning
