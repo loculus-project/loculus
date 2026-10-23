@@ -78,8 +78,8 @@ stateDiagram-v2
     SUBMITTED --> [*]
 
     note right of READY
-        Revision with no relevant changes (raw reads & assembly only):
-        copies the previous version's status, results and errors as-is
+        Pathoplexus revisions with no changes to raw reads and assemblies do not result in calls to ENA:
+        instead we copy the previous version's status, results and errors as-is
         (any status, incl. HAS_ERRORS / SUBMITTING)
     end note
 
