@@ -1,10 +1,10 @@
 package org.loculus.backend.service.submission
 
-import java.util.concurrent.TimeUnit
 import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.service.scheduler.TaskLock
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
+import java.util.concurrent.TimeUnit
 
 private val log = mu.KotlinLogging.logger {}
 

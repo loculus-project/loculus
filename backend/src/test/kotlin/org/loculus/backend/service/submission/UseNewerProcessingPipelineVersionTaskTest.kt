@@ -12,15 +12,15 @@ import org.junit.jupiter.api.Test
 import org.loculus.backend.api.v0.submission.PreparedProcessedData
 import org.loculus.backend.api.v0.submission.SubmissionControllerClient
 import org.loculus.backend.api.v0.submission.SubmissionConvenienceClient
+import org.loculus.backend.api.v0.submission.SubmitFiles.DefaultFiles
 import org.loculus.backend.service.scheduler.TASK_LOCK_TABLE_NAME
 import org.loculus.backend.service.submission.dbtables.CurrentProcessingPipelineTable
+import org.loculus.backend.service.submission.dbtables.PreprocessingQueueVersionsTable
 import org.loculus.backend.testutil.DEFAULT_ORGANISM
 import org.loculus.backend.testutil.EndpointTest
 import org.loculus.backend.testutil.ORGANISM_WITHOUT_CONSENSUS_SEQUENCES
 import org.loculus.backend.testutil.OTHER_ORGANISM
 import org.loculus.backend.types.Organism
-import org.loculus.backend.api.v0.submission.SubmitFiles.DefaultFiles
-import org.loculus.backend.service.submission.dbtables.PreprocessingQueueVersionsTable
 import org.loculus.backend.utils.DateProvider
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status

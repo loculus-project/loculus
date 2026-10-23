@@ -1,13 +1,8 @@
 package org.loculus.backend.api.v0.submission
 
-import java.util.concurrent.Callable
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
-import java.util.concurrent.TimeUnit
 import org.hamcrest.MatcherAssert.assertThat
-import org.hamcrest.Matchers.`is`
 import org.hamcrest.Matchers.empty
+import org.hamcrest.Matchers.`is`
 import org.junit.jupiter.api.Test
 import org.loculus.backend.testutil.DEFAULT_PIPELINE_VERSION
 import org.loculus.backend.testutil.EndpointTest
@@ -15,6 +10,11 @@ import org.loculus.backend.testutil.expectNdjsonAndGetContent
 import org.loculus.backend.types.AccessionVersion
 import org.loculus.backend.types.UnprocessedData
 import org.springframework.beans.factory.annotation.Autowired
+import java.util.concurrent.Callable
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
 private const val CLAIM_TIMEOUT_SECONDS = 30L
 

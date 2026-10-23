@@ -239,7 +239,12 @@ open class SubmissionController(
 
         val headers = HttpHeaders()
         headers.contentType = MediaType.parseMediaType(MediaType.APPLICATION_NDJSON_VALUE)
-        headers.eTag = lastDatabaseWriteETag
+        // A backfill changes the etag, so the response carries the value from after it.
+        headers.eTag = if (queueState == PreprocessingQueueState.NEEDS_BACKFILL) {
+            releasedDataModel.getLastDatabaseWriteETag(organism = organism, pipelineVersion = pipelineVersion)
+        } else {
+            lastDatabaseWriteETag
+        }
         val streamBody = streamTransactioned(
             endpoint = EXTRACT_UNPROCESSED_DATA_ENDPOINT,
             organism = organism,

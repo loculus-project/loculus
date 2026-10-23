@@ -25,9 +25,9 @@ import org.loculus.backend.service.submission.SEQUENCE_ENTRIES_PREPROCESSED_DATA
 import org.loculus.backend.service.submission.SEQUENCE_ENTRIES_TABLE_NAME
 import org.loculus.backend.service.submission.SEQUENCE_UPLOAD_AUX_TABLE_NAME
 import org.loculus.backend.service.submission.dbtables.CURRENT_PROCESSING_PIPELINE_TABLE_NAME
+import org.loculus.backend.service.submission.dbtables.PREPROCESSING_QUEUE_VERSIONS_TABLE_NAME
 import org.loculus.backend.types.Address
 import org.loculus.backend.types.NewGroup
-import org.loculus.backend.service.submission.dbtables.PREPROCESSING_QUEUE_VERSIONS_TABLE_NAME
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.context.annotation.Import

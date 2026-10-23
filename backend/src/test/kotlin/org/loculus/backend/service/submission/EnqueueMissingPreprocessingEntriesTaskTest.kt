@@ -1,9 +1,9 @@
 package org.loculus.backend.service.submission
 
 import org.hamcrest.MatcherAssert.assertThat
-import org.hamcrest.Matchers.`is`
 import org.hamcrest.Matchers.containsInAnyOrder
 import org.hamcrest.Matchers.empty
+import org.hamcrest.Matchers.`is`
 import org.hamcrest.Matchers.not
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq

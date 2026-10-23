@@ -6,8 +6,6 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import io.swagger.v3.oas.models.headers.Header
 import io.swagger.v3.oas.models.media.StringSchema
 import io.swagger.v3.oas.models.parameters.HeaderParameter
-import java.io.File
-import javax.sql.DataSource
 import org.flywaydb.core.Flyway
 import org.jetbrains.exposed.v1.core.DatabaseConfig
 import org.jetbrains.exposed.v1.core.Slf4jSqlDebugLogger
@@ -31,6 +29,8 @@ import org.springframework.context.annotation.Profile
 import org.springframework.scheduling.annotation.EnableScheduling
 import org.springframework.stereotype.Component
 import org.springframework.web.filter.CommonsRequestLoggingFilter
+import java.io.File
+import javax.sql.DataSource
 
 object BackendSpringProperty {
     const val BACKEND_CONFIG_PATH = "loculus.config.path"

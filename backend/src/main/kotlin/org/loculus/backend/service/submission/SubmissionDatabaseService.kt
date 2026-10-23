@@ -3,12 +3,6 @@ package org.loculus.backend.service.submission
 import com.fasterxml.jackson.core.JacksonException
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
-import java.io.BufferedReader
-import java.io.InputStream
-import java.io.InputStreamReader
-import java.util.Locale
-import java.util.UUID
-import kotlin.time.Instant
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.minus
@@ -57,8 +51,6 @@ import org.jetbrains.exposed.v1.jdbc.transactions.TransactionManager
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.jdbc.update
 import org.jetbrains.exposed.v1.json.extract
-import org.loculus.backend.api.fileIds
-import org.loculus.backend.api.getFileId
 import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.config.BackendSpringProperty
@@ -126,6 +118,12 @@ import org.loculus.backend.utils.toTimestamp
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.io.BufferedReader
+import java.io.InputStream
+import java.io.InputStreamReader
+import java.util.Locale
+import java.util.UUID
+import kotlin.time.Instant
 
 private val log = KotlinLogging.logger { }
 
