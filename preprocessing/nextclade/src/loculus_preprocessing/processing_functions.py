@@ -69,11 +69,11 @@ def compute_suggestions(
         standardized_option: options[standardized_option] for standardized_option in close_matches
     }
 
-    # Contained substring: catches some short forms
+    # Containment check: catches short forms
     suggestions = suggestions | {
         standardized_option: option
         for (standardized_option, option) in options.items()
-        if unknown_option in standardized_option
+        if unknown_option in standardized_option or standardized_option in unknown_option
     }
 
     # Lower similarity check: additional potentially related options
