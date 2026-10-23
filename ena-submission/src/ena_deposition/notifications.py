@@ -73,7 +73,7 @@ def send_slack_notification(
     comment: str, slack_config: SlackConfig, time: datetime, slack_retry_threshold_min: int
 ):
     """
-    Sends a slack notification if current time is over time_threshold hours
+    Sends a slack notification if current time is over slack_retry_threshold_min minutes
     since slack_config.last_notification_sent.
     """
     if not slack_config.slack_hook:
