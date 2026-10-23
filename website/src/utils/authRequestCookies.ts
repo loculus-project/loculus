@@ -1,6 +1,7 @@
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'node:crypto';
 
 import type { AstroCookies } from 'astro';
+import { z } from 'zod';
 
 import { getRuntimeConfig } from '../config.ts';
 import { routes } from '../routes/routes.ts';
@@ -14,14 +15,20 @@ const maxCookieBytes = 3800;
 const ivLength = 12;
 const authenticationTagLength = 16;
 
-type StoredAuthRequest = {
-    nonce: string;
-    codeVerifier: string;
-    returnTo: string;
-    expiresAt: number;
-};
+const storedAuthRequestSchema = z.object({
+    nonce: z.string(),
+    codeVerifier: z.string(),
+    returnTo: z.string(),
+    expiresAt: z.number(),
+});
 
-type AuthRequestStore = Record<string, StoredAuthRequest | undefined>;
+type StoredAuthRequest = z.infer<typeof storedAuthRequestSchema>;
+
+// The OIDC `state` parameter that identifies one login attempt.
+type OidcState = string;
+
+// Map entries are separate from object properties, so attacker-controlled state keys like "constructor" cannot match inherited members.
+type AuthRequestStore = Map<OidcState, StoredAuthRequest>;
 
 export type AuthRequest = {
     nonce: string;
@@ -36,7 +43,10 @@ function encryptionKey() {
 function seal(store: AuthRequestStore): string {
     const iv = randomBytes(ivLength);
     const cipher = createCipheriv('aes-256-gcm', encryptionKey(), iv, { authTagLength: authenticationTagLength });
-    const ciphertext = Buffer.concat([cipher.update(JSON.stringify(store), 'utf8'), cipher.final()]);
+    const ciphertext = Buffer.concat([
+        cipher.update(JSON.stringify(Object.fromEntries(store)), 'utf8'),
+        cipher.final(),
+    ]);
     const authenticationTag = cipher.getAuthTag();
     return [
         'v1',
@@ -46,21 +56,37 @@ function seal(store: AuthRequestStore): string {
     ].join('.');
 }
 
+// Validate entries individually rather than with z.record, which rebuilds the object by assignment and would
+// turn a "__proto__" key into a prototype change instead of an entry.
+function parseStore(parsed: unknown): AuthRequestStore {
+    const store: AuthRequestStore = new Map();
+    if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+        return store;
+    }
+    for (const [state, value] of Object.entries(parsed)) {
+        const transaction = storedAuthRequestSchema.safeParse(value);
+        if (transaction.success) {
+            store.set(state, transaction.data);
+        }
+    }
+    return store;
+}
+
 function unseal(value: string | undefined): AuthRequestStore {
     if (value === undefined) {
-        return {};
+        return new Map<OidcState, StoredAuthRequest>();
     }
 
     try {
         const parts = value.split('.');
         if (parts.length !== 4 || parts[0] !== 'v1') {
-            return {};
+            return new Map<OidcState, StoredAuthRequest>();
         }
         const [, encodedIv, encodedCiphertext, encodedAuthenticationTag] = parts;
         const iv = Buffer.from(encodedIv, 'base64url');
         const authenticationTag = Buffer.from(encodedAuthenticationTag, 'base64url');
         if (iv.length !== ivLength || authenticationTag.length !== authenticationTagLength) {
-            return {};
+            return new Map<OidcState, StoredAuthRequest>();
         }
         const decipher = createDecipheriv('aes-256-gcm', encryptionKey(), iv, {
             authTagLength: authenticationTagLength,
@@ -70,22 +96,14 @@ function unseal(value: string | undefined): AuthRequestStore {
             decipher.update(Buffer.from(encodedCiphertext, 'base64url')),
             decipher.final(),
         ]).toString('utf8');
-        return JSON.parse(plaintext) as AuthRequestStore;
+        return parseStore(JSON.parse(plaintext));
     } catch {
-        return {};
+        return new Map<OidcState, StoredAuthRequest>();
     }
 }
 
 function activeTransactions(store: AuthRequestStore, now = Date.now()): AuthRequestStore {
-    // JSON parsing restores Object.prototype; rebuild a prototype-free dictionary before keyed access.
-    return Object.assign(
-        Object.create(null) as AuthRequestStore,
-        Object.fromEntries(
-            Object.entries(store).filter(
-                (entry): entry is [string, StoredAuthRequest] => entry[1] !== undefined && entry[1].expiresAt > now,
-            ),
-        ),
-    );
+    return new Map([...store].filter(([, transaction]) => transaction.expiresAt > now));
 }
 
 function fitsCookieBudget(sealedStore: string): boolean {
@@ -93,7 +111,7 @@ function fitsCookieBudget(sealedStore: string): boolean {
 }
 
 function writeStore(cookies: AstroCookies, store: AuthRequestStore, sealedStore?: string) {
-    if (Object.keys(store).length === 0) {
+    if (store.size === 0) {
         cookies.delete(AUTH_TRANSACTIONS_COOKIE, { path: '/' });
         return;
     }
@@ -123,28 +141,30 @@ export function addAuthRequest(
         expiresAt: Date.now() + transactionLifetimeSeconds * 1000,
     };
 
-    // Reserve space for this attempt first, including when replica clocks differ.
-    const boundedStore: AuthRequestStore = Object.assign(Object.create(null), { [state]: transaction });
+    // Insert the new attempt unconditionally before adding older ones. Older entries are ranked by
+    // expiresAt, which came from whichever replica's clock created them, so ranking the new entry
+    // with them could evict it under clock skew.
+    const boundedStore: AuthRequestStore = new Map([[state, transaction]]);
     let sealedStore = seal(boundedStore);
     if (!fitsCookieBudget(sealedStore)) {
         // The caller supplies an absolute, same-origin URL. Preserve it unless it cannot
         // fit even on its own; never redirect to Keycloak with an unstorable transaction.
-        transaction.returnTo = new URL(routes.userOverviewPage(), returnTo).toString();
+        transaction.returnTo = new URL(routes.userOverviewPage(), new URL(returnTo).origin).toString();
         sealedStore = seal(boundedStore);
         if (!fitsCookieBudget(sealedStore)) {
             throw new Error('OIDC login transaction exceeds the cookie size limit');
         }
     }
 
-    const previousTransactions = Object.entries(existingStore)
-        .filter((entry): entry is [string, StoredAuthRequest] => entry[0] !== state && entry[1] !== undefined)
+    const previousTransactions = [...existingStore]
+        .filter(([previousState]) => previousState !== state)
         .sort(([, left], [, right]) => right.expiresAt - left.expiresAt)
         .slice(0, maxConcurrentTransactions - 1);
     for (const [previousState, previousTransaction] of previousTransactions) {
-        boundedStore[previousState] = previousTransaction;
+        boundedStore.set(previousState, previousTransaction);
         const candidate = seal(boundedStore);
         if (!fitsCookieBudget(candidate)) {
-            delete boundedStore[previousState];
+            boundedStore.delete(previousState);
             break; // This and any older entries are evicted to keep the new attempt usable.
         }
         sealedStore = candidate;
@@ -158,10 +178,8 @@ export function consumeAuthRequest(cookies: AstroCookies, state: string | undefi
     }
 
     const store = activeTransactions(unseal(cookies.get(AUTH_TRANSACTIONS_COOKIE)?.value));
-    // Only an own property can represent an issued transaction. Keep this explicit guard even
-    // with a prototype-free store so future changes cannot reintroduce inherited-key matches.
-    const transaction = Object.prototype.hasOwnProperty.call(store, state) ? store[state] : undefined;
-    delete store[state];
+    const transaction = store.get(state);
+    store.delete(state);
     writeStore(cookies, store);
     if (transaction === undefined) {
         return undefined;
