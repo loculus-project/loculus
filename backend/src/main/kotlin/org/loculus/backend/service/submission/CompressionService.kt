@@ -160,14 +160,21 @@ class CompressionService(
         )
     }
 
-    private fun decompress(compressedSequence: CompressedSequence): String {
-        val compressed = Base64.getDecoder().decode(compressedSequence.compressedSequence)
-        val decompressedSize = Zstd.getFrameContentSize(compressed)
-        if (Zstd.isError(decompressedSize)) {
-            throw RuntimeException("reading Zstd decompressed size failed: error code $decompressedSize")
-        }
+    fun getSequenceLength(compressedSequence: CompressedSequence): Int = decompressedSize(
+        Base64.getDecoder().decode(compressedSequence.compressedSequence),
+    )
 
-        val decompressedBuffer = ByteArray(decompressedSize.toInt())
+    private fun decompressedSize(compressed: ByteArray): Int {
+        val size = Zstd.getFrameContentSize(compressed)
+        if (Zstd.isError(size)) {
+            throw RuntimeException("reading Zstd decompressed size failed: error code $size")
+        }
+        return size.toInt()
+    }
+
+    fun decompress(compressedSequence: CompressedSequence): String {
+        val compressed = Base64.getDecoder().decode(compressedSequence.compressedSequence)
+        val decompressedBuffer = ByteArray(decompressedSize(compressed))
         val decompressionReturnCode: Long = if (compressedSequence.compressionDictId == null) {
             Zstd.decompress(decompressedBuffer, compressed)
         } else {
