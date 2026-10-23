@@ -196,7 +196,7 @@ class SubmissionDatabaseService(
             return registration[queueVersions.initializedAtColumn] == null
         }
 
-        // Blocks concurrent inserts, so every entry is either seen by the backfill or queued by the trigger.
+        // Blocks concurrent inserts, so every entry is either seen by the backfill or queued by its submission.
         TransactionManager.current().exec("LOCK TABLE sequence_entries IN SHARE ROW EXCLUSIVE MODE")
         val currentPipelineVersion = getCurrentProcessingPipelineVersion(organism)
         if (pipelineVersion < currentPipelineVersion) {

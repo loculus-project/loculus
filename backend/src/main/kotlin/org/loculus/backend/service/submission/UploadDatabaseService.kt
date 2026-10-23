@@ -3,14 +3,17 @@ package org.loculus.backend.service.submission
 import kotlinx.datetime.LocalDateTime
 import mu.KotlinLogging
 import org.jetbrains.exposed.v1.core.ArrayColumnType
+import org.jetbrains.exposed.v1.core.JoinType
 import org.jetbrains.exposed.v1.core.TextColumnType
 import org.jetbrains.exposed.v1.core.VarCharColumnType
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.less
 import org.jetbrains.exposed.v1.core.statements.StatementType
+import org.jetbrains.exposed.v1.core.stringLiteral
 import org.jetbrains.exposed.v1.exceptions.ExposedSQLException
 import org.jetbrains.exposed.v1.jdbc.batchInsert
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
+import org.jetbrains.exposed.v1.jdbc.insertIgnore
 import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.loculus.backend.auth.AuthenticatedUser
@@ -35,7 +38,9 @@ import org.loculus.backend.service.submission.MetadataUploadAuxTable.uploadedAtC
 import org.loculus.backend.service.submission.SequenceUploadAuxTable.compressedSequenceDataColumn
 import org.loculus.backend.service.submission.SequenceUploadAuxTable.fastaIdColumn
 import org.loculus.backend.service.submission.SequenceUploadAuxTable.sequenceUploadIdColumn
+import org.loculus.backend.service.submission.dbtables.PreprocessingQueueVersionsTable
 import org.loculus.backend.types.Organism
+import org.loculus.backend.types.PreprocessingStatus.UNPROCESSED
 import org.loculus.backend.types.Status
 import org.loculus.backend.types.SubmissionIdFilesMap
 import org.loculus.backend.types.SubmissionIdMapping
@@ -245,6 +250,8 @@ class UploadDatabaseService(
             result.toList()
         } ?: emptyList()
 
+        enqueueForPreprocessing(uploadId)
+
         if (submissionParams is SubmissionParams.OriginalSubmissionParams) {
             log.debug { "Setting data use terms for submission $uploadId to ${submissionParams.dataUseTerms}" }
             // setNewDataUseTerms authorized the groups of the affected entries in chunks, which
@@ -269,6 +276,34 @@ class UploadDatabaseService(
         )
 
         return@transaction insertionResult
+    }
+
+    // Queues the new entries for each registered pipeline version of their organism.
+    // Must run in the transaction that inserted them: registering a version waits for it, so its backfill sees them.
+    private fun enqueueForPreprocessing(uploadId: String) {
+        val upload = MetadataUploadAuxTable
+        val queueVersions = PreprocessingQueueVersionsTable
+        val queue = SequenceEntriesPreprocessedDataTable
+        val newEntries = upload
+            .join(queueVersions, JoinType.INNER) { upload.organismColumn eq queueVersions.organismColumn }
+            .select(
+                upload.accessionColumn,
+                upload.versionColumn,
+                queueVersions.pipelineVersionColumn,
+                upload.organismColumn,
+                stringLiteral(UNPROCESSED.name),
+            )
+            .where { upload.uploadIdColumn eq uploadId }
+        queue.insertIgnore(
+            newEntries,
+            columns = listOf(
+                queue.accessionColumn,
+                queue.versionColumn,
+                queue.pipelineVersionColumn,
+                queue.organismColumn,
+                queue.processingStatusColumn,
+            ),
+        )
     }
 
     fun deleteUploadData(uploadId: String) {
