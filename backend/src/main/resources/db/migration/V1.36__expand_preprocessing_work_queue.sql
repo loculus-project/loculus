@@ -26,7 +26,7 @@ ALTER TABLE sequence_entries_preprocessed_data
 ALTER TABLE sequence_entries_preprocessed_data
     VALIDATE CONSTRAINT sequence_entries_preprocessed_data_status_check;
 
--- Pipeline versions with a queue. The enqueue trigger reads it, initialized_at is set once the backfill completes.
+-- Pipeline versions with a queue. New entries are queued for each of them, initialized_at is set once the backfill completes.
 CREATE TABLE preprocessing_queue_versions (
     organism TEXT NOT NULL,
     pipeline_version BIGINT NOT NULL,
