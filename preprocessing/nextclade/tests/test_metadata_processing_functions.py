@@ -122,7 +122,8 @@ test_case_definitions = [
                 ProcessingAnnotationHelper(
                     ["continent"],
                     ["continent"],
-                    "Metadata field continent:'Afrika' - not in list of accepted options.",
+                    "Metadata field continent:'Afrika' - not in list of accepted options."
+                    " Perhaps you meant: Africa, Asia, Oceania",
                 ),
             ]
         ),

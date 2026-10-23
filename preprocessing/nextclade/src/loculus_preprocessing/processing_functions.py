@@ -5,6 +5,7 @@ This makes it easy to test and reason about the code
 
 import ast
 import calendar
+import difflib
 import json
 import logging
 import math
@@ -50,6 +51,43 @@ def compute_options_cache(output_field: str, options_list: list[str]) -> dict[st
         options[standardize_option(option)] = option
     options_cache[output_field] = options
     return options
+
+
+def compute_suggestions(
+    unknown_option: str, options: dict[str, str], num_suggestions: int = 3
+) -> list[str]:
+    """Compute suggestions for the unknown option. Suggestions are returned in the unstandardised option format."""
+
+    # High similarity check: catches near identical typos
+    close_matches = difflib.get_close_matches(
+        word=unknown_option,
+        possibilities=options,
+        n=num_suggestions,
+        cutoff=0.8,
+    )
+    suggestions = {
+        standardized_option: options[standardized_option] for standardized_option in close_matches
+    }
+
+    # Contained substring: catches some short forms
+    suggestions = suggestions | {
+        standardized_option: option
+        for (standardized_option, option) in options.items()
+        if unknown_option in standardized_option
+    }
+
+    # Lower similarity check: additional potentially related options
+    broad_matches = difflib.get_close_matches(
+        word=unknown_option,
+        possibilities=options,
+        n=num_suggestions,
+        cutoff=0.4,
+    )
+    suggestions = suggestions | {
+        standardized_option: options[standardized_option] for standardized_option in broad_matches
+    }
+
+    return list(suggestions.values())[:num_suggestions]
 
 
 def standardize_option(option):
@@ -965,6 +1003,11 @@ class ProcessingFunctions:
         elif context.is_insdc_ingest_group:
             return RawProcessingResult(datum=input_datum, warnings=[error_msg])
         else:
+            suggestions = compute_suggestions(standardized_input_datum, options)
+
+            if len(suggestions) > 0:
+                error_msg += f" Perhaps you meant: {', '.join(suggestions)}"
+
             return processing_error(error_msg)
         return RawProcessingResult(datum=output_datum)
 
