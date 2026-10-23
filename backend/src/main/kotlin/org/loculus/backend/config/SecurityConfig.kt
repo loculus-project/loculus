@@ -186,15 +186,24 @@ class LoggingAccessDeniedHandler(private val accessDeniedHandler: AccessDeniedHa
 }
 
 private const val AUTH_URL_PROPERTY = "spring.security.oauth2.resourceserver.jwt.jwk-set-uri"
+private const val AUTH_ISSUER_PROPERTY = "spring.security.oauth2.resourceserver.jwt.issuer-uri"
 
 @Component
-class AuthUrlIsPresentGuard(@Value("\${$AUTH_URL_PROPERTY:#{null}}") private val authUrlProperty: String?) :
-    InitializingBean {
+class JwtConfigIsPresentGuard(
+    @Value("\${$AUTH_URL_PROPERTY:#{null}}") private val jwkSetUri: String?,
+    @Value("\${$AUTH_ISSUER_PROPERTY:#{null}}") private val issuerUri: String?,
+) : InitializingBean {
 
     override fun afterPropertiesSet() {
-        if (authUrlProperty == null) {
+        if (jwkSetUri.isNullOrBlank()) {
             throw IllegalStateException(
                 "Missing required property '$AUTH_URL_PROPERTY'. Please set it when starting the application.",
+            )
+        }
+        // Spring Boot uses issuer-uri to validate iss even when signing keys come from an internal JWKS URL.
+        if (issuerUri.isNullOrBlank()) {
+            throw IllegalStateException(
+                "Missing required property '$AUTH_ISSUER_PROPERTY'. Please set it to the trusted token issuer.",
             )
         }
     }
