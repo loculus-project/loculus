@@ -1690,19 +1690,10 @@ class SubmissionDatabaseService(
      * the given organism and are older than the earliest preprocessing pipeline version to keep.
      */
     fun cleanUpOutdatedPreprocessingData(organism: String, earliestVersionToKeep: Long) {
-        val sql = """
-        DELETE FROM sequence_entries_preprocessed_data
-        WHERE pipeline_version < ? AND organism = ?
-        """.trimIndent()
         transaction {
-            exec(
-                sql,
-                listOf(
-                    Pair(LongColumnType(), earliestVersionToKeep),
-                    Pair(VarCharColumnType(), organism),
-                ),
-                explicitStatementType = StatementType.DELETE,
-            )
+            SequenceEntriesPreprocessedDataTable.deleteWhere {
+                (organismColumn eq organism) and (pipelineVersionColumn less earliestVersionToKeep)
+            }
         }
     }
 
