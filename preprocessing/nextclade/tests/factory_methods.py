@@ -4,6 +4,7 @@
 from dataclasses import dataclass, field, replace
 from datetime import datetime
 from typing import Literal
+from uuid import NAMESPACE_URL, uuid5
 
 import pytz
 
@@ -110,6 +111,8 @@ class UnprocessedEntryFactory:
             context=replace(
                 DEFAULT_TEST_CONTEXT,
                 accession_version=f"LOC_{accession_id}.1",
+                # Distinct per entry, so a mix-up between entries in a batch is caught
+                processing_attempt_id=str(uuid5(NAMESPACE_URL, accession_id)),
                 group_id=group_id,
                 insdc_ingest_group_id=insdc_ingest_group_id,
                 submitted_at=ts_from_ymd(2021, 12, 15),
@@ -154,6 +157,7 @@ class ProcessedEntryFactory:
         self,
         metadata_dict: dict[str, ProcessedMetadataValue],
         accession: str,
+        processing_attempt_id: str,
         errors: list[ProcessingAnnotation] | None = None,
         warnings: list[ProcessingAnnotation] | None = None,
         processed_alignment: ProcessedAlignment | None = None,
@@ -173,7 +177,7 @@ class ProcessedEntryFactory:
         return ProcessedEntry(
             accession=accession,
             version=1,
-            processingAttemptId=TEST_PROCESSING_ATTEMPT_ID,
+            processingAttemptId=processing_attempt_id,
             data=ProcessedData(
                 metadata=base_metadata_dict,
                 files=files,
@@ -216,6 +220,7 @@ class Case:
         expected_output = factory_custom.create_processed_entry(
             metadata_dict=self.expected_metadata,
             accession=unprocessed_entry.context.accession_version.split(".")[0],
+            processing_attempt_id=unprocessed_entry.context.processing_attempt_id,
             errors=self.expected_errors or [],
             warnings=self.expected_warnings or [],
             processed_alignment=self.expected_processed_alignment,
