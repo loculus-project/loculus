@@ -18,11 +18,12 @@ import org.hamcrest.Matchers.not
 import org.hamcrest.Matchers.notNullValue
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
-import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
+import org.jetbrains.exposed.v1.jdbc.update
 import org.junit.jupiter.api.Test
 import org.loculus.backend.api.FileIdAndNameAndReadUrl
 import org.loculus.backend.api.GeneticSequence
+import org.loculus.backend.api.PreprocessingStatus
 import org.loculus.backend.api.Status.IN_PROCESSING
 import org.loculus.backend.api.Status.RECEIVED
 import org.loculus.backend.api.SubmittedContentWithFileUrls
@@ -156,12 +157,11 @@ class ExtractUnprocessedDataEndpointTest(
     }
 
     @Test
-    fun `GIVEN newer pipeline version WHEN its processed entry is deleted from db THEN it is returned again`() {
+    fun `GIVEN newer pipeline version WHEN its failed entry is returned to the queue THEN it is returned again`() {
         val newerPipelineVersion = DEFAULT_PIPELINE_VERSION + 1
         val accessions = convenienceClient.submitDefaultFiles().submissionIdMappings.map { it.accession }
 
-        client.extractUnprocessedData(DefaultFiles.NUMBER_OF_SEQUENCES, pipelineVersion = newerPipelineVersion)
-            .expectNdjsonAndGetContent<UnprocessedData>()
+        convenienceClient.extractUnprocessedData(pipelineVersion = newerPipelineVersion)
         convenienceClient.submitProcessedData(
             accessions.map { PreparedProcessedData.withErrors(accession = it) },
             pipelineVersion = newerPipelineVersion,
@@ -177,12 +177,17 @@ class ExtractUnprocessedDataEndpointTest(
 
         val currentEtagBeforeDelete = client.extractUnprocessedData(0).andReturn().response.getHeader(ETAG)
 
-        // Simulates manually deleting a failed row so that the newer pipeline reprocesses it
+        // Simulates manually returning a failed row to the queue so that the newer pipeline reprocesses it
         val deletedAccession = accessions.first()
         transaction {
-            SequenceEntriesPreprocessedDataTable.deleteWhere {
-                (SequenceEntriesPreprocessedDataTable.accessionColumn eq deletedAccession) and
-                    (SequenceEntriesPreprocessedDataTable.pipelineVersionColumn eq newerPipelineVersion)
+            SequenceEntriesPreprocessedDataTable.update(
+                where = {
+                    (SequenceEntriesPreprocessedDataTable.accessionColumn eq deletedAccession) and
+                        (SequenceEntriesPreprocessedDataTable.pipelineVersionColumn eq newerPipelineVersion)
+                },
+            ) {
+                it[processingStatusColumn] = PreprocessingStatus.UNPROCESSED.name
+                it[errorsColumn] = null
             }
         }
 

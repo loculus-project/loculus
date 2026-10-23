@@ -11,6 +11,7 @@ import org.loculus.backend.api.ExternalSubmittedData
 import org.loculus.backend.api.ProcessingResult
 import org.loculus.backend.api.Status
 import org.loculus.backend.api.SubmittedProcessedData
+import org.loculus.backend.api.UnprocessedData
 import org.loculus.backend.controller.DEFAULT_EXTERNAL_METADATA_UPDATER
 import org.loculus.backend.controller.DEFAULT_GROUP_NAME
 import org.loculus.backend.controller.DEFAULT_ORGANISM
@@ -30,8 +31,20 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delet
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
+import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 
 class SubmissionControllerClient(private val mockMvc: MockMvc, private val objectMapper: ObjectMapper) {
+    private data class ClaimedEntry(
+        val organism: String,
+        val pipelineVersion: Long,
+        val accession: Accession,
+        val version: Long,
+    )
+
+    // Claim ids per entry, substituted for the placeholder on submit.
+    private val processingAttempts = ConcurrentHashMap<ClaimedEntry, UUID>()
+
     fun submit(
         metadataFile: MockMultipartFile,
         sequencesFile: MockMultipartFile? = null,
@@ -92,13 +105,32 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
         return mockMvc.perform(requestBuilder)
     }
 
+    fun rememberProcessingAttempts(claimedData: List<UnprocessedData>, organism: String, pipelineVersion: Long) {
+        claimedData.forEach {
+            processingAttempts[
+                ClaimedEntry(organism, pipelineVersion, it.accession, it.version),
+            ] = it.processingAttemptId
+        }
+    }
+
     fun submitProcessedData(
         vararg submittedProcessedData: SubmittedProcessedData,
         organism: String = DEFAULT_ORGANISM,
         pipelineVersion: Long = DEFAULT_PIPELINE_VERSION,
         jwt: String? = jwtForProcessingPipeline,
     ): ResultActions {
-        val stringContent = submittedProcessedData.joinToString("\n") { objectMapper.writeValueAsString(it) }
+        val dataWithProcessingAttempts = submittedProcessedData.map {
+            if (it.processingAttemptId != TEST_PROCESSING_ATTEMPT_ID) {
+                it
+            } else {
+                it.copy(
+                    processingAttemptId = processingAttempts[
+                        ClaimedEntry(organism, pipelineVersion, it.accession, it.version),
+                    ] ?: TEST_PROCESSING_ATTEMPT_ID,
+                )
+            }
+        }
+        val stringContent = dataWithProcessingAttempts.joinToString("\n") { objectMapper.writeValueAsString(it) }
 
         return submitProcessedDataRaw(stringContent, organism, pipelineVersion, jwt)
     }

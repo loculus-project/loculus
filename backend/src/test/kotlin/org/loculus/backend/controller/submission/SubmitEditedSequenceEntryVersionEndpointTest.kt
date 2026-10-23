@@ -95,6 +95,16 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
     }
 
     @Test
+    fun `GIVEN a sequence entry is processed WHEN I submit edited data THEN it is handed out for processing again`() {
+        val accessions = convenienceClient.prepareDataTo(Status.PROCESSED).map { it.accession }
+
+        client.submitEditedSequenceEntryVersion(generateEditedData(accessions.first()))
+            .andExpect(status().isNoContent)
+
+        assertThat(convenienceClient.extractUnprocessedData().map { it.accession }, `is`(listOf(accessions.first())))
+    }
+
+    @Test
     fun `GIVEN a sequence entry is processed WHEN I submit edited data THEN submitted and archived data are updated`() {
         val firstAccession = convenienceClient.prepareDataTo(Status.PROCESSED)
             .map { it.accession }

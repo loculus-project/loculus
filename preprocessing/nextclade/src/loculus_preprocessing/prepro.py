@@ -302,6 +302,7 @@ def processed_entry_no_alignment(
         processed_entry=ProcessedEntry(
             accession=accession_from_str(accession_version),
             version=version_from_str(accession_version),
+            processingAttemptId=unprocessed.context.processing_attempt_id,
             data=ProcessedData(
                 metadata=output_metadata,
                 files=unprocessed.files,
@@ -674,6 +675,7 @@ def process_single(
     processed_entry = ProcessedEntry(
         accession=accession_from_str(accession_version),
         version=version_from_str(accession_version),
+        processingAttemptId=unprocessed.context.processing_attempt_id,
         data=ProcessedData(
             metadata=output_metadata,
             files=unprocessed.files,
@@ -743,6 +745,7 @@ def processed_entry_with_errors(context: ProcessingContext) -> SubmissionData:
         processed_entry=ProcessedEntry(
             accession=accession_from_str(accession_version),
             version=version_from_str(accession_version),
+            processingAttemptId=context.processing_attempt_id,
             data=ProcessedData(
                 metadata=dict[str, ProcessedMetadataValue](),
                 files=None,

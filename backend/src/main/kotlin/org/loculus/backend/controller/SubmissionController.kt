@@ -56,6 +56,7 @@ import org.loculus.backend.model.SubmissionParams
 import org.loculus.backend.model.SubmitModel
 import org.loculus.backend.service.datauseterms.DataUseTermsPreconditionValidator
 import org.loculus.backend.service.groupmanagement.GroupManagementPreconditionValidator
+import org.loculus.backend.service.submission.PreprocessingQueueState
 import org.loculus.backend.service.submission.SubmissionDatabaseService
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.FastaEntry
@@ -229,9 +230,20 @@ open class SubmissionController(
             return ResponseEntity.status(HttpStatus.NOT_MODIFIED).eTag(lastDatabaseWriteETag).build()
         }
 
+        // The first worker of a new pipeline version populates its queue, in two short transactions.
+        val queueState = submissionDatabaseService.registerPreprocessingQueueVersion(organism, pipelineVersion)
+        if (queueState == PreprocessingQueueState.NEEDS_BACKFILL) {
+            submissionDatabaseService.backfillPreprocessingQueue(organism, pipelineVersion)
+        }
+
         val headers = HttpHeaders()
         headers.contentType = MediaType.parseMediaType(MediaType.APPLICATION_NDJSON_VALUE)
-        headers.eTag = lastDatabaseWriteETag
+        // A backfill changes the etag, so the response carries the value from after it.
+        headers.eTag = if (queueState == PreprocessingQueueState.NEEDS_BACKFILL) {
+            releasedDataModel.getLastDatabaseWriteETag(organism = organism, pipelineVersion = pipelineVersion)
+        } else {
+            lastDatabaseWriteETag
+        }
         val streamBody = streamTransactioned(
             endpoint = EXTRACT_UNPROCESSED_DATA_ENDPOINT,
             organism = organism,
