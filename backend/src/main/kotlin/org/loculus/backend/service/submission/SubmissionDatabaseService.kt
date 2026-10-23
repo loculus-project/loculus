@@ -59,6 +59,7 @@ import org.loculus.backend.api.FileIdAndMaybeReleasedAt
 import org.loculus.backend.api.FileIdAndNameAndReadUrl
 import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.GetSequenceResponse
+import org.loculus.backend.api.MetadataMap
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.PreprocessingAnnotation
 import org.loculus.backend.api.PreprocessingStatus.IN_PROCESSING
@@ -101,6 +102,7 @@ import org.loculus.backend.service.serialize
 import org.loculus.backend.service.submission.SequenceEntriesTable.accessionColumn
 import org.loculus.backend.service.submission.SequenceEntriesTable.groupIdColumn
 import org.loculus.backend.service.submission.SequenceEntriesTable.versionColumn
+import org.loculus.backend.service.submission.dbtables.AccessionExternalMetadataTable
 import org.loculus.backend.service.submission.dbtables.CurrentProcessingPipelineTable
 import org.loculus.backend.service.submission.dbtables.ExternalMetadataTable
 import org.loculus.backend.utils.Accession
@@ -423,7 +425,7 @@ class SubmissionDatabaseService(
                         e,
                     )
                 }
-            accessionVersions.add(submittedExternalMetadata.displayAccessionVersion())
+            accessionVersions.add(submittedExternalMetadata.displayAccessionOrAccessionVersion())
 
             insertExternalMetadata(
                 submittedExternalMetadata,
@@ -446,12 +448,21 @@ class SubmissionDatabaseService(
         organism: Organism,
         externalMetadataUpdater: String,
     ) {
-        accessionPreconditionValidator.validate {
-            thatAccessionVersionExists(submittedExternalMetadata)
-                .andThatSequenceEntriesAreInStates(
-                    listOf(Status.APPROVED_FOR_RELEASE),
-                )
-                .andThatOrganismIs(organism)
+        val accessionVersion = submittedExternalMetadata.toAccessionVersionOrNull()
+        if (accessionVersion != null) {
+            accessionPreconditionValidator.validate {
+                thatAccessionVersionExists(accessionVersion)
+                    .andThatSequenceEntriesAreInStates(
+                        listOf(Status.APPROVED_FOR_RELEASE),
+                    )
+                    .andThatOrganismIs(organism)
+            }
+        } else {
+            accessionPreconditionValidator.validate {
+                thatAccessionsExist(listOf(submittedExternalMetadata.accession))
+                    .andThatOrganismIs(organism)
+            }
+            throwIfAccessionHasNoReleasedVersion(submittedExternalMetadata.accession)
         }
         validateExternalMetadata(
             submittedExternalMetadata,
@@ -459,29 +470,94 @@ class SubmissionDatabaseService(
             externalMetadataUpdater,
         )
 
+        if (accessionVersion != null) {
+            upsertAccessionVersionExternalMetadata(
+                accessionVersion,
+                submittedExternalMetadata.externalMetadata,
+                externalMetadataUpdater,
+            )
+        } else {
+            upsertAccessionExternalMetadata(
+                submittedExternalMetadata.accession,
+                submittedExternalMetadata.externalMetadata,
+                externalMetadataUpdater,
+            )
+        }
+    }
+
+    private fun upsertAccessionVersionExternalMetadata(
+        accessionVersion: AccessionVersion,
+        externalMetadata: MetadataMap,
+        externalMetadataUpdater: String,
+    ) {
         val numberInserted =
             ExternalMetadataTable.update(
                 where = {
-                    (ExternalMetadataTable.accessionColumn eq submittedExternalMetadata.accession) and
-                        (ExternalMetadataTable.versionColumn eq submittedExternalMetadata.version) and
+                    (ExternalMetadataTable.accessionColumn eq accessionVersion.accession) and
+                        (ExternalMetadataTable.versionColumn eq accessionVersion.version) and
                         (ExternalMetadataTable.updaterIdColumn eq externalMetadataUpdater)
                 },
             ) {
-                it[accessionColumn] = submittedExternalMetadata.accession
-                it[versionColumn] = submittedExternalMetadata.version
+                it[accessionColumn] = accessionVersion.accession
+                it[versionColumn] = accessionVersion.version
                 it[updaterIdColumn] = externalMetadataUpdater
-                it[externalMetadataColumn] = submittedExternalMetadata.externalMetadata
+                it[externalMetadataColumn] = externalMetadata
                 it[updatedAtColumn] = dateProvider.getCurrentDateTime()
             }
 
         if (numberInserted != 1) {
             ExternalMetadataTable.insert {
-                it[accessionColumn] = submittedExternalMetadata.accession
-                it[versionColumn] = submittedExternalMetadata.version
+                it[accessionColumn] = accessionVersion.accession
+                it[versionColumn] = accessionVersion.version
                 it[updaterIdColumn] = externalMetadataUpdater
-                it[externalMetadataColumn] = submittedExternalMetadata.externalMetadata
+                it[externalMetadataColumn] = externalMetadata
                 it[updatedAtColumn] = dateProvider.getCurrentDateTime()
             }
+        }
+    }
+
+    private fun upsertAccessionExternalMetadata(
+        accession: Accession,
+        externalMetadata: MetadataMap,
+        externalMetadataUpdater: String,
+    ) {
+        val numberInserted =
+            AccessionExternalMetadataTable.update(
+                where = {
+                    (AccessionExternalMetadataTable.accessionColumn eq accession) and
+                        (AccessionExternalMetadataTable.updaterIdColumn eq externalMetadataUpdater)
+                },
+            ) {
+                it[accessionColumn] = accession
+                it[updaterIdColumn] = externalMetadataUpdater
+                it[externalMetadataColumn] = externalMetadata
+                it[updatedAtColumn] = dateProvider.getCurrentDateTime()
+            }
+
+        if (numberInserted != 1) {
+            AccessionExternalMetadataTable.insert {
+                it[accessionColumn] = accession
+                it[updaterIdColumn] = externalMetadataUpdater
+                it[externalMetadataColumn] = externalMetadata
+                it[updatedAtColumn] = dateProvider.getCurrentDateTime()
+            }
+        }
+    }
+
+    private fun throwIfAccessionHasNoReleasedVersion(accession: Accession) {
+        val hasReleasedVersion = SequenceEntriesView
+            .select(SequenceEntriesView.accessionColumn)
+            .where {
+                (SequenceEntriesView.accessionColumn eq accession) and
+                    (SequenceEntriesView.statusColumn eq Status.APPROVED_FOR_RELEASE.name)
+            }
+            .limit(1)
+            .any()
+
+        if (!hasReleasedVersion) {
+            throw UnprocessableEntityException(
+                "Accession $accession has no version in status ${Status.APPROVED_FOR_RELEASE}",
+            )
         }
     }
 

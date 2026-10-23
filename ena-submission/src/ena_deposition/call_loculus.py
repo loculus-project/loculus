@@ -90,11 +90,13 @@ def make_request(
 
 
 def submit_external_metadata(
-    external_metadata: dict[str, str],
+    external_metadata: list[dict[str, Any]],
     config: Config,
     organism: str,
 ) -> requests.Response:
-    """Submit metadata to Loculus."""
+    """Submit metadata to Loculus.
+    Each entry is sent as one NDJSON line. Entries without a `version` are accession-scoped,
+    i.e. apply to all versions of the accession."""
     logger.debug(
         f"Submitting external metadata for organism: {organism}, metadata: {external_metadata}"
     )
@@ -111,7 +113,7 @@ def submit_external_metadata(
         "Content-Type": "application/x-ndjson",
     }
 
-    data = json.dumps(external_metadata)
+    data = "\n".join(json.dumps(entry) for entry in external_metadata)
 
     response = make_request(HTTPMethod.POST, url, config, data=data, headers=headers, params=params)
 
