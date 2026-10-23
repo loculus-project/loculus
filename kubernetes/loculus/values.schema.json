@@ -1657,6 +1657,12 @@
         }
       }
     },
+    "allowLocalhostAuthRedirects": {
+      "groups": ["auth"],
+      "type": "boolean",
+      "default": false,
+      "description": "Allow exact http://localhost:3000/auth/callback and /logout redirects for local Astro development. Enable for previews or local development, not production. Independent of insecureCookies. Applies on realm creation; existing Keycloak realms require manual allowlist updates."
+    },
     "insecureCookies": {
       "groups": ["auth"],
       "type": "boolean",
