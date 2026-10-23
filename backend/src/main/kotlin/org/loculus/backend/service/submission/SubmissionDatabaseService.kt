@@ -24,7 +24,6 @@ import org.jetbrains.exposed.v1.core.booleanParam
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.greaterEq
 import org.jetbrains.exposed.v1.core.inList
-import org.jetbrains.exposed.v1.core.isNotNull
 import org.jetbrains.exposed.v1.core.less
 import org.jetbrains.exposed.v1.core.lessEq
 import org.jetbrains.exposed.v1.core.longParam
@@ -36,7 +35,6 @@ import org.jetbrains.exposed.v1.core.plus
 import org.jetbrains.exposed.v1.core.statements.StatementType
 import org.jetbrains.exposed.v1.core.stringLiteral
 import org.jetbrains.exposed.v1.core.stringParam
-import org.jetbrains.exposed.v1.core.vendors.ForUpdateOption.PostgreSQL.ForKeyShare
 import org.jetbrains.exposed.v1.core.vendors.ForUpdateOption.PostgreSQL.ForUpdate
 import org.jetbrains.exposed.v1.core.vendors.ForUpdateOption.PostgreSQL.MODE
 import org.jetbrains.exposed.v1.datetime.KotlinLocalDateTimeColumnType
@@ -240,27 +238,6 @@ class SubmissionDatabaseService(
             },
         ) {
             it[initializedAtColumn] = dateProvider.getCurrentDateTime()
-        }
-    }
-
-    // Queues entries that missed the enqueue at submission, e.g. ones a backend from before the queue
-    // accepted during a rolling deploy. Versions whose backfill has not finished are left to the backfill.
-    fun enqueueMissingPreprocessingEntries() {
-        val queueVersions = PreprocessingQueueVersionsTable
-        // Retiring a version deletes its row and waits for this lock, so nothing is queued for it afterwards.
-        val versions = queueVersions
-            .select(queueVersions.organismColumn, queueVersions.pipelineVersionColumn)
-            .where { queueVersions.initializedAtColumn.isNotNull() }
-            .forUpdate(ForKeyShare())
-            .map { it[queueVersions.organismColumn] to it[queueVersions.pipelineVersionColumn] }
-
-        versions.forEach { (organism, pipelineVersion) ->
-            val queued = enqueueEntriesWithoutQueueRow(organism, pipelineVersion)
-            if (queued > 0) {
-                log.warn {
-                    "Queued $queued entries of $organism that were missing for pipeline version $pipelineVersion"
-                }
-            }
         }
     }
 
