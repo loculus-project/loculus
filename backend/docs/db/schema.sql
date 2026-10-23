@@ -40,40 +40,6 @@ $$;
 ALTER FUNCTION public.create_update_trigger_for_table(table_name text) OWNER TO postgres;
 
 --
--- Name: enqueue_new_sequence_entries_for_preprocessing(); Type: FUNCTION; Schema: public; Owner: postgres
---
-
-CREATE FUNCTION public.enqueue_new_sequence_entries_for_preprocessing() RETURNS trigger
-    LANGUAGE plpgsql
-    AS $$
-BEGIN
-    INSERT INTO sequence_entries_preprocessed_data (
-        accession,
-        version,
-        pipeline_version,
-        organism,
-        processing_status
-    )
-    SELECT
-        new_rows.accession,
-        new_rows.version,
-        qv.pipeline_version,
-        new_rows.organism,
-        'UNPROCESSED'
-    FROM new_rows
-    JOIN preprocessing_queue_versions qv
-      ON qv.organism = new_rows.organism
-    WHERE NOT new_rows.is_revocation
-    ON CONFLICT (accession, version, pipeline_version) DO NOTHING;
-
-    RETURN NULL;
-END;
-$$;
-
-
-ALTER FUNCTION public.enqueue_new_sequence_entries_for_preprocessing() OWNER TO postgres;
-
---
 -- Name: jsonb_concat(jsonb, jsonb); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -1126,13 +1092,6 @@ CREATE INDEX sequence_entries_submitter_idx ON public.sequence_entries USING btr
 --
 
 CREATE INDEX user_groups_table_user_name_idx ON public.user_groups_table USING btree (user_name);
-
-
---
--- Name: sequence_entries enqueue_new_sequence_entries_for_preprocessing; Type: TRIGGER; Schema: public; Owner: postgres
---
-
-CREATE TRIGGER enqueue_new_sequence_entries_for_preprocessing AFTER INSERT ON public.sequence_entries REFERENCING NEW TABLE AS new_rows FOR EACH STATEMENT EXECUTE FUNCTION public.enqueue_new_sequence_entries_for_preprocessing();
 
 
 --
