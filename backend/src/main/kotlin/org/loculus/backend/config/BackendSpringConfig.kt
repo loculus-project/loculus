@@ -6,6 +6,8 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import io.swagger.v3.oas.models.headers.Header
 import io.swagger.v3.oas.models.media.StringSchema
 import io.swagger.v3.oas.models.parameters.HeaderParameter
+import java.io.File
+import javax.sql.DataSource
 import org.flywaydb.core.Flyway
 import org.jetbrains.exposed.v1.core.DatabaseConfig
 import org.jetbrains.exposed.v1.core.Slf4jSqlDebugLogger
@@ -29,8 +31,6 @@ import org.springframework.context.annotation.Profile
 import org.springframework.scheduling.annotation.EnableScheduling
 import org.springframework.stereotype.Component
 import org.springframework.web.filter.CommonsRequestLoggingFilter
-import java.io.File
-import javax.sql.DataSource
 
 object BackendSpringProperty {
     const val BACKEND_CONFIG_PATH = "loculus.config.path"
@@ -38,6 +38,8 @@ object BackendSpringProperty {
     const val CLEAN_UP_RUN_EVERY_SECONDS = "loculus.cleanup.task.run-every-seconds"
     const val PIPELINE_VERSION_UPGRADE_CHECK_INTERVAL_SECONDS =
         "loculus.pipeline-version-upgrade-check.interval-seconds"
+    const val ENQUEUE_MISSING_PREPROCESSING_ENTRIES_EVERY_SECONDS =
+        "loculus.preprocessing-queue.enqueue-missing-every-seconds"
     const val STREAM_BATCH_SIZE = "loculus.stream.batch-size"
     const val DEBUG_MODE = "loculus.debug-mode"
     const val ENABLE_SEQSETS = "loculus.enable-seqsets"

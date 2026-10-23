@@ -30,15 +30,19 @@ import org.jetbrains.exposed.v1.core.booleanParam
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.greaterEq
 import org.jetbrains.exposed.v1.core.inList
+import org.jetbrains.exposed.v1.core.isNotNull
 import org.jetbrains.exposed.v1.core.less
 import org.jetbrains.exposed.v1.core.lessEq
+import org.jetbrains.exposed.v1.core.longParam
 import org.jetbrains.exposed.v1.core.max
 import org.jetbrains.exposed.v1.core.not
+import org.jetbrains.exposed.v1.core.notExists
 import org.jetbrains.exposed.v1.core.or
 import org.jetbrains.exposed.v1.core.plus
 import org.jetbrains.exposed.v1.core.statements.StatementType
 import org.jetbrains.exposed.v1.core.stringLiteral
 import org.jetbrains.exposed.v1.core.stringParam
+import org.jetbrains.exposed.v1.core.vendors.ForUpdateOption.PostgreSQL.ForKeyShare
 import org.jetbrains.exposed.v1.core.vendors.ForUpdateOption.PostgreSQL.ForUpdate
 import org.jetbrains.exposed.v1.core.vendors.ForUpdateOption.PostgreSQL.MODE
 import org.jetbrains.exposed.v1.datetime.KotlinLocalDateTimeColumnType
@@ -205,7 +209,7 @@ class SubmissionDatabaseService(
             }
         }
 
-        // Blocks concurrent inserts, so every entry is either seen by the backfill or queued by the trigger.
+        // Blocks concurrent inserts, so every entry is either seen by the backfill or queued by its submission.
         TransactionManager.current().exec("LOCK TABLE sequence_entries IN SHARE ROW EXCLUSIVE MODE")
         val currentPipelineVersion = getCurrentProcessingPipelineVersion(organism)
         if (pipelineVersion < currentPipelineVersion) {
@@ -239,22 +243,7 @@ class SubmissionDatabaseService(
             return
         }
 
-        TransactionManager.current().exec(
-            """
-            INSERT INTO $SEQUENCE_ENTRIES_PREPROCESSED_DATA_TABLE_NAME (
-                accession, version, pipeline_version, organism, processing_status
-            )
-            SELECT accession, version, ?, organism, '${UNPROCESSED.name}'
-            FROM sequence_entries
-            WHERE organism = ? AND NOT is_revocation
-            ON CONFLICT (accession, version, pipeline_version) DO NOTHING
-            """.trimIndent(),
-            args = listOf(
-                LongColumnType() to pipelineVersion,
-                VarCharColumnType() to organism.name,
-            ),
-            explicitStatementType = StatementType.INSERT,
-        )
+        enqueueEntriesWithoutQueueRow(organism.name, pipelineVersion)
         queueVersions.update(
             where = {
                 (queueVersions.organismColumn eq organism.name) and
@@ -263,6 +252,62 @@ class SubmissionDatabaseService(
         ) {
             it[initializedAtColumn] = dateProvider.getCurrentDateTime()
         }
+    }
+
+    // Queues entries that missed the enqueue at submission, e.g. ones a backend from before the queue
+    // accepted during a rolling deploy. Versions whose backfill has not finished are left to the backfill.
+    fun enqueueMissingPreprocessingEntries() {
+        val queueVersions = PreprocessingQueueVersionsTable
+        // Retiring a version deletes its row and waits for this lock, so nothing is queued for it afterwards.
+        val versions = queueVersions
+            .select(queueVersions.organismColumn, queueVersions.pipelineVersionColumn)
+            .where { queueVersions.initializedAtColumn.isNotNull() }
+            .forUpdate(ForKeyShare())
+            .map { it[queueVersions.organismColumn] to it[queueVersions.pipelineVersionColumn] }
+
+        versions.forEach { (organism, pipelineVersion) ->
+            val queued = enqueueEntriesWithoutQueueRow(organism, pipelineVersion)
+            if (queued > 0) {
+                log.warn {
+                    "Queued $queued entries of $organism that were missing for pipeline version $pipelineVersion"
+                }
+            }
+        }
+    }
+
+    // Revocations are not preprocessed.
+    private fun enqueueEntriesWithoutQueueRow(organism: String, pipelineVersion: Long): Int {
+        val table = SequenceEntriesTable
+        val queue = SequenceEntriesPreprocessedDataTable
+        val missingEntries = table
+            .select(
+                table.accessionColumn,
+                table.versionColumn,
+                longParam(pipelineVersion),
+                table.organismColumn,
+                stringLiteral(UNPROCESSED.name),
+            )
+            .where {
+                (table.organismColumn eq organism) and
+                    not(table.isRevocationColumn) and
+                    notExists(
+                        queue.select(queue.accessionColumn).where {
+                            (queue.accessionColumn eq table.accessionColumn) and
+                                (queue.versionColumn eq table.versionColumn) and
+                                (queue.pipelineVersionColumn eq pipelineVersion)
+                        },
+                    )
+            }
+        return queue.insertIgnore(
+            missingEntries,
+            columns = listOf(
+                queue.accessionColumn,
+                queue.versionColumn,
+                queue.pipelineVersionColumn,
+                queue.organismColumn,
+                queue.processingStatusColumn,
+            ),
+        ) ?: 0
     }
 
     private fun fetchUnprocessedEntriesAndUpdateToInProcessing(
@@ -1703,7 +1748,7 @@ class SubmissionDatabaseService(
     fun cleanUpOutdatedPreprocessingData(organism: String, earliestVersionToKeep: Long) {
         transaction {
             SequenceEntriesPreprocessedDataTable.deleteWhere {
-                (organismColumn eq organism) and (pipelineVersionColumn less earliestVersionToKeep)
+                (pipelineVersionColumn less earliestVersionToKeep) and (organismColumn eq organism)
             }
         }
     }
