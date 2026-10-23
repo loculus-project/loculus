@@ -7,6 +7,7 @@ import io.jsonwebtoken.Jwts
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.loculus.backend.controller.TEST_TOKEN_ISSUER
@@ -30,19 +31,19 @@ class SecurityConfigTest {
     fun `startup rejects missing or blank issuer configuration`() {
         for (issuer in listOf(null, "", "   ")) {
             var context = ApplicationContextRunner()
-                .withUserConfiguration(AuthUrlIsPresentGuard::class.java)
+                .withUserConfiguration(JwtConfigIsPresentGuard::class.java)
                 .withPropertyValues("$propertyPrefix.jwk-set-uri=http://internal.example/certs")
             if (issuer != null) context = context.withPropertyValues("$propertyPrefix.issuer-uri=$issuer")
-            context.run { assertNotNull(it.startupFailure) }
+            context.run { assertMissingProperty(it.startupFailure, "$propertyPrefix.issuer-uri") }
         }
     }
 
     @Test
     fun `startup still requires a signing key URL`() {
         ApplicationContextRunner()
-            .withUserConfiguration(AuthUrlIsPresentGuard::class.java)
+            .withUserConfiguration(JwtConfigIsPresentGuard::class.java)
             .withPropertyValues("$propertyPrefix.issuer-uri=$TEST_TOKEN_ISSUER")
-            .run { assertNotNull(it.startupFailure) }
+            .run { assertMissingProperty(it.startupFailure, "$propertyPrefix.jwk-set-uri") }
     }
 
     @Test
@@ -58,7 +59,7 @@ class SecurityConfigTest {
         try {
             ApplicationContextRunner()
                 .withConfiguration(AutoConfigurations.of(OAuth2ResourceServerAutoConfiguration::class.java))
-                .withUserConfiguration(AuthUrlIsPresentGuard::class.java)
+                .withUserConfiguration(JwtConfigIsPresentGuard::class.java)
                 .withPropertyValues(
                     "$propertyPrefix.issuer-uri=$TEST_TOKEN_ISSUER",
                     "$propertyPrefix.jwk-set-uri=http://127.0.0.1:${server.address.port}/certs",
@@ -89,6 +90,16 @@ class SecurityConfigTest {
         } finally {
             server.stop(0)
         }
+    }
+
+    private fun assertMissingProperty(failure: Throwable?, property: String) {
+        assertNotNull(failure)
+        assertTrue(
+            generateSequence(failure) { it.cause }.any {
+                it is IllegalStateException && it.message?.startsWith("Missing required property '$property'.") == true
+            },
+            "Expected startup to fail because '$property' is missing; got $failure",
+        )
     }
 
     private fun token(

@@ -189,13 +189,13 @@ private const val AUTH_URL_PROPERTY = "spring.security.oauth2.resourceserver.jwt
 private const val AUTH_ISSUER_PROPERTY = "spring.security.oauth2.resourceserver.jwt.issuer-uri"
 
 @Component
-class AuthUrlIsPresentGuard(
-    @Value("\${$AUTH_URL_PROPERTY:#{null}}") private val authUrlProperty: String?,
+class JwtConfigIsPresentGuard(
+    @Value("\${$AUTH_URL_PROPERTY:#{null}}") private val jwkSetUri: String?,
     @Value("\${$AUTH_ISSUER_PROPERTY:#{null}}") private val issuerUri: String?,
 ) : InitializingBean {
 
     override fun afterPropertiesSet() {
-        if (authUrlProperty.isNullOrBlank()) {
+        if (jwkSetUri.isNullOrBlank()) {
             throw IllegalStateException(
                 "Missing required property '$AUTH_URL_PROPERTY'. Please set it when starting the application.",
             )
