@@ -4,6 +4,7 @@ import DataTable from './DataTable';
 import { SequenceManagement } from './SequenceManagement.tsx';
 import { SequencesContainer } from './SequencesDisplay/SequencesContainer.tsx';
 import { getDataTableData } from './getDataTableData';
+import { isRestrictedUse } from './isRestrictedUse';
 import { type SequenceData } from './types';
 import { getGitHubReportUrl } from '../../config.ts';
 import {
@@ -72,8 +73,7 @@ export const SequenceDataUI: FC<Props> = ({
 }: Props) => {
     const { tableData, dataUseTermsHistory, segmentReferences, sequenceEntryHistory, isRevocation } = sequenceData;
 
-    const dataUseTerms = tableData.find((entry) => entry.name === DATA_USE_TERMS_FIELD);
-    const isRestricted = dataUseTerms?.value.toString().toUpperCase() === 'RESTRICTED';
+    const isRestricted = isRestrictedUse(tableData);
 
     const dataTableData = getDataTableData(
         isRevocation ? tableData.filter((entry) => REVOCATION_VERSION_FIELDS.includes(entry.name)) : tableData,
@@ -100,6 +100,7 @@ export const SequenceDataUI: FC<Props> = ({
                         clientConfig={clientConfig}
                         referenceGenomesInfo={referenceGenomesInfo}
                         loadSequencesAutomatically={!!schema.loadSequencesAutomatically}
+                        isRestricted={isRestricted}
                     />
                 </div>
             )}
