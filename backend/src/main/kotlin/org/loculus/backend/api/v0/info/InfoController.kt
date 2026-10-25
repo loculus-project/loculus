@@ -1,15 +1,14 @@
-package org.loculus.backend.api.v0
+package org.loculus.backend.api.v0.info
 
 import io.swagger.v3.oas.annotations.Hidden
 import jakarta.servlet.http.HttpServletRequest
 import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.config.DEBUG_MODE_ON_VALUE
+import org.loculus.backend.config.PROJECT_NAME
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.MediaType
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
-
-const val PROJECT_NAME = "Loculus"
 
 @Hidden
 @RestController
