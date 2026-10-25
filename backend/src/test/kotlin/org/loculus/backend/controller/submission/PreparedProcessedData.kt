@@ -5,17 +5,17 @@ import com.fasterxml.jackson.databind.node.DoubleNode
 import com.fasterxml.jackson.databind.node.IntNode
 import com.fasterxml.jackson.databind.node.NullNode
 import com.fasterxml.jackson.databind.node.TextNode
-import org.loculus.backend.api.FileCategoryFilesMap
-import org.loculus.backend.api.GeneName
-import org.loculus.backend.api.GeneticSequence
-import org.loculus.backend.api.Insertion
-import org.loculus.backend.api.PreprocessingAnnotation
-import org.loculus.backend.api.PreprocessingAnnotationSource
-import org.loculus.backend.api.PreprocessingAnnotationSourceType
-import org.loculus.backend.api.ProcessedData
-import org.loculus.backend.api.SegmentName
-import org.loculus.backend.api.SubmittedProcessedData
 import org.loculus.backend.controller.DUMMY_ORGANISM_MAIN_SEQUENCE
+import org.loculus.backend.types.FileCategoryFilesMap
+import org.loculus.backend.types.GeneName
+import org.loculus.backend.types.GeneticSequence
+import org.loculus.backend.types.Insertion
+import org.loculus.backend.types.PreprocessingAnnotation
+import org.loculus.backend.types.PreprocessingAnnotationSource
+import org.loculus.backend.types.PreprocessingAnnotationSourceType
+import org.loculus.backend.types.ProcessedData
+import org.loculus.backend.types.SegmentName
+import org.loculus.backend.types.SubmittedProcessedData
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.Version
 

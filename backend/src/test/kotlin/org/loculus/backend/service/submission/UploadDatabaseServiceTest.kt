@@ -12,9 +12,6 @@ import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
-import org.loculus.backend.api.DataUseTerms
-import org.loculus.backend.api.DataUseTermsType
-import org.loculus.backend.api.Organism
 import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.controller.DEFAULT_GROUP
 import org.loculus.backend.controller.DEFAULT_ORGANISM
@@ -25,6 +22,9 @@ import org.loculus.backend.service.datauseterms.DATA_USE_TERMS_TABLE_NAME
 import org.loculus.backend.service.datauseterms.DataUseTermsDatabaseService
 import org.loculus.backend.service.datauseterms.DataUseTermsTable
 import org.loculus.backend.service.groupmanagement.GroupManagementDatabaseService
+import org.loculus.backend.types.DataUseTerms
+import org.loculus.backend.types.DataUseTermsType
+import org.loculus.backend.types.Organism
 import org.loculus.backend.utils.DateProvider
 import org.loculus.backend.utils.MetadataEntry
 import org.springframework.beans.factory.annotation.Autowired

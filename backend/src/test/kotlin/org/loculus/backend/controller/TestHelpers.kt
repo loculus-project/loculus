@@ -14,11 +14,11 @@ import org.hamcrest.Matchers.containsInAnyOrder
 import org.hamcrest.Matchers.hasEntry
 import org.hamcrest.Matchers.`is`
 import org.hamcrest.Matchers.not
-import org.loculus.backend.api.AccessionVersion
-import org.loculus.backend.api.AccessionVersionInterface
-import org.loculus.backend.api.ProcessingResult
-import org.loculus.backend.api.SequenceEntryStatus
-import org.loculus.backend.api.Status
+import org.loculus.backend.types.AccessionVersion
+import org.loculus.backend.types.AccessionVersionInterface
+import org.loculus.backend.types.ProcessingResult
+import org.loculus.backend.types.SequenceEntryStatus
+import org.loculus.backend.types.Status
 import org.loculus.backend.utils.DateProvider
 import org.springframework.test.web.servlet.MvcResult
 import org.springframework.test.web.servlet.ResultActions

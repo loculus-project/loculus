@@ -13,10 +13,6 @@ import org.jetbrains.exposed.v1.jdbc.batchInsert
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
-import org.loculus.backend.api.Organism
-import org.loculus.backend.api.Status
-import org.loculus.backend.api.SubmissionIdFilesMap
-import org.loculus.backend.api.SubmissionIdMapping
 import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.controller.UnprocessableEntityException
 import org.loculus.backend.log.AuditLogger
@@ -39,6 +35,10 @@ import org.loculus.backend.service.submission.MetadataUploadAuxTable.uploadedAtC
 import org.loculus.backend.service.submission.SequenceUploadAuxTable.compressedSequenceDataColumn
 import org.loculus.backend.service.submission.SequenceUploadAuxTable.fastaIdColumn
 import org.loculus.backend.service.submission.SequenceUploadAuxTable.sequenceUploadIdColumn
+import org.loculus.backend.types.Organism
+import org.loculus.backend.types.Status
+import org.loculus.backend.types.SubmissionIdFilesMap
+import org.loculus.backend.types.SubmissionIdMapping
 import org.loculus.backend.utils.DatabaseConstants
 import org.loculus.backend.utils.FastaEntry
 import org.loculus.backend.utils.MetadataEntry

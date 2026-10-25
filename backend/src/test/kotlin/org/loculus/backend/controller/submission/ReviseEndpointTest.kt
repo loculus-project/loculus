@@ -11,12 +11,6 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
-import org.loculus.backend.api.FileIdAndEtags
-import org.loculus.backend.api.FileIdAndName
-import org.loculus.backend.api.Status.APPROVED_FOR_RELEASE
-import org.loculus.backend.api.Status.PROCESSED
-import org.loculus.backend.api.Status.RECEIVED
-import org.loculus.backend.api.UnprocessedData
 import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.controller.DEFAULT_MULTIPART_FILE_PARTS
 import org.loculus.backend.controller.DEFAULT_ORGANISM
@@ -45,6 +39,12 @@ import org.loculus.backend.model.SubmitModel.AcceptedFileTypes.sequenceFileTypes
 import org.loculus.backend.model.SubmitModel.ValidExtension
 import org.loculus.backend.service.files.dummyFileId
 import org.loculus.backend.service.submission.CompressionAlgorithm
+import org.loculus.backend.types.FileIdAndEtags
+import org.loculus.backend.types.FileIdAndName
+import org.loculus.backend.types.Status.APPROVED_FOR_RELEASE
+import org.loculus.backend.types.Status.PROCESSED
+import org.loculus.backend.types.Status.RECEIVED
+import org.loculus.backend.types.UnprocessedData
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.http.MediaType.APPLICATION_JSON_VALUE

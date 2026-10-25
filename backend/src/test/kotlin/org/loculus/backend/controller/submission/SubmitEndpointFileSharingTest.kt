@@ -6,7 +6,6 @@ import org.hamcrest.Matchers.containsString
 import org.hamcrest.Matchers.`is`
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.loculus.backend.api.FileIdAndName
 import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.controller.DEFAULT_ORGANISM
@@ -24,6 +23,7 @@ import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles.NUMBER
 import org.loculus.backend.service.files.daysAgo
 import org.loculus.backend.service.files.dummyFileId
 import org.loculus.backend.service.files.insertFile
+import org.loculus.backend.types.FileIdAndName
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.http.MediaType.APPLICATION_JSON_VALUE

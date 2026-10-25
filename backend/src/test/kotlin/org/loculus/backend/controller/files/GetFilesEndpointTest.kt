@@ -5,7 +5,6 @@ import org.hamcrest.Matchers.containsString
 import org.hamcrest.Matchers.`is`
 import org.hamcrest.Matchers.notNullValue
 import org.junit.jupiter.api.Test
-import org.loculus.backend.api.FileIdAndName
 import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.S3_CONFIG
@@ -14,6 +13,7 @@ import org.loculus.backend.controller.jwtForDefaultUser
 import org.loculus.backend.controller.submission.PreparedProcessedData
 import org.loculus.backend.controller.submission.SubmissionConvenienceClient
 import org.loculus.backend.controller.toAccessionVersion
+import org.loculus.backend.types.FileIdAndName
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MvcResult

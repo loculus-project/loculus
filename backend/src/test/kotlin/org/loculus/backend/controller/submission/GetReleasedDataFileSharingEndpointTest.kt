@@ -8,8 +8,6 @@ import org.hamcrest.Matchers.hasKey
 import org.hamcrest.Matchers.hasSize
 import org.hamcrest.Matchers.`is`
 import org.junit.jupiter.api.Test
-import org.loculus.backend.api.FileIdAndName
-import org.loculus.backend.api.ReleasedData
 import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.controller.DEFAULT_GROUP
 import org.loculus.backend.controller.EndpointTest
@@ -22,6 +20,8 @@ import org.loculus.backend.controller.groupmanagement.GroupManagementControllerC
 import org.loculus.backend.controller.groupmanagement.andGetGroupId
 import org.loculus.backend.controller.jwtForDefaultUser
 import org.loculus.backend.service.submission.SubmissionDatabaseService
+import org.loculus.backend.types.FileIdAndName
+import org.loculus.backend.types.ReleasedData
 import org.springframework.beans.factory.annotation.Autowired
 
 @EndpointTest(

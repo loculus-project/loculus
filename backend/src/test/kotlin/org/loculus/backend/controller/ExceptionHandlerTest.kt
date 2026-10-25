@@ -8,9 +8,9 @@ import org.hamcrest.Matchers.containsString
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.loculus.backend.SpringBootTestWithoutDatabase
-import org.loculus.backend.api.DataUseTermsType
-import org.loculus.backend.api.SubmissionIdMapping
 import org.loculus.backend.model.SubmitModel
+import org.loculus.backend.types.DataUseTermsType
+import org.loculus.backend.types.SubmissionIdMapping
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.http.MediaType

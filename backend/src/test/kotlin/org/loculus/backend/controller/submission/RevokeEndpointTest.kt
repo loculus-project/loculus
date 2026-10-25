@@ -2,8 +2,6 @@ package org.loculus.backend.controller.submission
 
 import org.hamcrest.Matchers.containsString
 import org.junit.jupiter.api.Test
-import org.loculus.backend.api.Status
-import org.loculus.backend.api.Status.PROCESSED
 import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.EndpointTest
@@ -18,6 +16,8 @@ import org.loculus.backend.controller.expectUnauthorizedResponse
 import org.loculus.backend.controller.generateJwtFor
 import org.loculus.backend.controller.jwtForSuperUser
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles
+import org.loculus.backend.types.Status
+import org.loculus.backend.types.Status.PROCESSED
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content

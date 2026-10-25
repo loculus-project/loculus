@@ -7,7 +7,6 @@ import org.hamcrest.Matchers.hasSize
 import org.hamcrest.Matchers.nullValue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
-import org.loculus.backend.api.FileIdAndName
 import org.loculus.backend.controller.UnprocessableEntityException
 import org.loculus.backend.model.ACCESSION_HEADER
 import org.loculus.backend.model.FASTA_IDS_HEADER
@@ -16,6 +15,7 @@ import org.loculus.backend.model.FILES_HEADER_PREFIX
 import org.loculus.backend.model.FILES_SEPARATOR
 import org.loculus.backend.model.FILE_NAME_ID_SEPARATOR
 import org.loculus.backend.service.files.dummyFileId
+import org.loculus.backend.types.FileIdAndName
 import java.io.ByteArrayInputStream
 
 class MetadataEntryTest {

@@ -4,9 +4,6 @@ import org.hamcrest.CoreMatchers.containsString
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
-import org.loculus.backend.api.DataUseTerms
-import org.loculus.backend.api.DataUseTermsChangeRequest
-import org.loculus.backend.api.DataUseTermsType
 import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.dateMonthsFromNow
@@ -14,6 +11,9 @@ import org.loculus.backend.controller.expectUnauthorizedResponse
 import org.loculus.backend.controller.generateJwtFor
 import org.loculus.backend.controller.jwtForSuperUser
 import org.loculus.backend.controller.submission.SubmissionConvenienceClient
+import org.loculus.backend.types.DataUseTerms
+import org.loculus.backend.types.DataUseTermsChangeRequest
+import org.loculus.backend.types.DataUseTermsType
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.ResultActions

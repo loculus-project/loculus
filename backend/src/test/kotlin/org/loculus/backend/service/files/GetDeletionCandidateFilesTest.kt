@@ -4,7 +4,6 @@ import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.`is`
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.loculus.backend.api.FileIdAndName
 import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.controller.DEFAULT_GROUP
 import org.loculus.backend.controller.EndpointTest
@@ -17,6 +16,7 @@ import org.loculus.backend.controller.submission.SubmissionConvenienceClient
 import org.loculus.backend.service.files.daysAgo
 import org.loculus.backend.service.files.insertFile
 import org.loculus.backend.service.submission.UseNewerProcessingPipelineVersionTask
+import org.loculus.backend.types.FileIdAndName
 import org.springframework.beans.factory.annotation.Autowired
 
 /**

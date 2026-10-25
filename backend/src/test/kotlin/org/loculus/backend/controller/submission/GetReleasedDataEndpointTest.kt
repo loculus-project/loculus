@@ -36,12 +36,6 @@ import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.keycloak.representations.idm.UserRepresentation
-import org.loculus.backend.api.AccessionVersionInterface
-import org.loculus.backend.api.DataUseTerms
-import org.loculus.backend.api.DataUseTermsChangeRequest
-import org.loculus.backend.api.ReleasedData
-import org.loculus.backend.api.Status
-import org.loculus.backend.api.VersionStatus
 import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.config.DataUseTermsUrls
@@ -67,6 +61,12 @@ import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles.NUMBER
 import org.loculus.backend.service.KeycloakAdapter
 import org.loculus.backend.service.submission.SequenceEntriesTable
 import org.loculus.backend.service.submission.SubmissionDatabaseService
+import org.loculus.backend.types.AccessionVersionInterface
+import org.loculus.backend.types.DataUseTerms
+import org.loculus.backend.types.DataUseTermsChangeRequest
+import org.loculus.backend.types.ReleasedData
+import org.loculus.backend.types.Status
+import org.loculus.backend.types.VersionStatus
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.DateProvider
 import org.loculus.backend.utils.Version

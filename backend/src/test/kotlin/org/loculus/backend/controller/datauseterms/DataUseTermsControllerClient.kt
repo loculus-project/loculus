@@ -1,10 +1,10 @@
 package org.loculus.backend.controller.datauseterms
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import org.loculus.backend.api.DataUseTerms
-import org.loculus.backend.api.DataUseTermsChangeRequest
 import org.loculus.backend.controller.jwtForDefaultUser
 import org.loculus.backend.controller.withAuth
+import org.loculus.backend.types.DataUseTerms
+import org.loculus.backend.types.DataUseTermsChangeRequest
 import org.loculus.backend.utils.Accession
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc

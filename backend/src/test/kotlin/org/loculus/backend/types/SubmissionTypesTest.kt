@@ -1,4 +1,4 @@
-package org.loculus.backend.api
+package org.loculus.backend.types
 
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.`is`

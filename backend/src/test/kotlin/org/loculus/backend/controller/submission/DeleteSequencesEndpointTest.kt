@@ -11,13 +11,6 @@ import org.hamcrest.Matchers.not
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
-import org.loculus.backend.api.AccessionVersion
-import org.loculus.backend.api.DeleteSequenceScope
-import org.loculus.backend.api.DeleteSequenceScope.ALL
-import org.loculus.backend.api.ProcessingResult
-import org.loculus.backend.api.SequenceEntryStatus
-import org.loculus.backend.api.Status
-import org.loculus.backend.api.Status.PROCESSED
 import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.EndpointTest
@@ -29,6 +22,13 @@ import org.loculus.backend.controller.jsonContainsAccessionVersionsInAnyOrder
 import org.loculus.backend.controller.jwtForSuperUser
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES
 import org.loculus.backend.controller.toAccessionVersion
+import org.loculus.backend.types.AccessionVersion
+import org.loculus.backend.types.DeleteSequenceScope
+import org.loculus.backend.types.DeleteSequenceScope.ALL
+import org.loculus.backend.types.ProcessingResult
+import org.loculus.backend.types.SequenceEntryStatus
+import org.loculus.backend.types.Status
+import org.loculus.backend.types.Status.PROCESSED
 import org.loculus.backend.utils.AccessionVersionComparator
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType

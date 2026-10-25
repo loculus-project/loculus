@@ -21,13 +21,6 @@ import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.junit.jupiter.api.Test
-import org.loculus.backend.api.FileIdAndNameAndReadUrl
-import org.loculus.backend.api.GeneticSequence
-import org.loculus.backend.api.Status.IN_PROCESSING
-import org.loculus.backend.api.Status.RECEIVED
-import org.loculus.backend.api.SubmittedContentWithFileUrls
-import org.loculus.backend.api.SubmittedData
-import org.loculus.backend.api.UnprocessedData
 import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.DEFAULT_PIPELINE_VERSION
@@ -45,6 +38,13 @@ import org.loculus.backend.controller.getAccessionVersions
 import org.loculus.backend.controller.jwtForDefaultUser
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles
 import org.loculus.backend.service.submission.SequenceEntriesPreprocessedDataTable
+import org.loculus.backend.types.FileIdAndNameAndReadUrl
+import org.loculus.backend.types.GeneticSequence
+import org.loculus.backend.types.Status.IN_PROCESSING
+import org.loculus.backend.types.Status.RECEIVED
+import org.loculus.backend.types.SubmittedContentWithFileUrls
+import org.loculus.backend.types.SubmittedData
+import org.loculus.backend.types.UnprocessedData
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpHeaders.ETAG
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.header

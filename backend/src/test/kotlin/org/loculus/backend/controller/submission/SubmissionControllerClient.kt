@@ -1,16 +1,6 @@
 package org.loculus.backend.controller.submission
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import org.loculus.backend.api.AccessionVersion
-import org.loculus.backend.api.AccessionVersionInterface
-import org.loculus.backend.api.ApproveDataScope
-import org.loculus.backend.api.DataUseTerms
-import org.loculus.backend.api.DeleteSequenceScope
-import org.loculus.backend.api.EditedSequenceEntryData
-import org.loculus.backend.api.ExternalSubmittedData
-import org.loculus.backend.api.ProcessingResult
-import org.loculus.backend.api.Status
-import org.loculus.backend.api.SubmittedProcessedData
 import org.loculus.backend.controller.DEFAULT_EXTERNAL_METADATA_UPDATER
 import org.loculus.backend.controller.DEFAULT_GROUP_NAME
 import org.loculus.backend.controller.DEFAULT_ORGANISM
@@ -21,6 +11,16 @@ import org.loculus.backend.controller.jwtForExternalMetadataUpdatePipeline
 import org.loculus.backend.controller.jwtForProcessingPipeline
 import org.loculus.backend.controller.paramIfPresent
 import org.loculus.backend.controller.withAuth
+import org.loculus.backend.types.AccessionVersion
+import org.loculus.backend.types.AccessionVersionInterface
+import org.loculus.backend.types.ApproveDataScope
+import org.loculus.backend.types.DataUseTerms
+import org.loculus.backend.types.DeleteSequenceScope
+import org.loculus.backend.types.EditedSequenceEntryData
+import org.loculus.backend.types.ExternalSubmittedData
+import org.loculus.backend.types.ProcessingResult
+import org.loculus.backend.types.Status
+import org.loculus.backend.types.SubmittedProcessedData
 import org.loculus.backend.utils.Accession
 import org.springframework.http.MediaType
 import org.springframework.mock.web.MockMultipartFile

@@ -14,11 +14,6 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
-import org.loculus.backend.api.AccessionVersion
-import org.loculus.backend.api.EditedSequenceEntryData
-import org.loculus.backend.api.FileIdAndName
-import org.loculus.backend.api.Status
-import org.loculus.backend.api.SubmittedData
 import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.controller.DEFAULT_SIMPLE_FILE_CONTENT
 import org.loculus.backend.controller.DEFAULT_USER_NAME
@@ -38,6 +33,11 @@ import org.loculus.backend.controller.groupmanagement.andGetGroupId
 import org.loculus.backend.controller.jwtForSuperUser
 import org.loculus.backend.service.files.dummyFileId
 import org.loculus.backend.service.submission.SequenceEntriesTable
+import org.loculus.backend.types.AccessionVersion
+import org.loculus.backend.types.EditedSequenceEntryData
+import org.loculus.backend.types.FileIdAndName
+import org.loculus.backend.types.Status
+import org.loculus.backend.types.SubmittedData
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status

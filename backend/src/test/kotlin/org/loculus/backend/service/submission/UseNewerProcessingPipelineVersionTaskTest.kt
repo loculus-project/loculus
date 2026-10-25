@@ -9,7 +9,6 @@ import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.junit.jupiter.api.Test
-import org.loculus.backend.api.Organism
 import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.ORGANISM_WITHOUT_CONSENSUS_SEQUENCES
@@ -19,6 +18,7 @@ import org.loculus.backend.controller.submission.SubmissionControllerClient
 import org.loculus.backend.controller.submission.SubmissionConvenienceClient
 import org.loculus.backend.service.scheduler.TASK_LOCK_TABLE_NAME
 import org.loculus.backend.service.submission.dbtables.CurrentProcessingPipelineTable
+import org.loculus.backend.types.Organism
 import org.loculus.backend.utils.DateProvider
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status

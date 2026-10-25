@@ -3,8 +3,6 @@ package org.loculus.backend.controller.submission
 import org.hamcrest.Matchers.containsString
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.loculus.backend.api.FileIdAndEtags
-import org.loculus.backend.api.FileIdAndName
 import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.controller.DEFAULT_MULTIPART_FILE_PARTS
@@ -17,6 +15,8 @@ import org.loculus.backend.controller.groupmanagement.GroupManagementControllerC
 import org.loculus.backend.controller.groupmanagement.andGetGroupId
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES
+import org.loculus.backend.types.FileIdAndEtags
+import org.loculus.backend.types.FileIdAndName
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType.APPLICATION_JSON_VALUE
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content

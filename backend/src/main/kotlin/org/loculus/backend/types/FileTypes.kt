@@ -1,7 +1,7 @@
 /*
  * Includes API data classes that are used for the file sharing feature.
  */
-package org.loculus.backend.api
+package org.loculus.backend.types
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import io.swagger.v3.oas.annotations.media.Schema

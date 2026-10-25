@@ -12,9 +12,6 @@ import org.hamcrest.Matchers.greaterThan
 import org.hamcrest.Matchers.hasSize
 import org.hamcrest.Matchers.not
 import org.junit.jupiter.api.Test
-import org.loculus.backend.api.AccessionVersionSubmittedMetadata
-import org.loculus.backend.api.Organism
-import org.loculus.backend.api.Status
 import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.DEFAULT_USER_NAME
@@ -27,6 +24,9 @@ import org.loculus.backend.controller.groupmanagement.andGetGroupId
 import org.loculus.backend.controller.jacksonObjectMapper
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles
 import org.loculus.backend.service.submission.UploadDatabaseService
+import org.loculus.backend.types.AccessionVersionSubmittedMetadata
+import org.loculus.backend.types.Organism
+import org.loculus.backend.types.Status
 import org.loculus.backend.utils.MetadataEntry
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpHeaders

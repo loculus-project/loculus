@@ -14,8 +14,6 @@ import org.hamcrest.Matchers.matchesPattern
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.keycloak.representations.idm.UserRepresentation
-import org.loculus.backend.api.GeneticSequence
-import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.controller.DATA_USE_TERMS_DISABLED_CONFIG
@@ -31,6 +29,8 @@ import org.loculus.backend.controller.groupmanagement.andGetGroupId
 import org.loculus.backend.controller.jwtForDefaultUser
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES
 import org.loculus.backend.service.KeycloakAdapter
+import org.loculus.backend.types.GeneticSequence
+import org.loculus.backend.types.ProcessedData
 import org.loculus.backend.utils.DateProvider
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.header

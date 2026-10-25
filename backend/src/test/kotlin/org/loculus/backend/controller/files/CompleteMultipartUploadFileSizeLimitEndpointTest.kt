@@ -8,7 +8,6 @@ import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.loculus.backend.api.FileIdAndEtags
 import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.config.readBackendConfig
@@ -22,6 +21,7 @@ import org.loculus.backend.controller.jwtForDefaultUser
 import org.loculus.backend.controller.submission.SubmissionConvenienceClient
 import org.loculus.backend.service.files.FilesDatabaseService
 import org.loculus.backend.service.files.S3Service
+import org.loculus.backend.types.FileIdAndEtags
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.test.context.TestConfiguration

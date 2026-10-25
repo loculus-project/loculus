@@ -3,13 +3,13 @@ package org.loculus.backend.controller
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
-import org.loculus.backend.api.Group
-import org.loculus.backend.api.GroupDetails
-import org.loculus.backend.api.NewGroup
 import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.auth.HiddenParam
 import org.loculus.backend.auth.User
 import org.loculus.backend.service.groupmanagement.GroupManagementDatabaseService
+import org.loculus.backend.types.Group
+import org.loculus.backend.types.GroupDetails
+import org.loculus.backend.types.NewGroup
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.web.bind.annotation.DeleteMapping

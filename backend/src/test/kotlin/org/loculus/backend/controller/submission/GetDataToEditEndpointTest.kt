@@ -4,7 +4,6 @@ import org.hamcrest.CoreMatchers.containsString
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.jupiter.api.Test
-import org.loculus.backend.api.Status
 import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.EndpointTest
@@ -14,6 +13,7 @@ import org.loculus.backend.controller.assertStatusIs
 import org.loculus.backend.controller.expectUnauthorizedResponse
 import org.loculus.backend.controller.generateJwtFor
 import org.loculus.backend.controller.jwtForSuperUser
+import org.loculus.backend.types.Status
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content

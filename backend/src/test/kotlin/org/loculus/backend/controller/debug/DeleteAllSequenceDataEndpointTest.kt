@@ -10,10 +10,6 @@ import org.hamcrest.Matchers.hasSize
 import org.hamcrest.Matchers.`is`
 import org.hamcrest.Matchers.not
 import org.junit.jupiter.api.Test
-import org.loculus.backend.api.DataUseTerms
-import org.loculus.backend.api.DataUseTermsChangeRequest
-import org.loculus.backend.api.DeleteSequenceScope
-import org.loculus.backend.api.Status
 import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.EndpointTest
@@ -28,6 +24,10 @@ import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles.NUMBER
 import org.loculus.backend.controller.withAuth
 import org.loculus.backend.service.submission.SubmissionDatabaseService
 import org.loculus.backend.service.submission.UseNewerProcessingPipelineVersionTask
+import org.loculus.backend.types.DataUseTerms
+import org.loculus.backend.types.DataUseTermsChangeRequest
+import org.loculus.backend.types.DeleteSequenceScope
+import org.loculus.backend.types.Status
 import org.loculus.backend.utils.DateProvider
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.web.servlet.MockMvc

@@ -3,7 +3,6 @@ package org.loculus.backend.controller.files
 import org.hamcrest.CoreMatchers.containsString
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.loculus.backend.api.FileIdAndEtags
 import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.controller.DEFAULT_GROUP
 import org.loculus.backend.controller.DEFAULT_MULTIPART_FILE_PARTS
@@ -13,6 +12,7 @@ import org.loculus.backend.controller.groupmanagement.GroupManagementControllerC
 import org.loculus.backend.controller.groupmanagement.andGetGroupId
 import org.loculus.backend.controller.jwtForDefaultUser
 import org.loculus.backend.controller.submission.SubmissionConvenienceClient
+import org.loculus.backend.types.FileIdAndEtags
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status

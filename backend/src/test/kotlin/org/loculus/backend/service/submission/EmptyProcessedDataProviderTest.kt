@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.node.NullNode
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.jupiter.api.Test
-import org.loculus.backend.api.Organism
 import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.config.DataUseTerms
 import org.loculus.backend.config.InstanceConfig
@@ -14,6 +13,7 @@ import org.loculus.backend.config.ReferenceGenome
 import org.loculus.backend.config.ReferenceSequence
 import org.loculus.backend.config.Schema
 import org.loculus.backend.controller.DEFAULT_ORGANISM
+import org.loculus.backend.types.Organism
 
 private const val FIRST_METADATA_FIELD = "required"
 private const val SECOND_METADATA_FIELD = "notRequired"

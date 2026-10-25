@@ -7,13 +7,13 @@ import org.hamcrest.Matchers.equalTo
 import org.hamcrest.Matchers.hasEntry
 import org.hamcrest.Matchers.notNullValue
 import org.junit.jupiter.api.Test
-import org.loculus.backend.api.GeneticSequence
-import org.loculus.backend.api.ProcessedData
-import org.loculus.backend.api.Status
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.expectForbiddenResponse
 import org.loculus.backend.controller.expectUnauthorizedResponse
 import org.loculus.backend.controller.jwtForDefaultUser
+import org.loculus.backend.types.GeneticSequence
+import org.loculus.backend.types.ProcessedData
+import org.loculus.backend.types.Status
 import org.loculus.backend.utils.Accession
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType

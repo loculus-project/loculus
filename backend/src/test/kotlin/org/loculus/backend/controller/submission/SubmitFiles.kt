@@ -4,12 +4,12 @@ import org.apache.commons.compress.compressors.bzip2.BZip2CompressorOutputStream
 import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream
 import org.apache.commons.compress.compressors.xz.XZCompressorOutputStream
 import org.apache.commons.compress.compressors.zstandard.ZstdCompressorOutputStream
-import org.loculus.backend.api.SubmissionIdFilesMap
 import org.loculus.backend.model.FILES_HEADER_PREFIX
 import org.loculus.backend.model.FILES_SEPARATOR
 import org.loculus.backend.model.FILE_NAME_ID_SEPARATOR
 import org.loculus.backend.service.submission.CompressionAlgorithm
 import org.loculus.backend.testutil.TestResource
+import org.loculus.backend.types.SubmissionIdFilesMap
 import org.loculus.backend.utils.Accession
 import org.springframework.http.MediaType.TEXT_PLAIN_VALUE
 import org.springframework.mock.web.MockMultipartFile

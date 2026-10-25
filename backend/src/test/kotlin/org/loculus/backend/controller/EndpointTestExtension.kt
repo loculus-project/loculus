@@ -9,8 +9,6 @@ import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.extension.ExtensionContext
-import org.loculus.backend.api.Address
-import org.loculus.backend.api.NewGroup
 import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.controller.datauseterms.DataUseTermsControllerClient
 import org.loculus.backend.controller.files.FilesClient
@@ -28,6 +26,8 @@ import org.loculus.backend.service.submission.SEQUENCE_ENTRIES_TABLE_NAME
 import org.loculus.backend.service.submission.SEQUENCE_UPLOAD_AUX_TABLE_NAME
 import org.loculus.backend.service.submission.dbtables.CURRENT_PROCESSING_PIPELINE_TABLE_NAME
 import org.loculus.backend.testutil.TestEnvironment
+import org.loculus.backend.types.Address
+import org.loculus.backend.types.NewGroup
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.context.annotation.Import

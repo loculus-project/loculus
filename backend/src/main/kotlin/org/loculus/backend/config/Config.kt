@@ -2,7 +2,7 @@ package org.loculus.backend.config
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.commons.lang3.StringUtils.lowerCase
-import org.loculus.backend.api.Organism
+import org.loculus.backend.types.Organism
 
 data class BackendConfig(
     val websiteUrl: String,

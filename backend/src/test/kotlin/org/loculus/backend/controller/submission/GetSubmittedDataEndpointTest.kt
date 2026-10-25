@@ -12,7 +12,6 @@ import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.jdbc.update
 import org.junit.jupiter.api.Test
-import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.DUMMY_ORGANISM_MAIN_SEQUENCE
 import org.loculus.backend.controller.EndpointTest
@@ -25,6 +24,7 @@ import org.loculus.backend.controller.groupmanagement.andGetGroupId
 import org.loculus.backend.controller.jwtForDefaultUser
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles
 import org.loculus.backend.service.submission.SequenceEntriesTable
+import org.loculus.backend.types.AccessionVersion
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpHeaders
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content

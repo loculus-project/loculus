@@ -1,7 +1,7 @@
 package org.loculus.backend.controller.submission
 
 import com.fasterxml.jackson.databind.node.TextNode
-import org.loculus.backend.api.ExternalSubmittedData
+import org.loculus.backend.types.ExternalSubmittedData
 import org.loculus.backend.utils.Accession
 
 val defaultExternalMetadata =

@@ -4,11 +4,6 @@ import mu.KotlinLogging
 import org.apache.commons.compress.archivers.zip.ZipFile
 import org.apache.commons.compress.compressors.CompressorStreamFactory
 import org.jetbrains.exposed.v1.exceptions.ExposedSQLException
-import org.loculus.backend.api.DataUseTerms
-import org.loculus.backend.api.Organism
-import org.loculus.backend.api.SubmissionIdFilesMap
-import org.loculus.backend.api.SubmissionIdMapping
-import org.loculus.backend.api.getAllFileIds
 import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.controller.BadRequestException
@@ -28,6 +23,11 @@ import org.loculus.backend.service.files.FilesDatabaseService
 import org.loculus.backend.service.submission.CompressionAlgorithm
 import org.loculus.backend.service.submission.SubmissionIdFilesMappingPreconditionValidator
 import org.loculus.backend.service.submission.UploadDatabaseService
+import org.loculus.backend.types.DataUseTerms
+import org.loculus.backend.types.Organism
+import org.loculus.backend.types.SubmissionIdFilesMap
+import org.loculus.backend.types.SubmissionIdMapping
+import org.loculus.backend.types.getAllFileIds
 import org.loculus.backend.utils.DateProvider
 import org.loculus.backend.utils.FastaReader
 import org.loculus.backend.utils.extractDuplicateRecordId

@@ -1,14 +1,14 @@
 package org.loculus.backend.controller.files
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import org.loculus.backend.api.FileCategory
-import org.loculus.backend.api.FileIdAndEtags
-import org.loculus.backend.api.FileIdAndMultipartWriteUrl
-import org.loculus.backend.api.FileIdAndWriteUrl
 import org.loculus.backend.controller.jacksonObjectMapper
 import org.loculus.backend.controller.jwtForDefaultUser
 import org.loculus.backend.controller.withAuth
 import org.loculus.backend.service.files.FileId
+import org.loculus.backend.types.FileCategory
+import org.loculus.backend.types.FileIdAndEtags
+import org.loculus.backend.types.FileIdAndMultipartWriteUrl
+import org.loculus.backend.types.FileIdAndWriteUrl
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.Version
 import org.springframework.http.MediaType

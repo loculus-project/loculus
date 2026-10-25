@@ -15,12 +15,6 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 import org.keycloak.representations.idm.UserRepresentation
-import org.loculus.backend.api.ProcessingResult
-import org.loculus.backend.api.Status
-import org.loculus.backend.api.Status.APPROVED_FOR_RELEASE
-import org.loculus.backend.api.Status.IN_PROCESSING
-import org.loculus.backend.api.Status.PROCESSED
-import org.loculus.backend.api.Status.RECEIVED
 import org.loculus.backend.controller.ALTERNATIVE_DEFAULT_GROUP_NAME
 import org.loculus.backend.controller.ALTERNATIVE_DEFAULT_USER_NAME
 import org.loculus.backend.controller.DEFAULT_ORGANISM
@@ -36,6 +30,12 @@ import org.loculus.backend.controller.groupmanagement.andGetGroupId
 import org.loculus.backend.controller.jwtForSuperUser
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES
 import org.loculus.backend.service.KeycloakAdapter
+import org.loculus.backend.types.ProcessingResult
+import org.loculus.backend.types.Status
+import org.loculus.backend.types.Status.APPROVED_FOR_RELEASE
+import org.loculus.backend.types.Status.IN_PROCESSING
+import org.loculus.backend.types.Status.PROCESSED
+import org.loculus.backend.types.Status.RECEIVED
 import org.loculus.backend.utils.Accession
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath

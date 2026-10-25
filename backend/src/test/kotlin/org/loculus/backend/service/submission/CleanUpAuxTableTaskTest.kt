@@ -10,12 +10,12 @@ import org.hamcrest.MatcherAssert.assertThat
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.junit.jupiter.api.Test
-import org.loculus.backend.api.Organism
 import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.service.submission.MetadataUploadAuxTable
 import org.loculus.backend.service.submission.UploadDatabaseService
+import org.loculus.backend.types.Organism
 import org.loculus.backend.utils.DateProvider
 import org.loculus.backend.utils.MetadataEntry
 import org.springframework.beans.factory.annotation.Autowired

@@ -5,13 +5,6 @@ import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.hasItems
 import org.hamcrest.Matchers.`is`
 import org.junit.jupiter.api.Test
-import org.loculus.backend.api.AccessionVersion
-import org.loculus.backend.api.FileIdAndEtags
-import org.loculus.backend.api.FileIdAndName
-import org.loculus.backend.api.Status.APPROVED_FOR_RELEASE
-import org.loculus.backend.api.Status.IN_PROCESSING
-import org.loculus.backend.api.Status.PROCESSED
-import org.loculus.backend.api.Status.RECEIVED
 import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.controller.DEFAULT_GROUP
 import org.loculus.backend.controller.DEFAULT_MULTIPART_FILE_CONTENT
@@ -31,6 +24,13 @@ import org.loculus.backend.controller.jacksonObjectMapper
 import org.loculus.backend.controller.jwtForDefaultUser
 import org.loculus.backend.controller.jwtForProcessingPipeline
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles
+import org.loculus.backend.types.AccessionVersion
+import org.loculus.backend.types.FileIdAndEtags
+import org.loculus.backend.types.FileIdAndName
+import org.loculus.backend.types.Status.APPROVED_FOR_RELEASE
+import org.loculus.backend.types.Status.IN_PROCESSING
+import org.loculus.backend.types.Status.PROCESSED
+import org.loculus.backend.types.Status.RECEIVED
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import java.net.URI

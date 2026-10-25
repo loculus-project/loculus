@@ -1,4 +1,4 @@
-package org.loculus.backend.api
+package org.loculus.backend.types
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty

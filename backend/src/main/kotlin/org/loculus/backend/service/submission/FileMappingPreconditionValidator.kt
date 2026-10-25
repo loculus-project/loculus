@@ -1,18 +1,18 @@
 package org.loculus.backend.service.submission
 
-import org.loculus.backend.api.FileCategory
-import org.loculus.backend.api.FileCategoryFilesMap
-import org.loculus.backend.api.Organism
-import org.loculus.backend.api.SubmissionIdFilesMap
-import org.loculus.backend.api.categories
-import org.loculus.backend.api.fileIds
-import org.loculus.backend.api.getDuplicateFileIds
-import org.loculus.backend.api.getDuplicateFileNames
 import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.controller.UnprocessableEntityException
 import org.loculus.backend.service.files.FileId
 import org.loculus.backend.service.files.FilesDatabaseService
 import org.loculus.backend.service.files.S3Service
+import org.loculus.backend.types.FileCategory
+import org.loculus.backend.types.FileCategoryFilesMap
+import org.loculus.backend.types.Organism
+import org.loculus.backend.types.SubmissionIdFilesMap
+import org.loculus.backend.types.categories
+import org.loculus.backend.types.fileIds
+import org.loculus.backend.types.getDuplicateFileIds
+import org.loculus.backend.types.getDuplicateFileNames
 import org.springframework.stereotype.Component
 
 private val RESERVED_DEVICE_NAME_REGEX = Regex("CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9]", RegexOption.IGNORE_CASE)

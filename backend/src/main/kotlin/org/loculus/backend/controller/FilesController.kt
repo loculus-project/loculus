@@ -8,10 +8,6 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import jakarta.servlet.http.HttpServletRequest
 import mu.KotlinLogging
 import org.apache.http.HttpStatus
-import org.loculus.backend.api.AccessionVersion
-import org.loculus.backend.api.FileIdAndEtags
-import org.loculus.backend.api.FileIdAndMultipartWriteUrl
-import org.loculus.backend.api.FileIdAndWriteUrl
 import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.auth.HiddenParam
 import org.loculus.backend.auth.User
@@ -21,6 +17,10 @@ import org.loculus.backend.service.files.FilesPreconditionValidator
 import org.loculus.backend.service.files.S3Service
 import org.loculus.backend.service.submission.AccessionPreconditionValidator
 import org.loculus.backend.service.submission.SubmissionDatabaseService
+import org.loculus.backend.types.AccessionVersion
+import org.loculus.backend.types.FileIdAndEtags
+import org.loculus.backend.types.FileIdAndMultipartWriteUrl
+import org.loculus.backend.types.FileIdAndWriteUrl
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.generateFileIds
 import org.springframework.http.HttpHeaders

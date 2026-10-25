@@ -3,10 +3,10 @@ package org.loculus.backend.controller
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
-import org.loculus.backend.api.DataUseTermsChangeRequest
 import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.auth.HiddenParam
 import org.loculus.backend.service.datauseterms.DataUseTermsDatabaseService
+import org.loculus.backend.types.DataUseTermsChangeRequest
 import org.loculus.backend.utils.Accession
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType

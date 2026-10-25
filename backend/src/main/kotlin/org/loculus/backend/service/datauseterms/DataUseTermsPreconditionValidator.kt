@@ -7,11 +7,11 @@ import mu.KotlinLogging
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.inList
 import org.jetbrains.exposed.v1.jdbc.select
-import org.loculus.backend.api.DataUseTerms
-import org.loculus.backend.api.DataUseTermsType
 import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.controller.BadRequestException
 import org.loculus.backend.controller.UnprocessableEntityException
+import org.loculus.backend.types.DataUseTerms
+import org.loculus.backend.types.DataUseTermsType
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.DateProvider
 import org.springframework.stereotype.Component

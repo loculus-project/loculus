@@ -1,7 +1,7 @@
 package org.loculus.backend.controller.submission
 
-import org.loculus.backend.api.GeneticSequence
-import org.loculus.backend.api.SubmittedData
+import org.loculus.backend.types.GeneticSequence
+import org.loculus.backend.types.SubmittedData
 
 val defaultSubmittedData = SubmittedData(
     mapOf(

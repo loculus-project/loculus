@@ -14,9 +14,6 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 import org.junit.jupiter.params.provider.ValueSource
-import org.loculus.backend.api.DataUseTerms
-import org.loculus.backend.api.FileIdAndName
-import org.loculus.backend.api.Organism
 import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.EndpointTest
@@ -33,6 +30,9 @@ import org.loculus.backend.model.SubmitModel.AcceptedFileTypes.metadataFileTypes
 import org.loculus.backend.model.SubmitModel.AcceptedFileTypes.sequenceFileTypes
 import org.loculus.backend.service.files.dummyFileId
 import org.loculus.backend.service.submission.CompressionAlgorithm
+import org.loculus.backend.types.DataUseTerms
+import org.loculus.backend.types.FileIdAndName
+import org.loculus.backend.types.Organism
 import org.loculus.backend.utils.DateProvider
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
