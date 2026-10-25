@@ -35,7 +35,7 @@ private val log = KotlinLogging.logger { }
 
 @Configuration
 @EnableWebSecurity
-class SecurityConfig {
+class V0SecurityConfig {
 
     // This is the preconfigured default that we want to wrap in a logger
     private val defaultAccessDeniedHandler = DelegatingAccessDeniedHandler(
