@@ -3,10 +3,10 @@ package org.loculus.backend.service.submission
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.`is`
 import org.junit.jupiter.api.Test
-import org.loculus.backend.controller.DEFAULT_ORGANISM
-import org.loculus.backend.controller.DUMMY_ORGANISM_MAIN_SEQUENCE
-import org.loculus.backend.controller.EndpointTest
-import org.loculus.backend.controller.OTHER_ORGANISM
+import org.loculus.backend.testutil.DEFAULT_ORGANISM
+import org.loculus.backend.testutil.DUMMY_ORGANISM_MAIN_SEQUENCE
+import org.loculus.backend.testutil.EndpointTest
+import org.loculus.backend.testutil.OTHER_ORGANISM
 import org.loculus.backend.types.Organism
 import org.springframework.beans.factory.annotation.Autowired
 

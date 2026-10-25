@@ -1,4 +1,4 @@
-package org.loculus.backend.controller
+package org.loculus.backend.errors
 
 import jakarta.validation.ConstraintViolationException
 import mu.KotlinLogging

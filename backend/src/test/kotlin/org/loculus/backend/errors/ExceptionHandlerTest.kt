@@ -1,4 +1,4 @@
-package org.loculus.backend.controller
+package org.loculus.backend.errors
 
 import com.ninjasquad.springmockk.MockkBean
 import io.mockk.MockKAnnotations
@@ -10,6 +10,8 @@ import org.junit.jupiter.api.Test
 import org.loculus.backend.SpringBootTestWithoutDatabase
 import org.loculus.backend.api.v0.submission.SubmissionController
 import org.loculus.backend.model.SubmitModel
+import org.loculus.backend.testutil.addOrganismToPath
+import org.loculus.backend.testutil.withAuth
 import org.loculus.backend.types.DataUseTermsType
 import org.loculus.backend.types.SubmissionIdMapping
 import org.springframework.beans.factory.annotation.Autowired

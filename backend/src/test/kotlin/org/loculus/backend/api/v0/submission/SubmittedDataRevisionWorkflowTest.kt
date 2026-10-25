@@ -5,10 +5,10 @@ import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.greaterThan
 import org.hamcrest.Matchers.hasSize
 import org.junit.jupiter.api.Test
-import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.api.v0.groups.GroupManagementControllerClient
 import org.loculus.backend.api.v0.groups.andGetGroupId
-import org.loculus.backend.controller.jwtForDefaultUser
+import org.loculus.backend.testutil.EndpointTest
+import org.loculus.backend.testutil.jwtForDefaultUser
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.mock.web.MockMultipartFile

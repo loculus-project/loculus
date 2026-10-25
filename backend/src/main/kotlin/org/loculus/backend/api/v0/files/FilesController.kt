@@ -12,9 +12,9 @@ import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.auth.HiddenParam
 import org.loculus.backend.auth.User
 import org.loculus.backend.config.BackendConfig
-import org.loculus.backend.controller.NotFoundException
-import org.loculus.backend.controller.UnauthorizedException
-import org.loculus.backend.controller.UnprocessableEntityException
+import org.loculus.backend.errors.NotFoundException
+import org.loculus.backend.errors.UnauthorizedException
+import org.loculus.backend.errors.UnprocessableEntityException
 import org.loculus.backend.service.files.FilesDatabaseService
 import org.loculus.backend.service.files.FilesPreconditionValidator
 import org.loculus.backend.service.files.S3Service

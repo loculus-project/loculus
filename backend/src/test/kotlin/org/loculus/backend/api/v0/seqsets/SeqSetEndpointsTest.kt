@@ -8,10 +8,10 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
-import org.loculus.backend.controller.EndpointTest
-import org.loculus.backend.controller.expectUnauthorizedResponse
 import org.loculus.backend.service.crossref.CrossRefService
 import org.loculus.backend.service.submission.AccessionPreconditionValidator
+import org.loculus.backend.testutil.EndpointTest
+import org.loculus.backend.testutil.expectUnauthorizedResponse
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.ResultActions

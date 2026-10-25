@@ -4,8 +4,8 @@ import com.ninjasquad.springmockk.MockkBean
 import io.mockk.every
 import org.junit.jupiter.api.Test
 import org.keycloak.representations.idm.UserRepresentation
-import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.service.KeycloakAdapter
+import org.loculus.backend.testutil.EndpointTest
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content

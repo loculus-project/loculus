@@ -1,10 +1,10 @@
 package org.loculus.backend.api.v0.admin
 
 import org.junit.jupiter.api.Test
-import org.loculus.backend.controller.EndpointTest
-import org.loculus.backend.controller.jwtForDefaultUser
-import org.loculus.backend.controller.jwtForSuperUser
-import org.loculus.backend.controller.withAuth
+import org.loculus.backend.testutil.EndpointTest
+import org.loculus.backend.testutil.jwtForDefaultUser
+import org.loculus.backend.testutil.jwtForSuperUser
+import org.loculus.backend.testutil.withAuth
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get

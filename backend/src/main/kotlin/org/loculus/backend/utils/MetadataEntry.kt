@@ -4,7 +4,7 @@ import org.apache.commons.csv.CSVException
 import org.apache.commons.csv.CSVFormat
 import org.apache.commons.csv.CSVParser
 import org.apache.commons.csv.CSVRecord
-import org.loculus.backend.controller.UnprocessableEntityException
+import org.loculus.backend.errors.UnprocessableEntityException
 import org.loculus.backend.model.ACCESSION_HEADER
 import org.loculus.backend.model.FASTA_IDS_HEADER
 import org.loculus.backend.model.FASTA_IDS_SEPARATOR

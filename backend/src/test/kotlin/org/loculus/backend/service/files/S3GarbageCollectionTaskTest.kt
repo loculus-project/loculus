@@ -7,15 +7,11 @@ import org.hamcrest.Matchers.`is`
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.loculus.backend.config.BackendSpringProperty
-import org.loculus.backend.controller.DEFAULT_GROUP
-import org.loculus.backend.controller.EndpointTest
-import org.loculus.backend.controller.S3_CONFIG
 import org.loculus.backend.api.v0.groups.GroupManagementControllerClient
 import org.loculus.backend.api.v0.groups.andGetGroupId
-import org.loculus.backend.controller.jwtForDefaultUser
 import org.loculus.backend.api.v0.submission.PreparedProcessedData
 import org.loculus.backend.api.v0.submission.SubmissionConvenienceClient
+import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.log.AuditLogger
 import org.loculus.backend.service.files.FileId
 import org.loculus.backend.service.files.FilesDatabaseService
@@ -24,6 +20,10 @@ import org.loculus.backend.service.files.daysAgo
 import org.loculus.backend.service.files.dummyFileId
 import org.loculus.backend.service.files.insertFile
 import org.loculus.backend.service.scheduler.TASK_LOCK_TABLE_NAME
+import org.loculus.backend.testutil.DEFAULT_GROUP
+import org.loculus.backend.testutil.EndpointTest
+import org.loculus.backend.testutil.S3_CONFIG
+import org.loculus.backend.testutil.jwtForDefaultUser
 import org.loculus.backend.types.FileIdAndName
 import org.loculus.backend.utils.DateProvider
 import org.springframework.beans.factory.annotation.Autowired

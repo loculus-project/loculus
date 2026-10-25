@@ -14,7 +14,7 @@ import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.loculus.backend.auth.AuthenticatedUser
-import org.loculus.backend.controller.UnprocessableEntityException
+import org.loculus.backend.errors.UnprocessableEntityException
 import org.loculus.backend.log.AuditLogger
 import org.loculus.backend.model.FastaId
 import org.loculus.backend.model.SubmissionId

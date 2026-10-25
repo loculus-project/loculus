@@ -10,13 +10,13 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
-import org.loculus.backend.controller.EndpointTest
-import org.loculus.backend.controller.jwtForDefaultUser
 import org.loculus.backend.service.crossref.CrossRefCitedByResult
 import org.loculus.backend.service.crossref.CrossRefService
 import org.loculus.backend.service.scheduler.TASK_LOCK_TABLE_NAME
 import org.loculus.backend.service.seqsetcitations.SeqSetCrossRefCitationsTask
 import org.loculus.backend.service.submission.AccessionPreconditionValidator
+import org.loculus.backend.testutil.EndpointTest
+import org.loculus.backend.testutil.jwtForDefaultUser
 import org.loculus.backend.types.CitationContributor
 import org.loculus.backend.types.CitationSource
 import org.loculus.backend.types.SeqSetCitationSource

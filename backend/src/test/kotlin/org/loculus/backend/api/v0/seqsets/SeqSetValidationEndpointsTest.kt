@@ -6,10 +6,10 @@ import io.mockk.every
 import org.hamcrest.CoreMatchers.containsString
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.api.v0.submission.PreparedProcessedData
 import org.loculus.backend.api.v0.submission.SubmissionConvenienceClient
 import org.loculus.backend.service.crossref.CrossRefService
+import org.loculus.backend.testutil.EndpointTest
 import org.loculus.backend.types.SeqSetCitationsConstants
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType

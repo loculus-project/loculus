@@ -9,8 +9,8 @@ import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.loculus.backend.auth.AuthenticatedUser
-import org.loculus.backend.controller.ConflictException
-import org.loculus.backend.controller.NotFoundException
+import org.loculus.backend.errors.ConflictException
+import org.loculus.backend.errors.NotFoundException
 import org.loculus.backend.log.AuditLogger
 import org.loculus.backend.model.UNIQUE_CONSTRAINT_VIOLATION_SQL_STATE
 import org.loculus.backend.types.Address

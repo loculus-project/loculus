@@ -8,7 +8,7 @@ import org.loculus.backend.config.MetadataType
 import org.loculus.backend.config.ReferenceGenome
 import org.loculus.backend.config.ReferenceSequence
 import org.loculus.backend.config.Schema
-import org.loculus.backend.controller.ProcessingValidationException
+import org.loculus.backend.errors.ProcessingValidationException
 import org.loculus.backend.types.GeneticSequence
 import org.loculus.backend.types.Insertion
 import org.loculus.backend.types.MetadataMap

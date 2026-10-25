@@ -8,7 +8,7 @@ import com.fasterxml.jackson.databind.JsonDeserializer
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import io.swagger.v3.oas.annotations.media.Schema
-import org.loculus.backend.controller.UnprocessableEntityException
+import org.loculus.backend.errors.UnprocessableEntityException
 import org.loculus.backend.model.FastaId
 import org.loculus.backend.model.SubmissionId
 import org.loculus.backend.service.files.FileId

@@ -2,8 +2,8 @@ package org.loculus.backend.api.v0.groups
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.jayway.jsonpath.JsonPath
-import org.loculus.backend.controller.jwtForDefaultUser
-import org.loculus.backend.controller.withAuth
+import org.loculus.backend.testutil.jwtForDefaultUser
+import org.loculus.backend.testutil.withAuth
 import org.loculus.backend.types.Address
 import org.loculus.backend.types.NewGroup
 import org.springframework.http.MediaType

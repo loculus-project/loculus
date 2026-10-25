@@ -3,9 +3,9 @@ package org.loculus.backend.api.v0.submission
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable
-import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.api.v0.groups.GroupManagementControllerClient
 import org.loculus.backend.api.v0.groups.andGetGroupId
+import org.loculus.backend.testutil.EndpointTest
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.mock.web.MockMultipartFile
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status

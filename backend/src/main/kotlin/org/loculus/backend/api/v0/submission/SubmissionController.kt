@@ -13,11 +13,11 @@ import jakarta.validation.constraints.Max
 import mu.KotlinLogging
 import org.apache.commons.compress.compressors.zstandard.ZstdCompressorOutputStream
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
+import org.loculus.backend.api.LoculusCustomHeaders.X_TOTAL_RECORDS
 import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.auth.HiddenParam
 import org.loculus.backend.config.BackendConfig
-import org.loculus.backend.controller.LoculusCustomHeaders.X_TOTAL_RECORDS
-import org.loculus.backend.controller.UnprocessableEntityException
+import org.loculus.backend.errors.UnprocessableEntityException
 import org.loculus.backend.log.ORGANISM_MDC_KEY
 import org.loculus.backend.log.REQUEST_ID_MDC_KEY
 import org.loculus.backend.log.RequestIdContext

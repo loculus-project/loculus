@@ -9,7 +9,7 @@ import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.loculus.backend.auth.AuthenticatedUser
-import org.loculus.backend.controller.NotFoundException
+import org.loculus.backend.errors.NotFoundException
 import org.loculus.backend.log.AuditLogger
 import org.loculus.backend.service.submission.AccessionPreconditionValidator
 import org.loculus.backend.service.submission.MetadataUploadAuxTable

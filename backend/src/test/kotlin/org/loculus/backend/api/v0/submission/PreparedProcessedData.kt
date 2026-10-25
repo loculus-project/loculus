@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.node.DoubleNode
 import com.fasterxml.jackson.databind.node.IntNode
 import com.fasterxml.jackson.databind.node.NullNode
 import com.fasterxml.jackson.databind.node.TextNode
-import org.loculus.backend.controller.DUMMY_ORGANISM_MAIN_SEQUENCE
+import org.loculus.backend.testutil.DUMMY_ORGANISM_MAIN_SEQUENCE
 import org.loculus.backend.types.FileCategoryFilesMap
 import org.loculus.backend.types.GeneName
 import org.loculus.backend.types.GeneticSequence

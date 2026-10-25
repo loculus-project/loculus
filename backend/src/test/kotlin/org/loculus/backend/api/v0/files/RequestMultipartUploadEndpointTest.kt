@@ -8,13 +8,13 @@ import org.apache.http.impl.client.HttpClients
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.jupiter.api.Test
-import org.loculus.backend.config.BackendSpringProperty
-import org.loculus.backend.controller.EndpointTest
-import org.loculus.backend.controller.S3_CONFIG
 import org.loculus.backend.api.v0.groups.GroupManagementControllerClient
 import org.loculus.backend.api.v0.groups.andGetGroupId
-import org.loculus.backend.controller.jwtForAlternativeUser
-import org.loculus.backend.controller.jwtForProcessingPipeline
+import org.loculus.backend.config.BackendSpringProperty
+import org.loculus.backend.testutil.EndpointTest
+import org.loculus.backend.testutil.S3_CONFIG
+import org.loculus.backend.testutil.jwtForAlternativeUser
+import org.loculus.backend.testutil.jwtForProcessingPipeline
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 

@@ -1,4 +1,4 @@
-package org.loculus.backend.controller
+package org.loculus.backend.testutil
 
 import io.minio.BucketExistsArgs
 import io.minio.MakeBucketArgs
@@ -9,13 +9,13 @@ import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.extension.ExtensionContext
-import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.api.v0.datauseterms.DataUseTermsControllerClient
 import org.loculus.backend.api.v0.files.FilesClient
 import org.loculus.backend.api.v0.groups.GroupManagementControllerClient
 import org.loculus.backend.api.v0.seqsets.SeqSetCitationsControllerClient
 import org.loculus.backend.api.v0.submission.SubmissionControllerClient
 import org.loculus.backend.api.v0.submission.SubmissionConvenienceClient
+import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.service.datauseterms.DATA_USE_TERMS_TABLE_NAME
 import org.loculus.backend.service.files.FILES_TABLE_NAME
 import org.loculus.backend.service.groupmanagement.GROUPS_TABLE_NAME
@@ -25,7 +25,6 @@ import org.loculus.backend.service.submission.SEQUENCE_ENTRIES_PREPROCESSED_DATA
 import org.loculus.backend.service.submission.SEQUENCE_ENTRIES_TABLE_NAME
 import org.loculus.backend.service.submission.SEQUENCE_UPLOAD_AUX_TABLE_NAME
 import org.loculus.backend.service.submission.dbtables.CURRENT_PROCESSING_PIPELINE_TABLE_NAME
-import org.loculus.backend.testutil.TestEnvironment
 import org.loculus.backend.types.Address
 import org.loculus.backend.types.NewGroup
 import org.springframework.boot.test.context.SpringBootTest

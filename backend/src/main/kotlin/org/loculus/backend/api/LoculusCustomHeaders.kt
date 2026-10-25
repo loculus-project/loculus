@@ -1,4 +1,4 @@
-package org.loculus.backend.controller
+package org.loculus.backend.api
 
 object LoculusCustomHeaders {
     const val REQUEST_ID = "x-request-id"

@@ -1,7 +1,7 @@
 package org.loculus.backend.service.submission
 
 import org.loculus.backend.config.BackendConfig
-import org.loculus.backend.controller.UnprocessableEntityException
+import org.loculus.backend.errors.UnprocessableEntityException
 import org.loculus.backend.service.files.FileId
 import org.loculus.backend.service.files.FilesDatabaseService
 import org.loculus.backend.service.files.S3Service

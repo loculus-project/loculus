@@ -1,16 +1,16 @@
 package org.loculus.backend.api.v0.submission
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import org.loculus.backend.controller.DEFAULT_EXTERNAL_METADATA_UPDATER
-import org.loculus.backend.controller.DEFAULT_GROUP_NAME
-import org.loculus.backend.controller.DEFAULT_ORGANISM
-import org.loculus.backend.controller.DEFAULT_PIPELINE_VERSION
-import org.loculus.backend.controller.addOrganismToPath
-import org.loculus.backend.controller.jwtForDefaultUser
-import org.loculus.backend.controller.jwtForExternalMetadataUpdatePipeline
-import org.loculus.backend.controller.jwtForProcessingPipeline
-import org.loculus.backend.controller.paramIfPresent
-import org.loculus.backend.controller.withAuth
+import org.loculus.backend.testutil.DEFAULT_EXTERNAL_METADATA_UPDATER
+import org.loculus.backend.testutil.DEFAULT_GROUP_NAME
+import org.loculus.backend.testutil.DEFAULT_ORGANISM
+import org.loculus.backend.testutil.DEFAULT_PIPELINE_VERSION
+import org.loculus.backend.testutil.addOrganismToPath
+import org.loculus.backend.testutil.jwtForDefaultUser
+import org.loculus.backend.testutil.jwtForExternalMetadataUpdatePipeline
+import org.loculus.backend.testutil.jwtForProcessingPipeline
+import org.loculus.backend.testutil.paramIfPresent
+import org.loculus.backend.testutil.withAuth
 import org.loculus.backend.types.AccessionVersion
 import org.loculus.backend.types.AccessionVersionInterface
 import org.loculus.backend.types.ApproveDataScope

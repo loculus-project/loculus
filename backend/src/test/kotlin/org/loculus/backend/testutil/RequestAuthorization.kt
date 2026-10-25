@@ -1,4 +1,4 @@
-package org.loculus.backend.controller
+package org.loculus.backend.testutil
 
 import io.jsonwebtoken.Jwts
 import org.loculus.backend.auth.Roles.EXTERNAL_METADATA_UPDATER

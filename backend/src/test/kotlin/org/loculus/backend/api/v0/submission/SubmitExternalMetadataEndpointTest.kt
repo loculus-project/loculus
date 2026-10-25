@@ -7,10 +7,10 @@ import org.hamcrest.Matchers.equalTo
 import org.hamcrest.Matchers.hasEntry
 import org.hamcrest.Matchers.notNullValue
 import org.junit.jupiter.api.Test
-import org.loculus.backend.controller.EndpointTest
-import org.loculus.backend.controller.expectForbiddenResponse
-import org.loculus.backend.controller.expectUnauthorizedResponse
-import org.loculus.backend.controller.jwtForDefaultUser
+import org.loculus.backend.testutil.EndpointTest
+import org.loculus.backend.testutil.expectForbiddenResponse
+import org.loculus.backend.testutil.expectUnauthorizedResponse
+import org.loculus.backend.testutil.jwtForDefaultUser
 import org.loculus.backend.types.GeneticSequence
 import org.loculus.backend.types.ProcessedData
 import org.loculus.backend.types.Status

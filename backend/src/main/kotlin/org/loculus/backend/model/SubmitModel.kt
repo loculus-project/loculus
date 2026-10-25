@@ -6,9 +6,9 @@ import org.apache.commons.compress.compressors.CompressorStreamFactory
 import org.jetbrains.exposed.v1.exceptions.ExposedSQLException
 import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.config.BackendConfig
-import org.loculus.backend.controller.BadRequestException
-import org.loculus.backend.controller.DuplicateKeyException
-import org.loculus.backend.controller.UnprocessableEntityException
+import org.loculus.backend.errors.BadRequestException
+import org.loculus.backend.errors.DuplicateKeyException
+import org.loculus.backend.errors.UnprocessableEntityException
 import org.loculus.backend.metrics.ASSOCIATE_REVISED_DATA_PHASE
 import org.loculus.backend.metrics.CLEANUP_UPLOAD_DATA_PHASE
 import org.loculus.backend.metrics.COPY_TO_AUX_TABLE_PHASE

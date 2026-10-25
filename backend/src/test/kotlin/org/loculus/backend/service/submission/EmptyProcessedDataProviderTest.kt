@@ -12,7 +12,7 @@ import org.loculus.backend.config.MetadataType
 import org.loculus.backend.config.ReferenceGenome
 import org.loculus.backend.config.ReferenceSequence
 import org.loculus.backend.config.Schema
-import org.loculus.backend.controller.DEFAULT_ORGANISM
+import org.loculus.backend.testutil.DEFAULT_ORGANISM
 import org.loculus.backend.types.Organism
 
 private const val FIRST_METADATA_FIELD = "required"

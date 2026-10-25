@@ -1,8 +1,8 @@
 package org.loculus.backend.api.v0.datauseterms
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import org.loculus.backend.controller.jwtForDefaultUser
-import org.loculus.backend.controller.withAuth
+import org.loculus.backend.testutil.jwtForDefaultUser
+import org.loculus.backend.testutil.withAuth
 import org.loculus.backend.types.DataUseTerms
 import org.loculus.backend.types.DataUseTermsChangeRequest
 import org.loculus.backend.utils.Accession

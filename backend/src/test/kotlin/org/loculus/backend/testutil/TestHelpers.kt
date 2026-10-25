@@ -1,4 +1,4 @@
-package org.loculus.backend.controller
+package org.loculus.backend.testutil
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper

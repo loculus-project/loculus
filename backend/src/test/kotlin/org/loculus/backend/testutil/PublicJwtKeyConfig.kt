@@ -1,4 +1,4 @@
-package org.loculus.backend.controller
+package org.loculus.backend.testutil
 
 import org.springframework.boot.test.context.TestConfiguration
 import org.springframework.context.annotation.Bean

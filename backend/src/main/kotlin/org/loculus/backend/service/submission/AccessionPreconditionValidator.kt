@@ -5,8 +5,8 @@ import org.jetbrains.exposed.v1.core.inList
 import org.jetbrains.exposed.v1.jdbc.Query
 import org.jetbrains.exposed.v1.jdbc.select
 import org.loculus.backend.auth.AuthenticatedUser
-import org.loculus.backend.controller.ForbiddenException
-import org.loculus.backend.controller.UnprocessableEntityException
+import org.loculus.backend.errors.ForbiddenException
+import org.loculus.backend.errors.UnprocessableEntityException
 import org.loculus.backend.service.groupmanagement.GroupManagementPreconditionValidator
 import org.loculus.backend.types.AccessionVersion
 import org.loculus.backend.types.AccessionVersionInterface

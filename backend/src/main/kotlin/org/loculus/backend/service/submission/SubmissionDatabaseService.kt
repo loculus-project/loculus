@@ -48,9 +48,9 @@ import org.jetbrains.exposed.v1.json.extract
 import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.config.BackendSpringProperty
-import org.loculus.backend.controller.BadRequestException
-import org.loculus.backend.controller.ProcessingValidationException
-import org.loculus.backend.controller.UnprocessableEntityException
+import org.loculus.backend.errors.BadRequestException
+import org.loculus.backend.errors.ProcessingValidationException
+import org.loculus.backend.errors.UnprocessableEntityException
 import org.loculus.backend.log.AuditLogger
 import org.loculus.backend.metrics.STORE_PREPROCESSED_DATA_PHASE
 import org.loculus.backend.metrics.SUBMIT_PROCESSED_DATA_ENDPOINT

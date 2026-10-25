@@ -1,10 +1,10 @@
 package org.loculus.backend.api.v0.files
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import org.loculus.backend.controller.jacksonObjectMapper
-import org.loculus.backend.controller.jwtForDefaultUser
-import org.loculus.backend.controller.withAuth
 import org.loculus.backend.service.files.FileId
+import org.loculus.backend.testutil.jacksonObjectMapper
+import org.loculus.backend.testutil.jwtForDefaultUser
+import org.loculus.backend.testutil.withAuth
 import org.loculus.backend.types.FileCategory
 import org.loculus.backend.types.FileIdAndEtags
 import org.loculus.backend.types.FileIdAndMultipartWriteUrl
