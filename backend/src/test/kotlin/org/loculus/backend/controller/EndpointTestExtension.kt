@@ -10,12 +10,12 @@ import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.extension.ExtensionContext
 import org.loculus.backend.config.BackendSpringProperty
-import org.loculus.backend.controller.datauseterms.DataUseTermsControllerClient
-import org.loculus.backend.controller.files.FilesClient
-import org.loculus.backend.controller.groupmanagement.GroupManagementControllerClient
-import org.loculus.backend.controller.seqsetcitations.SeqSetCitationsControllerClient
-import org.loculus.backend.controller.submission.SubmissionControllerClient
-import org.loculus.backend.controller.submission.SubmissionConvenienceClient
+import org.loculus.backend.api.v0.datauseterms.DataUseTermsControllerClient
+import org.loculus.backend.api.v0.files.FilesClient
+import org.loculus.backend.api.v0.groups.GroupManagementControllerClient
+import org.loculus.backend.api.v0.seqsets.SeqSetCitationsControllerClient
+import org.loculus.backend.api.v0.submission.SubmissionControllerClient
+import org.loculus.backend.api.v0.submission.SubmissionConvenienceClient
 import org.loculus.backend.service.datauseterms.DATA_USE_TERMS_TABLE_NAME
 import org.loculus.backend.service.files.FILES_TABLE_NAME
 import org.loculus.backend.service.groupmanagement.GROUPS_TABLE_NAME
@@ -41,7 +41,7 @@ import org.springframework.test.context.DynamicPropertyRegistry
  * The main annotation for tests. It also loads the [EndpointTestExtension], which initializes
  * a PostgreSQL test container.
  * You can set additional properties to - for example - override the backend config file, like in
- * [org.loculus.backend.controller.submission.GetReleasedDataDataUseTermsDisabledEndpointTest].
+ * [org.loculus.backend.api.v0.submission.GetReleasedDataDataUseTermsDisabledEndpointTest].
  */
 @Target(AnnotationTarget.TYPE, AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.RUNTIME)

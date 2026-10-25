@@ -11,11 +11,11 @@ import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.controller.DEFAULT_GROUP
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.S3_CONFIG
-import org.loculus.backend.controller.groupmanagement.GroupManagementControllerClient
-import org.loculus.backend.controller.groupmanagement.andGetGroupId
+import org.loculus.backend.api.v0.groups.GroupManagementControllerClient
+import org.loculus.backend.api.v0.groups.andGetGroupId
 import org.loculus.backend.controller.jwtForDefaultUser
-import org.loculus.backend.controller.submission.PreparedProcessedData
-import org.loculus.backend.controller.submission.SubmissionConvenienceClient
+import org.loculus.backend.api.v0.submission.PreparedProcessedData
+import org.loculus.backend.api.v0.submission.SubmissionConvenienceClient
 import org.loculus.backend.log.AuditLogger
 import org.loculus.backend.service.files.FileId
 import org.loculus.backend.service.files.FilesDatabaseService

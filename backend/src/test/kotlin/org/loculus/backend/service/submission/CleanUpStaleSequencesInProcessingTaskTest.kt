@@ -5,7 +5,7 @@ import org.hamcrest.Matchers.hasSize
 import org.junit.jupiter.api.Test
 import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.controller.EndpointTest
-import org.loculus.backend.controller.submission.SubmissionConvenienceClient
+import org.loculus.backend.api.v0.submission.SubmissionConvenienceClient
 import org.loculus.backend.types.Status.IN_PROCESSING
 import org.loculus.backend.types.Status.RECEIVED
 import org.springframework.beans.factory.annotation.Autowired
