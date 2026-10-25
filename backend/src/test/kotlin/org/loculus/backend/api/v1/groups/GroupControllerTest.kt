@@ -33,7 +33,7 @@ class GroupControllerTest(@Autowired private val client: GroupClient) {
     }
 
     @Test
-    fun `WHEN I create a group THEN it is returned with status 201`() {
+    fun `WHEN creating a group THEN it is returned with status 201`() {
         client.createGroup()
             .andExpect(status().isCreated)
             .andExpect(jsonPath("\$.groupId").isNumber)
@@ -45,7 +45,7 @@ class GroupControllerTest(@Autowired private val client: GroupClient) {
     }
 
     @Test
-    fun `GIVEN a group WHEN I get it THEN the contact email is only shown when authenticated`() {
+    fun `GIVEN a group WHEN getting it THEN the contact email is only shown when authenticated`() {
         val groupId = client.createGroup().andGetGroupId()
 
         client.getGroup(groupId)
@@ -62,13 +62,13 @@ class GroupControllerTest(@Autowired private val client: GroupClient) {
     }
 
     @Test
-    fun `WHEN I get a group that does not exist THEN returns 404`() {
+    fun `WHEN getting a group that does not exist THEN returns 404`() {
         client.getGroup(123456789)
             .andExpect(status().isNotFound)
     }
 
     @Test
-    fun `WHEN I call endpoints that need a token without one THEN returns 401`() {
+    fun `WHEN calling endpoints that need a token without one THEN returns 401`() {
         val groupId = client.createGroup().andGetGroupId()
 
         client.getGroups(jwt = null).andExpect(status().isUnauthorized)
@@ -81,7 +81,7 @@ class GroupControllerTest(@Autowired private val client: GroupClient) {
     }
 
     @Test
-    fun `GIVEN I am a member WHEN I update the group THEN the group is changed`() {
+    fun `GIVEN a group member WHEN updating the group THEN the group is changed`() {
         val groupId = client.createGroup().andGetGroupId()
         val changedGroup = GROUP_REQUEST.copy(groupName = "v1GroupChanged")
 
@@ -94,7 +94,7 @@ class GroupControllerTest(@Autowired private val client: GroupClient) {
     }
 
     @Test
-    fun `GIVEN I am not a member WHEN I update the group THEN returns 403`() {
+    fun `GIVEN a user who is not a member WHEN updating the group THEN returns 403`() {
         val groupId = client.createGroup().andGetGroupId()
 
         client.updateGroup(groupId, jwt = jwtForAlternativeUser)
@@ -102,7 +102,7 @@ class GroupControllerTest(@Autowired private val client: GroupClient) {
     }
 
     @Test
-    fun `GIVEN a group WHEN I add and remove a member THEN the members list follows`() {
+    fun `GIVEN a group WHEN adding and removing a member THEN the members list follows`() {
         val groupId = client.createGroup().andGetGroupId()
 
         client.getMembers(groupId)
@@ -124,7 +124,7 @@ class GroupControllerTest(@Autowired private val client: GroupClient) {
     }
 
     @Test
-    fun `GIVEN I created two groups WHEN I get my groups THEN both are returned ordered by id`() {
+    fun `GIVEN a user created two groups WHEN getting their groups THEN both are returned ordered by id`() {
         val jwtForNewUser = generateJwtFor(UUID.randomUUID().toString() + "testuser")
         val firstGroupId = client.createGroup(jwt = jwtForNewUser).andGetGroupId()
         val secondGroupId = client.createGroup(GROUP_REQUEST.copy(groupName = "v1Group2"), jwt = jwtForNewUser)
@@ -136,7 +136,7 @@ class GroupControllerTest(@Autowired private val client: GroupClient) {
     }
 
     @Test
-    fun `GIVEN a group WHEN I filter groups by name ignoring case THEN only that group is returned`() {
+    fun `GIVEN a group WHEN filtering groups by name ignoring case THEN only that group is returned`() {
         val groupName = "v1Group" + UUID.randomUUID()
         val groupId = client.createGroup(GROUP_REQUEST.copy(groupName = groupName)).andGetGroupId()
 
