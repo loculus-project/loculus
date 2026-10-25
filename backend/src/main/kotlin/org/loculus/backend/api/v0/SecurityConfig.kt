@@ -1,4 +1,4 @@
-package org.loculus.backend.config
+package org.loculus.backend.api.v0
 
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse

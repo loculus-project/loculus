@@ -1,4 +1,4 @@
-package org.loculus.backend.controller
+package org.loculus.backend.api.v0
 
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
@@ -6,6 +6,7 @@ import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.auth.HiddenParam
 import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.config.ENABLE_SEQSETS_TRUE_VALUE
+import org.loculus.backend.controller.NotFoundException
 import org.loculus.backend.service.KeycloakAdapter
 import org.loculus.backend.service.seqsetcitations.SeqSetCitationsDatabaseService
 import org.loculus.backend.types.AccessionVersion

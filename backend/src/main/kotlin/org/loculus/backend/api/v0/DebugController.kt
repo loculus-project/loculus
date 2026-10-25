@@ -1,4 +1,4 @@
-package org.loculus.backend.controller
+package org.loculus.backend.api.v0
 
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.security.SecurityRequirement

@@ -1,4 +1,4 @@
-package org.loculus.backend.controller
+package org.loculus.backend.api.v0
 
 import org.loculus.backend.model.FASTA_IDS_HEADER
 import org.loculus.backend.model.FASTA_IDS_SEPARATOR

@@ -1,4 +1,4 @@
-package org.loculus.backend.controller
+package org.loculus.backend.api.v0
 
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
@@ -12,6 +12,9 @@ import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.auth.HiddenParam
 import org.loculus.backend.auth.User
 import org.loculus.backend.config.BackendConfig
+import org.loculus.backend.controller.NotFoundException
+import org.loculus.backend.controller.UnauthorizedException
+import org.loculus.backend.controller.UnprocessableEntityException
 import org.loculus.backend.service.files.FilesDatabaseService
 import org.loculus.backend.service.files.FilesPreconditionValidator
 import org.loculus.backend.service.files.S3Service

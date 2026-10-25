@@ -8,6 +8,7 @@ import org.hamcrest.Matchers.containsString
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.loculus.backend.SpringBootTestWithoutDatabase
+import org.loculus.backend.api.v0.SubmissionController
 import org.loculus.backend.model.SubmitModel
 import org.loculus.backend.types.DataUseTermsType
 import org.loculus.backend.types.SubmissionIdMapping
