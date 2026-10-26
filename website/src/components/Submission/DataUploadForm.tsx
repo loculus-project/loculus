@@ -4,8 +4,12 @@ import { DateTime } from 'luxon';
 import type { Result } from 'neverthrow';
 import { type FormEvent, useState, type Dispatch, type SetStateAction, useMemo } from 'react';
 
-import { extractAuthorLists, displayAuthorNamesConfirmationDialog } from './AuthorNamesConfirmationDialog.tsx';
 import { type FileFactory, FormOrUploadWrapper, type InputMode } from './FormOrUploadWrapper.tsx';
+import {
+    displaySubmissionConfirmationWizard,
+    extractAuthorLists,
+    type SubmissionConfirmationStep,
+} from './SubmissionConfirmationWizard.tsx';
 import { getClientLogger } from '../../clientLogger.ts';
 import { FolderUploadComponent } from './FileUpload/FolderUploadComponent.tsx';
 import { deriveFileMapping, validateFileUploadStates, type FileUploadState } from './FileUpload/fileUpload.ts';
@@ -27,7 +31,6 @@ import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
 import { stringifyMaybeAxiosError } from '../../utils/stringifyMaybeAxiosError.ts';
 import { dateTimeInMonths } from '../../utils/utcDates.ts';
-import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { MAX_SUBMITTED_DATA_DOWNLOAD_ENTRIES } from '../SearchPage/DownloadDialog/DownloadSubmittedDataButton.tsx';
 import { Button } from '../common/Button';
 import { Checkbox } from '../common/Checkbox';
@@ -163,28 +166,19 @@ const InnerDataUploadForm = ({
             }
         };
 
-        const confirmDataUseTermsAndSubmit = () => {
-            if (action === 'submit' && dataUseTermsEnabled && dataUseTermsType === openDataUseTermsOption) {
-                displayConfirmationDialog({
-                    dialogText:
-                        'You have selected the Open Data Use Terms. Once released under the Open Data Use Terms sequences will be deposited to INSDC and cannot be changed to the Restricted-Use Data Use Terms.',
-                    confirmButtonText: 'Continue under Open terms',
-                    closeButtonText: 'Cancel',
-                    onConfirmation: submitSequenceData,
-                });
-            } else {
-                submitSequenceData();
-            }
-        };
-
+        const confirmationSteps: SubmissionConfirmationStep[] = [];
+        if (action === 'submit' && dataUseTermsEnabled && dataUseTermsType === openDataUseTermsOption) {
+            confirmationSteps.push({ type: 'openDataUseTerms' });
+        }
         const authorLists = await extractAuthorLists(metadataFile, authorsFields);
         if (authorLists.length > 0) {
-            displayAuthorNamesConfirmationDialog({
-                authorLists,
-                onConfirmation: confirmDataUseTermsAndSubmit,
-            });
+            confirmationSteps.push({ type: 'authorNames', authorLists });
+        }
+
+        if (confirmationSteps.length > 0) {
+            displaySubmissionConfirmationWizard({ steps: confirmationSteps, onConfirmation: submitSequenceData });
         } else {
-            confirmDataUseTermsAndSubmit();
+            submitSequenceData();
         }
     };
 

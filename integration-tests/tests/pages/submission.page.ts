@@ -61,18 +61,19 @@ class SubmissionPage {
     async submitSequence(): Promise<ReviewPage> {
         await this.clickSubmit();
 
-        // The author names confirmation only shows if the metadata contains authors - but we don't know in this function
-        void this.page
-            .getByRole('button', { name: 'Names are correct' })
-            .click({ timeout: 3_000 })
-            .catch(() => {});
-
-        // 'Continue under Open terms' only shows if we are submitting under open terms - but we don't know in this function
+        // The confirmation wizard asks about open terms (only if we are submitting under open terms) and then about
+        // author names (only if the metadata contains authors) - but we don't know either in this function.
         // Void because we're waiting for the review page anyway, so no need to wait for this specifically
-        void this.page
-            .getByRole('button', { name: 'Continue under Open terms' })
-            .click({ timeout: 6_000 })
-            .catch(() => {});
+        void (async () => {
+            await this.page
+                .getByRole('button', { name: 'Continue under Open terms' })
+                .click({ timeout: 3_000 })
+                .catch(() => {});
+            await this.page
+                .getByRole('button', { name: 'Names are correct' })
+                .click({ timeout: 3_000 })
+                .catch(() => {});
+        })();
 
         await waitForUrlReportingAlerts(this.page, '**/review', { timeout: 15_000 });
         return new ReviewPage(this.page);

@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 
-import { extractAuthorLists, parseAuthors } from './AuthorNamesConfirmationDialog';
+import { extractAuthorLists, parseAuthors } from './SubmissionConfirmationWizard';
 
 describe('parseAuthors', () => {
     test('splits authors into last and first names', () => {

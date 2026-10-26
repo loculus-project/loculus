@@ -135,22 +135,34 @@ describe('SubmitForm', () => {
         },
     );
 
-    test('should ask the user to confirm how author names are split before submitting', async () => {
-        mockRequest.backend.submit(200, testResponse);
-        mockRequest.backend.getGroupsOfUser();
-
-        const { getByLabelText, getByRole, findByRole } = renderSubmissionForm();
+    async function uploadMetadataWithAuthorsAndClickSubmit({ dataUseTermsEnabled = true } = {}) {
+        const renderResult = renderSubmissionForm({ dataUseTermsEnabled });
+        const { getByLabelText, getByRole } = renderResult;
 
         await userEvent.upload(getByLabelText(/metadata file/i), metadataFileWithAuthors);
         await userEvent.upload(getByLabelText(/sequence file/i), sequencesFile);
-        await userEvent.click(
-            getByLabelText(/I confirm I have not and will not submit this data independently to INSDC/i),
-        );
-        await userEvent.click(getByLabelText(/I confirm that I have the legal right to submit this data/i));
-
+        if (dataUseTermsEnabled) {
+            await userEvent.click(
+                getByLabelText(/I confirm I have not and will not submit this data independently to INSDC/i),
+            );
+            await userEvent.click(getByLabelText(/I confirm that I have the legal right to submit this data/i));
+        }
         await userEvent.click(getByRole('button', { name: 'Upload and proceed to Approval' }));
 
-        expect(await findByRole('heading', { name: 'Are first and last names assigned correctly?' })).toBeVisible();
+        return renderResult;
+    }
+
+    test('should first confirm open data use terms and then how author names are split', async () => {
+        mockRequest.backend.submit(200, testResponse);
+        mockRequest.backend.getGroupsOfUser();
+
+        const { getByRole, findByRole, getByText } = await uploadMetadataWithAuthorsAndClickSubmit();
+
+        expect(getByText('Step 1 of 2')).toBeVisible();
+        await userEvent.click(await findByRole('button', { name: 'Continue under Open terms' }));
+
+        expect(getByText('Step 2 of 2')).toBeVisible();
+        expect(getByRole('heading', { name: 'Are first and last names assigned correctly?' })).toBeVisible();
         const rows = getByRole('table').querySelectorAll<HTMLTableRowElement>('tbody tr');
         expect(Array.from(rows).map((row) => Array.from(row.cells).map((cell) => cell.textContent))).toEqual([
             ['Smith', 'Anna'],
@@ -158,30 +170,36 @@ describe('SubmitForm', () => {
         ]);
 
         await userEvent.click(getByRole('button', { name: 'Names are correct' }));
-        await userEvent.click(await findByRole('button', { name: 'Continue under Open terms' }));
 
         await waitFor(() => {
             expect(toast.error).not.toHaveBeenCalled();
         });
     });
 
-    test('should not continue submitting when the user goes back to edit author names', async () => {
-        const { getByLabelText, getByRole, findByRole, queryByRole } = renderSubmissionForm();
+    test('should go back from the author names step to the data use terms step', async () => {
+        const { getByRole, findByRole, queryByRole } = await uploadMetadataWithAuthorsAndClickSubmit();
 
-        await userEvent.upload(getByLabelText(/metadata file/i), metadataFileWithAuthors);
-        await userEvent.upload(getByLabelText(/sequence file/i), sequencesFile);
-        await userEvent.click(
-            getByLabelText(/I confirm I have not and will not submit this data independently to INSDC/i),
-        );
-        await userEvent.click(getByLabelText(/I confirm that I have the legal right to submit this data/i));
+        await userEvent.click(await findByRole('button', { name: 'Continue under Open terms' }));
+        await userEvent.click(getByRole('button', { name: 'Back' }));
 
-        await userEvent.click(getByRole('button', { name: 'Upload and proceed to Approval' }));
+        expect(getByRole('button', { name: 'Continue under Open terms' })).toBeVisible();
+        expect(queryByRole('heading', { name: 'Are first and last names assigned correctly?' })).toBeNull();
+    });
+
+    test('should only ask about author names when there are no open data use terms to confirm', async () => {
+        const { findByRole, queryByRole, queryByText } = await uploadMetadataWithAuthorsAndClickSubmit({
+            dataUseTermsEnabled: false,
+        });
+
+        expect(await findByRole('heading', { name: 'Are first and last names assigned correctly?' })).toBeVisible();
+        expect(queryByText(/Step \d of \d/)).toBeNull();
+        expect(queryByRole('button', { name: 'Continue under Open terms' })).toBeNull();
+
         await userEvent.click(await findByRole('button', { name: 'Go back and edit' }));
 
         await waitFor(() => {
             expect(queryByRole('heading', { name: 'Are first and last names assigned correctly?' })).toBeNull();
         });
-        expect(queryByRole('button', { name: 'Continue under Open terms' })).toBeNull();
     });
 
     test('should answer with feedback that a file is missing', async () => {
