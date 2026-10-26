@@ -38,23 +38,19 @@ def make_entry(metadata: dict, config: Config, *, insdc_ingest: bool) -> Unproce
     )
 
 
-AEDES_AEGYPTI = {
-    "tax_id": 7159,
-    "scientific_name": "Aedes aegypti",
-    "common_name": None,
-    "parent_id": 7158,
-    "depth": 28,
-}
-
-
 def taxonomy_service_mock(url: str, **kwargs):
     """Dispatch mock responses based on taxonomy service URL."""
     if "scientific_name=" in url:
-        return make_response(200, [AEDES_AEGYPTI])
+        return make_response(
+            200,
+            [{"tax_id": 7159, "scientific_name": "Aedes aegypti", "depth": 28}],
+        )
     if "find_common_name=true" in url:
-        return make_response(200, {**AEDES_AEGYPTI, "common_name": "yellow fever mosquito"})
+        return make_response(
+            200, {"tax_id": 7159, "common_name": "yellow fever mosquito", "depth": 28}
+        )
     if "/taxa/" in url:
-        return make_response(200, AEDES_AEGYPTI)
+        return make_response(200, {"tax_id": 7159, "scientific_name": "Aedes aegypti", "depth": 28})
     return make_response(404, {"detail": "not found"})
 
 
