@@ -115,9 +115,9 @@ export const SubmissionConfirmationWizard: FC<SubmissionConfirmationWizardProps>
                 <>
                     <h3 className='font-bold text-lg pr-8'>Are first and last names assigned correctly?</h3>
                     <p className='text-sm text-gray-600 mt-2'>
-                        Authors must be given as <i>last name, first name</i>, separated by semicolons (e.g.{' '}
-                        <code>Smith, Anna; Perez, Tom J.</code>). Please check that the names below have been split
-                        correctly.
+                        In your submission, authors must be given as <i>last name, first name</i>, separated by
+                        semicolons (e.g. <code>Smith, Anna; Perez, Tom J.</code>). Please check that the names below
+                        have been split correctly.
                     </p>
                     <AuthorNamesTable authorLists={step.authorLists} />
                 </>
