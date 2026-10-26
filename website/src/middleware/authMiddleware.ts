@@ -22,6 +22,24 @@ enum TokenVerificationError {
     INVALID_TOKEN,
 }
 
+/**
+ * JWKS clients keyed by their `jwks_uri`. jwks-rsa caches the signing keys internally (and
+ * refreshes them on key rotation), but only per client instance: creating a new client for
+ * every request would re-fetch the keys from Keycloak on each verified token, adding a
+ * Keycloak round trip to every page load. With LAPIS authentication enabled, the auth
+ * middleware gates many data routes, so this cache matters for first-request latency.
+ */
+const jwksClients = new Map<string, JwksRsa.JwksClient>();
+
+function getJwksClient(jwksUri: string): JwksRsa.JwksClient {
+    let client = jwksClients.get(jwksUri);
+    if (client === undefined) {
+        client = new JwksRsa.JwksClient({ jwksUri });
+        jwksClients.set(jwksUri, client);
+    }
+    return client;
+}
+
 const logger = getInstanceLogger('LoginMiddleware');
 
 async function getValidTokenAndUserInfoFromCookie(context: APIContext, client: BaseClient) {
@@ -190,9 +208,7 @@ async function verifyToken(accessToken: string, client: BaseClient) {
         });
     }
 
-    const jwksClient = new JwksRsa.JwksClient({
-        jwksUri: client.issuer.metadata.jwks_uri,
-    });
+    const jwksClient = getJwksClient(client.issuer.metadata.jwks_uri);
 
     try {
         const signingKey = await jwksClient.getSigningKey(kid);

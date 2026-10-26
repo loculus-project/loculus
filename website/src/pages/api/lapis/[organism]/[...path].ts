@@ -213,7 +213,7 @@ export const ALL: APIRoute = async ({ params, request, locals }) => {
             // headers like `content-length: undefined`, which browsers reject (bodies of
             // streamed responses then never complete). Forward a header only when LAPIS
             // actually set it.
-            const value: string | null | undefined = lapisResponseHeaders.get(headerName);
+            const value = lapisResponseHeaders.get(headerName) as string | null | undefined;
             if (value != null) {
                 responseHeaders.set(headerName, value);
             }
