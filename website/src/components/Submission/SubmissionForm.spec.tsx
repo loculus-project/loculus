@@ -165,8 +165,8 @@ describe('SubmitForm', () => {
         expect(getByRole('heading', { name: 'Are first and last names assigned correctly?' })).toBeVisible();
         const rows = getByRole('table').querySelectorAll<HTMLTableRowElement>('tbody tr');
         expect(Array.from(rows).map((row) => Array.from(row.cells).map((cell) => cell.textContent))).toEqual([
-            ['Smith', 'Anna'],
-            ['Perez', 'Tom J.'],
+            ['Anna', 'Smith'],
+            ['Tom J.', 'Perez'],
         ]);
 
         await userEvent.click(getByRole('button', { name: 'Names are correct' }));

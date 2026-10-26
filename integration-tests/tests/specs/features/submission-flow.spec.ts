@@ -46,7 +46,7 @@ test.describe('Submission flow', () => {
             page.getByRole('heading', { name: 'Are first and last names assigned correctly?' }),
         ).toBeVisible();
         const firstAuthor = page.getByRole('row').filter({ hasText: 'Ammar' });
-        await expect(firstAuthor.getByRole('cell')).toHaveText(['Ammar', 'M.']);
+        await expect(firstAuthor.getByRole('cell')).toHaveText(['M.', 'Ammar']);
         await page.getByRole('button', { name: 'Names are correct' }).click();
 
         await expect(

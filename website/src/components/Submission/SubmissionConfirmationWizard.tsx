@@ -94,14 +94,13 @@ const AuthorNamesTable: FC<{ authorLists: AuthorListOccurrence[] }> = ({ authorL
                     <table className='w-full table-fixed text-sm border border-gray-200'>
                         <thead className='bg-gray-50 text-left'>
                             <tr>
-                                <th className='px-2 py-1 font-medium'>Last name</th>
                                 <th className='px-2 py-1 font-medium'>First name</th>
+                                <th className='px-2 py-1 font-medium'>Last name</th>
                             </tr>
                         </thead>
                         <tbody>
                             {parseAuthors(authors).map((author, authorIndex) => (
                                 <tr key={authorIndex} className='border-t border-gray-200'>
-                                    <td className='px-2 py-1'>{author.lastName}</td>
                                     <td className='px-2 py-1'>
                                         {author.firstName !== '' ? (
                                             author.firstName
@@ -109,6 +108,7 @@ const AuthorNamesTable: FC<{ authorLists: AuthorListOccurrence[] }> = ({ authorL
                                             <span className='italic text-yellow-700'>none</span>
                                         )}
                                     </td>
+                                    <td className='px-2 py-1'>{author.lastName}</td>
                                 </tr>
                             ))}
                         </tbody>
