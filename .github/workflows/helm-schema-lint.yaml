@@ -30,3 +30,6 @@ jobs:
 
       - name: Test browser authentication config rendering
         run: bash kubernetes/test-browser-auth-config.sh
+
+      - name: Test backend issuer config rendering
+        run: bash kubernetes/test-backend-auth-config.sh
