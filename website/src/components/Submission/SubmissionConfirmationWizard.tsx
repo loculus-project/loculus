@@ -5,15 +5,10 @@ import { type AuthorListOccurrence, parseAuthors } from './authorNames';
 import { Button } from '../common/Button';
 import { ModalBox } from '../common/ModalBox';
 
-const MAX_DISPLAYED_AUTHOR_LISTS = 10;
-
 const AuthorNamesTable: FC<{ authorLists: AuthorListOccurrence[] }> = ({ authorLists }) => {
-    const displayedAuthorLists = authorLists.slice(0, MAX_DISPLAYED_AUTHOR_LISTS);
-    const numberOfHiddenAuthorLists = authorLists.length - displayedAuthorLists.length;
-
     return (
         <div className='mt-4 space-y-4'>
-            {displayedAuthorLists.map(({ authors, numberOfEntries }, listIndex) => (
+            {authorLists.map(({ authors, numberOfEntries }, listIndex) => (
                 <div key={authors}>
                     {authorLists.length > 1 && (
                         <p className='text-xs text-gray-500 mb-1'>
@@ -59,11 +54,6 @@ const AuthorNamesTable: FC<{ authorLists: AuthorListOccurrence[] }> = ({ authorL
                     </table>
                 </div>
             ))}
-            {numberOfHiddenAuthorLists > 0 && (
-                <p className='text-xs text-gray-500'>
-                    … and {numberOfHiddenAuthorLists} more author {numberOfHiddenAuthorLists === 1 ? 'list' : 'lists'}.
-                </p>
-            )}
         </div>
     );
 };
