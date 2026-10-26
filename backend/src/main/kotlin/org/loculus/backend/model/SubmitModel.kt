@@ -30,6 +30,7 @@ import org.loculus.backend.service.submission.SubmissionIdFilesMappingPreconditi
 import org.loculus.backend.service.submission.UploadDatabaseService
 import org.loculus.backend.utils.DateProvider
 import org.loculus.backend.utils.FastaReader
+import org.loculus.backend.utils.extractDuplicateRecordId
 import org.loculus.backend.utils.metadataEntryStreamAsSequence
 import org.loculus.backend.utils.revisionEntryStreamAsSequence
 import org.springframework.stereotype.Service
@@ -334,7 +335,7 @@ class SubmitModel(
         } catch (e: ExposedSQLException) {
             if (e.sqlState == UNIQUE_CONSTRAINT_VIOLATION_SQL_STATE) {
                 throw DuplicateKeyException(
-                    "Metadata file contains at least one duplicate submissionId: ${e.cause?.cause}",
+                    "Metadata file contains at least one duplicate submissionId" + e.duplicateIdSuffix(uploadId),
                 )
             }
             throw e
@@ -355,12 +356,23 @@ class SubmitModel(
             } catch (e: ExposedSQLException) {
                 if (e.sqlState == UNIQUE_CONSTRAINT_VIOLATION_SQL_STATE) {
                     throw DuplicateKeyException(
-                        "Sequence file contains at least one duplicate submissionId: ${e.cause?.cause}",
+                        "Sequence file contains at least one duplicate FASTA ID" + e.duplicateIdSuffix(uploadId),
                     )
                 }
                 throw e
             }
         }
+    }
+
+    private fun ExposedSQLException.duplicateIdSuffix(uploadId: String): String {
+        val duplicateId = extractDuplicateRecordId(uploadId)
+        if (duplicateId == null) {
+            log.error(this) {
+                "Could not extract the duplicate ID from unique constraint violation for upload $uploadId"
+            }
+            return ""
+        }
+        return ": ${duplicateId.value}"
     }
 
     private fun getFileType(file: MultipartFile, expectedFileType: ValidExtension): CompressionAlgorithm {

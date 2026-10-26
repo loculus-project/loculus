@@ -6,6 +6,7 @@ import org.hamcrest.CoreMatchers.containsString
 import org.hamcrest.CoreMatchers.hasItem
 import org.hamcrest.CoreMatchers.hasItems
 import org.hamcrest.CoreMatchers.`is`
+import org.hamcrest.CoreMatchers.not
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
@@ -40,7 +41,9 @@ class GroupManagementControllerTest(@Autowired private val client: GroupManageme
 
     @BeforeEach
     fun setup() {
-        every { keycloakAdapter.getUsersWithName(any()) } returns listOf(UserRepresentation())
+        every { keycloakAdapter.getUsersWithName(any()) } answers {
+            listOf(UserRepresentation().apply { username = firstArg<String>().lowercase() })
+        }
     }
 
     @Test
@@ -262,7 +265,7 @@ class GroupManagementControllerTest(@Autowired private val client: GroupManageme
     fun `GIVEN a group WHEN I add a user that does not exists to the group THEN expect user is not found`() {
         every { keycloakAdapter.getUsersWithName(any()) } returns listOf()
 
-        val otherUser = "otherUserThatDoesNotExist"
+        val otherUser = "otheruserthatdoesnotexist"
 
         val groupId = client.createNewGroup()
             .andExpect(status().isOk)
@@ -280,7 +283,7 @@ class GroupManagementControllerTest(@Autowired private val client: GroupManageme
 
     @Test
     fun `GIVEN a group is created WHEN another user is added THEN expect user is in group`() {
-        val otherUser = "otherUser"
+        val otherUser = "otheruser"
 
         val groupId = client.createNewGroup()
             .andExpect(status().isOk)
@@ -295,6 +298,58 @@ class GroupManagementControllerTest(@Autowired private val client: GroupManageme
             .andExpect(jsonPath("\$.users.size()", `is`(2)))
             .andExpect(jsonPath("\$.users[*].name", hasItem(DEFAULT_USER_NAME)))
             .andExpect(jsonPath("\$.users[*].name", hasItem(otherUser)))
+    }
+
+    @Test
+    fun `WHEN a user is added with different case THEN the Keycloak username is stored`() {
+        val groupId = client.createNewGroup()
+            .andExpect(status().isOk)
+            .andGetGroupId()
+
+        client.addUserToGroup(groupId = groupId, usernameToAdd = "OtherUser")
+            .andExpect(status().isNoContent)
+
+        client.getDetailsOfGroup(groupId = groupId)
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("\$.users[*].name", hasItem("otheruser")))
+            .andExpect(jsonPath("\$.users[*].name", not(hasItem("OtherUser"))))
+    }
+
+    @Test
+    fun `GIVEN a user is already in a group THEN they can't be added again`() {
+        val groupId = client.createNewGroup()
+            .andExpect(status().isOk)
+            .andGetGroupId()
+
+        client.addUserToGroup(groupId = groupId, usernameToAdd = "otheruser")
+            .andExpect(status().isNoContent)
+
+        client.addUserToGroup(groupId = groupId, usernameToAdd = "OtherUser")
+            .andExpect(status().isConflict)
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+            .andExpect(
+                jsonPath("\$.detail").value(
+                    "User otheruser is already member of the group $groupId.",
+                ),
+            )
+    }
+
+    @Test
+    fun `WHEN trying to remove a user with different case THEN the user is removed`() {
+        val groupId = client.createNewGroup()
+            .andExpect(status().isOk)
+            .andGetGroupId()
+
+        client.addUserToGroup(groupId = groupId, usernameToAdd = "otheruser")
+            .andExpect(status().isNoContent)
+
+        client.removeUserFromGroup(groupId = groupId, userToRemove = "OtherUser")
+            .andExpect(status().isNoContent)
+
+        client.getDetailsOfGroup(groupId)
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("\$.users.size()", `is`(1)))
+            .andExpect(jsonPath("\$.users[*].name", hasItem(DEFAULT_USER_NAME)))
     }
 
     @Test

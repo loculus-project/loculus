@@ -105,7 +105,7 @@ val DEFAULT_GROUP_CHANGED = NewGroup(
 const val DEFAULT_USER_NAME = "testuser"
 const val SUPER_USER_NAME = "test_superuser"
 const val ALTERNATIVE_DEFAULT_GROUP_NAME = "testGroup2"
-const val ALTERNATIVE_DEFAULT_USER_NAME = "testUser2"
+const val ALTERNATIVE_DEFAULT_USER_NAME = "testuser2"
 
 val ALTERNATIVE_DEFAULT_GROUP = NewGroup(
     groupName = ALTERNATIVE_DEFAULT_GROUP_NAME,

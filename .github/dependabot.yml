@@ -46,6 +46,15 @@ updates:
     directory: keycloak/keycloakify
     schedule:
       interval: monthly
+    ignore:
+      - dependency-name: "react"
+        versions: [">=19.0.0"] #https://github.com/loculus-project/loculus/issues/3452
+      - dependency-name: "react-dom"
+        versions: [">=19.0.0"] #https://github.com/loculus-project/loculus/issues/3452
+      - dependency-name: "@types/react"
+        versions: [">=19.0.0"] #https://github.com/loculus-project/loculus/issues/3452
+      - dependency-name: "@types/react-dom"
+        versions: [">=19.0.0"] #https://github.com/loculus-project/loculus/issues/3452
     groups:
       minorAndPatch:
         update-types:
@@ -125,6 +134,24 @@ updates:
           - "patch"
   - package-ecosystem: conda
     directory: ena-submission
+    schedule:
+      interval: monthly
+    groups:
+      minorAndPatch:
+        update-types:
+          - "minor"
+          - "patch"
+  - package-ecosystem: conda
+    directory: raw-reads-processing
+    schedule:
+      interval: monthly
+    groups:
+      minorAndPatch:
+        update-types:
+          - "minor"
+          - "patch"
+  - package-ecosystem: conda
+    directory: taxonomy/taxonomy_service
     schedule:
       interval: monthly
     groups:
