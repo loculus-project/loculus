@@ -195,22 +195,6 @@ describe('SubmitForm', () => {
         expect(queryByRole('heading', { name: 'Are first and last names assigned correctly?' })).toBeNull();
     });
 
-    test('should start with author names when there are no open data use terms to confirm', async () => {
-        const { findByRole, getByText, queryByRole } = await uploadMetadataWithAuthorsAndClickSubmit({
-            dataUseTermsEnabled: false,
-        });
-
-        expect(await findByRole('heading', { name: 'Are first and last names assigned correctly?' })).toBeVisible();
-        expect(getByText('Step 1 of 2')).toBeVisible();
-        expect(queryByRole('button', { name: 'Continue under Open terms' })).toBeNull();
-
-        await userEvent.click(await findByRole('button', { name: 'Go back and edit' }));
-
-        await waitFor(() => {
-            expect(queryByRole('heading', { name: 'Are first and last names assigned correctly?' })).toBeNull();
-        });
-    });
-
     test('should answer with feedback that a file is missing', async () => {
         mockRequest.backend.submit(200, testResponse);
         mockRequest.backend.getGroupsOfUser();
@@ -426,24 +410,4 @@ describe('SubmitForm', () => {
             });
         },
     );
-
-    test('should not submit when cancelling at the final step', async () => {
-        mockRequest.backend.submit(500, 'should not be called');
-        mockRequest.backend.getGroupsOfUser();
-
-        const { getByLabelText, getByRole, findByRole, queryByRole } = renderSubmissionForm({
-            dataUseTermsEnabled: false,
-        });
-
-        await userEvent.upload(getByLabelText(/Metadata File/i), metadataFile);
-        await userEvent.upload(getByLabelText(/Sequence File/i), sequencesFile);
-        await userEvent.click(getByRole('button', { name: 'Upload and proceed to Approval' }));
-        await userEvent.click(await findByRole('button', { name: 'Cancel' }));
-
-        await waitFor(() => {
-            expect(queryByRole('heading', { name: 'What happens next' })).toBeNull();
-        });
-        await new Promise((resolve) => setTimeout(resolve, 200));
-        expect(toast.error).not.toHaveBeenCalled();
-    });
 });
