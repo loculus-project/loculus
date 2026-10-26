@@ -48,6 +48,7 @@ class SecurityConfigTest {
 
     @Test
     fun `Boot decoder validates issuer signature and timestamps using a separate JWKS endpoint`() {
+        // Serve the test public key from a local HTTP server that stands in for Keycloak's JWKS endpoint.
         val server = HttpServer.create(InetSocketAddress("127.0.0.1", 0), 0)
         val keys = JWKSet(RSAKey.Builder(keyPair.public as RSAPublicKey).build()).toString().toByteArray()
         server.createContext("/certs") { exchange ->
@@ -57,6 +58,7 @@ class SecurityConfigTest {
         }
         server.start()
         try {
+            // Create a minimal Spring context using production JWT auto-configuration with test issuer and JWKS URLs.
             ApplicationContextRunner()
                 .withConfiguration(AutoConfigurations.of(OAuth2ResourceServerAutoConfiguration::class.java))
                 .withUserConfiguration(JwtConfigIsPresentGuard::class.java)
