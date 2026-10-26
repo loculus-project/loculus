@@ -13,7 +13,7 @@ dependencies:
   - uv=0.12.21
   - pyyaml=6.0.3
   - pyjwt=2.15.1
-  - python-dateutil=2.9.0.post0
+  - python-dateutil=3.0.0
   - pytz=2026.5
   - requests=2.34.2
   - pandas=3.0.6
