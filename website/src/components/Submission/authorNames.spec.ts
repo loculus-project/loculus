@@ -3,12 +3,13 @@ import { describe, expect, test } from 'vitest';
 import { extractAuthorLists, parseAuthors } from './authorNames';
 
 describe('parseAuthors', () => {
-    test('splits authors into first and last names and flags missing commas', () => {
-        expect(parseAuthors('Smith, Anna; Perez,  Tom J.; Xu,; Anna Smith;')).toEqual([
-            { firstName: 'Anna', lastName: 'Smith', hasComma: true },
-            { firstName: 'Tom J.', lastName: 'Perez', hasComma: true },
-            { firstName: '', lastName: 'Xu', hasComma: true },
-            { firstName: '', lastName: 'Anna Smith', hasComma: false },
+    test('splits authors into first and last names and flags missing or extra commas', () => {
+        expect(parseAuthors('Smith, Anna; Perez,  Tom J.; Xu,; Anna Smith; Garcia, Maria, Okafor, Chinedu;')).toEqual([
+            { status: 'ok', firstName: 'Anna', lastName: 'Smith' },
+            { status: 'ok', firstName: 'Tom J.', lastName: 'Perez' },
+            { status: 'ok', firstName: '', lastName: 'Xu' },
+            { status: 'missingComma', raw: 'Anna Smith' },
+            { status: 'tooManyCommas', raw: 'Garcia, Maria, Okafor, Chinedu' },
         ]);
     });
 });

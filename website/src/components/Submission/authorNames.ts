@@ -2,13 +2,12 @@ import Papa from 'papaparse';
 
 import { CompressedFile, RawFile, splitFileExtensions } from './FileUpload/fileProcessing';
 
-export type ParsedAuthor = {
-    firstName: string;
-    /** The whole entry when there is no comma, since preprocessing then cannot tell the names apart. */
-    lastName: string;
-    /** Preprocessing rejects authors without a comma, even if the first name is unknown (`Xu,` is accepted). */
-    hasComma: boolean;
-};
+/**
+ * Preprocessing requires exactly one comma per author: it separates the last name from the first name(s).
+ * `Xu,` (first name unknown) is accepted, but `Anna Xu` and `Smith, Anna, Jr.` are rejected.
+ */
+export type ParsedAuthor =
+    { status: 'ok'; firstName: string; lastName: string } | { status: 'missingComma' | 'tooManyCommas'; raw: string };
 
 export type AuthorListOccurrence = {
     authors: string;
@@ -24,12 +23,15 @@ export const parseAuthors = (authors: string): ParsedAuthor[] =>
         .split(';')
         .map((author) => author.trim())
         .filter((author) => author !== '')
-        .map((author) => {
-            const [lastName, firstName = ''] = author.split(',');
+        .map((author): ParsedAuthor => {
+            const parts = author.split(',');
+            if (parts.length === 1) return { status: 'missingComma', raw: author };
+            if (parts.length > 2) return { status: 'tooManyCommas', raw: author };
+            const [lastName, firstName] = parts;
             return {
+                status: 'ok',
                 firstName: firstName.trim().replace(/\s+/g, ' '),
                 lastName: lastName.trim().replace(/\s+/g, ' '),
-                hasComma: author.includes(','),
             };
         });
 

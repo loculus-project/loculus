@@ -31,7 +31,7 @@ const AuthorNamesTable: FC<{ authorLists: AuthorListOccurrence[] }> = ({ authorL
                         <tbody>
                             {parseAuthors(authors).map((author, authorIndex) => (
                                 <tr key={authorIndex} className='border-t border-gray-200'>
-                                    {author.hasComma ? (
+                                    {author.status === 'ok' ? (
                                         <>
                                             <td className='px-2 py-1'>
                                                 {author.firstName !== '' ? (
@@ -44,10 +44,12 @@ const AuthorNamesTable: FC<{ authorLists: AuthorListOccurrence[] }> = ({ authorL
                                         </>
                                     ) : (
                                         <td colSpan={2} className='px-2 py-1 text-red-700'>
-                                            {author.lastName}
+                                            {author.raw}
                                             <span className='italic'>
                                                 {' '}
-                                                (missing comma: this author will be rejected)
+                                                (
+                                                {author.status === 'missingComma' ? 'missing comma' : 'too many commas'}
+                                                : this author will be rejected)
                                             </span>
                                         </td>
                                     )}
