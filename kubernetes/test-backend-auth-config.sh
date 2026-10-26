@@ -8,11 +8,27 @@ assert_issuer() {
     local expected="$1"
     shift
     local rendered
-    rendered=$(helm template loculus "$chart" --show-only templates/loculus-backend.yaml "$@")
+    rendered=$(helm template loculus "$chart" \
+        --show-only templates/loculus-backend.yaml \
+        --show-only templates/keycloak-deployment.yaml \
+        --show-only templates/keycloak-config-map.yaml "$@")
     local actual
     actual=$(printf '%s\n' "$rendered" | sed -n 's/.*--spring.security.oauth2.resourceserver.jwt.issuer-uri=\([^"]*\)".*/\1/p')
     if [[ "$actual" != "$expected" ]]; then
         echo "Expected issuer $expected; got $actual" >&2
+        exit 1
+    fi
+    local hostname_url frontend_url
+    hostname_url=$(printf '%s\n' "$rendered" | sed -n '/name: KC_HOSTNAME_URL/{n;s/.*value: "\([^"]*\)".*/\1/p;}')
+    frontend_url=$(printf '%s\n' "$rendered" | sed -n 's/.*"frontendUrl": "\([^"]*\)".*/\1/p')
+    # Check rendered Keycloak configuration, not a live token; Keycloak appends the realm path.
+    # Remove a trailing slash before joining the base URL and realm path.
+    if [[ -z "$hostname_url" || "${hostname_url%/}/realms/loculus" != "$actual" ]]; then
+        echo "Keycloak KC_HOSTNAME_URL '$hostname_url' does not match backend issuer '$actual'" >&2
+        exit 1
+    fi
+    if [[ -z "$frontend_url" || "${frontend_url%/}/realms/loculus" != "$actual" ]]; then
+        echo "Keycloak realm frontendUrl '$frontend_url' does not match backend issuer '$actual'" >&2
         exit 1
     fi
     if [[ "$rendered" != *'--spring.security.oauth2.resourceserver.jwt.jwk-set-uri=http://loculus-keycloak-service:8083/realms/loculus/protocol/openid-connect/certs'* ]]; then
