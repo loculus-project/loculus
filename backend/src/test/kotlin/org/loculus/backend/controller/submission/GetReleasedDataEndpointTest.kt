@@ -31,8 +31,8 @@ import org.hamcrest.Matchers.`in`
 import org.hamcrest.Matchers.matchesPattern
 import org.hamcrest.Matchers.not
 import org.hamcrest.Matchers.notNullValue
-import org.jetbrains.exposed.sql.batchInsert
-import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.v1.jdbc.batchInsert
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.keycloak.representations.idm.UserRepresentation
@@ -213,7 +213,7 @@ class GetReleasedDataEndpointTest(
             ifNoneMatch = initialEtag,
         )
         responseNoNewData.andExpect(status().isNotModified)
-            .andExpect(header().doesNotExist(ETAG))
+            .andExpect(header().string(ETAG, initialEtag!!))
 
         prepareRevokedAndRevocationAndRevisedVersions()
 
@@ -261,7 +261,7 @@ class GetReleasedDataEndpointTest(
             ifNoneMatch = initialEtagDefaultOrganism,
         )
             .andExpect(status().isOk)
-            .andExpect(header().string(ETAG, greaterThan(initialEtagDefaultOrganism)))
+            .andExpect(header().string(ETAG, greaterThan(initialEtagDefaultOrganism!!)))
         submissionControllerClient.getReleasedData(organism = OTHER_ORGANISM, ifNoneMatch = initialEtagOtherOrganism)
             .andExpect(status().isNotModified)
     }
@@ -290,7 +290,7 @@ class GetReleasedDataEndpointTest(
 
         submissionControllerClient.getReleasedData(ifNoneMatch = initialEtag)
             .andExpect(status().isOk)
-            .andExpect(header().string(ETAG, greaterThan(initialEtag)))
+            .andExpect(header().string(ETAG, greaterThan(initialEtag!!)))
     }
 
     @Test
@@ -320,7 +320,7 @@ class GetReleasedDataEndpointTest(
             .andExpect(status().isNotModified)
         submissionControllerClient.getReleasedData(organism = OTHER_ORGANISM, ifNoneMatch = initialEtag)
             .andExpect(status().isOk)
-            .andExpect(header().string(ETAG, greaterThan(initialEtag)))
+            .andExpect(header().string(ETAG, greaterThan(initialEtag!!)))
     }
 
     @Test
@@ -652,7 +652,7 @@ class GetReleasedDataEndpointWithDataUseTermsUrlTest(
     }
 
     @Test
-    fun `GIVEN sequence entry with expired restricted data use terms THEN returns open data use terms`() {
+    fun `GIVEN sequence entry with expired restricted data use terms THEN returns open terms and new etag`() {
         every { dateProvider.getCurrentInstant() } answers { callOriginal() }
 
         val threeMonthsFromNow = dateMonthsFromNow(3)
@@ -664,11 +664,21 @@ class GetReleasedDataEndpointWithDataUseTermsUrlTest(
 
         assertAccessionVersionIsRestrictedUntil(accessionVersion, threeMonthsFromNow)
 
+        val etagWhileRestricted = submissionControllerClient.getReleasedData()
+            .andReturn().response.getHeader(ETAG)!!
+        submissionControllerClient.getReleasedData(ifNoneMatch = etagWhileRestricted)
+            .andExpect(status().isNotModified)
+
         val threeMonthsAndADayFromNow = LocalDateTime(
             date = dateMonthsFromNow(3).plus(1, DateTimeUnit.DAY),
             time = LocalTime.fromSecondOfDay(0),
         ).toInstant(DateProvider.timeZone)
         every { dateProvider.getCurrentInstant() } answers { threeMonthsAndADayFromNow }
+
+        // The restriction lapsing is not a database write, so the etag has to change on the date alone.
+        submissionControllerClient.getReleasedData(ifNoneMatch = etagWhileRestricted)
+            .andExpect(status().isOk)
+            .andExpect(header().string(ETAG, greaterThan(etagWhileRestricted)))
 
         assertAccessionVersionIsOpen(accessionVersion)
     }

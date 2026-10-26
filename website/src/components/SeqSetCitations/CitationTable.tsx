@@ -1,5 +1,6 @@
 import { type FC } from 'react';
 
+import { formatCitationContributors } from './formatCitationContributors';
 import { routes } from '../../routes/routes';
 import { type SeqSetCitation, type SequenceCitation } from '../../types/seqSetCitation';
 
@@ -19,7 +20,7 @@ export const CitationDetails: FC<{
     displayYear?: boolean;
 }> = ({ citation, className = '', displayYear = false }) => {
     return (
-        <div className={`flex flex-col gap-2 ${className}`}>
+        <div className={`flex flex-col gap-1 ${className}`}>
             <a
                 className='text-primary-700'
                 href={`https://doi.org/${citation.source.sourceDOI}`}
@@ -29,11 +30,10 @@ export const CitationDetails: FC<{
                 {citation.source.title}
                 {displayYear && ` (${citation.source.year})`}
             </a>
-            <div className='text-sm text-gray-700'>
-                {citation.source.contributors
-                    .map((contributor) => [contributor.givenName, contributor.surname].filter((name) => name).join(' '))
-                    .join(', ')}
-            </div>
+            <div className='text-sm text-gray-700'>{formatCitationContributors(citation.source.contributors)}</div>
+            {citation.source.journal !== undefined && citation.source.journal !== null && (
+                <div className='text-sm italic text-gray-700'>{citation.source.journal}</div>
+            )}
             {'seqSets' in citation && citation.seqSets.length > 0 && (
                 <span className='text-sm text-gray-500'>
                     From SeqSet{citation.seqSets.length > 1 ? 's' : ''}:

@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
+import org.junit.jupiter.params.provider.ValueSource
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.FileIdAndName
 import org.loculus.backend.api.Organism
@@ -30,6 +31,7 @@ import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES
 import org.loculus.backend.model.SubmitModel.AcceptedFileTypes.metadataFileTypes
 import org.loculus.backend.model.SubmitModel.AcceptedFileTypes.sequenceFileTypes
+import org.loculus.backend.service.files.dummyFileId
 import org.loculus.backend.service.submission.CompressionAlgorithm
 import org.loculus.backend.utils.DateProvider
 import org.springframework.beans.factory.annotation.Autowired
@@ -42,7 +44,6 @@ import org.springframework.test.web.servlet.ResultMatcher
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
-import java.util.UUID
 import kotlin.time.Clock
 
 @EndpointTest
@@ -169,13 +170,14 @@ class SubmitEndpointTest(
     }
 
     @Test
-    fun `GIVEN submission with file mapping THEN returns an error`() {
+    fun `GIVEN submission with file mapping for organism without file support THEN returns an error`() {
         submissionControllerClient.submit(
-            DefaultFiles.metadataFile,
+            DefaultFiles.multiSegmentedMetadataFile.withFileMapping(
+                mapOf("custom0" to mapOf("bar" to listOf(FileIdAndName(dummyFileId(), "baz")))),
+            ),
             DefaultFiles.sequencesFileMultiSegmented,
             organism = OTHER_ORGANISM,
             groupId = groupId,
-            fileMapping = mapOf("foo" to mapOf("bar" to listOf(FileIdAndName(UUID.randomUUID(), "baz")))),
         )
             .andExpect(status().isBadRequest)
             .andExpect(content().contentType(APPLICATION_PROBLEM_JSON))
@@ -209,7 +211,33 @@ class SubmitEndpointTest(
         )
             .andExpect(expectedStatus)
             .andExpect(jsonPath("\$.title").value(expectedTitle))
-            .andExpect(jsonPath("\$.detail", containsString(expectedMessage)))
+            .andExpect(jsonPath("\$.detail").value(expectedMessage))
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = ["SAMPLE_C", "SAMPLE,C(1)"])
+    fun `GIVEN duplicate metadata IDs THEN reports the ID without database details`(id: String) {
+        submissionControllerClient.submit(
+            metadataFile = SubmitFiles.metadataFileWith(
+                content = "submissionId\tfirstColumn\n$id\tvalue\n$id\totherValue",
+            ),
+            sequencesFile = DefaultFiles.sequencesFile,
+            groupId = groupId,
+        )
+            .andExpect(status().isUnprocessableContent)
+            .andExpect(jsonPath("\$.detail").value("Metadata file contains at least one duplicate submissionId: $id"))
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = ["SAMPLE_C", "SAMPLE,C(1)"])
+    fun `GIVEN duplicate FASTA IDs THEN reports the ID without database details`(id: String) {
+        submissionControllerClient.submit(
+            metadataFile = DefaultFiles.metadataFile,
+            sequencesFile = SubmitFiles.sequenceFileWith(content = ">$id\nAC\n>$id\nAC"),
+            groupId = groupId,
+        )
+            .andExpect(status().isUnprocessableContent)
+            .andExpect(jsonPath("\$.detail").value("Sequence file contains at least one duplicate FASTA ID: $id"))
     }
 
     @Test
@@ -365,9 +393,9 @@ class SubmitEndpointTest(
                         """.trimIndent(),
                     ),
                     DefaultFiles.sequencesFile,
-                    status().isUnprocessableEntity,
-                    "Unprocessable Entity",
-                    "contains no value for 'id'",
+                    status().isUnprocessableContent,
+                    "Unprocessable Content",
+                    "Record #1 in the metadata file contains no value for 'id'. Row: ['', 'someValueButNoHeader']",
                     DEFAULT_ORGANISM,
                     DataUseTerms.Open,
                 ),
@@ -380,42 +408,9 @@ class SubmitEndpointTest(
                         """.trimIndent(),
                     ),
                     DefaultFiles.sequencesFile,
-                    status().isUnprocessableEntity,
-                    "Unprocessable Entity",
+                    status().isUnprocessableContent,
+                    "Unprocessable Content",
                     "The metadata file does not contain either header 'id' or 'submissionId'",
-                    DEFAULT_ORGANISM,
-                    DataUseTerms.Open,
-                ),
-                Arguments.of(
-                    "duplicate headers in metadata file",
-                    SubmitFiles.metadataFileWith(
-                        content = """
-                            id	firstColumn
-                            sameHeader	someValue
-                            sameHeader	someValue2
-                        """.trimIndent(),
-                    ),
-                    DefaultFiles.sequencesFile,
-                    status().isUnprocessableEntity,
-                    "Unprocessable Entity",
-                    "Metadata file contains at least one duplicate submissionId",
-                    DEFAULT_ORGANISM,
-                    DataUseTerms.Open,
-                ),
-                Arguments.of(
-                    "duplicate headers in sequence file",
-                    DefaultFiles.metadataFile,
-                    SubmitFiles.sequenceFileWith(
-                        content = """
-                            >sameHeader_main
-                            AC
-                            >sameHeader_main
-                            AC
-                        """.trimIndent(),
-                    ),
-                    status().isUnprocessableEntity,
-                    "Unprocessable Entity",
-                    "Sequence file contains at least one duplicate submissionId",
                     DEFAULT_ORGANISM,
                     DataUseTerms.Open,
                 ),
@@ -435,8 +430,8 @@ class SubmitEndpointTest(
                             AC
                         """.trimIndent(),
                     ),
-                    status().isUnprocessableEntity,
-                    "Unprocessable Entity",
+                    status().isUnprocessableContent,
+                    "Unprocessable Content",
                     "Sequence file contains 1 FASTA ids that are not present in the metadata file: 'notInMetadata'",
                     DEFAULT_ORGANISM,
                     DataUseTerms.Open,
@@ -456,9 +451,9 @@ class SubmitEndpointTest(
                             AC
                         """.trimIndent(),
                     ),
-                    status().isUnprocessableEntity,
-                    "Unprocessable Entity",
-                    "Metadata file contains 1 FASTA ids that are not present in the sequence file: 'notInSequences'",
+                    status().isUnprocessableContent,
+                    "Unprocessable Content",
+                    "Metadata file contains 1 FASTA ids that are not present in the sequence file: 'notInSequences'. ",
                     DEFAULT_ORGANISM,
                     DataUseTerms.Open,
                 ),
@@ -539,7 +534,7 @@ class SubmitEndpointTest(
             sequencesFile,
             groupId = groupId,
         )
-            .andExpect(status().isUnprocessableEntity)
+            .andExpect(status().isUnprocessableContent)
             .andExpect(content().contentType(APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath("\$.detail").value(

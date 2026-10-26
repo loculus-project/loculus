@@ -8,6 +8,7 @@ import org.apache.http.impl.client.HttpClients
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.containsString
+import org.hamcrest.Matchers.matchesPattern
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.loculus.backend.config.BackendSpringProperty
@@ -47,6 +48,7 @@ class RequestUploadEndpointTest(
         responseJson.forEach {
             assert(it.has("fileId"))
             assert(it.has("url"))
+            assertThat(it.get("fileId").textValue(), matchesPattern("FILE_[0-9A-HJ-NP-Z]{4,}"))
         }
     }
 
@@ -76,7 +78,7 @@ class RequestUploadEndpointTest(
             .contentAsString
         val uploadInfo = objectMapper.readTree(responseContent).get(0)
         val url = uploadInfo.get("url").textValue()
-        val headers = uploadInfo.get("headers").fields().asSequence()
+        val headers = uploadInfo.get("headers").properties()
             .associate { it.key to it.value.textValue() }
 
         val content = "test content".toByteArray()
@@ -98,7 +100,7 @@ class RequestUploadEndpointTest(
             .contentAsString
         val uploadInfo = objectMapper.readTree(responseContent).get(0)
         val url = uploadInfo.get("url").textValue()
-        val headers = uploadInfo.get("headers").fields().asSequence()
+        val headers = uploadInfo.get("headers").properties()
             .associate { it.key to it.value.textValue() }
 
         val httpClient = HttpClients.createDefault()

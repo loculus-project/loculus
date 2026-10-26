@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+# ruff: file-ignore[hardcoded-password-string]
+
 import argparse
 import json
 import os
@@ -32,11 +34,9 @@ ROOT_DIR = script_path.parent
 CLUSTER_NAME = "testCluster"
 HELM_RELEASE_NAME = "preview"
 HELM_CHART_DIR = ROOT_DIR / "kubernetes" / "loculus"
+WEBSITE_ORGANISM_CONFIGMAP_PREFIX = "loculus-web-org-config-"
 
-# By default, uses K3s v1.31: https://hub.docker.com/r/rancher/k3s/tags?name=v1.31
-# K3s v1.31 is the latest version which installs Traefik v2 (Traefik v3 is not yet supported by Loculus)
-# Also see: https://docs.k3s.io/upgrades#version-specific-caveats
-DEFAULT_K3S_IMAGE = "rancher/k3s:v1.31.14-k3s1"
+DEFAULT_K3S_IMAGE = "rancher/k3s:v1.35.6-k3s1"
 
 WEBSITE_PORT_MAPPING = "-p 127.0.0.1:3000:30081@agent:0"
 BACKEND_PORT_MAPPING = "-p 127.0.0.1:8079:30082@agent:0"
@@ -486,19 +486,47 @@ def generate_config(
         return
 
     parsed_yaml = list(yaml.full_load_all(helm_output))
-    if len(parsed_yaml) == 1:
-        config_data = parsed_yaml[0]["data"][configmap_path.name]
 
-        with open(output_path, "w") as f:
-            f.write(config_data)
+    def write_config(path, contents):
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with open(path, "w") as f:
+            f.write(contents)
+        print(f"Wrote config to {path}")
 
-        print(f"Wrote config to {output_path}")
-    elif any(substring in template for substring in ["ingest", "preprocessing"]):
+    if any(substring in template for substring in ["ingest", "preprocessing"]):
         for doc in parsed_yaml:
             config_data = yaml.safe_load(doc["data"][configmap_path.name])
-            with open(output_path.with_suffix(f".{config_data['organism']}.yaml"), "w") as f:
-                yaml.dump(config_data, f)
-                print(f"Wrote config to {f.name}")
+            write_config(output_path.with_suffix(f".{config_data['organism']}.yaml"), yaml.dump(config_data))
+        return
+
+    for doc in parsed_yaml:
+        config_data = doc.get("data", {})
+        if configmap_path.name not in config_data:
+            continue
+
+        output_config = config_data[configmap_path.name]
+        if configmap_path.name == "website_config.json":
+            output_config = merge_split_website_config(output_config, parsed_yaml)
+
+        write_config(output_path, output_config)
+        return
+
+    raise RuntimeError(f"Could not find {configmap_path.name} in rendered template {template}")
+
+
+def merge_split_website_config(website_config, rendered_docs):
+    config = json.loads(website_config)
+    config["organisms"] = {}
+
+    for doc in rendered_docs:
+        configmap_name = doc.get("metadata", {}).get("name", "")
+        if not configmap_name.startswith(WEBSITE_ORGANISM_CONFIGMAP_PREFIX):
+            continue
+
+        for filename, data in doc.get("data", {}).items():
+            config["organisms"][Path(filename).stem] = json.loads(data)
+
+    return json.dumps(config)
 
 
 def get_codespace_params(codespace_name):
@@ -515,21 +543,16 @@ def get_codespace_params(codespace_name):
 
 
 def install_secret_generator():
-    add_helm_repo_command = [
-        "helm",
-        "repo",
-        "add",
-        "mittwald",
-        "https://helm.mittwald.de",
-    ]
-    run_command(add_helm_repo_command)
-    print("Mittwald repository added to Helm.")
-
-    update_helm_repo_command = ["helm", "repo", "update"]
-    run_command(update_helm_repo_command)
-    print("Helm repositories updated.")
-
-    secret_generator_chart = "mittwald/kubernetes-secret-generator"  # noqa: S105
+    """
+    To refresh the mirror of the helm chart after upstream version bump:
+      VERSION=<version>
+      helm pull kubernetes-secret-generator --repo https://helm.mittwald.de --version $VERSION
+      gh auth refresh -h github.com -s write:packages
+      gh auth token | helm registry login ghcr.io -u <github-username> --password-stdin
+      helm push kubernetes-secret-generator-$VERSION.tgz oci://ghcr.io/loculus-project
+    """
+    secret_generator_chart = "oci://ghcr.io/loculus-project/kubernetes-secret-generator"
+    secret_generator_version = "3.4.1"
     print("Installing Kubernetes Secret Generator...")
     helm_install_command = [
         "helm",
@@ -537,6 +560,8 @@ def install_secret_generator():
         "--install",
         "kubernetes-secret-generator",
         secret_generator_chart,
+        "--version",
+        secret_generator_version,
         "--set",
         "secretLength=32",
         "--set",

@@ -5,21 +5,30 @@ import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import requests
+from requests.adapters import HTTPAdapter, Retry
 
 DEFAULT_MAX_WORKERS = 16
+REQUEST_TIMEOUT = 30  # seconds
 thread_local = threading.local()
+
+retry_strategy = Retry(
+    total=3,
+    backoff_factor=1,
+    status_forcelist=[
+        429,  # Too Many Requests
+        500,  # Internal Server Error
+        502,  # Bad Gateway
+        503,  # Service Unavailable
+        504,  # Gateway Timeout
+    ],
+    allowed_methods=["GET"],
+    raise_on_status=False,
+)
 
 
 def copy_structure(input_dir, output_dir):
-    for root, dirs, files in os.walk(input_dir):
-        for dir in dirs:
-            dir_path = os.path.join(output_dir, os.path.relpath(os.path.join(root, dir), input_dir))
-            os.makedirs(dir_path, exist_ok=True)
-        for file in files:
-            file_path = os.path.join(output_dir, os.path.relpath(os.path.join(root, file), input_dir))
-            # Make sure the directory exists
-            os.makedirs(os.path.dirname(file_path), exist_ok=True)
-            shutil.copy(os.path.join(root, file), file_path)
+    ignore_hidden_kubernetes_dirs = shutil.ignore_patterns("..*")
+    shutil.copytree(input_dir, output_dir, dirs_exist_ok=True, ignore=ignore_hidden_kubernetes_dirs)
 
 
 def download_urls(urls):
@@ -56,8 +65,12 @@ def download_urls_with_workers(urls, max_workers):
 
 def download_url(url):
     if not hasattr(thread_local, "session"):
-        thread_local.session = requests.Session()
-    return thread_local.session.get(url)
+        session = requests.Session()
+        adapter = HTTPAdapter(max_retries=retry_strategy)
+        session.mount("https://", adapter)
+        session.mount("http://", adapter)
+        thread_local.session = session
+    return thread_local.session.get(url, timeout=REQUEST_TIMEOUT)
 
 
 def replace_url_with_content(file_content, downloaded_content):
@@ -65,6 +78,7 @@ def replace_url_with_content(file_content, downloaded_content):
     for url in set(urls):
         file_content = file_content.replace(f"[[URL:{url}]]", downloaded_content[url])
     return file_content
+
 
 def make_substitutions(file_content, substitutions):
     for key, value in substitutions.items():
@@ -95,17 +109,18 @@ def process_files(output_dir, substitutions):
                     f.write(new_content)
                     f.truncate()
 
+
 def main(input_dir, output_dir, substitutions):
     print(f"Processing {input_dir} to {output_dir}")
     copy_structure(input_dir, output_dir)
     print(f"Copied directory structure from {input_dir} to {output_dir}")
     process_files(output_dir, substitutions)
 
+
 if __name__ == "__main__":
     import sys
     input_dir = sys.argv[1]
     output_dir = sys.argv[2]
-    
 
     substitutions = {}
     for var in os.environ:

@@ -1,7 +1,8 @@
 package org.loculus.backend.service.submission
 
 import mu.KotlinLogging
-import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.loculus.backend.api.Organism
 import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.service.submission.dbtables.CompressionDictionariesTable

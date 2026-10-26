@@ -199,7 +199,7 @@ data class ProcessedData<SequenceType>(
     )
     val sequenceNameToFastaId: Map<SegmentName, String> = emptyMap(),
     @Schema(
-        example = """{"raw_reads": [{"fileId": "s0m3-uUiDd", "name": "data.fastaq"}], "sequencing_logs": []}""",
+        example = """{"rawReads": [{"fileId": "s0m3-uUiDd", "name": "data.fastaq"}], "sequenceLogs": []}""",
         description = "The key is the file category name, the value is a list of files, with ID and name.",
     )
     val files: FileCategoryFilesMap?,
@@ -284,6 +284,7 @@ data class PreprocessingAnnotationSource(
 enum class PreprocessingAnnotationSourceType {
     Metadata,
     NucleotideSequence,
+    File,
 }
 
 data class GetSequenceResponse(
@@ -336,7 +337,7 @@ data class SubmittedContentInternal<SequenceType, FilesType>(
     )
     val unalignedNucleotideSequences: Map<FastaId, SequenceType?>,
     @Schema(
-        example = """{"raw_reads": [{"fileId": "f1le-uuId-asdf", "name": "myfile.fastaq"]}""",
+        example = """{"rawReads": [{"fileId": "f1le-uuId-asdf", "name": "myfile.fastaq"]}""",
         description = "A map from file categories, to lists of files. The files can also have URLs.",
     )
     val files: Map<String, List<FilesType>>? = null,
@@ -451,7 +452,7 @@ fun SubmissionIdFilesMap.getAllFileIds(): Set<FileId> = this.values.flatMap {
 }.toSet()
 
 /**
- * A file category like 'raw_reads' or 'logs'.
+ * A file category like 'rawReads' or 'logs'.
  */
 typealias FileCategory = String
 
@@ -477,4 +478,18 @@ fun FileCategoryFilesMap.getDuplicateFileNames(category: FileCategory): Set<Stri
         .eachCount()
 
     return nameCounts.filterValues { it > 1 }.keys
+}
+
+/**
+ * File IDs used more than once within [category].
+ *
+ * Consumers key their local copy by file ID, so duplicate entries collapse onto one downloaded
+ * file - for paired-end reads that still passes validation and would archive one mate twice.
+ */
+fun FileCategoryFilesMap.getDuplicateFileIds(category: FileCategory): Set<FileId> {
+    val idCounts = this[category]!!
+        .groupingBy { it.fileId }
+        .eachCount()
+
+    return idCounts.filterValues { it > 1 }.keys
 }

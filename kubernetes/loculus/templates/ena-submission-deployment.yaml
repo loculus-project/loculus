@@ -101,8 +101,17 @@ spec:
                 secretKeyRef:
                   name: ena-submission
                   key: password
+          ports:
+            - containerPort: 5000
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 5000
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            failureThreshold: 3
           args:
-            - ena_deposition 
+            - ena_deposition
             - "--config-file=/config/config.yaml"
           volumeMounts:
             - name: loculus-ena-submission-config-volume

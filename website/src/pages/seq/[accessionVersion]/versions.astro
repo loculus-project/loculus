@@ -15,14 +15,12 @@ const { organism, versionListResult } = await getVersionsData(accession);
         <h1 class='title'>Versions for accession {accession}</h1>
     </div>
 
-    {
-        versionListResult.match(
-            (list) => {
-                return <VersionsWithDiff versions={list} accession={accession} client:only='react' />;
-            },
-            (error) => {
-                return <ErrorBox title='Request for sequence history failed'>{error}</ErrorBox>;
-            },
-        )
-    }
+    {versionListResult.match(
+        (list) => {
+            return <VersionsWithDiff versions={list} accession={accession} client:only='react' />;
+        },
+        (error) => {
+            return <ErrorBox title='Request for sequence history failed'>{error}</ErrorBox>;
+        },
+    )}
 </BaseLayout>

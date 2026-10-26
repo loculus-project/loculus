@@ -15,7 +15,7 @@ type RevokeSequenceEntryProps = {
     organism: string;
     accessToken: string;
     clientConfig: ClientConfig;
-    accessionVersion: string;
+    accession: string;
     groupId: number;
     onRevokeSuccess?: () => void;
 };
@@ -26,7 +26,7 @@ const InnerRevokeButton: FC<RevokeSequenceEntryProps> = ({
     organism,
     accessToken,
     clientConfig,
-    accessionVersion,
+    accession,
     groupId,
     onRevokeSuccess,
 }) => {
@@ -87,7 +87,7 @@ const InnerRevokeButton: FC<RevokeSequenceEntryProps> = ({
             toastId: REVOCATION_TOAST_ID,
             position: 'top-center',
         });
-        useRevokeSequenceEntries.mutate({ accessions: [accessionVersion], versionComment: inputValue });
+        useRevokeSequenceEntries.mutate({ accessions: [accession], versionComment: inputValue });
     };
 
     return (

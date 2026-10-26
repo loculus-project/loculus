@@ -1,6 +1,5 @@
 import logging
 import threading
-import time
 from dataclasses import asdict
 from datetime import datetime
 
@@ -10,14 +9,12 @@ from sqlalchemy import Engine
 from ena_deposition import call_loculus
 from ena_deposition.loculus_models import Group
 
-from .config import Config
-from .ena_submission_helper import (
+from .config import Config, EnaResultField
+from .ena_builders import get_alias
+from .ena_client import (
     CreationResult,
     accession_exists,
     create_ena_project,
-    get_alias,
-    retry_failed_submissions_for_matching_errors,
-    set_accession_does_not_exist_error,
 )
 from .ena_types import (
     OrganismType,
@@ -32,15 +29,19 @@ from .ena_types import (
 from .notifications import SlackConfig, send_slack_notification, slack_conn_init
 from .submission_db_helper import (
     ProjectTableEntry,
-    Status,
-    StatusAll,
     SubmissionTableEntry,
-    add_to_project_table,
+    add_to_db,
     db_init,
     find_conditions_in_db,
     find_errors_or_stuck_in_db,
+    retry_failed_submissions_for_matching_errors,
+    set_accession_does_not_exist_error,
     update_db_where_conditions,
     update_with_retry,
+)
+from .submission_types import (
+    Status,
+    StatusAll,
 )
 
 logger = logging.getLogger(__name__)
@@ -114,7 +115,7 @@ def update_with_existing_bioproject(
         f"Group {row.group_id} and organism {row.organism} already has "
         f"bioprojectAccession, adding to project_table"
     )
-    bioproject = row.result.get("bioproject_accession") if row.result else None
+    bioproject = row.result.get(EnaResultField.BIOPROJECT) if row.result else None
 
     logger.info("Checking if bioproject actually exists and is public")
     if not bioproject or not accession_exists(str(bioproject), config):
@@ -134,14 +135,14 @@ def update_with_existing_bioproject(
         {
             "group_id": row.group_id,
             "organism": row.organism,
-            "result": {"bioproject_accession": bioproject},
+            "result": {EnaResultField.BIOPROJECT: bioproject},
             "status": Status.SUBMITTED,
             "center_name": center_name,
         },
     )
 
 
-def sync_state_with_submission_table(db_engine: Engine):
+def sync_state_with_submission_table(db_engine: Engine, config: Config):
     """
     1. Find all entries in submission_table in state READY_TO_SUBMIT
     2. If (exists entry/entries in the project_table for (group_id, organism)):
@@ -158,7 +159,9 @@ def sync_state_with_submission_table(db_engine: Engine):
     for row in ready_to_submit:
         group_key = {"group_id": row.group_id, "organism": row.organism}
         seq_key = asdict(row.pkey)
-        submitter_provided_bioproject: str | None = row.seq_metadata.get("bioprojectAccession")
+        submitter_provided_bioproject: str | None = row.seq_metadata.get(
+            config.loculus_accession_fields.bioproject
+        )
 
         # Check if there exist entries in the project table for (group_id, organism)
         existing_corresponding_projects = find_conditions_in_db(
@@ -171,7 +174,7 @@ def sync_state_with_submission_table(db_engine: Engine):
                 project
                 for project in existing_corresponding_projects
                 if project.result
-                and project.result.get("bioproject_accession") == submitter_provided_bioproject
+                and project.result.get(EnaResultField.BIOPROJECT) == submitter_provided_bioproject
             ]
         else:
             corresponding_project = existing_corresponding_projects
@@ -205,18 +208,19 @@ def sync_state_with_submission_table(db_engine: Engine):
             )
             continue
 
-        project_id = add_to_project_table(
+        project_row = add_to_db(
             db_engine,
             ProjectTableEntry(
                 group_id=row.group_id,
                 organism=row.organism,
-                result={"bioproject_accession": submitter_provided_bioproject}
+                result={EnaResultField.BIOPROJECT: submitter_provided_bioproject}
                 if submitter_provided_bioproject
                 else None,
             ),
         )
-        if not project_id:
+        if project_row is None:
             continue
+        project_id = project_row.project_id
         update_db_where_conditions(
             db_engine,
             model_class=SubmissionTableEntry,
@@ -248,7 +252,7 @@ def project_table_create(
     )
     logger.debug(f"Found {len(ready_to_submit_project)} entries in project_table in status READY")
     for row in ready_to_submit_project:
-        group_key = {"group_id": row.group_id, "organism": row.organism}
+        project_key = {"project_id": row.project_id}
 
         try:
             group_info = call_loculus.get_group_info(config, row.group_id)
@@ -256,7 +260,7 @@ def project_table_create(
             logger.error(f"Was unable to get group info for group: {row.group_id}, {e}")
             continue
 
-        if row.result and row.result.get("bioproject_accession"):
+        if row.result and row.result.get(EnaResultField.BIOPROJECT):
             update_with_existing_bioproject(
                 db_engine, config, row, center_name=group_info.institution
             )
@@ -271,7 +275,7 @@ def project_table_create(
         number_rows_updated = update_db_where_conditions(
             db_engine,
             model_class=ProjectTableEntry,
-            conditions=group_key,
+            conditions=project_key,
             update_values=update_values,
         )
         if number_rows_updated != 1:
@@ -284,7 +288,7 @@ def project_table_create(
             )
             continue
         logger.info(
-            f"Starting Project creation for group_id {row.group_id} organism {row.organism}"
+            f"Starting Project creation for project_key {row.project_id} organism {row.organism}"
         )
         # Actual HTTP request to ENA happens here
         project_creation_results: CreationResult = create_ena_project(config, project_set)
@@ -295,7 +299,8 @@ def project_table_create(
                 "finished_at": datetime.now(tz=pytz.utc),
             }
             logger.info(
-                f"Project creation succeeded for group_id {row.group_id} organism {row.organism}"
+                f"Project creation succeeded for project_key {row.project_id} "
+                f"organism {row.organism}"
             )
         else:
             update_values = {
@@ -304,11 +309,11 @@ def project_table_create(
                 "started_at": datetime.now(tz=pytz.utc),
             }
             logger.error(
-                f"Project creation failed for group_id {row.group_id} organism {row.organism}"
+                f"Project creation failed for project_key {row.project_id} organism {row.organism}"
             )
         update_with_retry(
             db_engine=db_engine,
-            conditions=group_key,
+            conditions=project_key,
             update_values=update_values,
             model_class=ProjectTableEntry,
         )
@@ -368,11 +373,15 @@ def create_project(config: Config, stop_event: threading.Event):
             logger.warning("create_project stopped due to exception in another task")
             return
         logger.debug("Checking for projects to create")
-        sync_state_with_submission_table(db_engine)
+        sync_state_with_submission_table(db_engine, config)
 
         project_table_create(db_engine, config)
-        sync_state_with_submission_table(db_engine)  # update submission_table state after creation
+        sync_state_with_submission_table(
+            db_engine, config
+        )  # update submission_table state after creation
         last_retry_time = project_table_handle_errors(
             db_engine, config, slack_config, last_retry_time
         )
-        time.sleep(config.time_between_iterations)
+        if stop_event.wait(timeout=config.time_between_iterations):
+            logger.info("create_project stopped due to exception in another task")
+            return

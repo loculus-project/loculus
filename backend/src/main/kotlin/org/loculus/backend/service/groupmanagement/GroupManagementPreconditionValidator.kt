@@ -1,7 +1,10 @@
 package org.loculus.backend.service.groupmanagement
 
-import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.v1.core.and
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.inList
+import org.jetbrains.exposed.v1.jdbc.selectAll
+import org.keycloak.representations.idm.UserRepresentation
 import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.controller.ForbiddenException
 import org.loculus.backend.controller.NotFoundException
@@ -68,11 +71,13 @@ class GroupManagementPreconditionValidator(private val keycloakAdapter: Keycloak
         }
     }
 
-    fun validateThatUserExists(username: String) {
+    fun validateThatUserExists(username: String): UserRepresentation {
         val users = keycloakAdapter.getUsersWithName(username)
         when {
             users.isEmpty() -> throw NotFoundException("User $username does not exist.")
             users.size > 1 -> throw IllegalStateException("Multiple users with name $username exist.")
         }
+
+        return users.single()
     }
 }

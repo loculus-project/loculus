@@ -1,0 +1,68 @@
+name: raw-reads-processing-unit-tests
+on:
+  # test
+  pull_request:
+    paths:
+      - "raw-reads-processing/**"
+      - ".github/workflows/raw-reads-processing-unit-tests.yaml"
+      - "ruff.toml"
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+concurrency:
+  group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-raw-reads-processing-unit-tests
+  cancel-in-progress: true
+defaults:
+  run:
+    shell: micromamba-shell {0}
+    working-directory: raw-reads-processing
+jobs:
+  checkFormat:
+    name: Check formatting
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Set up micromamba
+        uses: mamba-org/setup-micromamba@v3
+        with:
+          environment-file: "raw-reads-processing/environment.yml"
+          micromamba-version: "latest"
+          cache-environment: true
+      - name: Run ruff format check
+        run: ruff format --diff .
+  lint:
+    name: Lint code
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Set up micromamba
+        uses: mamba-org/setup-micromamba@v3
+        with:
+          environment-file: "raw-reads-processing/environment.yml"
+          micromamba-version: "latest"
+          cache-environment: true
+      - name: Run ruff check
+        run: ruff check .
+  unitTests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+      - name: Build test image
+        uses: docker/build-push-action@v7
+        with:
+          context: ./raw-reads-processing
+          push: false
+          load: true
+          tags: raw-reads-processing-service:test
+          cache-from: type=gha,scope=raw-reads-processing-service-${{ github.ref }}
+          cache-to: type=gha,mode=max,scope=raw-reads-processing-service-${{ github.ref }}
+      - name: Run tests
+        run: docker run --rm raw-reads-processing-service:test pytest

@@ -47,6 +47,13 @@
         secretKeyRef:
           name: backend-keycloak-client-secret
           key: backendKeycloakClientSecret
+    {{- if eq .name "loculus-website-config" }}
+    - name: LOCULUSSUB_oidcTransactionCookieSecret
+      valueFrom:
+        secretKeyRef:
+          name: website-oidc-cookie-secret
+          key: oidcTransactionCookieSecret
+    {{- end }}
     - name: LOCULUSSUB_orcidSecret
       valueFrom:
         secretKeyRef:
@@ -61,4 +68,8 @@
     name: {{ if .configmap }}{{ .configmap }}{{ else }}{{ .name }}{{ end }}
 - name: {{ .name }}-processed
   emptyDir: {}
+{{- end }}
+
+{{- define "loculus.websiteOrganismConfigMapName" -}}
+{{- printf "loculus-web-org-config-%s" . | trunc 63 | trimSuffix "-" -}}
 {{- end }}

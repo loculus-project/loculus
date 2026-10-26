@@ -7,8 +7,8 @@ import kotlinx.datetime.minus
 import kotlinx.datetime.toLocalDateTime
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
-import org.jetbrains.exposed.sql.selectAll
-import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.v1.jdbc.selectAll
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.junit.jupiter.api.Test
 import org.loculus.backend.api.Organism
 import org.loculus.backend.auth.AuthenticatedUser
@@ -49,7 +49,6 @@ class CleanUpAuxTableTaskTest(
             submittedOrganism = Organism("organism"),
             uploadedMetadataBatch = listOf(MetadataEntry("submission id", mapOf("key" to "value"))),
             uploadedAt = oneHourOld,
-            null,
         )
         val uploadIdOld = "upload id old"
         val oneDayOld = now.minus(
@@ -64,7 +63,6 @@ class CleanUpAuxTableTaskTest(
             submittedOrganism = Organism("organism"),
             uploadedMetadataBatch = listOf(MetadataEntry("submission id", mapOf("key" to "value"))),
             uploadedAt = oneDayOld,
-            null,
         )
 
         transaction {

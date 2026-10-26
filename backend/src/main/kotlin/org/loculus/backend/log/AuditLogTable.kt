@@ -1,7 +1,7 @@
 package org.loculus.backend.log
 
-import org.jetbrains.exposed.sql.Table
-import org.jetbrains.exposed.sql.kotlin.datetime.datetime
+import org.jetbrains.exposed.v1.core.Table
+import org.jetbrains.exposed.v1.datetime.datetime
 
 const val AUDIT_LOG_TABLE_NAME = "audit_log"
 

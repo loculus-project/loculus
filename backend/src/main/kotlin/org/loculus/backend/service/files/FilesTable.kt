@@ -1,10 +1,9 @@
 package org.loculus.backend.service.files
 
-import org.jetbrains.exposed.sql.Table
-import org.jetbrains.exposed.sql.kotlin.datetime.datetime
-import java.util.UUID
+import org.jetbrains.exposed.v1.core.Table
+import org.jetbrains.exposed.v1.datetime.datetime
 
-typealias FileId = UUID
+typealias FileId = String
 typealias MultipartUploadId = String
 const val FILES_TABLE_NAME = "files"
 
@@ -16,7 +15,7 @@ const val FILES_TABLE_NAME = "files"
  */
 object FilesTable : Table(FILES_TABLE_NAME) {
 
-    val idColumn = uuid("id")
+    val idColumn = text("id")
 
     /**
      * When the file upload was requested, i.e. the row in the table was created.

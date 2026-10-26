@@ -2,14 +2,26 @@ import logging
 import os
 import re
 import typing
-from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
+from collections.abc import Iterable, Mapping, Sequence
+from dataclasses import asdict
 from datetime import datetime, timedelta
-from enum import StrEnum
-from typing import Any, Final
+from typing import Any, Final, Literal, cast
 
 import pytz
-from sqlalchemy import Engine, Enum, create_engine, delete, func, make_url, or_, select, update
+from sqlalchemy import (
+    DateTime,
+    Engine,
+    Enum,
+    ForeignKey,
+    Index,
+    create_engine,
+    delete,
+    func,
+    make_url,
+    or_,
+    select,
+    update,
+)
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import (
     DeclarativeBase,
@@ -25,6 +37,9 @@ from tenacity import (
     stop_after_attempt,
     wait_fixed,
 )
+
+from .config import Config, EnaResultField
+from .submission_types import Accession, AccessionVersion, ProjectId, Status, StatusAll, Version
 
 logger = logging.getLogger(__name__)
 
@@ -58,59 +73,6 @@ def db_init(db_password_default: str, db_username_default: str, db_url_default: 
     )
 
 
-class StatusAll(StrEnum):
-    READY_TO_SUBMIT = "READY_TO_SUBMIT"
-    SUBMITTED_PROJECT = "SUBMITTED_PROJECT"
-    SUBMITTED_SAMPLE = "SUBMITTED_SAMPLE"
-    SUBMITTING_ASSEMBLY = "SUBMITTING_ASSEMBLY"
-    SUBMITTED_ALL = "SUBMITTED_ALL"
-    SENT_TO_LOCULUS = "SENT_TO_LOCULUS"
-    HAS_ERRORS_EXT_METADATA_UPLOAD = "HAS_ERRORS_EXT_METADATA_UPLOAD"
-
-
-class Status(StrEnum):
-    READY = "READY"
-    SUBMITTING = "SUBMITTING"
-    SUBMITTED = "SUBMITTED"
-    HAS_ERRORS = "HAS_ERRORS"
-    WAITING = "WAITING"  # Only for assembly creation
-
-
-type Accession = str
-type Version = int
-
-
-@dataclass(frozen=True)
-class AccessionVersion:
-    accession: Accession
-    version: Version
-
-    @classmethod
-    def from_string(cls, s: str) -> "AccessionVersion":
-        if s.count(".") != 1:
-            msg = (
-                f"Invalid AccessionVersion string '{s}': "
-                "expected exactly one '.' separating accession and version"
-            )
-            raise ValueError(msg)
-        accession_str, version_str = s.split(".", 1)
-        return cls(
-            accession=accession_str,
-            version=int(version_str),
-        )
-
-    def __post_init__(self):
-        if not isinstance(self.version, int):
-            msg = "version must be an int"
-            logger.error(msg)
-            raise TypeError(msg)
-
-
-@dataclass(frozen=True)
-class ProjectId:
-    project_id: int | None
-
-
 # ---------------------------------------------------------------------------
 # SQLAlchemy ORM models
 # Using MappedAsDataclass so they still behave as dataclasses (constructor,
@@ -138,17 +100,18 @@ class SubmissionTableEntry(Base):
     version: Mapped[int] = mapped_column(primary_key=True)
     organism: Mapped[str] = mapped_column()
     group_id: Mapped[int] = mapped_column()
+    submit_raw_reads: Mapped[bool] = mapped_column(default=False)
 
     # Optional fields with defaults.
     # 'seq_metadata' maps to the DB column "metadata".
     seq_metadata: Mapped[dict[str, Any]] = mapped_column("metadata", JSONB, default_factory=dict)
     errors: Mapped[list[str] | None] = mapped_column(JSONB, default=None)
     warnings: Mapped[list[str] | None] = mapped_column(JSONB, default=None)
-    status_all: Mapped[Status] = mapped_column(
+    status_all: Mapped[StatusAll] = mapped_column(
         Enum(StatusAll, native_enum=False),  # Store enum as string in DB table.
         default=StatusAll.READY_TO_SUBMIT,
     )
-    started_at: Mapped[datetime | None] = mapped_column(default=None)
+    started_at: Mapped[datetime] = mapped_column(default_factory=lambda: datetime.now(tz=pytz.utc))
     finished_at: Mapped[datetime | None] = mapped_column(default=None)
     unaligned_nucleotide_sequences: Mapped[dict[str, str | None]] = mapped_column(
         JSONB, default_factory=dict
@@ -157,7 +120,9 @@ class SubmissionTableEntry(Base):
     external_metadata: Mapped[dict[str, str | Sequence[str]] | None] = mapped_column(
         JSONB, default=None
     )
-    project_id: Mapped[int | None] = mapped_column(default=None)
+    project_id: Mapped[int | None] = mapped_column(
+        ForeignKey("ena_deposition_schema.project_table.project_id"), default=None
+    )
 
     @property
     def pkey(self) -> AccessionVersion:
@@ -168,7 +133,11 @@ class ProjectTableEntry(Base):
     """Maps to project_table. Primary key: project_id (BIGSERIAL)."""
 
     __tablename__ = "project_table"
-    __table_args__: typing.ClassVar[dict[str, Any]] = {"schema": "ena_deposition_schema"}
+    __table_args__: typing.ClassVar[tuple[Any, ...]] = (
+        Index("idx_project_table_group_id", "group_id"),
+        Index("idx_project_table_organism", "organism"),
+        {"schema": "ena_deposition_schema"},
+    )
 
     # BIGSERIAL primary key — server-generated, excluded from __init__.
     project_id: Mapped[int | None] = mapped_column(
@@ -182,12 +151,16 @@ class ProjectTableEntry(Base):
         Enum(Status, native_enum=False),
         default=Status.READY,
     )
-    started_at: Mapped[datetime | None] = mapped_column(default=None)
+    started_at: Mapped[datetime] = mapped_column(default_factory=lambda: datetime.now(tz=pytz.utc))
     finished_at: Mapped[datetime | None] = mapped_column(default=None)
     center_name: Mapped[str | None] = mapped_column(default=None)
     result: Mapped[dict[str, str | Sequence[str]] | None] = mapped_column(JSONB, default=None)
-    ena_first_publicly_visible: Mapped[datetime | None] = mapped_column(default=None)
-    ncbi_first_publicly_visible: Mapped[datetime | None] = mapped_column(default=None)
+    ena_first_publicly_visible: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), default=None
+    )
+    ncbi_first_publicly_visible: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), default=None
+    )
 
     @property
     def pkey(self) -> ProjectId:
@@ -208,11 +181,50 @@ class SampleTableEntry(Base):
         Enum(Status, native_enum=False),
         default=Status.READY,
     )
-    started_at: Mapped[datetime | None] = mapped_column(default=None)
+    started_at: Mapped[datetime] = mapped_column(default_factory=lambda: datetime.now(tz=pytz.utc))
     finished_at: Mapped[datetime | None] = mapped_column(default=None)
     result: Mapped[dict[str, str | Sequence[str]] | None] = mapped_column(JSONB, default=None)
-    ena_first_publicly_visible: Mapped[datetime | None] = mapped_column(default=None)
-    ncbi_first_publicly_visible: Mapped[datetime | None] = mapped_column(default=None)
+    ena_first_publicly_visible: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), default=None
+    )
+    ncbi_first_publicly_visible: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), default=None
+    )
+
+    @property
+    def pkey(self) -> AccessionVersion:
+        return AccessionVersion(accession=self.accession, version=self.version)
+
+
+class RawReadsTableEntry(Base):
+    """Maps to raw_reads_table. Primary key: (accession, version)."""
+
+    __tablename__ = "raw_reads_table"
+    __table_args__: typing.ClassVar[dict[str, Any]] = {"schema": "ena_deposition_schema"}
+
+    accession: Mapped[str] = mapped_column(primary_key=True)
+    version: Mapped[int] = mapped_column(primary_key=True)
+    errors: Mapped[list[str] | None] = mapped_column(JSONB, default=None)
+    warnings: Mapped[list[str] | None] = mapped_column(JSONB, default=None)
+    status: Mapped[Status] = mapped_column(
+        Enum(Status, native_enum=False),
+        default=Status.READY,
+    )
+    started_at: Mapped[datetime] = mapped_column(default_factory=lambda: datetime.now(tz=pytz.utc))
+    finished_at: Mapped[datetime | None] = mapped_column(default=None)
+    result: Mapped[dict[str, str | Sequence[str]] | None] = mapped_column(JSONB, default=None)
+    ena_run_first_publicly_visible: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), default=None
+    )
+    ncbi_run_first_publicly_visible: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), default=None
+    )
+    ena_experiment_first_publicly_visible: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), default=None
+    )
+    ncbi_experiment_first_publicly_visible: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), default=None
+    )
 
     @property
     def pkey(self) -> AccessionVersion:
@@ -233,20 +245,34 @@ class AssemblyTableEntry(Base):
         Enum(Status, native_enum=False),
         default=Status.READY,
     )
-    started_at: Mapped[datetime | None] = mapped_column(default=None)
+    started_at: Mapped[datetime] = mapped_column(default_factory=lambda: datetime.now(tz=pytz.utc))
     finished_at: Mapped[datetime | None] = mapped_column(default=None)
     result: Mapped[dict[str, str | Sequence[str]] | None] = mapped_column(JSONB, default=None)
-    ena_nucleotide_first_publicly_visible: Mapped[datetime | None] = mapped_column(default=None)
-    ncbi_nucleotide_first_publicly_visible: Mapped[datetime | None] = mapped_column(default=None)
-    ena_gca_first_publicly_visible: Mapped[datetime | None] = mapped_column(default=None)
-    ncbi_gca_first_publicly_visible: Mapped[datetime | None] = mapped_column(default=None)
+    ena_nucleotide_first_publicly_visible: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), default=None
+    )
+    ncbi_nucleotide_first_publicly_visible: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), default=None
+    )
+    ena_gca_first_publicly_visible: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), default=None
+    )
+    ncbi_gca_first_publicly_visible: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), default=None
+    )
 
     @property
     def pkey(self) -> AccessionVersion:
         return AccessionVersion(accession=self.accession, version=self.version)
 
 
-type TableEntry = SubmissionTableEntry | ProjectTableEntry | SampleTableEntry | AssemblyTableEntry
+type TableEntry = (
+    SubmissionTableEntry
+    | ProjectTableEntry
+    | SampleTableEntry
+    | AssemblyTableEntry
+    | RawReadsTableEntry
+)
 
 
 def highest_version_in_submission_table(engine: Engine) -> dict[Accession, Version]:
@@ -308,7 +334,9 @@ def delete_records_in_db[T: TableEntry](
     return deleted_rows
 
 
-def find_errors_or_stuck_in_db[T: (ProjectTableEntry, SampleTableEntry, AssemblyTableEntry)](
+def find_errors_or_stuck_in_db[
+    T: (ProjectTableEntry, SampleTableEntry, AssemblyTableEntry, RawReadsTableEntry)
+](
     engine: Engine,
     model_class: type[T],
     time_threshold: int = 15,
@@ -377,7 +405,7 @@ def update_db_where_conditions[T: TableEntry](
         f"Updating '{model_class.__name__}' with conditions '{conditions}'"
         f" and values '{update_values}'"
     )
-    try:
+    try:  # noqa: PLW0717
         with Session(engine) as session:
             stmt = update(model_class)
             for col_name, value in conditions.items():
@@ -460,45 +488,22 @@ def update_with_retry[T: TableEntry](
         return 0
 
 
-def add_to_project_table(engine: Engine, entry: ProjectTableEntry) -> int | None:
-    """Insert *entry* into project_table and return the generated project_id."""
-    entry.started_at = datetime.now(tz=pytz.utc)
+def add_to_db[T: TableEntry](engine: Engine, entry: T) -> T | None:
+    """Insert *entry* into its table.
+
+    Returns the persisted entry on success, or None on failure. Because the
+    session is opened with ``expire_on_commit=False``, the returned entry's
+    attributes stay populated after the session closes, including any
+    server-generated key such as ``project_table.project_id``.
+    """
     try:
-        with Session(engine) as session:
+        with Session(engine, expire_on_commit=False) as session:
             session.add(entry)
-            session.flush()  # Sends INSERT; project_id is populated via RETURNING.
-            project_id = entry.project_id
             session.commit()
-        return project_id
+        return entry
     except Exception as e:
-        logger.warning(f"add_to_project_table errored with: {e}")
+        logger.warning(f"add_to_db errored for {type(entry).__name__}: {e}")
         return None
-
-
-def add_to_sample_table(engine: Engine, entry: SampleTableEntry) -> bool:
-    """Insert *entry* into sample_table. Returns True on success."""
-    entry.started_at = datetime.now(tz=pytz.utc)
-    try:
-        with Session(engine, expire_on_commit=False) as session:
-            session.add(entry)
-            session.commit()
-        return True
-    except Exception as e:
-        logger.warning(f"add_to_sample_table errored with: {e}")
-        return False
-
-
-def add_to_assembly_table(engine: Engine, entry: AssemblyTableEntry) -> bool:
-    """Insert *entry* into assembly_table. Returns True on success."""
-    entry.started_at = datetime.now(tz=pytz.utc)
-    try:
-        with Session(engine, expire_on_commit=False) as session:
-            session.add(entry)
-            session.commit()
-        return True
-    except Exception as e:
-        logger.warning(f"add_to_assembly_table errored with: {e}")
-        return False
 
 
 def in_submission_table(engine: Engine, conditions: dict[str, Any]) -> bool:
@@ -508,19 +513,6 @@ def in_submission_table(engine: Engine, conditions: dict[str, Any]) -> bool:
         for col_name, value in conditions.items():
             stmt = stmt.where(getattr(SubmissionTableEntry, col_name) == value)
         return session.scalar(stmt) is not None
-
-
-def add_to_submission_table(engine: Engine, entry: SubmissionTableEntry) -> bool:
-    """Insert *entry* into submission_table. Returns True on success."""
-    entry.started_at = datetime.now(tz=pytz.utc)
-    try:
-        with Session(engine, expire_on_commit=False) as session:
-            session.add(entry)
-            session.commit()
-        return True
-    except Exception as e:
-        logger.warning(f"add_to_submission_table errored with: {e}")
-        return False
 
 
 def is_latest_revision(engine: Engine, seq_key: AccessionVersion) -> bool:
@@ -562,3 +554,149 @@ def previous_version(engine: Engine, seq_key: AccessionVersion) -> int | None:
     )
     all_versions = sorted(row.version for row in rows)
     return all_versions[-2]
+
+
+def get_last_entry(db_engine: Engine, accession_version: AccessionVersion) -> SubmissionTableEntry:
+    version_to_revise = previous_version(db_engine, accession_version)
+    last_version_rows = find_conditions_in_db(
+        db_engine,
+        SubmissionTableEntry,
+        conditions={"accession": accession_version.accession, "version": version_to_revise},
+    )
+    if len(last_version_rows) == 0:
+        error_msg = f"Last version {version_to_revise} not found in submission_table"
+        raise RuntimeError(error_msg)
+
+    return last_version_rows[0]
+
+
+def get_project_and_sample_results(
+    db_engine: Engine, submission_row: SubmissionTableEntry
+) -> tuple[str, str]:
+    sample_rows = find_conditions_in_db(
+        db_engine, SampleTableEntry, conditions=asdict(submission_row.pkey)
+    )
+    if len(sample_rows) == 0:
+        error_msg = f"Entry {submission_row.accession} not found in sample_table"
+        raise RuntimeError(error_msg)
+
+    project_rows = find_conditions_in_db(
+        db_engine,
+        ProjectTableEntry,
+        conditions={"project_id": submission_row.project_id},
+    )
+    if len(project_rows) == 0:
+        error_msg = f"Entry {submission_row.accession} not found in project_table"
+        raise RuntimeError(error_msg)
+    sample_accession = (
+        sample_rows[0].result.get("ena_sample_accession") if sample_rows[0].result else None
+    )
+    study_accession = (
+        project_rows[0].result.get(EnaResultField.BIOPROJECT) if project_rows[0].result else None
+    )
+    if not sample_accession or not study_accession:
+        error_msg = (
+            f"Missing sample_accession or study_accession for accession {submission_row.accession} "
+            "cannot create manifest"
+        )
+        raise RuntimeError(error_msg)
+    return cast(str, sample_accession), cast(str, study_accession)
+
+
+def set_accession_does_not_exist_error(
+    conditions: dict[str, Any],
+    accession: str,
+    accession_type: Literal["BIOPROJECT", "BIOSAMPLE", "RUN_REF"],
+    db_engine: Engine,
+):
+    error_text = f"Accession {accession} of type {accession_type} does not exist in ENA."
+    logger.error(error_text)
+
+    succeeded: bool | int | None
+    match accession_type:
+        case "BIOSAMPLE":
+            succeeded = update_db_where_conditions(
+                db_engine,
+                SampleTableEntry,
+                conditions,
+                {
+                    "status": Status.HAS_ERRORS,
+                    "errors": [error_text],
+                    "result": {
+                        EnaResultField.BIOSAMPLE: accession,
+                        "ena_sample_accession": accession,
+                    },
+                },
+            )
+        case "BIOPROJECT":
+            succeeded = update_db_where_conditions(
+                db_engine,
+                ProjectTableEntry,
+                conditions,
+                {
+                    "status": Status.HAS_ERRORS,
+                    "errors": [error_text],
+                    "result": {EnaResultField.BIOPROJECT: accession},
+                },
+            )
+        case "RUN_REF":
+            succeeded = update_db_where_conditions(
+                db_engine,
+                RawReadsTableEntry,
+                conditions,
+                {
+                    "status": Status.HAS_ERRORS,
+                    "errors": [error_text],
+                    "result": {EnaResultField.RUN: accession},
+                },
+            )
+
+    if not succeeded:
+        logger.warning(f"{accession_type} creation failed and DB update failed.")
+
+
+def retry_failed_submissions_for_matching_errors(
+    entries_with_errors: Iterable[ProjectTableEntry]
+    | Iterable[SampleTableEntry]
+    | Iterable[AssemblyTableEntry]
+    | Iterable[RawReadsTableEntry],
+    db_engine: Engine,
+    model_class: type[ProjectTableEntry]
+    | type[SampleTableEntry]
+    | type[AssemblyTableEntry]
+    | type[RawReadsTableEntry],
+    config: Config,
+    last_retry: datetime | None = None,
+) -> datetime | None:
+    if (
+        last_retry
+        and datetime.now(tz=pytz.utc) - timedelta(minutes=config.retry_threshold_min) < last_retry
+    ):
+        return last_retry
+    for entry in entries_with_errors:
+        errors = str(entry.errors or "")
+        if not any(substring in errors for substring in config.slack_retry_substrings):
+            continue
+
+        pkey = entry.pkey
+        logger.info(
+            f"Retrying submission {pkey} in {model_class.__tablename__}"
+            f" with error: '{entry.errors}'"
+        )
+
+        update_values = {
+            "status": Status.READY,
+            "errors": None,
+            "finished_at": None,
+        }
+        try:
+            update_with_retry(
+                db_engine=db_engine,
+                conditions=asdict(pkey),
+                update_values=update_values,
+                model_class=model_class,
+            )
+            last_retry = datetime.now(tz=pytz.utc)
+        except Exception as e:
+            logger.error(f"Failed to update {model_class.__tablename__} entry for retry: {e!s}")
+    return last_retry

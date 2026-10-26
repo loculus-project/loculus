@@ -81,7 +81,7 @@ def fetch_updated_hierarchy(
     url = f"{service_url.rstrip('/')}/silo-lineage"
     logger.info("Fetching %s hierarchy over %d values", file_base, len(values))
     sorted_values = sorted(values)
-    try:  # noqa: PLW0717
+    try:  # ruff:ignore[too-many-statements-in-try-clause]
         response = _post_silo_lineage(url, sorted_values)
         if response.status_code == codes.request_entity_too_large:
             logger.warning(

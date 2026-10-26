@@ -1,7 +1,7 @@
 package org.loculus.backend.service.seqsetcitations
 
-import org.jetbrains.exposed.sql.Table
-import org.jetbrains.exposed.sql.kotlin.datetime.datetime
+import org.jetbrains.exposed.v1.core.Table
+import org.jetbrains.exposed.v1.datetime.datetime
 import org.loculus.backend.api.CitationContributor
 import org.loculus.backend.api.CitationOrigin
 import org.loculus.backend.service.jacksonSerializableJsonb
@@ -44,6 +44,7 @@ object SeqSetCitationSourceTable : Table("seqset_citation_source") {
     val title = text("title")
     val year = integer("year")
     val contributors = jacksonSerializableJsonb<List<CitationContributor>>("contributors")
+    val journal = text("journal").nullable()
     override val primaryKey = PrimaryKey(citationSourceId)
 }
 

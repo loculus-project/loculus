@@ -8,8 +8,13 @@ from pydantic import BaseModel
 from sqlalchemy import Engine, select
 from sqlalchemy.orm import Session
 
-from .config import Config
-from .submission_db_helper import AssemblyTableEntry, SampleTableEntry, Status, db_init
+from .config import Config, EnaResultField
+from .submission_db_helper import (
+    AssemblyTableEntry,
+    SampleTableEntry,
+    db_init,
+)
+from .submission_types import Status
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +32,9 @@ def get_bio_sample_accessions(engine: Engine) -> dict[str, str]:
         stmt = select(SampleTableEntry).where(SampleTableEntry.status == Status.SUBMITTED)
         results = list(session.scalars(stmt).all())
     return {
-        row.accession: cast(str, row.result["biosample_accession"]) for row in results if row.result
+        row.accession: cast(str, row.result[EnaResultField.BIOSAMPLE])
+        for row in results
+        if row.result
     }
 
 
@@ -41,7 +48,7 @@ def get_insdc_accessions(engine: Engine) -> dict[str, list[str]]:
         row.accession: [
             cast(str, row.result[key])
             for key in row.result
-            if key.startswith("insdc_accession_full")
+            if key.startswith(EnaResultField.INSDC_ACCESSION_FULL_PREFIX)
         ]
         for row in results
         if row.result
@@ -56,6 +63,11 @@ def init_app(config: Config):
 @app.get("/")
 def read_root():
     return {"message": "ENA Deposition Pod API is running"}
+
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
 
 
 @app.get("/submitted", response_model=SubmittedAccessionsResponse)

@@ -11,8 +11,58 @@ export class RevisionPage {
     /**
      * Navigate to the revision page for a specific group
      */
-    async goto(organism: string, groupId: number) {
-        await this.page.goto(`/${organism}/submission/${groupId}/revise`);
+    async goto(organism: string, groupId: number, inputMode?: 'form' | 'bulk') {
+        await this.page.goto(
+            `/${organism}/submission/${groupId}/revise${inputMode ? '?inputMode=' + inputMode : ''}`,
+        );
+    }
+
+    /**
+     * Look up an individual sequence entry to revise in form mode
+     */
+    async searchAccessionVersion(accessionVersion: string) {
+        await this.page
+            .getByRole('textbox', { name: 'Accession of sequence to revise' })
+            .fill(accessionVersion);
+        await this.page.getByRole('button', { name: 'Find sequence entry' }).click();
+    }
+
+    /**
+     * Assert the individual sequence entry revision form displays for the accessionVersion
+     */
+    async expectRevisionFormLoaded(accessionVersion: string) {
+        await expect(
+            this.page.getByRole('heading', {
+                name: `Create new revision from ${accessionVersion}`,
+            }),
+        ).toBeVisible();
+    }
+
+    /**
+     * Assert the individual sequence entry revision form is not shown (e.g. after an invalid search)
+     */
+    async expectRevisionFormNotLoaded() {
+        await expect(
+            this.page.getByRole('heading', { name: /Create new revision from/ }),
+        ).toBeHidden();
+    }
+
+    /**
+     * Assert the "could not find that sequence entry" search error is shown
+     */
+    async expectAccessionNotFoundError() {
+        await expect(
+            this.page.getByText(
+                'Could not find that sequence entry. Please check the accession and version and try again.',
+            ),
+        ).toBeVisible();
+    }
+
+    /**
+     * Assert the "invalid accession format" search error is shown
+     */
+    async expectInvalidAccessionFormatError() {
+        await expect(this.page.getByText('Please enter a valid accession format.')).toBeVisible();
     }
 
     /**
@@ -39,6 +89,12 @@ export class RevisionPage {
         await expect(this.page.getByTestId('discard_metadata_file')).toBeEnabled();
     }
 
+    async discardFiles(fileCategory: string) {
+        await this.page.getByTestId(`discard_${fileCategory}`).click();
+        // Confirmation modal appears and the discard button must be clicked
+        await this.page.getByRole('button', { name: 'Discard', exact: true }).click();
+    }
+
     /**
      * Accept the data submission terms
      */
@@ -47,7 +103,7 @@ export class RevisionPage {
             .getByText('I confirm I have not and will not submit this data independently to INSDC')
             .click();
         await this.page
-            .getByText('I confirm that the data submitted is not sensitive or human-identifiable')
+            .getByText('I confirm that I have the legal right to submit this data')
             .click();
     }
 
@@ -87,12 +143,12 @@ export class RevisionPage {
 
     async uploadExternalFiles(
         fileId: string,
-        fileContents: Record<string, Record<string, string>>,
+        fileContents: Record<string, string | Record<string, string>>,
         tmpDir: string,
     ) {
         await prepareTmpDirForBulkUpload(fileContents, tmpDir);
         const fileCount = Object.values(fileContents).reduce(
-            (total, files) => total + Object.keys(files).length,
+            (total, files) => total + (typeof files === 'string' ? 1 : Object.keys(files).length),
             0,
         );
         await uploadFilesFromTmpDir(this.page, fileId, tmpDir, fileCount);

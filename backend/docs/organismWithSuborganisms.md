@@ -74,7 +74,7 @@ defaultOrganisms:
           <<: *preprocessingConfigFile
           # use a minimizer to figure out which suborganism a submitted sequence belongs to
           segment_classification_method: "minimizer"
-          minimizer_url: "https://raw.githubusercontent.com/alejandra-gonzalezsanchez/loculus-evs/master/evs_minimizer-index.json"
+          minimizer_url: "https://alejandra-gonzalezsanchez.github.io/loculus-evs/evs_minimizer-index.json"
           segments:
             - name: main
               references:
@@ -271,8 +271,8 @@ Once the suborganism is assigned, it runs Nextclade with the correct Nextclade d
       "matchingSuborganism-gene2": [...]
     },
     "files": {
-      "raw_reads": [],
-      "sequencing_logs": []
+      "rawReads": [],
+      "sequenceLogs": []
     }
   },
   "errors": [...],

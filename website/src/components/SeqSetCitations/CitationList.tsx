@@ -24,30 +24,22 @@ const CitationList: FC<CitationListProps> = ({ citations, maxDisplayedCitations,
                 fullWidth={false}
                 className='min-h-[60vh]'
             >
+                <div className='w-[1000px]'></div>
                 <CitationTable isLoading={false} error={null} citations={citations} />
             </BaseDialog>
-            {citations.length > 0 ? (
-                <div className='space-y-2'>
-                    <ul className='space-y-4'>
-                        {(maxDisplayedCitations !== undefined
-                            ? citations.slice(0, maxDisplayedCitations)
-                            : citations
-                        ).map((citation: SeqSetCitation | SequenceCitation) => (
-                            <li key={citation.source.sourceDOI}>
-                                <CitationDetails citation={citation} className='text-sm' displayYear />
-                            </li>
-                        ))}
-                    </ul>
-                    {displayCitationsModalButton && (
-                        <Button className='text-sm hover:underline' onClick={() => setIsOpen(true)}>
-                            View all citations ({citations.length})...
-                        </Button>
-                    )}
-                </div>
-            ) : (
-                <div className='py-8 text-center'>
-                    <span>No citations found.</span>
-                </div>
+            <ul className='space-y-4'>
+                {(maxDisplayedCitations !== undefined ? citations.slice(0, maxDisplayedCitations) : citations).map(
+                    (citation: SeqSetCitation | SequenceCitation) => (
+                        <li key={citation.source.sourceDOI}>
+                            <CitationDetails citation={citation} className='text-sm' displayYear />
+                        </li>
+                    ),
+                )}
+            </ul>
+            {displayCitationsModalButton && (
+                <Button className='text-sm hover:underline' onClick={() => setIsOpen(true)}>
+                    View all citations ({citations.length})...
+                </Button>
             )}
         </div>
     );

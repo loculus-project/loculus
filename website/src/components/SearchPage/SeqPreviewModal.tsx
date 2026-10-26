@@ -90,11 +90,16 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
             ) : data !== null && !isError ? (
                 <div className='px-6'>
                     <SequenceDataUI
-                        {...data}
+                        sequenceData={data}
+                        organism={data.organism}
+                        accessionVersion={data.accessionVersion}
+                        schema={data.schema}
+                        clientConfig={data.clientConfig}
+                        sequenceCitations={data.sequenceCitations}
                         referenceGenomesInfo={referenceGenomesInfo}
                         myGroups={myGroups}
                         accessToken={accessToken}
-                        sequenceFlaggingConfig={data.isRevocation ? undefined : sequenceFlaggingConfig}
+                        sequenceFlaggingConfig={sequenceFlaggingConfig}
                         onRevokeSuccess={onClose}
                     />
                 </div>
@@ -112,7 +117,7 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
                     <SequenceEntryHistoryMenu
                         sequenceEntryHistory={data.sequenceEntryHistory}
                         accessionVersion={seqId}
-                        setPreviewedSeqId={setPreviewedSeqId}
+                        handleSelect={setPreviewedSeqId}
                     />
                 )}
                 <Button
