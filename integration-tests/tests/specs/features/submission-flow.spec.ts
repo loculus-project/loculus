@@ -37,6 +37,14 @@ test.describe('Submission flow', () => {
         await page.getByLabel('I confirm I have not and will').check();
 
         await page.getByRole('button', { name: 'Upload and proceed to Approval' }).click();
+
+        await expect(
+            page.getByRole('heading', { name: 'Are first and last names assigned correctly?' }),
+        ).toBeVisible();
+        const firstAuthor = page.getByRole('row').filter({ hasText: 'Ammar' });
+        await expect(firstAuthor.getByRole('cell')).toHaveText(['Ammar', 'M.']);
+        await page.getByRole('button', { name: 'Names are correct' }).click();
+
         await page.getByRole('button', { name: 'Continue under Open terms' }).click();
 
         await expect(

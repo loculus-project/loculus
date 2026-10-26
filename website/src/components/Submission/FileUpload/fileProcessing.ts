@@ -21,7 +21,7 @@ export type FileKind<F extends ProcessedFile> = {
 const COMPRESSION_EXTENSIONS = ['zst', 'gz', 'zip', 'xz'];
 
 /** Splits a file name into its data extension and its trailing compression extension, if any. */
-const splitFileExtensions = (file: File): { dataExtension: string; compressionExtension: string | null } => {
+export const splitFileExtensions = (file: File): { dataExtension: string; compressionExtension: string | null } => {
     const fileNameParts = file.name.toLowerCase().split('.');
     const extension = fileNameParts[fileNameParts.length - 1];
     const isCompressed = COMPRESSION_EXTENSIONS.includes(extension);

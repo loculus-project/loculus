@@ -112,6 +112,11 @@ export class RevisionPage {
      */
     async clickSubmit() {
         await this.page.getByRole('button', { name: 'Upload and proceed to Approval' }).click();
+        // The author names confirmation only shows if the metadata contains authors
+        void this.page
+            .getByRole('button', { name: 'Names are correct' })
+            .click({ timeout: 3_000 })
+            .catch(() => {});
     }
 
     /**

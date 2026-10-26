@@ -6,6 +6,7 @@ import SubmissionPageWrapper from '../../../../components/Submission/SubmissionP
 import {
     dataUseTermsAreEnabled,
     getFileSharingConfig,
+    getAuthorsFields,
     getGroupedInputFields,
     getRuntimeConfig,
     getSchema,
@@ -44,6 +45,7 @@ const clientConfig = getRuntimeConfig().public;
                 instanceName={instanceName}
                 organism={organism}
                 metadataTemplateFields={groupedInputFields}
+                authorsFields={getAuthorsFields(cleanedOrganism.key)}
                 clientConfig={clientConfig}
                 group={group}
                 inputMode={inputMode}

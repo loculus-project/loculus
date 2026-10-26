@@ -69,6 +69,7 @@ function renderSubmissionForm({
                     ],
                 ])
             }
+            authorsFields={['authors']}
             submissionDataTypes={{
                 consensusSequences: allowSubmissionOfConsensusSequences,
                 maxSequencesPerEntry: 1,
@@ -80,6 +81,11 @@ function renderSubmissionForm({
 }
 
 const metadataFile = new File(['content'], 'metadata.tsv', { type: 'text/plain' });
+const metadataFileWithAuthors = new File(
+    ['submissionId\tauthors\nheader0\tSmith, Anna; Perez, Tom J.\nheader1\tSmith, Anna; Perez, Tom J.\n'],
+    'metadata.tsv',
+    { type: 'text/plain' },
+);
 const sequencesFile = new File(['content'], 'sequences.fasta', { type: 'text/plain' });
 const sequenceFile = new File(['content'], 'sequence.txt', { type: 'text/plain' });
 
@@ -128,6 +134,55 @@ describe('SubmitForm', () => {
             });
         },
     );
+
+    test('should ask the user to confirm how author names are split before submitting', async () => {
+        mockRequest.backend.submit(200, testResponse);
+        mockRequest.backend.getGroupsOfUser();
+
+        const { getByLabelText, getByRole, findByRole } = renderSubmissionForm();
+
+        await userEvent.upload(getByLabelText(/metadata file/i), metadataFileWithAuthors);
+        await userEvent.upload(getByLabelText(/sequence file/i), sequencesFile);
+        await userEvent.click(
+            getByLabelText(/I confirm I have not and will not submit this data independently to INSDC/i),
+        );
+        await userEvent.click(getByLabelText(/I confirm that I have the legal right to submit this data/i));
+
+        await userEvent.click(getByRole('button', { name: 'Upload and proceed to Approval' }));
+
+        expect(await findByRole('heading', { name: 'Are first and last names assigned correctly?' })).toBeVisible();
+        const rows = getByRole('table').querySelectorAll<HTMLTableRowElement>('tbody tr');
+        expect(Array.from(rows).map((row) => Array.from(row.cells).map((cell) => cell.textContent))).toEqual([
+            ['Smith', 'Anna'],
+            ['Perez', 'Tom J.'],
+        ]);
+
+        await userEvent.click(getByRole('button', { name: 'Names are correct' }));
+        await userEvent.click(await findByRole('button', { name: 'Continue under Open terms' }));
+
+        await waitFor(() => {
+            expect(toast.error).not.toHaveBeenCalled();
+        });
+    });
+
+    test('should not continue submitting when the user goes back to edit author names', async () => {
+        const { getByLabelText, getByRole, findByRole, queryByRole } = renderSubmissionForm();
+
+        await userEvent.upload(getByLabelText(/metadata file/i), metadataFileWithAuthors);
+        await userEvent.upload(getByLabelText(/sequence file/i), sequencesFile);
+        await userEvent.click(
+            getByLabelText(/I confirm I have not and will not submit this data independently to INSDC/i),
+        );
+        await userEvent.click(getByLabelText(/I confirm that I have the legal right to submit this data/i));
+
+        await userEvent.click(getByRole('button', { name: 'Upload and proceed to Approval' }));
+        await userEvent.click(await findByRole('button', { name: 'Go back and edit' }));
+
+        await waitFor(() => {
+            expect(queryByRole('heading', { name: 'Are first and last names assigned correctly?' })).toBeNull();
+        });
+        expect(queryByRole('button', { name: 'Continue under Open terms' })).toBeNull();
+    });
 
     test('should answer with feedback that a file is missing', async () => {
         mockRequest.backend.submit(200, testResponse);

@@ -4,6 +4,7 @@ import { DateTime } from 'luxon';
 import type { Result } from 'neverthrow';
 import { type FormEvent, useState, type Dispatch, type SetStateAction, useMemo } from 'react';
 
+import { extractAuthorLists, displayAuthorNamesConfirmationDialog } from './AuthorNamesConfirmationDialog.tsx';
 import { type FileFactory, FormOrUploadWrapper, type InputMode } from './FormOrUploadWrapper.tsx';
 import { getClientLogger } from '../../clientLogger.ts';
 import { FolderUploadComponent } from './FileUpload/FolderUploadComponent.tsx';
@@ -51,6 +52,8 @@ type DataUploadFormProps = {
     inputMode: InputMode;
     group: Group;
     metadataTemplateFields: Map<string, InputField[]>;
+    /** Names of metadata fields of type 'authors', whose name splitting the user is asked to confirm on submit */
+    authorsFields: string[];
     onSuccess: () => void;
     onError: (message: string) => void;
     submissionDataTypes: SubmissionDataTypes;
@@ -71,6 +74,7 @@ const InnerDataUploadForm = ({
     onError,
     group,
     metadataTemplateFields,
+    authorsFields,
     submissionDataTypes,
     dataUseTermsEnabled,
     fileSharingConfig,
@@ -159,16 +163,28 @@ const InnerDataUploadForm = ({
             }
         };
 
-        if (action === 'submit' && dataUseTermsEnabled && dataUseTermsType === openDataUseTermsOption) {
-            displayConfirmationDialog({
-                dialogText:
-                    'You have selected the Open Data Use Terms. Once released under the Open Data Use Terms sequences will be deposited to INSDC and cannot be changed to the Restricted-Use Data Use Terms.',
-                confirmButtonText: 'Continue under Open terms',
-                closeButtonText: 'Cancel',
-                onConfirmation: submitSequenceData,
+        const confirmDataUseTermsAndSubmit = () => {
+            if (action === 'submit' && dataUseTermsEnabled && dataUseTermsType === openDataUseTermsOption) {
+                displayConfirmationDialog({
+                    dialogText:
+                        'You have selected the Open Data Use Terms. Once released under the Open Data Use Terms sequences will be deposited to INSDC and cannot be changed to the Restricted-Use Data Use Terms.',
+                    confirmButtonText: 'Continue under Open terms',
+                    closeButtonText: 'Cancel',
+                    onConfirmation: submitSequenceData,
+                });
+            } else {
+                submitSequenceData();
+            }
+        };
+
+        const authorLists = await extractAuthorLists(metadataFile, authorsFields);
+        if (authorLists.length > 0) {
+            displayAuthorNamesConfirmationDialog({
+                authorLists,
+                onConfirmation: confirmDataUseTermsAndSubmit,
             });
         } else {
-            submitSequenceData();
+            confirmDataUseTermsAndSubmit();
         }
     };
 
