@@ -117,7 +117,7 @@ export const SubmissionConfirmationWizard: FC<SubmissionConfirmationWizardProps>
                     <p className='text-sm text-gray-600 mt-2'>
                         In your submission, authors must be given as <i>last name, first name</i>, separated by
                         semicolons (e.g. <code>Smith, Anna; Perez, Tom J.</code>). Please check that the names below
-                        have been split correctly.
+                        have been split correctly. If not, please go back and change your metadata input.
                     </p>
                     <AuthorNamesTable authorLists={step.authorLists} />
                 </>
