@@ -143,7 +143,8 @@ class TaxonomyService:
         try:
             response = taxonomy_cache.get_or_fetch(url)
         except requests.exceptions.RequestException as e:
-            msg = f"Network error while fetching '{url}': {e}."
+            logger.error(f"Network error while fetching '{url}': {e}")
+            msg = "Network error while contacting taxonomy service."
             raise TaxonomyServiceError(msg) from e
 
         if response.status_code in (requests.codes.not_found, requests.codes.unprocessable_entity):
@@ -152,16 +153,18 @@ class TaxonomyService:
             )
             return []
         if response.status_code != requests.codes.ok:
-            msg = (
+            logger.error(
                 f"Taxonomy service returned unexpected status {response.status_code} "
                 f"for '{url}': {response.text}"
             )
+            msg = f"Taxonomy service returned unexpected status {response.status_code}."
             raise TaxonomyServiceError(msg)
 
         try:
             return TaxonomyResponse.model_validate(response.json()).taxa()
         except (requests.exceptions.JSONDecodeError, ValidationError) as e:
-            msg = f"Unexpected response from taxonomy service for '{url}': {e}"
+            logger.error(f"Unexpected response from taxonomy service for '{url}': {e}")
+            msg = "Taxonomy service returned an unexpected response."
             raise TaxonomyServiceError(msg) from e
 
     def get_tax_id(self, unvalidated_host: str, error_if_failed: bool) -> RawProcessingResult:
