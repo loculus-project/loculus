@@ -174,12 +174,9 @@ const InnerDataUploadForm = ({
         if (authorLists.length > 0) {
             confirmationSteps.push({ type: 'authorNames', authorLists });
         }
+        confirmationSteps.push({ type: 'nextSteps' });
 
-        if (confirmationSteps.length > 0) {
-            displaySubmissionConfirmationWizard({ steps: confirmationSteps, onConfirmation: submitSequenceData });
-        } else {
-            submitSequenceData();
-        }
+        displaySubmissionConfirmationWizard({ steps: confirmationSteps, onConfirmation: submitSequenceData });
     };
 
     return (

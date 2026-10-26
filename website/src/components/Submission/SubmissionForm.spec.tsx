@@ -128,6 +128,7 @@ describe('SubmitForm', () => {
             const submitButton = getByRole('button', { name: 'Upload and proceed to Approval' });
             await userEvent.click(submitButton);
             await userEvent.click(await findByRole('button', { name: 'Continue under Open terms' }));
+            await userEvent.click(await findByRole('button', { name: 'Continue' }));
 
             await waitFor(() => {
                 expect(toast.error).not.toHaveBeenCalled();
@@ -152,16 +153,16 @@ describe('SubmitForm', () => {
         return renderResult;
     }
 
-    test('should first confirm open data use terms and then how author names are split', async () => {
+    test('should confirm open data use terms, then how author names are split, then explain what happens next', async () => {
         mockRequest.backend.submit(200, testResponse);
         mockRequest.backend.getGroupsOfUser();
 
         const { getByRole, findByRole, getByText } = await uploadMetadataWithAuthorsAndClickSubmit();
 
-        expect(getByText('Step 1 of 2')).toBeVisible();
+        expect(getByText('Step 1 of 3')).toBeVisible();
         await userEvent.click(await findByRole('button', { name: 'Continue under Open terms' }));
 
-        expect(getByText('Step 2 of 2')).toBeVisible();
+        expect(getByText('Step 2 of 3')).toBeVisible();
         expect(getByRole('heading', { name: 'Are first and last names assigned correctly?' })).toBeVisible();
         const rows = getByRole('table').querySelectorAll<HTMLTableRowElement>('tbody tr');
         expect(Array.from(rows).map((row) => Array.from(row.cells).map((cell) => cell.textContent))).toEqual([
@@ -170,6 +171,11 @@ describe('SubmitForm', () => {
         ]);
 
         await userEvent.click(getByRole('button', { name: 'Names are correct' }));
+
+        expect(getByText('Step 3 of 3')).toBeVisible();
+        expect(getByRole('heading', { name: 'What happens next' })).toBeVisible();
+        expect(getByText('The sequences will not be released until you review and release them.')).toBeVisible();
+        await userEvent.click(getByRole('button', { name: 'Continue' }));
 
         await waitFor(() => {
             expect(toast.error).not.toHaveBeenCalled();
@@ -186,13 +192,13 @@ describe('SubmitForm', () => {
         expect(queryByRole('heading', { name: 'Are first and last names assigned correctly?' })).toBeNull();
     });
 
-    test('should only ask about author names when there are no open data use terms to confirm', async () => {
-        const { findByRole, queryByRole, queryByText } = await uploadMetadataWithAuthorsAndClickSubmit({
+    test('should start with author names when there are no open data use terms to confirm', async () => {
+        const { findByRole, getByText, queryByRole } = await uploadMetadataWithAuthorsAndClickSubmit({
             dataUseTermsEnabled: false,
         });
 
         expect(await findByRole('heading', { name: 'Are first and last names assigned correctly?' })).toBeVisible();
-        expect(queryByText(/Step \d of \d/)).toBeNull();
+        expect(getByText('Step 1 of 2')).toBeVisible();
         expect(queryByRole('button', { name: 'Continue under Open terms' })).toBeNull();
 
         await userEvent.click(await findByRole('button', { name: 'Go back and edit' }));
@@ -346,6 +352,7 @@ describe('SubmitForm', () => {
         const submitButton = getByRole('button', { name: 'Upload and proceed to Approval' });
         await userEvent.click(submitButton);
         await userEvent.click(await findByRole('button', { name: 'Continue under Open terms' }));
+        await userEvent.click(await findByRole('button', { name: 'Continue' }));
 
         await waitFor(() => {
             expect(toast.error).toHaveBeenCalledWith(expect.stringContaining(receivedUnexpectedMessageFromBackend), {
@@ -372,6 +379,7 @@ describe('SubmitForm', () => {
         const submitButton = getByRole('button', { name: 'Upload and proceed to Approval' });
         await userEvent.click(submitButton);
         await userEvent.click(await findByRole('button', { name: 'Continue under Open terms' }));
+        await userEvent.click(await findByRole('button', { name: 'Continue' }));
 
         await waitFor(() => {
             expect(toast.error).not.toHaveBeenCalled();
@@ -384,7 +392,10 @@ describe('SubmitForm', () => {
             mockRequest.backend.submit(200, testResponse);
             mockRequest.backend.getGroupsOfUser();
 
-            const { getByLabelText, getByRole } = renderSubmissionForm({ dataUseTermsEnabled: false, inputMode });
+            const { getByLabelText, getByRole, findByRole, queryByText } = renderSubmissionForm({
+                dataUseTermsEnabled: false,
+                inputMode,
+            });
 
             switch (inputMode) {
                 case 'form': {
@@ -403,9 +414,33 @@ describe('SubmitForm', () => {
             const submitButton = getByRole('button', { name: 'Upload and proceed to Approval' });
             await userEvent.click(submitButton);
 
+            expect(await findByRole('heading', { name: 'What happens next' })).toBeVisible();
+            expect(queryByText(/Step \d of \d/)).toBeNull();
+            await userEvent.click(getByRole('button', { name: 'Continue' }));
+
             await waitFor(() => {
                 expect(toast.error).not.toHaveBeenCalled();
             });
         },
     );
+
+    test('should not submit when cancelling at the final step', async () => {
+        mockRequest.backend.submit(500, 'should not be called');
+        mockRequest.backend.getGroupsOfUser();
+
+        const { getByLabelText, getByRole, findByRole, queryByRole } = renderSubmissionForm({
+            dataUseTermsEnabled: false,
+        });
+
+        await userEvent.upload(getByLabelText(/Metadata File/i), metadataFile);
+        await userEvent.upload(getByLabelText(/Sequence File/i), sequencesFile);
+        await userEvent.click(getByRole('button', { name: 'Upload and proceed to Approval' }));
+        await userEvent.click(await findByRole('button', { name: 'Cancel' }));
+
+        await waitFor(() => {
+            expect(queryByRole('heading', { name: 'What happens next' })).toBeNull();
+        });
+        await new Promise((resolve) => setTimeout(resolve, 200));
+        expect(toast.error).not.toHaveBeenCalled();
+    });
 });

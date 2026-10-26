@@ -38,16 +38,20 @@ test.describe('Submission flow', () => {
 
         await page.getByRole('button', { name: 'Upload and proceed to Approval' }).click();
 
-        await expect(page.getByText('Step 1 of 2')).toBeVisible();
+        await expect(page.getByText('Step 1 of 3')).toBeVisible();
         await page.getByRole('button', { name: 'Continue under Open terms' }).click();
 
-        await expect(page.getByText('Step 2 of 2')).toBeVisible();
+        await expect(page.getByText('Step 2 of 3')).toBeVisible();
         await expect(
             page.getByRole('heading', { name: 'Are first and last names assigned correctly?' }),
         ).toBeVisible();
         const firstAuthor = page.getByRole('row').filter({ hasText: 'Ammar' });
         await expect(firstAuthor.getByRole('cell')).toHaveText(['M.', 'Ammar']);
         await page.getByRole('button', { name: 'Names are correct' }).click();
+
+        await expect(page.getByText('Step 3 of 3')).toBeVisible();
+        await expect(page.getByRole('heading', { name: 'What happens next' })).toBeVisible();
+        await page.getByRole('button', { name: 'Continue', exact: true }).click();
 
         await expect(
             page.getByRole('heading', { name: 'Review pending submissions' }),

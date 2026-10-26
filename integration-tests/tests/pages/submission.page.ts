@@ -61,8 +61,9 @@ class SubmissionPage {
     async submitSequence(): Promise<ReviewPage> {
         await this.clickSubmit();
 
-        // The confirmation wizard asks about open terms (only if we are submitting under open terms) and then about
-        // author names (only if the metadata contains authors) - but we don't know either in this function.
+        // The confirmation wizard asks about open terms (only if we are submitting under open terms), then about
+        // author names (only if the metadata contains authors) - but we don't know either in this function - and
+        // always ends with a step explaining what happens next.
         // Void because we're waiting for the review page anyway, so no need to wait for this specifically
         void (async () => {
             await this.page
@@ -71,6 +72,10 @@ class SubmissionPage {
                 .catch(() => {});
             await this.page
                 .getByRole('button', { name: 'Names are correct' })
+                .click({ timeout: 3_000 })
+                .catch(() => {});
+            await this.page
+                .getByRole('button', { name: 'Continue', exact: true })
                 .click({ timeout: 3_000 })
                 .catch(() => {});
         })();

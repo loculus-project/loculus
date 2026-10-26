@@ -125,7 +125,7 @@ const AuthorNamesTable: FC<{ authorLists: AuthorListOccurrence[] }> = ({ authorL
 };
 
 export type SubmissionConfirmationStep =
-    { type: 'openDataUseTerms' } | { type: 'authorNames'; authorLists: AuthorListOccurrence[] };
+    { type: 'openDataUseTerms' } | { type: 'authorNames'; authorLists: AuthorListOccurrence[] } | { type: 'nextSteps' };
 
 type SubmissionConfirmationWizardProps = {
     steps: SubmissionConfirmationStep[];
@@ -182,6 +182,22 @@ export const SubmissionConfirmationWizard: FC<SubmissionConfirmationWizardProps>
             );
             confirmButtonText = 'Names are correct';
             closeButtonText = 'Go back and edit';
+            break;
+        case 'nextSteps':
+            content = (
+                <>
+                    <h3 className='font-bold text-lg pr-8'>What happens next</h3>
+                    <p className='text-sm text-gray-600 mt-2'>
+                        Your sequences will now be processed and you will be taken to a page where you can review and
+                        release them.
+                    </p>
+                    <p className='text-sm text-gray-600 mt-2'>
+                        <strong>The sequences will not be released until you review and release them.</strong>
+                    </p>
+                </>
+            );
+            confirmButtonText = 'Continue';
+            closeButtonText = 'Cancel';
             break;
     }
 

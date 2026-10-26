@@ -112,11 +112,18 @@ export class RevisionPage {
      */
     async clickSubmit() {
         await this.page.getByRole('button', { name: 'Upload and proceed to Approval' }).click();
-        // The author names confirmation only shows if the metadata contains authors
-        void this.page
-            .getByRole('button', { name: 'Names are correct' })
-            .click({ timeout: 3_000 })
-            .catch(() => {});
+        // The confirmation wizard asks about author names (only if the metadata contains authors)
+        // and always ends with a step explaining what happens next
+        void (async () => {
+            await this.page
+                .getByRole('button', { name: 'Names are correct' })
+                .click({ timeout: 3_000 })
+                .catch(() => {});
+            await this.page
+                .getByRole('button', { name: 'Continue', exact: true })
+                .click({ timeout: 3_000 })
+                .catch(() => {});
+        })();
     }
 
     /**
