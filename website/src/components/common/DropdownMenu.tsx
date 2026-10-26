@@ -14,12 +14,12 @@ const panelClasses = [
 type DropdownAlign = 'start' | 'center' | 'end';
 
 const alignClasses: Record<DropdownAlign, string> = {
-    start: 'left-0 supports-[position-area:bottom]:[position-area:bottom_span-right]',
+    start: 'left-0 -ml-4 supports-[position-area:bottom]:[position-area:bottom_span-right]',
     center: [
         'left-1/2 -translate-x-1/2 supports-[position-area:bottom]:translate-x-0',
         'supports-[position-area:bottom]:[position-area:bottom_span-all] supports-[position-area:bottom]:[justify-self:anchor-center]',
     ].join(' '),
-    end: 'right-0 supports-[position-area:bottom]:[position-area:bottom_span-left]',
+    end: 'right-0 -mr-4 supports-[position-area:bottom]:[position-area:bottom_span-left]',
 };
 
 interface DropdownMenuProps {
