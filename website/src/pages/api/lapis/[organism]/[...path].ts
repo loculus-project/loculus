@@ -208,9 +208,14 @@ export const ALL: APIRoute = async ({ params, request, locals }) => {
         // axios responses always carry an AxiosHeaders instance; the static type is just loose.
         const lapisResponseHeaders = response.headers as unknown as AxiosHeaders;
         for (const headerName of FORWARDED_RESPONSE_HEADERS) {
-            const value = lapisResponseHeaders.get(headerName);
-            if (value !== null) {
-                responseHeaders.set(headerName, String(value));
+            // AxiosHeaders.get() yields `undefined` at runtime for absent headers although its
+            // static type claims `string | null`: forwarding the stringified value would send
+            // headers like `content-length: undefined`, which browsers reject (bodies of
+            // streamed responses then never complete). Forward a header only when LAPIS
+            // actually set it.
+            const value: string | null | undefined = lapisResponseHeaders.get(headerName);
+            if (value != null) {
+                responseHeaders.set(headerName, value);
             }
         }
 

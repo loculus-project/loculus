@@ -128,6 +128,9 @@ export async function tryGetLapisAccessToken(
     const form: Record<string, string> = {
         grant_type: 'password',
         client_id: 'backend-client',
+        // The website's auth middleware validates the session via Keycloak's userinfo endpoint,
+        // which rejects access tokens without the 'openid' scope.
+        scope: 'openid',
         username: TEST_USER.username,
         password: TEST_USER.password,
     };
@@ -165,6 +168,10 @@ export async function loginTestUserWithCookies(page: Page): Promise<void> {
         form: {
             grant_type: 'password',
             client_id: 'backend-client',
+            // Keycloak's userinfo endpoint (used by the website's auth middleware to validate
+            // the session) rejects access tokens without the 'openid' scope, which would make
+            // the middleware delete these cookies again and log the user out.
+            scope: 'openid',
             username: TEST_USER.username,
             password: TEST_USER.password,
         },
@@ -206,4 +213,19 @@ export async function loginTestUserWithCookies(page: Page): Promise<void> {
         { name: 'access_token', value: accessToken, url: baseUrl.origin },
         { name: 'refresh_token', value: refreshToken, url: baseUrl.origin },
     ]);
+
+    // Fail loudly when the website rejects this session instead of letting every subsequent
+    // locator wait time out on the Keycloak login page (e.g. the middleware's userinfo call
+    // refusing the token). '/user' always enforces a login and redirects anonymous callers to
+    // Keycloak, so a redirect means the injected session is not accepted.
+    const sessionProbe = await page.request.get(`${baseUrl.origin}/user`, {
+        maxRedirects: 0,
+    });
+    if (sessionProbe.status() >= 300 && sessionProbe.status() < 400) {
+        throw new Error(
+            `The website rejected the injected session cookies: GET /user answered with a ` +
+                `redirect (${sessionProbe.status()}) instead of rendering the page. Check that the ` +
+                'password grant requests the scopes the auth middleware needs (openid).',
+        );
+    }
 }

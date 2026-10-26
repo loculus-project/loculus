@@ -136,6 +136,11 @@ describe('LAPIS browser proxy route', () => {
         expect(await response.text()).toBe(JSON.stringify({ data: [], info: { dataVersion: '' } }));
         // response headers (incl. download file names) are passed through
         expect(response.headers.get('Content-Disposition')).toBe('attachment; filename="download.fasta"');
+        // headers that LAPIS did not set must not be forwarded as the literal string 'undefined'
+        // (AxiosHeaders.get() yields `undefined` for absent headers): a bogus `content-length`
+        // makes browsers reject streamed response bodies.
+        expect(response.headers.get('Content-Length')).toBeNull();
+        expect(response.headers.has('Content-Length')).toBe(false);
         expect(captured).toHaveLength(1);
         expect(captured[0].method).toBe('GET');
         expect(captured[0].body).toBeNull();

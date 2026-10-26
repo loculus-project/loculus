@@ -1,6 +1,6 @@
 import { expect } from '@playwright/test';
 import { SearchPage } from '../../pages/search.page';
-import { test } from '../../fixtures/group.fixture';
+import { test } from '../../fixtures/logged-in.fixture';
 import { getFromLinkTargetAndAssertContent } from '../../utils/link-helpers';
 
 test.describe('Sequence Preview Annotations', () => {
