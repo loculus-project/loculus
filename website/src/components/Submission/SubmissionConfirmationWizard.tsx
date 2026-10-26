@@ -188,8 +188,8 @@ export const SubmissionConfirmationWizard: FC<SubmissionConfirmationWizardProps>
                 <>
                     <h3 className='font-bold text-lg pr-8'>What happens next</h3>
                     <p className='text-sm text-gray-600 mt-2'>
-                        Your sequences will now be processed and you will be taken to a page where you can review and
-                        release them.
+                        Your sequences will now enter processing. On the next page you will be able to review and
+                        release the processed sequences.
                     </p>
                     <p className='text-sm text-gray-600 mt-2'>
                         <strong>The sequences will not be released until you review and release them.</strong>
