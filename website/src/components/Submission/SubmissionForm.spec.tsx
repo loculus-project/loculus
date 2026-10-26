@@ -82,7 +82,9 @@ function renderSubmissionForm({
 
 const metadataFile = new File(['content'], 'metadata.tsv', { type: 'text/plain' });
 const metadataFileWithAuthors = new File(
-    ['submissionId\tauthors\nheader0\tSmith, Anna; Perez, Tom J.\nheader1\tSmith, Anna; Perez, Tom J.\n'],
+    [
+        'submissionId\tauthors\nheader0\tSmith, Anna; Perez, Tom J.; Anna Xu\nheader1\tSmith, Anna; Perez, Tom J.; Anna Xu\n',
+    ],
     'metadata.tsv',
     { type: 'text/plain' },
 );
@@ -168,6 +170,7 @@ describe('SubmitForm', () => {
         expect(Array.from(rows).map((row) => Array.from(row.cells).map((cell) => cell.textContent))).toEqual([
             ['Anna', 'Smith'],
             ['Tom J.', 'Perez'],
+            ['Anna Xu (missing comma: this author will be rejected)'],
         ]);
 
         await userEvent.click(getByRole('button', { name: 'Names are correct' }));

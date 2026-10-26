@@ -1,20 +1,24 @@
 import { describe, expect, test } from 'vitest';
 
-import { extractAuthorLists, parseAuthors } from './SubmissionConfirmationWizard';
+import { extractAuthorLists, parseAuthors } from './authorNames';
 
 describe('parseAuthors', () => {
     test('splits authors into last and first names', () => {
         expect(parseAuthors('Smith, Anna; Perez,  Tom J.;Xu, X.L.;')).toEqual([
-            { lastName: 'Smith', firstName: 'Anna' },
-            { lastName: 'Perez', firstName: 'Tom J.' },
-            { lastName: 'Xu', firstName: 'X.L.' },
+            { firstName: 'Anna', lastName: 'Smith', hasComma: true },
+            { firstName: 'Tom J.', lastName: 'Perez', hasComma: true },
+            { firstName: 'X.L.', lastName: 'Xu', hasComma: true },
         ]);
     });
 
     test('returns an empty first name when it is missing', () => {
-        expect(parseAuthors('Xu,; Anna Smith')).toEqual([
-            { lastName: 'Xu', firstName: '' },
-            { lastName: 'Anna Smith', firstName: '' },
+        expect(parseAuthors('Xu,')).toEqual([{ firstName: '', lastName: 'Xu', hasComma: true }]);
+    });
+
+    test('flags authors without a comma, keeping the whole entry as the last name', () => {
+        expect(parseAuthors('Anna Smith; Xu, X.')).toEqual([
+            { firstName: '', lastName: 'Anna Smith', hasComma: false },
+            { firstName: 'X.', lastName: 'Xu', hasComma: true },
         ]);
     });
 });

@@ -7,9 +7,9 @@ import { type FormEvent, useState, type Dispatch, type SetStateAction, useMemo }
 import { type FileFactory, FormOrUploadWrapper, type InputMode } from './FormOrUploadWrapper.tsx';
 import {
     displaySubmissionConfirmationWizard,
-    extractAuthorLists,
     type SubmissionConfirmationStep,
 } from './SubmissionConfirmationWizard.tsx';
+import { extractAuthorLists } from './authorNames.ts';
 import { getClientLogger } from '../../clientLogger.ts';
 import { FolderUploadComponent } from './FileUpload/FolderUploadComponent.tsx';
 import { deriveFileMapping, validateFileUploadStates, type FileUploadState } from './FileUpload/fileUpload.ts';

@@ -1,4 +1,5 @@
 import { expect, type Page } from '@playwright/test';
+import { clickThroughConfirmationWizard } from '../utils/confirmation-wizard-helpers';
 import { prepareTmpDirForBulkUpload, uploadFilesFromTmpDir } from '../utils/file-upload-helpers';
 
 /**
@@ -112,18 +113,7 @@ export class RevisionPage {
      */
     async clickSubmit() {
         await this.page.getByRole('button', { name: 'Upload and proceed to Approval' }).click();
-        // The confirmation wizard asks about author names (only if the metadata contains authors)
-        // and always ends with a step explaining what happens next
-        void (async () => {
-            await this.page
-                .getByRole('button', { name: 'Names are correct' })
-                .click({ timeout: 3_000 })
-                .catch(() => {});
-            await this.page
-                .getByRole('button', { name: 'Continue', exact: true })
-                .click({ timeout: 3_000 })
-                .catch(() => {});
-        })();
+        await clickThroughConfirmationWizard(this.page);
     }
 
     /**
