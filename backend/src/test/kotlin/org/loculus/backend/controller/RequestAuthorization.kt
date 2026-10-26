@@ -11,6 +11,7 @@ import java.time.temporal.ChronoUnit
 import java.util.Date
 
 val keyPair: KeyPair = Jwts.SIG.RS256.keyPair().build()
+const val TEST_TOKEN_ISSUER = "https://authentication.example.test/realms/loculus"
 
 val jwtForDefaultUser = generateJwtFor(DEFAULT_USER_NAME)
 val jwtForAlternativeUser = generateJwtFor(ALTERNATIVE_DEFAULT_USER_NAME)
@@ -20,6 +21,7 @@ val jwtForExternalMetadataUpdatePipeline =
 val jwtForSuperUser = generateJwtFor(SUPER_USER_NAME, listOf(SUPER_USER))
 
 fun generateJwtFor(username: String, roles: List<String> = emptyList()): String = Jwts.builder()
+    .issuer(TEST_TOKEN_ISSUER)
     .expiration(Date.from(Instant.now().plus(1, ChronoUnit.DAYS)))
     .issuedAt(Date.from(Instant.now()))
     .signWith(keyPair.private, Jwts.SIG.RS256)
