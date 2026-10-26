@@ -133,7 +133,7 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                         </label>
                         <DropdownMenu
                             className='hidden sm:flex'
-                            panelClassName='min-w-60'
+                            panelClassName='-ml-4 min-w-60'
                             trigger={
                                 <label tabIndex={0} className='py-1 block cursor-pointer title'>
                                     {groupName}

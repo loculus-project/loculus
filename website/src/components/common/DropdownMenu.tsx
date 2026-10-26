@@ -6,7 +6,7 @@ const panelClasses = [
     'flex flex-col gap-px bg-base-100 rounded-lg shadow-sm p-1',
     'max-h-[75vh] overflow-y-auto overscroll-contain',
     // Where anchor positioning is supported, fit the panel to the space below the trigger
-    'supports-[position-area:bottom]:fixed supports-[position-area:bottom]:inset-auto supports-[position-area:bottom]:max-h-full',
+    'supports-[position-area:bottom]:fixed supports-[position-area:bottom]:inset-auto supports-[position-area:bottom]:max-h-[calc(100%-1rem)]',
     'supports-[position-area:bottom]:[position-anchor:var(--dropdown-anchor)]',
     'supports-[position-area:bottom]:[position-try-fallbacks:flip-inline]',
 ].join(' ');
@@ -14,12 +14,12 @@ const panelClasses = [
 type DropdownAlign = 'start' | 'center' | 'end';
 
 const alignClasses: Record<DropdownAlign, string> = {
-    start: 'left-0 -ml-4 supports-[position-area:bottom]:[position-area:bottom_span-right]',
+    start: 'left-0 supports-[position-area:bottom]:[position-area:bottom_span-right]',
     center: [
         'left-1/2 -translate-x-1/2 supports-[position-area:bottom]:translate-x-0',
         'supports-[position-area:bottom]:[position-area:bottom_span-all] supports-[position-area:bottom]:[justify-self:anchor-center]',
     ].join(' '),
-    end: 'right-0 -mr-4 supports-[position-area:bottom]:[position-area:bottom_span-left]',
+    end: 'right-0 supports-[position-area:bottom]:[position-area:bottom_span-left]',
 };
 
 interface DropdownMenuProps {
