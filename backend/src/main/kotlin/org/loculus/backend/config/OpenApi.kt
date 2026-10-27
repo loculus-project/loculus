@@ -6,8 +6,6 @@ import io.swagger.v3.oas.models.media.Schema
 import io.swagger.v3.oas.models.security.SecurityRequirement
 import io.swagger.v3.oas.models.security.SecurityScheme
 
-const val PROJECT_NAME = "Loculus"
-
 const val ORGANISM_SCHEMA_NAME = "Organism"
 
 fun buildOpenApiSchema(backendConfig: BackendConfig): OpenAPI = OpenAPI()
