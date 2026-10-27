@@ -472,44 +472,20 @@ class SubmissionDatabaseService(
         )
 
         if (accessionVersion != null) {
-            upsertAccessionVersionExternalMetadata(
-                accessionVersion,
-                submittedExternalMetadata.externalMetadata,
-                externalMetadataUpdater,
-            )
+            AccessionVersionExternalMetadataTable.upsert {
+                it[accessionColumn] = accessionVersion.accession
+                it[versionColumn] = accessionVersion.version
+                it[updaterIdColumn] = externalMetadataUpdater
+                it[externalMetadataColumn] = submittedExternalMetadata.externalMetadata
+                it[updatedAtColumn] = dateProvider.getCurrentDateTime()
+            }
         } else {
-            upsertAccessionExternalMetadata(
-                submittedExternalMetadata.accession,
-                submittedExternalMetadata.externalMetadata,
-                externalMetadataUpdater,
-            )
-        }
-    }
-
-    private fun upsertAccessionVersionExternalMetadata(
-        accessionVersion: AccessionVersion,
-        externalMetadata: MetadataMap,
-        externalMetadataUpdater: String,
-    ) {
-        AccessionVersionExternalMetadataTable.upsert {
-            it[accessionColumn] = accessionVersion.accession
-            it[versionColumn] = accessionVersion.version
-            it[updaterIdColumn] = externalMetadataUpdater
-            it[externalMetadataColumn] = externalMetadata
-            it[updatedAtColumn] = dateProvider.getCurrentDateTime()
-        }
-    }
-
-    private fun upsertAccessionExternalMetadata(
-        accession: Accession,
-        externalMetadata: MetadataMap,
-        externalMetadataUpdater: String,
-    ) {
-        AccessionExternalMetadataTable.upsert {
-            it[accessionColumn] = accession
-            it[updaterIdColumn] = externalMetadataUpdater
-            it[externalMetadataColumn] = externalMetadata
-            it[updatedAtColumn] = dateProvider.getCurrentDateTime()
+            AccessionExternalMetadataTable.upsert {
+                it[accessionColumn] = submittedExternalMetadata.accession
+                it[updaterIdColumn] = externalMetadataUpdater
+                it[externalMetadataColumn] = submittedExternalMetadata.externalMetadata
+                it[updatedAtColumn] = dateProvider.getCurrentDateTime()
+            }
         }
     }
 
