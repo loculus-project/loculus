@@ -12,15 +12,15 @@ import org.jetbrains.exposed.v1.core.or
 import org.jetbrains.exposed.v1.core.wrapAsExpression
 import org.jetbrains.exposed.v1.datetime.datetime
 import org.jetbrains.exposed.v1.jdbc.select
-import org.loculus.backend.api.AccessionVersionInterface
-import org.loculus.backend.api.Organism
-import org.loculus.backend.api.PreprocessingAnnotation
-import org.loculus.backend.api.ProcessedData
-import org.loculus.backend.api.ProcessingResult
-import org.loculus.backend.api.Status
-import org.loculus.backend.api.SubmittedData
-import org.loculus.backend.api.toPairs
 import org.loculus.backend.service.jacksonSerializableJsonb
+import org.loculus.backend.types.AccessionVersionInterface
+import org.loculus.backend.types.Organism
+import org.loculus.backend.types.PreprocessingAnnotation
+import org.loculus.backend.types.ProcessedData
+import org.loculus.backend.types.ProcessingResult
+import org.loculus.backend.types.Status
+import org.loculus.backend.types.SubmittedData
+import org.loculus.backend.types.toPairs
 
 const val SEQUENCE_ENTRIES_VIEW_NAME = "sequence_entries_view"
 

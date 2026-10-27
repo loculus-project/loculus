@@ -1,0 +1,138 @@
+package org.loculus.backend.api.v0.seqsets
+
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.security.SecurityRequirement
+import org.loculus.backend.auth.AuthenticatedUser
+import org.loculus.backend.auth.HiddenParam
+import org.loculus.backend.config.BackendSpringProperty
+import org.loculus.backend.config.ENABLE_SEQSETS_TRUE_VALUE
+import org.loculus.backend.errors.NotFoundException
+import org.loculus.backend.service.KeycloakAdapter
+import org.loculus.backend.service.seqsetcitations.SeqSetCitationsDatabaseService
+import org.loculus.backend.types.AccessionVersion
+import org.loculus.backend.types.AddSeqSetCitationRequest
+import org.loculus.backend.types.AdminSeqSetCitation
+import org.loculus.backend.types.AuthorProfile
+import org.loculus.backend.types.ResponseSeqSet
+import org.loculus.backend.types.SeqSet
+import org.loculus.backend.types.SeqSetCitation
+import org.loculus.backend.types.SeqSetRecord
+import org.loculus.backend.types.SequenceCitation
+import org.loculus.backend.types.SubmittedSeqSet
+import org.loculus.backend.types.SubmittedSeqSetRecord
+import org.loculus.backend.types.SubmittedSeqSetUpdate
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
+import org.springframework.validation.annotation.Validated
+import org.springframework.web.bind.annotation.DeleteMapping
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.PutMapping
+import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestParam
+import org.springframework.web.bind.annotation.RestController
+
+@RestController
+@Validated
+@SecurityRequirement(name = "bearerAuth")
+@ConditionalOnProperty(
+    BackendSpringProperty.ENABLE_SEQSETS,
+    havingValue = ENABLE_SEQSETS_TRUE_VALUE,
+)
+class SeqSetCitationsController(
+    private val seqSetCitationsService: SeqSetCitationsDatabaseService,
+    private val keycloakAdapter: KeycloakAdapter,
+) {
+    @Operation(description = "Get a SeqSet")
+    @GetMapping("/get-seqset")
+    fun getSeqSet(@RequestParam seqSetId: String, @RequestParam version: Long?): List<SeqSet> =
+        seqSetCitationsService.getSeqSet(seqSetId, version)
+
+    @Operation(description = "Validate SeqSet records")
+    @PostMapping("/validate-seqset-records")
+    fun validateSeqSetRecords(@RequestBody records: List<SubmittedSeqSetRecord>) =
+        seqSetCitationsService.validateSeqSetRecords(records)
+
+    @Operation(description = "Create a new SeqSet with the specified data")
+    @PostMapping("/create-seqset")
+    fun createSeqSet(
+        @HiddenParam authenticatedUser: AuthenticatedUser,
+        @RequestBody body: SubmittedSeqSet,
+    ): ResponseSeqSet =
+        seqSetCitationsService.createSeqSet(authenticatedUser, body.name, body.records, body.description)
+
+    @Operation(description = "Update a SeqSet with the specified data")
+    @PutMapping("/update-seqset")
+    fun updateSeqSet(
+        @HiddenParam authenticatedUser: AuthenticatedUser,
+        @RequestBody body: SubmittedSeqSetUpdate,
+    ): ResponseSeqSet = seqSetCitationsService.updateSeqSet(
+        authenticatedUser,
+        body.seqSetId,
+        body.name,
+        body.records,
+        body.description,
+    )
+
+    @Operation(description = "Get a list of SeqSets created by the logged-in user")
+    @GetMapping("/get-seqsets-of-user")
+    fun getSeqSets(@HiddenParam authenticatedUser: AuthenticatedUser): List<SeqSet> =
+        seqSetCitationsService.getSeqSets(authenticatedUser)
+
+    @Operation(description = "Get records for a SeqSet")
+    @GetMapping("/get-seqset-records")
+    fun getSeqSetRecords(@RequestParam seqSetId: String, @RequestParam version: Long?): List<SeqSetRecord> =
+        seqSetCitationsService.getSeqSetRecords(seqSetId, version)
+
+    @Operation(description = "Delete a SeqSet")
+    @DeleteMapping("/delete-seqset")
+    fun deleteSeqSet(
+        @HiddenParam authenticatedUser: AuthenticatedUser,
+        @RequestParam seqSetId: String,
+        @RequestParam version: Long,
+    ) = seqSetCitationsService.deleteSeqSet(authenticatedUser, seqSetId, version)
+
+    @Operation(description = "Create and associate a DOI to a SeqSet version")
+    @PostMapping("/create-seqset-doi")
+    fun createSeqSetDOI(
+        @HiddenParam authenticatedUser: AuthenticatedUser,
+        @RequestParam seqSetId: String,
+        @RequestParam version: Long,
+    ): ResponseSeqSet = seqSetCitationsService.createSeqSetDOI(authenticatedUser, seqSetId, version)
+
+    @Operation(description = "Get citations for a SeqSet from publications or other sources")
+    @GetMapping("/get-seqset-citations")
+    fun getSeqSetCitations(@RequestParam seqSetId: String, @RequestParam version: Long): List<SeqSetCitation> =
+        seqSetCitationsService.getSeqSetCitations(seqSetId, version)
+
+    @Operation(description = "Get all citations to all SeqSets in this instance. Restricted to super users.")
+    @GetMapping("/admin/get-all-seqset-citations")
+    fun getAllSeqSetCitations(): List<AdminSeqSetCitation> = seqSetCitationsService.getAllSeqSetCitations()
+
+    @Operation(
+        description = "Manually register a publication or other source as citing one or more SeqSets. " +
+            "Restricted to super users.",
+    )
+    @PostMapping("/admin/add-seqset-citation")
+    fun addSeqSetCitation(@RequestBody body: AddSeqSetCitationRequest): AdminSeqSetCitation =
+        seqSetCitationsService.addCuratedCitation(body)
+
+    @Operation(
+        description = "Delete a manually registered SeqSet citation by its source DOI. Restricted to super users.",
+    )
+    @DeleteMapping("/admin/delete-seqset-citation")
+    fun deleteSeqSetCitation(@RequestParam sourceDOI: String) = seqSetCitationsService.deleteCuratedCitation(sourceDOI)
+
+    @Operation(description = "Get sequence citations from publications or other sources")
+    @GetMapping("/get-sequence-citations")
+    fun getSequenceCitations(@RequestParam accession: String, @RequestParam version: Long?): List<SequenceCitation> =
+        seqSetCitationsService.getSequenceCitations(accession, version)
+
+    @Operation(description = "Get an author")
+    @GetMapping("/get-author")
+    fun getAuthor(@RequestParam username: String): AuthorProfile {
+        val keycloakUser = keycloakAdapter.getUsersWithName(username).firstOrNull()
+            ?: throw NotFoundException("Author profile $username does not exist")
+
+        return seqSetCitationsService.transformKeycloakUserToAuthorProfile(keycloakUser)
+    }
+}
