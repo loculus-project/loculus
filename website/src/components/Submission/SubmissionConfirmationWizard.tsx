@@ -140,11 +140,9 @@ export const SubmissionConfirmationWizard: FC<SubmissionConfirmationWizardProps>
 
     return (
         <ModalBox role='dialog' aria-modal='true' aria-label='Confirm submission'>
-            <form method='dialog'>
-                <Button circle size='sm' variant='ghost' className='absolute right-2 top-2' onClick={onClose}>
-                    ✕
-                </Button>
-            </form>
+            <Button type='button' circle size='sm' variant='ghost' className='absolute right-2 top-2' onClick={onClose}>
+                ✕
+            </Button>
             {steps.length > 1 && (
                 <p className='text-xs font-medium text-gray-600 mb-2'>
                     Step {stepIndex + 1} of {steps.length}
@@ -152,16 +150,16 @@ export const SubmissionConfirmationWizard: FC<SubmissionConfirmationWizardProps>
             )}
             {content}
             <div className='flex justify-end gap-4 mt-4'>
-                <form method='dialog'>
-                    <Button variant='outline' onClick={isFirstStep ? onClose : () => setStepIndex(stepIndex - 1)}>
-                        {isFirstStep ? closeButtonText : 'Back'}
-                    </Button>
-                </form>
-                <form method='dialog'>
-                    <Button variant='primary' onClick={next}>
-                        {confirmButtonText}
-                    </Button>
-                </form>
+                <Button
+                    type='button'
+                    variant='outline'
+                    onClick={isFirstStep ? onClose : () => setStepIndex(stepIndex - 1)}
+                >
+                    {isFirstStep ? closeButtonText : 'Back'}
+                </Button>
+                <Button type='button' variant='primary' onClick={next}>
+                    {confirmButtonText}
+                </Button>
             </div>
         </ModalBox>
     );
@@ -170,12 +168,16 @@ export const SubmissionConfirmationWizard: FC<SubmissionConfirmationWizardProps>
 export const displaySubmissionConfirmationWizard = ({
     steps,
     onConfirmation,
+    onClosed,
 }: {
     steps: SubmissionConfirmationStep[];
     onConfirmation: () => void;
+    /** Called whenever the wizard closes, whether confirmed, cancelled or closed with Escape. */
+    onClosed: () => void;
 }) => {
     confirmAlert({
         closeOnClickOutside: false,
+        willUnmount: onClosed,
         customUI: ({ onClose }) => (
             <SubmissionConfirmationWizard
                 steps={steps}
