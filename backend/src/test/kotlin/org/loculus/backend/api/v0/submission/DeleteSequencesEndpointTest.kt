@@ -1,0 +1,392 @@
+package org.loculus.backend.api.v0.submission
+
+import org.hamcrest.MatcherAssert.assertThat
+import org.hamcrest.Matchers.containsString
+import org.hamcrest.Matchers.equalTo
+import org.hamcrest.Matchers.hasItem
+import org.hamcrest.Matchers.hasProperty
+import org.hamcrest.Matchers.hasSize
+import org.hamcrest.Matchers.`is`
+import org.hamcrest.Matchers.not
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.MethodSource
+import org.loculus.backend.api.v0.submission.SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES
+import org.loculus.backend.testutil.DEFAULT_ORGANISM
+import org.loculus.backend.testutil.DEFAULT_USER_NAME
+import org.loculus.backend.testutil.EndpointTest
+import org.loculus.backend.testutil.OTHER_ORGANISM
+import org.loculus.backend.testutil.assertStatusIs
+import org.loculus.backend.testutil.expectUnauthorizedResponse
+import org.loculus.backend.testutil.generateJwtFor
+import org.loculus.backend.testutil.jsonContainsAccessionVersionsInAnyOrder
+import org.loculus.backend.testutil.jwtForSuperUser
+import org.loculus.backend.testutil.toAccessionVersion
+import org.loculus.backend.types.AccessionVersion
+import org.loculus.backend.types.DeleteSequenceScope
+import org.loculus.backend.types.DeleteSequenceScope.ALL
+import org.loculus.backend.types.ProcessingResult
+import org.loculus.backend.types.SequenceEntryStatus
+import org.loculus.backend.types.Status
+import org.loculus.backend.types.Status.PROCESSED
+import org.loculus.backend.utils.AccessionVersionComparator
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.http.MediaType
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+
+@EndpointTest
+class DeleteSequencesEndpointTest(
+    @Autowired val client: SubmissionControllerClient,
+    @Autowired val convenienceClient: SubmissionConvenienceClient,
+) {
+
+    @Test
+    fun `GIVEN invalid authorization token THEN returns 401 Unauthorized`() {
+        expectUnauthorizedResponse(isModifyingRequest = true) {
+            client.deleteSequenceEntries(
+                scope = ALL,
+                accessionVersionsFilter = emptyList(),
+                jwt = it,
+            )
+        }
+    }
+
+    @ParameterizedTest(name = "{arguments}")
+    @MethodSource("provideValidTestScenarios")
+    fun `GIVEN accession versions able to delete WHEN tried to delete THEN sequences will be deleted`(
+        testScenario: TestScenario,
+    ) {
+        convenienceClient.prepareDataTo(testScenario.statusAfterPreparation)
+        if (testScenario.statusAfterPreparation == Status.PROCESSED) {
+            convenienceClient.prepareDefaultSequenceEntriesToAwaitingApprovalForRevocation()
+        }
+
+        val accessionVersionsToDelete = convenienceClient.getSequenceEntriesOfUserInState(
+            status = testScenario.statusAfterPreparation,
+        )
+
+        val deletionResult = client.deleteSequenceEntries(
+            scope = ALL,
+            accessionVersionsFilter = accessionVersionsToDelete.map {
+                AccessionVersion(it.accession, it.version)
+            },
+        )
+
+        deletionResult
+            .andExpect(status().isOk)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(jsonContainsAccessionVersionsInAnyOrder(accessionVersionsToDelete))
+
+        assertThat(
+            convenienceClient.getSequenceEntriesOfUserInState(
+                status = testScenario.statusAfterPreparation,
+            ).size,
+            `is`(0),
+        )
+    }
+
+    @ParameterizedTest(name = "{arguments}")
+    @MethodSource("provideInvalidTestScenarios")
+    fun `GIVEN accession versions unable to delete WHEN tried to delete THEN unprocessable entity error is thrown`(
+        testScenario: TestScenario,
+    ) {
+        convenienceClient.prepareDataTo(testScenario.statusAfterPreparation)
+
+        val accessionVersionsToDelete = convenienceClient.getSequenceEntriesOfUserInState(
+            status = testScenario.statusAfterPreparation,
+        )
+
+        val deletionResult = client.deleteSequenceEntries(
+            scope = ALL,
+            accessionVersionsFilter = accessionVersionsToDelete.map {
+                AccessionVersion(it.accession, it.version)
+            },
+        )
+
+        val listOfAllowedStatuses = "[${Status.RECEIVED}, ${Status.PROCESSED}]"
+        val errorString = "Accession versions are not in one of the states $listOfAllowedStatuses: " +
+            accessionVersionsToDelete.sortedWith(AccessionVersionComparator).joinToString(", ") {
+                "${it.accession}.${it.version} - ${it.status}"
+            }
+        deletionResult.andExpect(status().isUnprocessableContent)
+            .andExpect(
+                content().contentType(MediaType.APPLICATION_PROBLEM_JSON),
+            )
+            .andExpect(
+                jsonPath("\$.detail", containsString(errorString)),
+            )
+        assertThat(
+            convenienceClient.getSequenceEntriesOfUserInState(
+                status = testScenario.statusAfterPreparation,
+            ).size,
+            `is`(NUMBER_OF_SEQUENCES),
+        )
+    }
+
+    @Test
+    fun `WHEN deleting non-existing accessionVersions THEN throws an unprocessableEntity error`() {
+        convenienceClient.submitDefaultFiles()
+
+        val nonExistingAccession = AccessionVersion("123", 1)
+        val nonExistingVersion = AccessionVersion("1", 123)
+
+        client.deleteSequenceEntries(
+            scope = ALL,
+            accessionVersionsFilter = listOf(nonExistingAccession, nonExistingVersion),
+        )
+            .andExpect(status().isUnprocessableContent)
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+            .andExpect(
+                jsonPath(
+                    "\$.detail",
+                    containsString("Accession versions 1.123, 123.1 do not exist"),
+                ),
+            )
+    }
+
+    @Test
+    fun `WHEN deleting via scope = ALL THEN expect all accessions to be deleted `() {
+        val erroneousSequences = convenienceClient.prepareDataTo(Status.PROCESSED, errors = true)
+        val approvableSequences = convenienceClient.prepareDataTo(Status.PROCESSED)
+
+        val allSequences = erroneousSequences + approvableSequences
+
+        assertThat(
+            convenienceClient.getSequenceEntries().sequenceEntries,
+            hasSize(allSequences.size),
+        )
+
+        client.deleteSequenceEntries(scope = ALL)
+            .andExpect(status().isOk)
+            .andExpect(jsonContainsAccessionVersionsInAnyOrder(allSequences))
+
+        assertThat(
+            convenienceClient.getSequenceEntries().sequenceEntries,
+            hasSize(0),
+        )
+    }
+
+    @Test
+    fun `WHEN deleting via scope = PROCESSED_WITH_ERRORS THEN expect all accessions with errors to be deleted `() {
+        val erroneousSequences = convenienceClient.prepareDataTo(Status.PROCESSED, errors = true)
+        val approvableSequences = convenienceClient.prepareDataTo(Status.PROCESSED)
+
+        assertThat(
+            convenienceClient.getStatusCount(Status.PROCESSED),
+            equalTo(erroneousSequences.size + approvableSequences.size),
+        )
+        assertThat(
+            convenienceClient.getProcessingResultCount(ProcessingResult.HAS_ERRORS),
+            equalTo(erroneousSequences.size),
+        )
+        assertThat(
+            convenienceClient.getProcessingResultCount(ProcessingResult.NO_ISSUES) +
+                convenienceClient.getProcessingResultCount(ProcessingResult.HAS_WARNINGS),
+            equalTo(approvableSequences.size),
+        )
+
+        client.deleteSequenceEntries(scope = DeleteSequenceScope.PROCESSED_WITH_ERRORS)
+            .andExpect(status().isOk)
+            .andExpect(jsonContainsAccessionVersionsInAnyOrder(erroneousSequences))
+
+        assertThat(
+            convenienceClient.getProcessingResultCount(ProcessingResult.HAS_ERRORS),
+            equalTo(0),
+        )
+        assertThat(
+            convenienceClient.getProcessingResultCount(ProcessingResult.NO_ISSUES) +
+                convenienceClient.getProcessingResultCount(ProcessingResult.HAS_WARNINGS),
+            equalTo(approvableSequences.size),
+        )
+    }
+
+    @Test
+    fun `WHEN deleting via scope = PROCESSED_WITH_WARNINGS THEN expect all accessions with warnings to be deleted `() {
+        val originalSubmission = convenienceClient.prepareDefaultSequenceEntriesToInProcessing()
+        val sequenceWithWarning = PreparedProcessedData.withWarnings(originalSubmission.first().accession)
+        convenienceClient.submitProcessedData(sequenceWithWarning)
+
+        val countOfSequenceEntriesWithWarnings = 1
+
+        assertThat(
+            convenienceClient.getSequenceEntries().sequenceEntries,
+            hasSize(originalSubmission.size),
+        )
+
+        val containsSequenceWithWarning =
+            hasItem<SequenceEntryStatus>(hasProperty("accession", `is`(sequenceWithWarning.accession)))
+
+        assertThat(convenienceClient.getSequenceEntries().sequenceEntries, containsSequenceWithWarning)
+
+        client.deleteSequenceEntries(scope = DeleteSequenceScope.PROCESSED_WITH_WARNINGS)
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("\$.length()").value(countOfSequenceEntriesWithWarnings))
+
+        assertThat(convenienceClient.getSequenceEntries().sequenceEntries, not(containsSequenceWithWarning))
+    }
+
+    @Test
+    fun `WHEN deleting sequence entry of wrong organism THEN throws an unprocessableEntity error`() {
+        val defaultOrganismData = convenienceClient.prepareDataTo(PROCESSED, organism = DEFAULT_ORGANISM)
+        val otherOrganismData = convenienceClient.prepareDataTo(PROCESSED, organism = OTHER_ORGANISM)
+
+        client.deleteSequenceEntries(
+            scope = ALL,
+            organism = OTHER_ORGANISM,
+        )
+            .andExpect(status().isOk)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(jsonContainsAccessionVersionsInAnyOrder(otherOrganismData))
+
+        convenienceClient.getSequenceEntry(
+            accession = defaultOrganismData.first().accession,
+            version = 1,
+            organism = DEFAULT_ORGANISM,
+        )
+            .assertStatusIs(PROCESSED)
+    }
+
+    @Test
+    fun `GIVEN multiple organisms WHEN I delete all sequences THEN deletes only sequences of that organism`() {
+        val accessionVersion = convenienceClient.submitDefaultFiles(organism = DEFAULT_ORGANISM).submissionIdMappings[0]
+
+        client.deleteSequenceEntries(
+            scope = ALL,
+            accessionVersionsFilter = listOf(accessionVersion.toAccessionVersion()),
+            organism = OTHER_ORGANISM,
+        )
+            .andExpect(status().isUnprocessableContent)
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+            .andExpect(
+                jsonPath("\$.detail", containsString("accession versions are not of organism $OTHER_ORGANISM:")),
+            )
+    }
+
+    @Test
+    fun `WHEN deleting accession versions not from the submitter THEN throws forbidden error`() {
+        val accessionVersions = convenienceClient.submitDefaultFiles().submissionIdMappings
+
+        val notSubmitter = "theOneWhoMustNotBeNamed"
+        client.deleteSequenceEntries(
+            scope = ALL,
+            accessionVersionsFilter = accessionVersions,
+            jwt = generateJwtFor(notSubmitter),
+        )
+            .andExpect(status().isForbidden)
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+            .andExpect(
+                jsonPath("\$.detail", containsString("is not a member of group")),
+            )
+    }
+
+    @Test
+    fun `WHEN superuser deletes all entries THEN is successfully deleted`() {
+        val accessionVersions = convenienceClient
+            .submitDefaultFiles(
+                username = DEFAULT_USER_NAME,
+            ).submissionIdMappings +
+            convenienceClient.submitDefaultFiles(
+                username = DEFAULT_USER_NAME,
+            ).submissionIdMappings
+
+        client.deleteSequenceEntries(scope = ALL, jwt = jwtForSuperUser)
+            .andExpect(status().isOk)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(jsonContainsAccessionVersionsInAnyOrder(accessionVersions))
+    }
+
+    @Test
+    fun `WHEN superuser deletes entries of other user THEN is successfully deleted`() {
+        val accessionVersions = convenienceClient
+            .submitDefaultFiles(
+                username = DEFAULT_USER_NAME,
+            )
+            .submissionIdMappings
+
+        client.deleteSequenceEntries(
+            scope = ALL,
+            accessionVersionsFilter = accessionVersions,
+            jwt = jwtForSuperUser,
+        )
+            .andExpect(status().isOk)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(jsonContainsAccessionVersionsInAnyOrder(accessionVersions))
+    }
+
+    @Test
+    @Suppress("ktlint:standard:max-line-length")
+    fun `GIVEN data with and without warnings WHEN I delete only warnings THEN only sequence with warning is deleted`() {
+        val submittedSequences =
+            convenienceClient.prepareDefaultSequenceEntriesToInProcessing()
+        val accessionOfSuccessfullyProcessedData = submittedSequences[0].accession
+        val accessionWithWarnings = submittedSequences[1].accession
+
+        convenienceClient.submitProcessedData(
+            PreparedProcessedData.withWarnings(accession = accessionWithWarnings),
+        )
+        convenienceClient.submitProcessedData(
+            PreparedProcessedData.successfullyProcessed(accession = accessionOfSuccessfullyProcessedData),
+        )
+
+        client.deleteSequenceEntries(
+            scope = DeleteSequenceScope.PROCESSED_WITH_WARNINGS,
+            accessionVersionsFilter = listOf(
+                AccessionVersion(accessionWithWarnings, 1),
+                AccessionVersion(accessionOfSuccessfullyProcessedData, 1),
+            ),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("\$.length()").value(1))
+
+        assertThat(
+            convenienceClient.getSequenceEntries().sequenceEntries,
+            not(hasItem<SequenceEntryStatus>(hasProperty("accession", `is`(accessionWithWarnings)))),
+        )
+
+        convenienceClient.getSequenceEntry(accession = accessionOfSuccessfullyProcessedData, version = 1)
+            .assertStatusIs(Status.PROCESSED)
+    }
+
+    companion object {
+        @JvmStatic
+        fun provideValidTestScenarios() = listOf(
+            TestScenario(
+                Status.RECEIVED,
+                true,
+            ),
+            TestScenario(
+                Status.RECEIVED,
+                true,
+            ),
+            TestScenario(
+                Status.PROCESSED,
+                true,
+            ),
+        )
+
+        @JvmStatic
+        fun provideInvalidTestScenarios() = listOf(
+            TestScenario(
+                Status.IN_PROCESSING,
+                false,
+            ),
+            TestScenario(
+                Status.APPROVED_FOR_RELEASE,
+                false,
+            ),
+        )
+    }
+}
+
+data class TestScenario(val statusAfterPreparation: Status, val expectedToSucceed: Boolean) {
+    override fun toString(): String {
+        val resultString = if (expectedToSucceed) {
+            "sequences are deleted"
+        } else {
+            "the deletion operation fails"
+        }
+        return "GIVEN own sequences in $statusAfterPreparation status THEN $resultString"
+    }
+}
