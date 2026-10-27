@@ -168,7 +168,8 @@ def get_external_metadata_to_upload(
     metadata are omitted, to avoid writing empty rows in the backend):
     - accession-scoped (no `version`): bioproject, biosample and unversioned INSDC accessions.
       These describe the sample/project rather than the specific sequence, so they also
-      apply to later revisions of the accession (which are not deposited to ENA).
+      apply to later revisions of the accession (until the revision itself is deposited and
+      re-sends them).
     - accession-version-scoped: run accession and assembly accessions (GCA, versioned INSDC
       accessions), as these refer to the exact raw reads/sequence that was deposited -
       a revision with updated raw reads gets a new run.
