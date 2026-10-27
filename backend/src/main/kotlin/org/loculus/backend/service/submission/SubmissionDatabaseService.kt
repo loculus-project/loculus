@@ -67,8 +67,8 @@ import org.loculus.backend.service.submission.SequenceEntriesTable.accessionColu
 import org.loculus.backend.service.submission.SequenceEntriesTable.groupIdColumn
 import org.loculus.backend.service.submission.SequenceEntriesTable.versionColumn
 import org.loculus.backend.service.submission.dbtables.AccessionExternalMetadataTable
+import org.loculus.backend.service.submission.dbtables.AccessionVersionExternalMetadataTable
 import org.loculus.backend.service.submission.dbtables.CurrentProcessingPipelineTable
-import org.loculus.backend.service.submission.dbtables.ExternalMetadataTable
 import org.loculus.backend.types.AccessionVersion
 import org.loculus.backend.types.AccessionVersionInterface
 import org.loculus.backend.types.AccessionVersionSubmittedMetadata
@@ -491,11 +491,11 @@ class SubmissionDatabaseService(
         externalMetadataUpdater: String,
     ) {
         val numberInserted =
-            ExternalMetadataTable.update(
+            AccessionVersionExternalMetadataTable.update(
                 where = {
-                    (ExternalMetadataTable.accessionColumn eq accessionVersion.accession) and
-                        (ExternalMetadataTable.versionColumn eq accessionVersion.version) and
-                        (ExternalMetadataTable.updaterIdColumn eq externalMetadataUpdater)
+                    (AccessionVersionExternalMetadataTable.accessionColumn eq accessionVersion.accession) and
+                        (AccessionVersionExternalMetadataTable.versionColumn eq accessionVersion.version) and
+                        (AccessionVersionExternalMetadataTable.updaterIdColumn eq externalMetadataUpdater)
                 },
             ) {
                 it[accessionColumn] = accessionVersion.accession
@@ -506,7 +506,7 @@ class SubmissionDatabaseService(
             }
 
         if (numberInserted != 1) {
-            ExternalMetadataTable.insert {
+            AccessionVersionExternalMetadataTable.insert {
                 it[accessionColumn] = accessionVersion.accession
                 it[versionColumn] = accessionVersion.version
                 it[updaterIdColumn] = externalMetadataUpdater

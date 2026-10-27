@@ -3,6 +3,16 @@
 --   processed metadata <- accession-scoped external metadata <- accession-version-scoped external metadata
 -- i.e. if a field exists in both, the accession-version-scoped value takes precedence.
 
+-- Rename the existing (accession-version-scoped) table so that both tables state their scope explicitly.
+ALTER TABLE external_metadata RENAME TO accession_version_external_metadata;
+ALTER TABLE accession_version_external_metadata
+    RENAME CONSTRAINT external_metadata_pkey TO accession_version_external_metadata_pkey;
+ALTER FUNCTION update_external_metadata_tracker() RENAME TO update_accession_version_external_metadata_tracker;
+-- The tracker triggers record TG_TABLE_NAME, so carry over existing tracker rows to the new name.
+UPDATE table_update_tracker
+SET table_name = 'accession_version_external_metadata'
+WHERE table_name = 'external_metadata';
+
 CREATE TABLE accession_external_metadata (
     accession text NOT NULL,
     external_metadata_updater text NOT NULL,
@@ -110,7 +120,7 @@ LEFT JOIN (
         em.accession,
         em.version,
         jsonb_merge_agg(em.external_metadata) AS external_metadata
-    FROM external_metadata em
+    FROM accession_version_external_metadata em
     GROUP BY em.accession, em.version
 ) aem
     ON aem.accession = se.accession
