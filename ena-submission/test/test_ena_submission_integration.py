@@ -747,16 +747,27 @@ def accessions_of_upload(payloads: list[dict[str, Any]]) -> dict[str, Any]:
     fields = get_config(CONFIG_FILE).loculus_accession_fields
     accession_scoped_fields = {getattr(fields, name) for name in ACCESSION_SCOPED_FIELDS}
 
-    assert len(payloads) == 2  # noqa: PLR2004
-    accession_scoped, version_scoped = payloads
-    assert accession_scoped["accession"] == TEST_ACCESSION
-    assert "version" not in accession_scoped
-    assert version_scoped["accession"] == TEST_ACCESSION
-    assert version_scoped["version"] == TEST_VERSION
-    assert set(accession_scoped["externalMetadata"]) <= accession_scoped_fields
-    assert not set(version_scoped["externalMetadata"]) & accession_scoped_fields
+    # Payloads without external metadata are omitted, so either scope may be missing
+    accession_scoped = [p for p in payloads if "version" not in p]
+    version_scoped = [p for p in payloads if "version" in p]
+    assert len(accession_scoped) <= 1
+    assert len(version_scoped) <= 1
+    assert payloads
 
-    return {**accession_scoped["externalMetadata"], **version_scoped["externalMetadata"]}
+    accessions: dict[str, Any] = {}
+    for payload in accession_scoped:
+        assert payload["accession"] == TEST_ACCESSION
+        assert payload["externalMetadata"]
+        assert set(payload["externalMetadata"]) <= accession_scoped_fields
+        accessions.update(payload["externalMetadata"])
+    for payload in version_scoped:
+        assert payload["accession"] == TEST_ACCESSION
+        assert payload["version"] == TEST_VERSION
+        assert payload["externalMetadata"]
+        assert not set(payload["externalMetadata"]) & accession_scoped_fields
+        accessions.update(payload["externalMetadata"])
+
+    return accessions
 
 
 def multi_segment_submission(
