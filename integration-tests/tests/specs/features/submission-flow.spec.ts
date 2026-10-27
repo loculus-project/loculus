@@ -51,7 +51,7 @@ test.describe('Submission flow', () => {
 
         await expect(page.getByText('Step 3 of 3')).toBeVisible();
         await expect(page.getByRole('heading', { name: 'What happens next' })).toBeVisible();
-        await page.getByRole('button', { name: 'Continue', exact: true }).click();
+        await page.getByRole('button', { name: 'Submit', exact: true }).click();
 
         await expect(
             page.getByRole('heading', { name: 'Review pending submissions' }),

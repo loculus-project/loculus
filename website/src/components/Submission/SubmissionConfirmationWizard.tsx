@@ -125,15 +125,15 @@ export const SubmissionConfirmationWizard: FC<SubmissionConfirmationWizardProps>
                 <>
                     <h3 className='font-bold text-lg pr-8'>What happens next</h3>
                     <p className='text-sm text-gray-800 mt-2'>
-                        Your sequences will now enter processing. On the next page you will be able to review and
-                        release the processed sequences.
+                        When you click Submit your sequences will enter processing. On the next page you will be able to
+                        review and <i>release</i> the processed sequences.
                     </p>
                     <p className='text-sm text-gray-800 mt-2'>
-                        <strong>The sequences will not be released until you review and release them.</strong>
+                        <i>The sequences will not be released until you review and release them.</i>
                     </p>
                 </>
             );
-            confirmButtonText = 'Continue';
+            confirmButtonText = 'Submit';
             closeButtonText = 'Cancel';
             break;
     }

@@ -130,7 +130,7 @@ describe('SubmitForm', () => {
             const submitButton = getByRole('button', { name: 'Upload and proceed to Approval' });
             await userEvent.click(submitButton);
             await userEvent.click(await findByRole('button', { name: 'Continue under Open terms' }));
-            await userEvent.click(await findByRole('button', { name: 'Continue' }));
+            await userEvent.click(await findByRole('button', { name: 'Submit' }));
 
             await waitFor(() => {
                 expect(toast.error).not.toHaveBeenCalled();
@@ -178,7 +178,7 @@ describe('SubmitForm', () => {
         expect(getByText('Step 3 of 3')).toBeVisible();
         expect(getByRole('heading', { name: 'What happens next' })).toBeVisible();
         expect(getByText('The sequences will not be released until you review and release them.')).toBeVisible();
-        await userEvent.click(getByRole('button', { name: 'Continue' }));
+        await userEvent.click(getByRole('button', { name: 'Submit' }));
 
         await waitFor(() => {
             expect(toast.error).not.toHaveBeenCalled();
@@ -339,7 +339,7 @@ describe('SubmitForm', () => {
         const submitButton = getByRole('button', { name: 'Upload and proceed to Approval' });
         await userEvent.click(submitButton);
         await userEvent.click(await findByRole('button', { name: 'Continue under Open terms' }));
-        await userEvent.click(await findByRole('button', { name: 'Continue' }));
+        await userEvent.click(await findByRole('button', { name: 'Submit' }));
 
         await waitFor(() => {
             expect(toast.error).toHaveBeenCalledWith(expect.stringContaining(receivedUnexpectedMessageFromBackend), {
@@ -366,7 +366,7 @@ describe('SubmitForm', () => {
         const submitButton = getByRole('button', { name: 'Upload and proceed to Approval' });
         await userEvent.click(submitButton);
         await userEvent.click(await findByRole('button', { name: 'Continue under Open terms' }));
-        await userEvent.click(await findByRole('button', { name: 'Continue' }));
+        await userEvent.click(await findByRole('button', { name: 'Submit' }));
 
         await waitFor(() => {
             expect(toast.error).not.toHaveBeenCalled();
@@ -403,7 +403,7 @@ describe('SubmitForm', () => {
 
             expect(await findByRole('heading', { name: 'What happens next' })).toBeVisible();
             expect(queryByText(/Step \d of \d/)).toBeNull();
-            await userEvent.click(getByRole('button', { name: 'Continue' }));
+            await userEvent.click(getByRole('button', { name: 'Submit' }));
 
             await waitFor(() => {
                 expect(toast.error).not.toHaveBeenCalled();

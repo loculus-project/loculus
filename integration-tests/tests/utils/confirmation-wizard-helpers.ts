@@ -1,7 +1,7 @@
 import type { Page } from '@playwright/test';
 
 /** Matches the button that advances the submission confirmation wizard, whichever step is shown. */
-const WIZARD_NEXT_BUTTON_NAME = /^(Continue under Open terms|Names are correct|Continue)$/;
+const WIZARD_NEXT_BUTTON_NAME = /^(Continue under Open terms|Names are correct|Submit)$/;
 
 /**
  * Clicks through the confirmation wizard that opens after 'Upload and proceed to Approval',
