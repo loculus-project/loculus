@@ -490,11 +490,11 @@ class SubmissionDatabaseService(
     }
 
     private fun throwIfAccessionHasNoReleasedVersion(accession: Accession) {
-        val hasReleasedVersion = SequenceEntriesView
-            .select(SequenceEntriesView.accessionColumn)
+        val hasReleasedVersion = SequenceEntriesTable
+            .select(SequenceEntriesTable.accessionColumn)
             .where {
-                (SequenceEntriesView.accessionColumn eq accession) and
-                    (SequenceEntriesView.statusColumn eq Status.APPROVED_FOR_RELEASE.name)
+                (SequenceEntriesTable.accessionColumn eq accession) and
+                    SequenceEntriesTable.releasedAtTimestampColumn.isNotNull()
             }
             .limit(1)
             .any()
