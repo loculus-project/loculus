@@ -166,11 +166,12 @@ def get_external_metadata_to_upload(
 
     Returns up to two NDJSON payloads for the backend (payloads without any external
     metadata are omitted, to avoid writing empty rows in the backend):
-    - accession-scoped (no `version`): bioproject and biosample accessions.
+    - accession-scoped (no `version`): bioproject, biosample and unversioned INSDC accessions.
       These describe the sample/project rather than the specific sequence, so they also
       apply to later revisions of the accession (which are not deposited to ENA).
-    - accession-version-scoped: assembly accessions (GCA, INSDC accessions), as these
-      refer to the exact sequence that was deposited.
+    - accession-version-scoped: run accession and assembly accessions (GCA, versioned INSDC
+      accessions), as these refer to the exact raw reads/sequence that was deposited -
+      a revision with updated raw reads gets a new run.
     """
     accession = entry.accession
     version = entry.version

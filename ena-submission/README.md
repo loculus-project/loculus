@@ -202,8 +202,8 @@ In a loop:
 - Get sequences in `submission_table` in state SUBMITTED_PROJECT, SUBMITTED_SAMPLE, SUBMITTED_RAW_READS, SUBMITTING_ASSEMBLY or SUBMITTED_ALL.
 - Get the results of all the submissions that are available so far (from all other tables)
 - If they differ from the external metadata previously uploaded for this sequence (stored in `submission_table.external_metadata`): create a POST request to the submit-external-metadata endpoint with the results in the expected format. Each request contains two NDJSON lines:
-  - an accession-scoped line (no `version`) with the bioproject, biosample and run accessions. The backend applies these to all versions of the accession, so they are kept when the sequence is revised in Loculus (revisions are not deposited to ENA).
-  - an accession-version-scoped line with the assembly accessions (GCA and INSDC accessions), which only refer to the deposited version.
+  - an accession-scoped line (no `version`) with the bioproject and biosample accessions. The backend applies these to all versions of the accession, so they are kept when the sequence is revised in Loculus (revisions are not deposited to ENA).
+  - an accession-version-scoped line with the assembly accessions (GCA, INSDC and run accessions), which only refer to the deposited version.
 - If the sequence is in state SUBMITTED_ALL and all accessions are present: set it to state SENT_TO_LOCULUS (if this update fails set it to HAS_ERRORS_EXT_METADATA_UPLOAD)
 - Get sequences in `submission_table` in state HAS_ERRORS_EXT_METADATA_UPLOAD for over 15 min: send a slack notification. Unlike the other tables, these entries are never retried automatically and need to be fixed manually. The 15 min and the slack notification interval (12h) are hard-coded in `upload_handle_errors` (not read from `submitting_time_threshold_min` / `slack_retry_threshold_min`).
 
