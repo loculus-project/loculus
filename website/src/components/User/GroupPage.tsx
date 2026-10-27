@@ -133,14 +133,14 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                         </label>
                         <DropdownMenu
                             className='hidden sm:flex'
-                            panelClassName='-ml-4 min-w-60'
+                            panelClassName='min-w-60'
                             trigger={
-                                <label tabIndex={0} className='py-1 block cursor-pointer title'>
+                                <Button className='py-1 block cursor-pointer title'>
                                     {groupName}
                                     <span className='text-primary'>
                                         <IwwaArrowDown className='inline-block -mt-1 ml-1 h-4 w-4 ' />
                                     </span>
-                                </label>
+                                </Button>
                             }
                         >
                             {userGroups.map(

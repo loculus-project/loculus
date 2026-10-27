@@ -190,7 +190,7 @@ const DownloadButton: React.FC<DownloadButtonProps> = ({ seqId, allowFastaDownlo
         <DropdownMenu
             className='inline-block'
             align='end'
-            panelClassName='w-52 -mr-4'
+            panelClassName='w-52'
             trigger={
                 <Button className={BUTTONCLASS}>
                     <IcBaselineDownload className='w-6 h-6' />

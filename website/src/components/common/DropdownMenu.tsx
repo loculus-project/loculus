@@ -1,65 +1,116 @@
-import { type AnchorHTMLAttributes, type CSSProperties, type FC, type ReactNode, useId } from 'react';
-
-const panelClasses = [
-    'invisible absolute top-full z-20 opacity-0 transition-opacity duration-150',
-    'group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100',
-    'flex flex-col gap-px bg-base-100 rounded-lg shadow-sm p-1',
-    'max-h-[75vh] overflow-y-auto overscroll-contain',
-    // Where anchor positioning is supported, fit the panel to the space below the trigger
-    'supports-[position-area:bottom]:fixed supports-[position-area:bottom]:inset-auto supports-[position-area:bottom]:max-h-[calc(100%-1rem)]',
-    'supports-[position-area:bottom]:[position-anchor:var(--dropdown-anchor)]',
-    'supports-[position-area:bottom]:[position-try-fallbacks:flip-inline]',
-].join(' ');
+import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
+import {
+    type AnchorHTMLAttributes,
+    type FC,
+    Fragment,
+    type ReactElement,
+    type ReactNode,
+    useEffect,
+    useState,
+} from 'react';
 
 type DropdownAlign = 'start' | 'center' | 'end';
 
-const alignClasses: Record<DropdownAlign, string> = {
-    start: 'left-0 supports-[position-area:bottom]:[position-area:bottom_span-right]',
-    center: [
-        'left-1/2 -translate-x-1/2 supports-[position-area:bottom]:translate-x-0',
-        'supports-[position-area:bottom]:[position-area:bottom_span-all] supports-[position-area:bottom]:[justify-self:anchor-center]',
-    ].join(' '),
-    end: 'right-0 supports-[position-area:bottom]:[position-area:bottom_span-left]',
+const anchorTo: Record<DropdownAlign, 'bottom start' | 'bottom' | 'bottom end'> = {
+    start: 'bottom start',
+    center: 'bottom',
+    end: 'bottom end',
+};
+
+const panelClasses = [
+    'z-50 flex flex-col gap-px p-1 bg-white rounded-lg shadow-lg border border-gray-200 focus:outline-hidden',
+    // Headless UI caps the anchored panel to the space below the trigger and makes it scroll; this keeps
+    // a scroll at the end of the list from scrolling the page behind it.
+    'overscroll-contain',
+    'origin-top transition ease-out duration-100 data-closed:scale-95 data-closed:opacity-0 data-leave:duration-75 data-leave:ease-in',
+].join(' ');
+
+/**
+ * Whether the element has more content below its visible area. The anchored menu panel gets its max-height
+ * from floating-ui after it mounts, so this is recomputed when the panel resizes as well as when it scrolls.
+ */
+const useCanScrollDown = (element: HTMLElement | null) => {
+    const [canScrollDown, setCanScrollDown] = useState(false);
+
+    useEffect(() => {
+        if (element === null) return;
+        const update = () => setCanScrollDown(element.scrollTop + element.clientHeight < element.scrollHeight - 1);
+        update();
+        element.addEventListener('scroll', update, { passive: true });
+        const resizeObserver = new ResizeObserver(update);
+        resizeObserver.observe(element);
+        return () => {
+            element.removeEventListener('scroll', update);
+            resizeObserver.disconnect();
+        };
+    }, [element]);
+
+    return canScrollDown;
 };
 
 interface DropdownMenuProps {
-    trigger: ReactNode;
+    /**
+     * The element that opens the menu. It must be a single element that forwards its ref to a button
+     * (e.g. `Button` or `NavigationTab`); Headless UI attaches the click and keyboard handlers to it.
+     */
+    trigger: ReactElement;
     children: ReactNode;
+    /** Where the panel sits relative to the trigger. */
     align?: DropdownAlign;
     panelClassName?: string;
     className?: string;
+    id?: string;
+    panelId?: string;
 }
 
+/**
+ * A click-to-open menu that is anchored below its trigger and scrolls when it would otherwise run off the
+ * screen. Built on Headless UI's `Menu`, so it is keyboard navigable and closes on escape or outside click.
+ */
 export const DropdownMenu: FC<DropdownMenuProps> = ({
     trigger,
     children,
     align = 'start',
     panelClassName = '',
     className = '',
+    id,
+    panelId,
 }) => {
-    const anchorName = `--dropdown-${useId().replace(/:/g, '')}`;
+    const [panelElement, setPanelElement] = useState<HTMLElement | null>(null);
+    const canScrollDown = useCanScrollDown(panelElement);
+
     return (
-        <div
-            className={`relative group [anchor-name:var(--dropdown-anchor)] ${className}`.trim()}
-            style={{ '--dropdown-anchor': anchorName } as CSSProperties} // eslint-disable-line @typescript-eslint/naming-convention
-        >
-            {trigger}
-            <ul className={`${panelClasses} ${alignClasses[align]} ${panelClassName}`}>{children}</ul>
-        </div>
+        <Menu as='div' className={`group ${className}`.trim()} id={id}>
+            <MenuButton as={Fragment}>{trigger}</MenuButton>
+            <MenuItems
+                ref={setPanelElement}
+                id={panelId}
+                anchor={{ to: anchorTo[align], gap: 4, padding: 8 }}
+                transition
+                className={`${panelClasses} ${panelClassName}`.trim()}
+            >
+                {children}
+                {/* Fades out the bottom of the list while there is more to scroll to, hinting that it scrolls. */}
+                <div
+                    aria-hidden='true'
+                    className={`pointer-events-none sticky bottom-0 shrink-0 -mt-10 h-10 bg-linear-to-t from-white transition-opacity duration-150 ${canScrollDown ? 'opacity-100' : 'opacity-0'}`}
+                />
+            </MenuItems>
+        </Menu>
     );
 };
 
 const itemClasses =
-    'flex items-center gap-2 px-3 py-1.5 rounded text-sm cursor-pointer hover:bg-base-200 hover:no-underline';
+    'flex items-center gap-2 px-3 py-1.5 rounded text-sm cursor-pointer data-focus:bg-base-200 hover:no-underline';
 
 type DropdownMenuItemProps = AnchorHTMLAttributes<HTMLAnchorElement> & {
     children: ReactNode;
 };
 
 export const DropdownMenuItem: FC<DropdownMenuItemProps> = ({ className = '', children, ...props }) => (
-    <li>
+    <MenuItem>
         <a className={`${itemClasses} ${className}`.trim()} {...props}>
             {children}
         </a>
-    </li>
+    </MenuItem>
 );

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { type ButtonHTMLAttributes } from 'react';
 
 import { Button } from '../common/Button';
 
@@ -10,13 +10,12 @@ type NavigationTabProps =
           href: string;
           className?: string;
       }
-    | {
+    | (Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children' | 'className'> & {
           isActive?: boolean;
           children: React.ReactNode;
           as?: 'button';
-          onClick?: () => void;
           className?: string;
-      };
+      });
 
 export const NavigationTab = React.forwardRef<HTMLButtonElement, NavigationTabProps>((props, ref) => {
     const { isActive = false, children, className = '' } = props;
@@ -37,8 +36,12 @@ export const NavigationTab = React.forwardRef<HTMLButtonElement, NavigationTabPr
         );
     }
 
+    // The remaining props (click and keyboard handlers, aria and data attributes) are passed through so the
+    // tab can act as the trigger of a Headless UI menu.
+    const { isActive: _isActive, children: _children, className: _className, as: _as, ...buttonProps } = props;
+
     return (
-        <Button ref={ref} onClick={props.onClick} className={combinedClassName}>
+        <Button ref={ref} className={combinedClassName} {...buttonProps}>
             {children}
         </Button>
     );

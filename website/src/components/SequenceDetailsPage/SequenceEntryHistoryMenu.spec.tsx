@@ -23,11 +23,11 @@ describe('SequenceEntryHistoryMenu', () => {
     test('latest version is labeled correctly', async () => {
         render(<SequenceEntryHistoryMenu sequenceEntryHistory={historyRevised} accessionVersion='FOO.2' />);
         const button = screen.getByText('Version 2');
-        await userEvent.hover(button);
+        await userEvent.click(button);
 
-        expect(screen.getByRole('link', { name: 'FOO.1 Previous version' })).toBeVisible();
-        expect(screen.getByRole('link', { name: 'FOO.2 Latest version' })).toBeVisible();
-        expect(screen.getByRole('link', { name: 'Compare versions' })).toBeVisible();
+        expect(screen.getByRole('menuitem', { name: 'FOO.1 Previous version' })).toBeVisible();
+        expect(screen.getByRole('menuitem', { name: 'FOO.2 Latest version' })).toBeVisible();
+        expect(screen.getByRole('menuitem', { name: 'Compare versions' })).toBeVisible();
     });
 
     const historyRevoke: SequenceEntryHistory = [
@@ -38,9 +38,9 @@ describe('SequenceEntryHistoryMenu', () => {
     test('revoked version is labeled correctly', async () => {
         render(<SequenceEntryHistoryMenu sequenceEntryHistory={historyRevoke} accessionVersion='BAR.2' />);
         const button = screen.getByText('Version 2');
-        await userEvent.hover(button);
+        await userEvent.click(button);
 
-        expect(screen.getByRole('link', { name: 'BAR.1 Previous version' })).toBeVisible();
-        expect(screen.getByRole('link', { name: 'BAR.2 Sequence revoked' })).toBeVisible();
+        expect(screen.getByRole('menuitem', { name: 'BAR.1 Previous version' })).toBeVisible();
+        expect(screen.getByRole('menuitem', { name: 'BAR.2 Sequence revoked' })).toBeVisible();
     });
 });

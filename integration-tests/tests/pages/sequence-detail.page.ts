@@ -70,7 +70,7 @@ export class SequenceDetailPage {
         await expect(versionLink).toBeVisible();
         await versionLink.click();
 
-        const compareVersionsLink = this.page.getByRole('link', { name: 'Compare versions' });
+        const compareVersionsLink = this.page.getByRole('menuitem', { name: 'Compare versions' });
         await expect(compareVersionsLink).toBeVisible();
         await compareVersionsLink.click();
 

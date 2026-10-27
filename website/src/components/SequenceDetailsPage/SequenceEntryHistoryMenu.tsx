@@ -3,8 +3,8 @@ import React from 'react';
 import { routes } from '../../routes/routes';
 import { type SequenceEntryHistory } from '../../types/lapis';
 import { getVersionStatusColor, getVersionStatusLabel } from '../../utils/getVersionStatusColor';
+import { Button } from '../common/Button';
 import { DropdownMenu, DropdownMenuItem } from '../common/DropdownMenu';
-import { buttonClasses } from '../common/buttonStyles';
 import IcBaselineHistory from '~icons/ic/baseline-history';
 import Arrow from '~icons/ic/sharp-keyboard-arrow-down';
 
@@ -29,22 +29,18 @@ export const SequenceEntryHistoryMenu: React.FC<Props> = ({
                 align='center'
                 panelClassName='text-sm w-80'
                 trigger={
-                    <label
-                        tabIndex={0}
+                    <Button
+                        size='sm'
+                        variant='unstyled'
                         // Kept black (rather than the primary `outline` variant) to match the
                         // dark control icons it sits next to in SeqPreviewModal.
-                        className={buttonClasses({
-                            size: 'sm',
-                            variant: 'unstyled',
-                            className:
-                                'py-1 bg-transparent border-base-content text-base-content hover:bg-base-content hover:text-base-100',
-                        })}
+                        className='py-1 bg-transparent border-base-content text-base-content hover:bg-base-content hover:text-base-100'
                     >
                         <span className='text-sm'>
                             {selectedVersion === undefined ? 'All versions' : `Version ${selectedVersion.version}`}
                         </span>
                         <Arrow />
-                    </label>
+                    </Button>
                 }
             >
                 {sequenceEntryHistory.map((version) => {

@@ -2,6 +2,7 @@ import { type FC } from 'react';
 
 import { SubmissionRouteUtils } from '../../routes/SubmissionRoute.ts';
 import type { Group } from '../../types/backend.ts';
+import { Button } from '../common/Button';
 import { DropdownMenu, DropdownMenuItem } from '../common/DropdownMenu';
 import DashiconsGroups from '~icons/dashicons/groups';
 import IwwaArrowDown from '~icons/iwwa/arrow-down';
@@ -32,13 +33,13 @@ export const SubmissionGroupSelector: FC<GroupSelectorProps> = ({ groups, select
     }
 
     return (
-        <div className='flex mb-2'>
+        <div className='mb-2'>
             <DropdownMenu
                 panelClassName='w-52 text-gray-700'
                 trigger={
-                    <div tabIndex={0} role='button' className='cursor-pointer'>
+                    <Button className='cursor-pointer'>
                         {groupNameElement} <IwwaArrowDown className='inline-block -mt-1 h-5 w-5' />
-                    </div>
+                    </Button>
                 }
             >
                 {groups.map((group) => (
