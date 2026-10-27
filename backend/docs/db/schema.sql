@@ -74,6 +74,29 @@ $$;
 ALTER FUNCTION public.update_accession_external_metadata_tracker() OWNER TO postgres;
 
 --
+-- Name: update_accession_version_external_metadata_tracker(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.update_accession_version_external_metadata_tracker() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    INSERT INTO table_update_tracker (table_name, organism, pipeline_version, last_time_updated)
+    SELECT TG_TABLE_NAME, se.organism, NULL, timezone('UTC', CURRENT_TIMESTAMP)
+    FROM changed_rows cr
+    JOIN sequence_entries se
+      ON se.accession = cr.accession AND se.version = cr.version
+    GROUP BY se.organism
+    ON CONFLICT (table_name, organism, pipeline_version)
+    DO UPDATE SET last_time_updated = timezone('UTC', CURRENT_TIMESTAMP);
+    RETURN NULL;
+END;
+$$;
+
+
+ALTER FUNCTION public.update_accession_version_external_metadata_tracker() OWNER TO postgres;
+
+--
 -- Name: update_current_processing_pipeline_tracker(); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -116,29 +139,6 @@ $$;
 
 
 ALTER FUNCTION public.update_data_use_terms_table_tracker() OWNER TO postgres;
-
---
--- Name: update_external_metadata_tracker(); Type: FUNCTION; Schema: public; Owner: postgres
---
-
-CREATE FUNCTION public.update_external_metadata_tracker() RETURNS trigger
-    LANGUAGE plpgsql
-    AS $$
-BEGIN
-    INSERT INTO table_update_tracker (table_name, organism, pipeline_version, last_time_updated)
-    SELECT TG_TABLE_NAME, se.organism, NULL, timezone('UTC', CURRENT_TIMESTAMP)
-    FROM changed_rows cr
-    JOIN sequence_entries se
-      ON se.accession = cr.accession AND se.version = cr.version
-    GROUP BY se.organism
-    ON CONFLICT (table_name, organism, pipeline_version)
-    DO UPDATE SET last_time_updated = timezone('UTC', CURRENT_TIMESTAMP);
-    RETURN NULL;
-END;
-$$;
-
-
-ALTER FUNCTION public.update_external_metadata_tracker() OWNER TO postgres;
 
 --
 -- Name: update_preprocessed_data_tracker(); Type: FUNCTION; Schema: public; Owner: postgres
@@ -251,6 +251,21 @@ CREATE SEQUENCE public.accession_sequence
 ALTER SEQUENCE public.accession_sequence OWNER TO postgres;
 
 --
+-- Name: accession_version_external_metadata; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.accession_version_external_metadata (
+    accession text NOT NULL,
+    version bigint NOT NULL,
+    external_metadata_updater text NOT NULL,
+    external_metadata jsonb,
+    updated_metadata_at timestamp without time zone NOT NULL
+);
+
+
+ALTER TABLE public.accession_version_external_metadata OWNER TO postgres;
+
+--
 -- Name: audit_log; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -341,21 +356,6 @@ CREATE TABLE public.data_use_terms_table (
 
 
 ALTER TABLE public.data_use_terms_table OWNER TO postgres;
-
---
--- Name: external_metadata; Type: TABLE; Schema: public; Owner: postgres
---
-
-CREATE TABLE public.external_metadata (
-    accession text NOT NULL,
-    version bigint NOT NULL,
-    external_metadata_updater text NOT NULL,
-    external_metadata jsonb,
-    updated_metadata_at timestamp without time zone NOT NULL
-);
-
-
-ALTER TABLE public.external_metadata OWNER TO postgres;
 
 --
 -- Name: file_id_sequence; Type: SEQUENCE; Schema: public; Owner: postgres
@@ -716,7 +716,7 @@ CREATE VIEW public.sequence_entries_view AS
      LEFT JOIN ( SELECT em.accession,
             em.version,
             public.jsonb_merge_agg(em.external_metadata) AS external_metadata
-           FROM public.external_metadata em
+           FROM public.accession_version_external_metadata em
           GROUP BY em.accession, em.version) aem ON (((aem.accession = se.accession) AND (aem.version = se.version))))
      LEFT JOIN ( SELECT aemt.accession,
             public.jsonb_merge_agg(aemt.external_metadata) AS external_metadata
@@ -852,6 +852,14 @@ ALTER TABLE ONLY public.accession_external_metadata
 
 
 --
+-- Name: accession_version_external_metadata accession_version_external_metadata_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.accession_version_external_metadata
+    ADD CONSTRAINT accession_version_external_metadata_pkey PRIMARY KEY (accession, version, external_metadata_updater);
+
+
+--
 -- Name: audit_log audit_log_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -881,14 +889,6 @@ ALTER TABLE ONLY public.compression_dictionaries
 
 ALTER TABLE ONLY public.current_processing_pipeline
     ADD CONSTRAINT current_processing_pipeline_pkey PRIMARY KEY (organism);
-
-
---
--- Name: external_metadata external_metadata_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.external_metadata
-    ADD CONSTRAINT external_metadata_pkey PRIMARY KEY (accession, version, external_metadata_updater);
 
 
 --
@@ -1134,6 +1134,13 @@ CREATE TRIGGER update_tracker_trigger_del AFTER DELETE ON public.accession_exter
 
 
 --
+-- Name: accession_version_external_metadata update_tracker_trigger_del; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER update_tracker_trigger_del AFTER DELETE ON public.accession_version_external_metadata REFERENCING OLD TABLE AS changed_rows FOR EACH STATEMENT EXECUTE FUNCTION public.update_accession_version_external_metadata_tracker();
+
+
+--
 -- Name: current_processing_pipeline update_tracker_trigger_del; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
@@ -1145,13 +1152,6 @@ CREATE TRIGGER update_tracker_trigger_del AFTER DELETE ON public.current_process
 --
 
 CREATE TRIGGER update_tracker_trigger_del AFTER DELETE ON public.data_use_terms_table REFERENCING OLD TABLE AS changed_rows FOR EACH STATEMENT EXECUTE FUNCTION public.update_data_use_terms_table_tracker();
-
-
---
--- Name: external_metadata update_tracker_trigger_del; Type: TRIGGER; Schema: public; Owner: postgres
---
-
-CREATE TRIGGER update_tracker_trigger_del AFTER DELETE ON public.external_metadata REFERENCING OLD TABLE AS changed_rows FOR EACH STATEMENT EXECUTE FUNCTION public.update_external_metadata_tracker();
 
 
 --
@@ -1176,6 +1176,13 @@ CREATE TRIGGER update_tracker_trigger_ins AFTER INSERT ON public.accession_exter
 
 
 --
+-- Name: accession_version_external_metadata update_tracker_trigger_ins; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER update_tracker_trigger_ins AFTER INSERT ON public.accession_version_external_metadata REFERENCING NEW TABLE AS changed_rows FOR EACH STATEMENT EXECUTE FUNCTION public.update_accession_version_external_metadata_tracker();
+
+
+--
 -- Name: current_processing_pipeline update_tracker_trigger_ins; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
@@ -1187,13 +1194,6 @@ CREATE TRIGGER update_tracker_trigger_ins AFTER INSERT ON public.current_process
 --
 
 CREATE TRIGGER update_tracker_trigger_ins AFTER INSERT ON public.data_use_terms_table REFERENCING NEW TABLE AS changed_rows FOR EACH STATEMENT EXECUTE FUNCTION public.update_data_use_terms_table_tracker();
-
-
---
--- Name: external_metadata update_tracker_trigger_ins; Type: TRIGGER; Schema: public; Owner: postgres
---
-
-CREATE TRIGGER update_tracker_trigger_ins AFTER INSERT ON public.external_metadata REFERENCING NEW TABLE AS changed_rows FOR EACH STATEMENT EXECUTE FUNCTION public.update_external_metadata_tracker();
 
 
 --
@@ -1218,6 +1218,13 @@ CREATE TRIGGER update_tracker_trigger_upd AFTER UPDATE ON public.accession_exter
 
 
 --
+-- Name: accession_version_external_metadata update_tracker_trigger_upd; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER update_tracker_trigger_upd AFTER UPDATE ON public.accession_version_external_metadata REFERENCING NEW TABLE AS changed_rows FOR EACH STATEMENT EXECUTE FUNCTION public.update_accession_version_external_metadata_tracker();
+
+
+--
 -- Name: current_processing_pipeline update_tracker_trigger_upd; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
@@ -1229,13 +1236,6 @@ CREATE TRIGGER update_tracker_trigger_upd AFTER UPDATE ON public.current_process
 --
 
 CREATE TRIGGER update_tracker_trigger_upd AFTER UPDATE ON public.data_use_terms_table REFERENCING NEW TABLE AS changed_rows FOR EACH STATEMENT EXECUTE FUNCTION public.update_data_use_terms_table_tracker();
-
-
---
--- Name: external_metadata update_tracker_trigger_upd; Type: TRIGGER; Schema: public; Owner: postgres
---
-
-CREATE TRIGGER update_tracker_trigger_upd AFTER UPDATE ON public.external_metadata REFERENCING NEW TABLE AS changed_rows FOR EACH STATEMENT EXECUTE FUNCTION public.update_external_metadata_tracker();
 
 
 --
