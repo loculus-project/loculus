@@ -32,7 +32,7 @@ export const SubmissionGroupSelector: FC<GroupSelectorProps> = ({ groups, select
     }
 
     return (
-        <div className='mb-2'>
+        <div className='flex mb-2'>
             <DropdownMenu
                 panelClassName='w-52 text-gray-700'
                 trigger={
