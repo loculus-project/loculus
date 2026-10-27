@@ -50,6 +50,7 @@ import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.TransactionManager
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.jdbc.update
+import org.jetbrains.exposed.v1.jdbc.upsert
 import org.jetbrains.exposed.v1.json.extract
 import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.config.BackendConfig
@@ -617,29 +618,12 @@ class SubmissionDatabaseService(
         externalMetadata: MetadataMap,
         externalMetadataUpdater: String,
     ) {
-        val numberInserted =
-            AccessionVersionExternalMetadataTable.update(
-                where = {
-                    (AccessionVersionExternalMetadataTable.accessionColumn eq accessionVersion.accession) and
-                        (AccessionVersionExternalMetadataTable.versionColumn eq accessionVersion.version) and
-                        (AccessionVersionExternalMetadataTable.updaterIdColumn eq externalMetadataUpdater)
-                },
-            ) {
-                it[accessionColumn] = accessionVersion.accession
-                it[versionColumn] = accessionVersion.version
-                it[updaterIdColumn] = externalMetadataUpdater
-                it[externalMetadataColumn] = externalMetadata
-                it[updatedAtColumn] = dateProvider.getCurrentDateTime()
-            }
-
-        if (numberInserted != 1) {
-            AccessionVersionExternalMetadataTable.insert {
-                it[accessionColumn] = accessionVersion.accession
-                it[versionColumn] = accessionVersion.version
-                it[updaterIdColumn] = externalMetadataUpdater
-                it[externalMetadataColumn] = externalMetadata
-                it[updatedAtColumn] = dateProvider.getCurrentDateTime()
-            }
+        AccessionVersionExternalMetadataTable.upsert {
+            it[accessionColumn] = accessionVersion.accession
+            it[versionColumn] = accessionVersion.version
+            it[updaterIdColumn] = externalMetadataUpdater
+            it[externalMetadataColumn] = externalMetadata
+            it[updatedAtColumn] = dateProvider.getCurrentDateTime()
         }
     }
 
@@ -648,26 +632,11 @@ class SubmissionDatabaseService(
         externalMetadata: MetadataMap,
         externalMetadataUpdater: String,
     ) {
-        val numberInserted =
-            AccessionExternalMetadataTable.update(
-                where = {
-                    (AccessionExternalMetadataTable.accessionColumn eq accession) and
-                        (AccessionExternalMetadataTable.updaterIdColumn eq externalMetadataUpdater)
-                },
-            ) {
-                it[accessionColumn] = accession
-                it[updaterIdColumn] = externalMetadataUpdater
-                it[externalMetadataColumn] = externalMetadata
-                it[updatedAtColumn] = dateProvider.getCurrentDateTime()
-            }
-
-        if (numberInserted != 1) {
-            AccessionExternalMetadataTable.insert {
-                it[accessionColumn] = accession
-                it[updaterIdColumn] = externalMetadataUpdater
-                it[externalMetadataColumn] = externalMetadata
-                it[updatedAtColumn] = dateProvider.getCurrentDateTime()
-            }
+        AccessionExternalMetadataTable.upsert {
+            it[accessionColumn] = accession
+            it[updaterIdColumn] = externalMetadataUpdater
+            it[externalMetadataColumn] = externalMetadata
+            it[updatedAtColumn] = dateProvider.getCurrentDateTime()
         }
     }
 
