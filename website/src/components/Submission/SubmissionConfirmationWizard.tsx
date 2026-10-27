@@ -11,7 +11,7 @@ const AuthorNamesTable: FC<{ authorLists: AuthorListOccurrence[] }> = ({ authorL
             {authorLists.map(({ authors, numberOfEntries }, listIndex) => (
                 <div key={authors}>
                     {authorLists.length > 1 && (
-                        <p className='text-xs text-gray-500 mb-1'>
+                        <p className='text-xs text-gray-600 mb-1'>
                             Author list {listIndex + 1} (used by {numberOfEntries}{' '}
                             {numberOfEntries === 1 ? 'entry' : 'entries'})
                         </p>
@@ -94,10 +94,13 @@ export const SubmissionConfirmationWizard: FC<SubmissionConfirmationWizardProps>
     switch (step.type) {
         case 'openDataUseTerms':
             content = (
-                <h3 className='font-bold text-lg pr-8'>
-                    You have selected the Open Data Use Terms. Once released under the Open Data Use Terms sequences
-                    will be deposited to INSDC and cannot be changed to the Restricted-Use Data Use Terms.
-                </h3>
+                <>
+                    <h3 className='font-bold text-lg pr-8'>Open data use terms</h3>
+                    <p className='text-sm text-gray-800 mt-2'>
+                        You have selected the Open Data Use Terms. Once released under the Open Data Use Terms,
+                        sequences will be deposited to INSDC and cannot be changed to the Restricted-Use Data Use Terms.
+                    </p>
+                </>
             );
             confirmButtonText = 'Continue under Open terms';
             closeButtonText = 'Cancel';
@@ -106,7 +109,7 @@ export const SubmissionConfirmationWizard: FC<SubmissionConfirmationWizardProps>
             content = (
                 <>
                     <h3 className='font-bold text-lg pr-8'>Are first and last names assigned correctly?</h3>
-                    <p className='text-sm text-gray-600 mt-2'>
+                    <p className='text-sm text-gray-800 mt-2'>
                         In your submission, authors must be given as <i>last name, first name</i>, separated by
                         semicolons (e.g. <code>Smith, Anna; Perez, Tom J.</code>). Please check that the names below
                         have been split correctly. If not, please go back and change your metadata input.
@@ -121,11 +124,11 @@ export const SubmissionConfirmationWizard: FC<SubmissionConfirmationWizardProps>
             content = (
                 <>
                     <h3 className='font-bold text-lg pr-8'>What happens next</h3>
-                    <p className='text-sm text-gray-600 mt-2'>
+                    <p className='text-sm text-gray-800 mt-2'>
                         Your sequences will now enter processing. On the next page you will be able to review and
                         release the processed sequences.
                     </p>
-                    <p className='text-sm text-gray-600 mt-2'>
+                    <p className='text-sm text-gray-800 mt-2'>
                         <strong>The sequences will not be released until you review and release them.</strong>
                     </p>
                 </>
@@ -143,7 +146,7 @@ export const SubmissionConfirmationWizard: FC<SubmissionConfirmationWizardProps>
                 </Button>
             </form>
             {steps.length > 1 && (
-                <p className='text-xs font-medium text-gray-500 mb-2'>
+                <p className='text-xs font-medium text-gray-600 mb-2'>
                     Step {stepIndex + 1} of {steps.length}
                 </p>
             )}
