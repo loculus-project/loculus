@@ -98,10 +98,6 @@ const InnerDataUploadForm = ({
 
     const [confirmedNoPII, setConfirmedNoPII] = useState(false);
 
-    // True from clicking Upload until the confirmation wizard closes: covers reading the metadata for the
-    // author check and rendering the wizard, which can take seconds for large files with many author lists.
-    const [isConfirming, setIsConfirming] = useState(false);
-
     const fileLinkage = useMemo(
         () =>
             inputMode === 'bulk' && submissionFileMapping?.isOk()
@@ -112,47 +108,37 @@ const InnerDataUploadForm = ({
 
     const handleSubmit = async (event: FormEvent) => {
         event.preventDefault();
-        setIsConfirming(true);
-        let wizardOpened = false;
-        try {
-            wizardOpened = await prepareAndConfirm();
-        } finally {
-            if (!wizardOpened) setIsConfirming(false);
-        }
-    };
 
-    /** Validates the input and opens the confirmation wizard. Returns whether the wizard was opened. */
-    const prepareAndConfirm = async (): Promise<boolean> => {
         const fileUploadStateResult = validateFileUploadStates(fileUploadStates);
         if (fileUploadStateResult.isErr()) {
             onError(fileUploadStateResult.error.message);
-            return false;
+            return;
         }
 
         const sequenceDataResult = await fileFactory!();
 
         if (sequenceDataResult.isErr()) {
             onError(sequenceDataResult.error.message);
-            return false;
+            return;
         }
 
         const { metadataFile, sequenceFile, submissionId } = sequenceDataResult.value;
 
         if (submissionId === undefined && inputMode === 'form') {
             onError('No ID specified.');
-            return false;
+            return;
         }
 
         if (dataUseTermsEnabled && !confirmedNoPII) {
             onError(
                 'Please confirm the data you submitted does not include restricted or personally identifiable information.',
             );
-            return false;
+            return;
         }
 
         if (dataUseTermsEnabled && !agreedToINSDCUploadTerms) {
             onError('Please tick the box to agree that you will not independently submit these sequences to INSDC');
-            return false;
+            return;
         }
 
         const submitSequenceData = () => {
@@ -190,12 +176,7 @@ const InnerDataUploadForm = ({
         }
         confirmationSteps.push({ type: 'nextSteps' });
 
-        displaySubmissionConfirmationWizard({
-            steps: confirmationSteps,
-            onConfirmation: submitSequenceData,
-            onClosed: () => setIsConfirming(false),
-        });
-        return true;
+        displaySubmissionConfirmationWizard({ steps: confirmationSteps, onConfirmation: submitSequenceData });
     };
 
     return (
@@ -275,11 +256,9 @@ const InnerDataUploadForm = ({
                         type='submit'
                         className='rounded-md py-2 text-sm font-semibold shadow-xs focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 bg-primary-600 text-white hover:bg-primary-500'
                         onClick={(e) => void handleSubmit(e)}
-                        alsoDisabledIf={isPending || isConfirming}
+                        alsoDisabledIf={isPending}
                     >
-                        <div
-                            className={`absolute ml-1.5 inline-flex ${isPending || isConfirming ? 'visible' : 'invisible'}`}
-                        >
+                        <div className={`absolute ml-1.5 inline-flex ${isPending ? 'visible' : 'invisible'}`}>
                             <Spinner size='sm' />
                         </div>
                         <span className='flex-1 text-center mx-8'>Upload</span>
