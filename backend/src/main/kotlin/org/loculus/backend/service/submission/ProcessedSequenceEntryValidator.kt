@@ -98,9 +98,18 @@ private fun <T> validateNoUnknownInMetaData(data: Map<String, T>, known: List<St
     }
 }
 
-private fun validateKnownMetadataField(metadata: BaseMetadata, processedMetadataMap: MetadataMap): MetadataMap {
+/**
+ * Validates the metadata against the given fields and returns a map containing exactly those fields,
+ * with missing (non-required) fields set to null.
+ */
+private fun validateAndCompleteMetadata(metadataMap: MetadataMap, metadataFields: List<BaseMetadata>): MetadataMap {
+    validateNoUnknownInMetaData(metadataMap, metadataFields.map { it.name })
+    return metadataFields.associate { it.name to getValidatedFieldValue(it, metadataMap) }
+}
+
+private fun getValidatedFieldValue(metadata: BaseMetadata, metadataMap: MetadataMap): JsonNode {
     val fieldName = metadata.name
-    val fieldValue = processedMetadataMap[fieldName]
+    val fieldValue = metadataMap[fieldName]
 
     if (metadata.required) {
         if (fieldValue == null) {
@@ -112,12 +121,12 @@ private fun validateKnownMetadataField(metadata: BaseMetadata, processedMetadata
         }
     }
 
-    if (fieldValue != null) {
-        validateType(fieldValue, metadata)
-        return processedMetadataMap
+    if (fieldValue == null) {
+        return NullNode.instance
     }
 
-    return processedMetadataMap + (fieldName to NullNode.instance)
+    validateType(fieldValue, metadata)
+    return fieldValue
 }
 
 private fun validateType(fieldValue: JsonNode, metadata: BaseMetadata) {
@@ -177,13 +186,7 @@ class ExternalMetadataValidatorFactory(private val backendConfig: BackendConfig)
 class ExternalMetadataValidator(private val schema: Schema) {
     fun validate(externalMetadata: MetadataMap, externalMetadataUpdater: String): MetadataMap {
         val metadataFields = schema.externalMetadata.filter { it.externalMetadataUpdater == externalMetadataUpdater }
-        var processedMetadataMap = externalMetadata
-        validateNoUnknownInMetaData(processedMetadataMap, metadataFields.map { it.name })
-
-        for (metadata in metadataFields) {
-            processedMetadataMap = validateKnownMetadataField(metadata, processedMetadataMap)
-        }
-        return processedMetadataMap
+        return validateAndCompleteMetadata(externalMetadata, metadataFields)
     }
 }
 
@@ -207,16 +210,8 @@ class ProcessedSequenceEntryValidator(private val schema: Schema, private val re
         return processedDataWithAllMetadataFields
     }
 
-    private fun validateMetadata(processedData: ProcessedData<GeneticSequence>): ProcessedData<GeneticSequence> {
-        val metadataFields = schema.metadata
-        var processedMetadataMap = processedData.metadata
-        validateNoUnknownInMetaData(processedMetadataMap, metadataFields.map { it.name })
-
-        for (metadata in metadataFields) {
-            processedMetadataMap = validateKnownMetadataField(metadata, processedMetadataMap)
-        }
-        return processedData.copy(metadata = processedMetadataMap)
-    }
+    private fun validateMetadata(processedData: ProcessedData<GeneticSequence>): ProcessedData<GeneticSequence> =
+        processedData.copy(metadata = validateAndCompleteMetadata(processedData.metadata, schema.metadata))
 
     private fun validateNucleotideSequences(processedData: ProcessedData<GeneticSequence>) {
         for (segment in referenceGenome.nucleotideSequences) {
