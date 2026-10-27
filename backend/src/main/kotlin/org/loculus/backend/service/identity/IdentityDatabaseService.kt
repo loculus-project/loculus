@@ -44,11 +44,4 @@ class IdentityDatabaseService(private val dateProvider: DateProvider) {
             .single()[LoculusUsersTable.provisionedAt]
         return LoculusPrincipal(userId, provisionedAt, identity)
     }
-
-    @Transactional(readOnly = true)
-    fun findUsername(principal: LoculusPrincipal): String? = ExternalIdentitiesTable.selectAll().where {
-        (ExternalIdentitiesTable.issuer eq principal.externalIdentity.issuer) and
-            (ExternalIdentitiesTable.subject eq principal.externalIdentity.subject) and
-            (ExternalIdentitiesTable.userId eq principal.userId)
-    }.singleOrNull()?.get(ExternalIdentitiesTable.preferredUsername)
 }

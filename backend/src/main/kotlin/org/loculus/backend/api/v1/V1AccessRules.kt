@@ -4,7 +4,7 @@ import org.springframework.http.HttpMethod
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configurers.AuthorizeHttpRequestsConfigurer
 
-// Resource permissions belong in services; these rules only select publicly accessible endpoints.
+// Route-level authentication requirements; resource permissions belong in application services.
 fun v1AccessRules(auth: AuthorizeHttpRequestsConfigurer<HttpSecurity>.AuthorizationManagerRequestMatcherRegistry) {
-    auth.requestMatchers(HttpMethod.GET, "/v1/groups/{groupId}").permitAll()
+    auth.requestMatchers(HttpMethod.GET, "/v1/me").authenticated()
 }
