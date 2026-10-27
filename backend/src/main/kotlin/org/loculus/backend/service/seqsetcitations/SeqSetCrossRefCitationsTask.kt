@@ -1,10 +1,10 @@
 package org.loculus.backend.service.seqsetcitations
 
-import org.loculus.backend.api.SeqSetCitationSource
 import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.config.ENABLE_SEQSETS_TRUE_VALUE
 import org.loculus.backend.service.crossref.CrossRefService
 import org.loculus.backend.service.scheduler.TaskLock
+import org.loculus.backend.types.SeqSetCitationSource
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component

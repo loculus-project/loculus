@@ -3,7 +3,7 @@ package org.loculus.backend.log
 import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
-import org.loculus.backend.controller.LoculusCustomHeaders.REQUEST_ID
+import org.loculus.backend.api.LoculusCustomHeaders.REQUEST_ID
 import org.slf4j.MDC
 import org.springframework.core.annotation.Order
 import org.springframework.stereotype.Component
