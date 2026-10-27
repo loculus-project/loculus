@@ -731,10 +731,10 @@ class ExternalMetadataUploads:
         )
 
 
-def last_external_metadata_accessions(mock: Mock) -> dict[str, Any]:
+def last_external_metadata_accessions(mock: Mock, version: int = TEST_VERSION) -> dict[str, Any]:
     """ENA accessions of the most recent `submit_external_metadata` call."""
     mock.assert_called()
-    return accessions_of_upload(mock.call_args.args[0])
+    return accessions_of_upload(mock.call_args.args[0], version)
 
 
 # ENA accessions that describe the sample/project apply to all versions of an accession,
@@ -742,7 +742,9 @@ def last_external_metadata_accessions(mock: Mock) -> dict[str, Any]:
 ACCESSION_SCOPED_FIELDS = ("bioproject", "biosample", "insdc_accession_prefix")
 
 
-def accessions_of_upload(payloads: list[dict[str, Any]]) -> dict[str, Any]:
+def accessions_of_upload(
+    payloads: list[dict[str, Any]], version: int = TEST_VERSION
+) -> dict[str, Any]:
     """Check the scoping of one upload's payloads and return all of its ENA accessions."""
     fields = get_config(CONFIG_FILE).loculus_accession_fields
     accession_scoped_names = {getattr(fields, name) for name in ACCESSION_SCOPED_FIELDS}
@@ -768,7 +770,7 @@ def accessions_of_upload(payloads: list[dict[str, Any]]) -> dict[str, Any]:
         accessions.update(payload["externalMetadata"])
     for payload in version_scoped:
         assert payload["accession"] == TEST_ACCESSION
-        assert payload["version"] == TEST_VERSION
+        assert payload["version"] == version
         assert payload["externalMetadata"]
         assert not any(is_accession_scoped(field) for field in payload["externalMetadata"])
         accessions.update(payload["externalMetadata"])
@@ -1781,7 +1783,9 @@ class TestRevisionRawReadsModificationTests(TestSubmission):
         get_external_metadata_and_send_to_loculus(self.db_engine, self.config)
 
         run_field = self.config.loculus_accession_fields.run
-        revised_run = last_external_metadata_accessions(mock_submit_external_metadata)[run_field]
+        revised_run = last_external_metadata_accessions(
+            mock_submit_external_metadata, version=TEST_VERSION + 1
+        )[run_field]
         assert original_accessions[run_field] != revised_run, (
             "When raw reads are modified, insdcRawReadsAccession should change"
         )
@@ -1838,7 +1842,9 @@ class TestRevisionNoRawReadsNoAssemblyModificationTests(TestSubmission):
         get_external_metadata_and_send_to_loculus(self.db_engine, self.config)
 
         run_field = self.config.loculus_accession_fields.run
-        revised_run = last_external_metadata_accessions(mock_submit_external_metadata)[run_field]
+        revised_run = last_external_metadata_accessions(
+            mock_submit_external_metadata, version=TEST_VERSION + 1
+        )[run_field]
         assert original_accessions[run_field] == revised_run, (
             "When raw reads are not modified, insdcRawReadsAccession should stay the same"
         )
