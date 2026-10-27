@@ -222,7 +222,7 @@ private fun clearDatabaseStatement(): String = """
             $PREPROCESSING_QUEUE_VERSIONS_TABLE_NAME,
             $CURRENT_PROCESSING_PIPELINE_TABLE_NAME,
             $FILES_TABLE_NAME,
-            external_metadata,
+            accession_version_external_metadata,
             accession_external_metadata,
             seqsets,
             seqset_records,

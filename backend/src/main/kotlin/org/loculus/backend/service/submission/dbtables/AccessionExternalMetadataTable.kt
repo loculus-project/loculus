@@ -9,7 +9,7 @@ const val ACCESSION_EXTERNAL_METADATA_TABLE_NAME = "accession_external_metadata"
 
 /**
  * External metadata that applies to all versions of an accession.
- * It is overlaid on top of the processed metadata, but below the version-scoped [ExternalMetadataTable].
+ * It is overlaid on top of the processed metadata, but below the version-scoped [AccessionVersionExternalMetadataTable].
  */
 object AccessionExternalMetadataTable : Table(ACCESSION_EXTERNAL_METADATA_TABLE_NAME) {
     val accessionColumn = varchar("accession", 255)
