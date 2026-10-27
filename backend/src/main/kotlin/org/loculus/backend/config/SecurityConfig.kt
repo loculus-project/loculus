@@ -17,10 +17,6 @@ import org.springframework.security.web.access.AccessDeniedHandlerImpl
 import org.springframework.security.web.access.DelegatingAccessDeniedHandler
 import org.springframework.security.web.csrf.CsrfException
 
-private val debugEndpoints = arrayOf(
-    "/debug/*",
-)
-
 @Configuration
 @EnableWebSecurity
 class SecurityConfig {
@@ -29,6 +25,10 @@ class SecurityConfig {
     private val defaultAccessDeniedHandler = DelegatingAccessDeniedHandler(
         linkedMapOf(CsrfException::class.java to AccessDeniedHandlerImpl()),
         BearerTokenAccessDeniedHandler(),
+    )
+
+    private val debugEndpoints = arrayOf(
+        "/debug/*",
     )
 
     @Bean
