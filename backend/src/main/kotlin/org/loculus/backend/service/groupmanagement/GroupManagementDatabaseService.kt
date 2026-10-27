@@ -1,8 +1,10 @@
 package org.loculus.backend.service.groupmanagement
 
 import org.jetbrains.exposed.v1.core.JoinType
+import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.greater
 import org.jetbrains.exposed.v1.core.lowerCase
 import org.jetbrains.exposed.v1.exceptions.ExposedSQLException
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
@@ -30,10 +32,16 @@ class GroupManagementDatabaseService(
     private val dateProvider: DateProvider,
 ) {
 
-    fun getDetailsOfGroup(groupId: Int, user: org.loculus.backend.auth.User): GroupDetails {
+    // Temporary compatibility wrapper for v0 callers using the legacy User type.
+    // Deprecate and remove once those callers migrate to the new group service,
+    // which supplies the visibility decision directly.
+    fun getDetailsOfGroup(groupId: Int, user: org.loculus.backend.auth.User): GroupDetails =
+        getDetailsOfGroup(groupId, includePrivateDetails = user is AuthenticatedUser)
+
+    fun getDetailsOfGroup(groupId: Int, includePrivateDetails: Boolean): GroupDetails {
         val groupEntity = GroupEntity.findById(groupId) ?: throw NotFoundException("Group $groupId does not exist.")
 
-        return when (user is AuthenticatedUser) {
+        return when (includePrivateDetails) {
             true -> {
                 val users = UserGroupEntity.find { UserGroupsTable.groupIdColumn eq groupId }
                 GroupDetails(
@@ -50,9 +58,15 @@ class GroupManagementDatabaseService(
         }
     }
 
-    fun createNewGroup(group: NewGroup, authenticatedUser: AuthenticatedUser): Group {
+    // Temporary compatibility wrapper for v0 callers using AuthenticatedUser.
+    // Deprecate and remove once those callers migrate to the new group service,
+    // which resolves the creator's membership identifier before calling the database.
+    fun createNewGroup(group: NewGroup, authenticatedUser: AuthenticatedUser): Group =
+        createNewGroup(group, authenticatedUser.username)
+
+    fun createNewGroup(group: NewGroup, creatorUsername: String): Group {
         val groupEntity = GroupEntity.new {
-            createdBy = authenticatedUser.username
+            createdBy = creatorUsername
             createdAt = dateProvider.getCurrentDateTime()
             this.updateWith(group)
         }
@@ -60,11 +74,11 @@ class GroupManagementDatabaseService(
         val groupId = groupEntity.id.value
 
         UserGroupEntity.new {
-            userName = authenticatedUser.username
+            userName = creatorUsername
             this.groupId = groupId
         }
 
-        auditLogger.log(authenticatedUser.username, "Created group: $groupId with groupName ${group.groupName}")
+        auditLogger.log(creatorUsername, "Created group: $groupId with groupName ${group.groupName}")
 
         return groupEntity.toGroup()
     }
@@ -119,6 +133,16 @@ class GroupManagementDatabaseService(
     }
 
     fun getGroupIdsOfUser(authenticatedUser: AuthenticatedUser) = getGroupsOfUser(authenticatedUser).map { it.groupId }
+
+    /** Membership-scoped pagination for the new API, without the legacy superuser bypass. */
+    fun getMembershipGroups(username: String, limit: Int, after: Int): List<Group> {
+        val ids = UserGroupsTable.selectAll().where {
+            (UserGroupsTable.userNameColumn eq username) and (UserGroupsTable.groupIdColumn greater after)
+        }.orderBy(UserGroupsTable.groupIdColumn to SortOrder.ASC).limit(limit)
+            .map { it[UserGroupsTable.groupIdColumn] }
+        // Bulk-load the bounded page; never fetch all groups and filter in application code.
+        return GroupEntity.forIds(ids).sortedBy { it.id.value }.map { it.toGroup() }
+    }
 
     fun addUserToGroup(authenticatedUser: AuthenticatedUser, groupId: Int, usernameToAdd: String) {
         val user = groupManagementPreconditionValidator.validateThatUserExists(usernameToAdd)
