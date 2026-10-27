@@ -158,7 +158,7 @@ class GroupController(private val identities: LoculusIdentityResolver, private v
                 content = [
                     Content(
                         mediaType = "application/json",
-                        schema = Schema(implementation = GroupResponse::class),
+                        schema = Schema(implementation = CreateGroupResponse::class),
                     ),
                 ],
                 headers = [
@@ -209,7 +209,7 @@ class GroupController(private val identities: LoculusIdentityResolver, private v
     fun create(
         @Parameter(hidden = true) @AuthenticationPrincipal jwt: Jwt,
         @Valid @RequestBody request: CreateGroupRequest,
-    ): ResponseEntity<GroupResponse> {
+    ): ResponseEntity<CreateGroupResponse> {
         val group = groups.create(identities.resolve(jwt), request.toServiceInput())
         return ResponseEntity.created(URI.create("/v1/groups/${group.groupId}"))
             .cacheControl(CacheControl.noStore())

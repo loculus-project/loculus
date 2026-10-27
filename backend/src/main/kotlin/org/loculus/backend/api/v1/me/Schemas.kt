@@ -1,3 +1,6 @@
+// Keep API schemas together by feature, even while this endpoint has only one response type.
+@file:Suppress("ktlint:standard:filename")
+
 package org.loculus.backend.api.v1.me
 
 import io.swagger.v3.oas.annotations.media.Schema

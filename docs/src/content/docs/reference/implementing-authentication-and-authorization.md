@@ -119,7 +119,7 @@ Use the existing examples as a starting point:
 | Responsibility                                      | Example under `backend/src/main/kotlin/org/loculus/backend/`                                               |
 | --------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
 | Receive requests and return HTTP responses          | `api/v1/me/MeController.kt`, `api/v1/groups/GroupController.kt`                                            |
-| Define public response/request types and validation | `api/v1/me/MeResponse.kt`, `api/v1/groups/Schemas.kt`                                                      |
+| Define public response/request types and validation | `api/v1/me/Schemas.kt`, `api/v1/groups/Schemas.kt`                                                         |
 | Translate public and internal types                 | Each endpoint package's `Mappings.kt`                                                                      |
 | Resolve authenticated identities                    | `auth/LoculusIdentityResolver.kt`                                                                          |
 | Apply resource policies and coordinate operations   | `service/groupmanagement/GroupAuthorizationService.kt`, `GroupService.kt`                                  |

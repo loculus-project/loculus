@@ -72,7 +72,7 @@ data class GroupAddressResponse(
     val country: String,
 )
 
-data class GroupResponse(
+data class CreateGroupResponse(
     @field:Schema(description = "Group ID.", minimum = "1")
     val groupId: Int,
     val groupName: String,
