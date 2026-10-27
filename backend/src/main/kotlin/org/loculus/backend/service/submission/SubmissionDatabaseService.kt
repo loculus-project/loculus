@@ -23,6 +23,7 @@ import org.jetbrains.exposed.v1.core.booleanParam
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.greaterEq
 import org.jetbrains.exposed.v1.core.inList
+import org.jetbrains.exposed.v1.core.isNotNull
 import org.jetbrains.exposed.v1.core.less
 import org.jetbrains.exposed.v1.core.max
 import org.jetbrains.exposed.v1.core.not
