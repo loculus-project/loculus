@@ -4,6 +4,7 @@ import org.loculus.backend.api.v0.v0AccessRules
 import org.loculus.backend.auth.KeycloakAuthenticationConverter
 import org.loculus.backend.auth.LoggingAccessDeniedHandler
 import org.loculus.backend.auth.LoggingAuthenticationEntryPoint
+import org.loculus.backend.auth.Roles.SUPER_USER
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.HttpMethod
@@ -15,6 +16,10 @@ import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.access.AccessDeniedHandlerImpl
 import org.springframework.security.web.access.DelegatingAccessDeniedHandler
 import org.springframework.security.web.csrf.CsrfException
+
+private val debugEndpoints = arrayOf(
+    "/debug/*",
+)
 
 @Configuration
 @EnableWebSecurity
@@ -43,6 +48,7 @@ class SecurityConfig {
             ).permitAll()
             auth.requestMatchers(HttpMethod.OPTIONS).permitAll()
             v0AccessRules(auth)
+            auth.requestMatchers(*debugEndpoints).hasAuthority(SUPER_USER)
             auth.anyRequest().authenticated()
         }
         .oauth2ResourceServer { oauth2 ->

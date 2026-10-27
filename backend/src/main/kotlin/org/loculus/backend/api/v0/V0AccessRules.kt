@@ -32,10 +32,6 @@ private val headEndpointsThatArePublic = arrayOf(
     "/files/get/**",
 )
 
-private val debugEndpoints = arrayOf(
-    "/debug/*",
-)
-
 private val adminEndpoints = arrayOf(
     "/admin/*",
 )
@@ -48,5 +44,4 @@ fun v0AccessRules(auth: AuthorizeHttpRequestsConfigurer<HttpSecurity>.Authorizat
         *endpointsForExternalMetadataUpdater,
     ).hasAuthority(EXTERNAL_METADATA_UPDATER)
     auth.requestMatchers(*adminEndpoints).hasAuthority(SUPER_USER)
-    auth.requestMatchers(*debugEndpoints).hasAuthority(SUPER_USER)
 }
