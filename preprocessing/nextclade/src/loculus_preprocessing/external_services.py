@@ -114,7 +114,10 @@ def lookup_failed(message: str, error_if_failed: bool) -> RawProcessingResult:
 
 
 def ambiguous_host_warning(host: str, selected: Taxon, taxa: list[Taxon]) -> str:
-    ids = ", ".join([str(t.tax_id) for t in taxa])
+    taxa = [selected] + [t for t in taxa if t.tax_id != selected.tax_id]
+    ids = ", ".join([str(t.tax_id) for t in taxa[:5]])
+    if len(taxa) > 5:  # noqa: PLR2004
+        ids += "..."
     return (
         f"'{host}' matches {len(taxa)} taxa ({ids}). Taxon will be set to the most general one: "
         f"{selected.tax_id}. To use a different taxon, enter its taxon ID in the `host` "

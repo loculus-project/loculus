@@ -234,7 +234,7 @@ def test_host_processing_ambiguous_sci_name(mock_session: MagicMock) -> None:
     assert metadata["hostNameCommon"] == "mosquitos"
     assert result[0].processed_entry.errors == []
     warnings = [warning.message for warning in result[0].processed_entry.warnings]
-    assert any("'Culex' matches 2 taxa (53527, 7174)" in warning for warning in warnings), warnings
+    assert any("'Culex' matches 2 taxa (7174, 53527)" in warning for warning in warnings), warnings
 
 
 def invalid_json_response():
