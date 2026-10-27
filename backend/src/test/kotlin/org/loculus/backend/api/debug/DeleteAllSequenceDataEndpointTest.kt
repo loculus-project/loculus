@@ -1,4 +1,4 @@
-package org.loculus.backend.api.v0.debug
+package org.loculus.backend.api.debug
 
 import kotlinx.datetime.DateTimeUnit.Companion.MONTH
 import kotlinx.datetime.plus

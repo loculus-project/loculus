@@ -1,4 +1,4 @@
-package org.loculus.backend.api.v0.info
+package org.loculus.backend.api.info
 
 import io.swagger.v3.oas.annotations.Hidden
 import jakarta.servlet.http.HttpServletRequest
