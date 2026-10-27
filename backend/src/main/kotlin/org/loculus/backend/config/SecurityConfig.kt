@@ -1,11 +1,9 @@
-package org.loculus.backend.api.v0
+package org.loculus.backend.config
 
+import org.loculus.backend.api.v0.v0AccessRules
 import org.loculus.backend.auth.KeycloakAuthenticationConverter
 import org.loculus.backend.auth.LoggingAccessDeniedHandler
 import org.loculus.backend.auth.LoggingAuthenticationEntryPoint
-import org.loculus.backend.auth.Roles.EXTERNAL_METADATA_UPDATER
-import org.loculus.backend.auth.Roles.PREPROCESSING_PIPELINE
-import org.loculus.backend.auth.Roles.SUPER_USER
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.HttpMethod
@@ -20,45 +18,12 @@ import org.springframework.security.web.csrf.CsrfException
 
 @Configuration
 @EnableWebSecurity
-class V0SecurityConfig {
+class SecurityConfig {
 
     // This is the preconfigured default that we want to wrap in a logger
     private val defaultAccessDeniedHandler = DelegatingAccessDeniedHandler(
         linkedMapOf(CsrfException::class.java to AccessDeniedHandlerImpl()),
         BearerTokenAccessDeniedHandler(),
-    )
-
-    private val endpointsForPreprocessingPipeline = arrayOf(
-        "/*/extract-unprocessed-data",
-        "/*/submit-processed-data",
-    )
-
-    private val endpointsForExternalMetadataUpdater = arrayOf(
-        "/*/submit-external-metadata",
-    )
-
-    private val getEndpointsThatArePublic = arrayOf(
-        "/data-use-terms/*",
-        "/get-seqset",
-        "/get-seqset-records",
-        "/get-seqset-citations",
-        "/get-sequence-citations",
-        "/get-author",
-        "/*/get-released-data",
-        "/files/get/**",
-        "/groups/*",
-    )
-
-    private val headEndpointsThatArePublic = arrayOf(
-        "/files/get/**",
-    )
-
-    private val debugEndpoints = arrayOf(
-        "/debug/*",
-    )
-
-    private val adminEndpoints = arrayOf(
-        "/admin/*",
     )
 
     @Bean
@@ -76,15 +41,8 @@ class V0SecurityConfig {
                 "/api-docs/**",
                 "/swagger-ui/**",
             ).permitAll()
-            auth.requestMatchers(HttpMethod.GET, *getEndpointsThatArePublic).permitAll()
-            auth.requestMatchers(HttpMethod.HEAD, *headEndpointsThatArePublic).permitAll()
             auth.requestMatchers(HttpMethod.OPTIONS).permitAll()
-            auth.requestMatchers(*endpointsForPreprocessingPipeline).hasAuthority(PREPROCESSING_PIPELINE)
-            auth.requestMatchers(
-                *endpointsForExternalMetadataUpdater,
-            ).hasAuthority(EXTERNAL_METADATA_UPDATER)
-            auth.requestMatchers(*adminEndpoints).hasAuthority(SUPER_USER)
-            auth.requestMatchers(*debugEndpoints).hasAuthority(SUPER_USER)
+            v0AccessRules(auth)
             auth.anyRequest().authenticated()
         }
         .oauth2ResourceServer { oauth2 ->

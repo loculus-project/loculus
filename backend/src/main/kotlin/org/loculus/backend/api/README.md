@@ -5,7 +5,7 @@ Each folder is one version of the API (`v0/`, `v1/`, ...), with one sub-folder p
 ```
 api/
 └── vX/
-    ├── VXSecurityConfig.kt   # access rules for this version's paths
+    ├── VXAccessRules.kt      # access rules for this version's paths
     └── groups/
         ├── GroupController.kt
         ├── Schemas.kt        # optional
