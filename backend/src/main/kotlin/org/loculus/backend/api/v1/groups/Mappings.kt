@@ -16,8 +16,8 @@ fun CreateGroupRequest.toServiceInput(): NewGroup = NewGroup(
 private fun Address.toResponse(): GroupAddressResponse =
     GroupAddressResponse(line1, line2, postalCode, city, state, country)
 
-fun Group.toResponse(): GroupResponse =
-    GroupResponse(groupId, groupName, institution, address.toResponse(), contactEmail)
+fun Group.toResponse(): CreateGroupResponse =
+    CreateGroupResponse(groupId, groupName, institution, address.toResponse(), contactEmail)
 
 fun GroupDetails.toResponse(): GroupDetailsResponse = GroupDetailsResponse(
     group.groupId,
