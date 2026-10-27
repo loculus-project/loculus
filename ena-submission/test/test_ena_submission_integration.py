@@ -745,7 +745,13 @@ ACCESSION_SCOPED_FIELDS = ("bioproject", "biosample", "insdc_accession_prefix")
 def accessions_of_upload(payloads: list[dict[str, Any]]) -> dict[str, Any]:
     """Check the scoping of one upload's payloads and return all of its ENA accessions."""
     fields = get_config(CONFIG_FILE).loculus_accession_fields
-    accession_scoped_fields = {getattr(fields, name) for name in ACCESSION_SCOPED_FIELDS}
+    accession_scoped_names = {getattr(fields, name) for name in ACCESSION_SCOPED_FIELDS}
+
+    def is_accession_scoped(field: str) -> bool:
+        # Multi-segment organisms suffix INSDC accessions with the segment, e.g. `_L`
+        return field in accession_scoped_names or field.startswith(
+            f"{fields.insdc_accession_prefix}_"
+        )
 
     # Payloads without external metadata are omitted, so either scope may be missing
     accession_scoped = [p for p in payloads if "version" not in p]
@@ -758,13 +764,13 @@ def accessions_of_upload(payloads: list[dict[str, Any]]) -> dict[str, Any]:
     for payload in accession_scoped:
         assert payload["accession"] == TEST_ACCESSION
         assert payload["externalMetadata"]
-        assert set(payload["externalMetadata"]) <= accession_scoped_fields
+        assert all(is_accession_scoped(field) for field in payload["externalMetadata"])
         accessions.update(payload["externalMetadata"])
     for payload in version_scoped:
         assert payload["accession"] == TEST_ACCESSION
         assert payload["version"] == TEST_VERSION
         assert payload["externalMetadata"]
-        assert not set(payload["externalMetadata"]) & accession_scoped_fields
+        assert not any(is_accession_scoped(field) for field in payload["externalMetadata"])
         accessions.update(payload["externalMetadata"])
 
     return accessions
