@@ -112,7 +112,7 @@ export class RevisionPage {
      * Click the Upload (submit) button
      */
     async clickSubmit() {
-        await this.page.getByRole('button', { name: 'Upload and proceed to Approval' }).click();
+        await this.page.getByRole('button', { name: 'Upload', exact: true }).click();
         await clickThroughConfirmationWizard(this.page);
     }
 

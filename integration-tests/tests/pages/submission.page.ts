@@ -54,7 +54,7 @@ class SubmissionPage {
 
     async clickSubmit() {
         await this.page
-            .getByRole('button', { name: 'Upload and proceed to Approval' })
+            .getByRole('button', { name: 'Upload', exact: true })
             .click({ timeout: 10_000 });
     }
 

@@ -1,4 +1,4 @@
-import { render, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { toast } from 'react-toastify';
 import { afterEach, describe, expect, test, vi } from 'vitest';
@@ -96,6 +96,11 @@ const testResponse: SubmissionIdMapping[] = [
     { accession: '1', version: 1, submissionId: 'header1' },
 ];
 
+/** The wizard's final button has the same name as the page's Upload button, so look it up inside the wizard. */
+async function clickUploadInWizard() {
+    await userEvent.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Upload' }));
+}
+
 describe('SubmitForm', () => {
     afterEach(() => {
         vi.clearAllMocks();
@@ -127,10 +132,10 @@ describe('SubmitForm', () => {
             );
             await userEvent.click(getByLabelText(/I confirm that I have the legal right to submit this data/i));
 
-            const submitButton = getByRole('button', { name: 'Upload and proceed to Approval' });
+            const submitButton = getByRole('button', { name: 'Upload' });
             await userEvent.click(submitButton);
             await userEvent.click(await findByRole('button', { name: 'Continue under Open terms' }));
-            await userEvent.click(await findByRole('button', { name: 'Submit' }));
+            await clickUploadInWizard();
 
             await waitFor(() => {
                 expect(toast.error).not.toHaveBeenCalled();
@@ -150,7 +155,7 @@ describe('SubmitForm', () => {
             );
             await userEvent.click(getByLabelText(/I confirm that I have the legal right to submit this data/i));
         }
-        await userEvent.click(getByRole('button', { name: 'Upload and proceed to Approval' }));
+        await userEvent.click(getByRole('button', { name: 'Upload' }));
 
         return renderResult;
     }
@@ -178,7 +183,7 @@ describe('SubmitForm', () => {
         expect(getByText('Step 3 of 3')).toBeVisible();
         expect(getByRole('heading', { name: 'What happens next' })).toBeVisible();
         expect(getByText('The sequences will not be released until you review and release them.')).toBeVisible();
-        await userEvent.click(getByRole('button', { name: 'Submit' }));
+        await clickUploadInWizard();
 
         await waitFor(() => {
             expect(toast.error).not.toHaveBeenCalled();
@@ -207,7 +212,7 @@ describe('SubmitForm', () => {
         );
         await userEvent.click(getByLabelText(/I confirm that I have the legal right to submit this data/i));
 
-        const submitButton = getByRole('button', { name: 'Upload and proceed to Approval' });
+        const submitButton = getByRole('button', { name: 'Upload' });
         await userEvent.click(submitButton);
 
         await waitFor(() => {
@@ -231,7 +236,7 @@ describe('SubmitForm', () => {
         );
         await userEvent.click(getByLabelText(/I confirm that I have the legal right to submit this data/i));
 
-        const submitButton = getByRole('button', { name: 'Upload and proceed to Approval' });
+        const submitButton = getByRole('button', { name: 'Upload' });
         await userEvent.click(submitButton);
 
         await waitFor(() => {
@@ -255,7 +260,7 @@ describe('SubmitForm', () => {
         );
         await userEvent.click(getByLabelText(/I confirm that I have the legal right to submit this data/i));
 
-        const submitButton = getByRole('button', { name: 'Upload and proceed to Approval' });
+        const submitButton = getByRole('button', { name: 'Upload' });
         await userEvent.click(submitButton);
 
         await waitFor(() => {
@@ -305,7 +310,7 @@ describe('SubmitForm', () => {
         await userEvent.upload(getByLabelText(/Sequence file/i), sequencesFile);
         await userEvent.click(getByLabelText(/I confirm that I have the legal right to submit this data/i));
 
-        const submitButton = getByRole('button', { name: 'Upload and proceed to Approval' });
+        const submitButton = getByRole('button', { name: 'Upload' });
         await userEvent.click(submitButton);
         await waitFor(() => {
             expect(toast.error).toHaveBeenCalledWith(
@@ -336,10 +341,10 @@ describe('SubmitForm', () => {
         );
         await userEvent.click(getByLabelText(/I confirm that I have the legal right to submit this data/i));
 
-        const submitButton = getByRole('button', { name: 'Upload and proceed to Approval' });
+        const submitButton = getByRole('button', { name: 'Upload' });
         await userEvent.click(submitButton);
         await userEvent.click(await findByRole('button', { name: 'Continue under Open terms' }));
-        await userEvent.click(await findByRole('button', { name: 'Submit' }));
+        await clickUploadInWizard();
 
         await waitFor(() => {
             expect(toast.error).toHaveBeenCalledWith(expect.stringContaining(receivedUnexpectedMessageFromBackend), {
@@ -363,10 +368,10 @@ describe('SubmitForm', () => {
         );
         await userEvent.click(getByLabelText(/I confirm that I have the legal right to submit this data/i));
 
-        const submitButton = getByRole('button', { name: 'Upload and proceed to Approval' });
+        const submitButton = getByRole('button', { name: 'Upload' });
         await userEvent.click(submitButton);
         await userEvent.click(await findByRole('button', { name: 'Continue under Open terms' }));
-        await userEvent.click(await findByRole('button', { name: 'Submit' }));
+        await clickUploadInWizard();
 
         await waitFor(() => {
             expect(toast.error).not.toHaveBeenCalled();
@@ -398,12 +403,12 @@ describe('SubmitForm', () => {
                 }
             }
 
-            const submitButton = getByRole('button', { name: 'Upload and proceed to Approval' });
+            const submitButton = getByRole('button', { name: 'Upload' });
             await userEvent.click(submitButton);
 
             expect(await findByRole('heading', { name: 'What happens next' })).toBeVisible();
             expect(queryByText(/Step \d of \d/)).toBeNull();
-            await userEvent.click(getByRole('button', { name: 'Submit' }));
+            await clickUploadInWizard();
 
             await waitFor(() => {
                 expect(toast.error).not.toHaveBeenCalled();

@@ -125,21 +125,21 @@ export const SubmissionConfirmationWizard: FC<SubmissionConfirmationWizardProps>
                 <>
                     <h3 className='font-bold text-lg pr-8'>What happens next</h3>
                     <p className='text-sm text-gray-800 mt-2'>
-                        When you click Submit your sequences will enter processing. On the next page you will be able to
+                        When you click Upload your sequences will enter processing. On the next page you will be able to
                         review and <i>release</i> the processed sequences.
                     </p>
                     <p className='text-sm text-gray-800 mt-2'>
-                        <i>The sequences will not be released until you review and release them.</i>
+                        <strong>The sequences will not be released until you review and release them.</strong>
                     </p>
                 </>
             );
-            confirmButtonText = 'Submit';
+            confirmButtonText = 'Upload';
             closeButtonText = 'Cancel';
             break;
     }
 
     return (
-        <ModalBox>
+        <ModalBox role='dialog' aria-modal='true' aria-label='Confirm submission'>
             <form method='dialog'>
                 <Button circle size='sm' variant='ghost' className='absolute right-2 top-2' onClick={onClose}>
                     ✕
