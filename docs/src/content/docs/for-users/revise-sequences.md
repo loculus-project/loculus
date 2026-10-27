@@ -37,6 +37,6 @@ Even if you are not revising the sequence, you must provide a FASTA file that ma
 
 To submit a revision, navigate to the `Submit` section of the Loculus website using the link in the top-right corner of the website. Select the correct organism if requested, or ensure you're submitting to the correct organism database via the drop-down on the top-left of the website.
 
-Just as with an original submission, drag and drop (or select) the files where you have made the appropriate revisions. Press 'Submit'.
+Just as with an original submission, drag and drop (or select) the files where you have made the appropriate revisions. Click 'Upload', confirm the steps in the dialog that opens (including how author names have been split into first and last names, if your metadata has authors), and click 'Upload' again in the dialog.
 
 You will be directed to the same processing page as you're taken to during initial submission, where you can view the sequences and their changes before releasing them. Once released, these changes will appear in the database after a few minutes, with the version numbers incremented.

@@ -15,7 +15,8 @@ The form submits a single individual sequence entry, to submit multiple sequence
 4. Click on 'Submit individual sequence entry using a form'.
 5. Enter the metadata information about your sequence, as well as the unaligned nucleotide sequence(s).
 6. If Terms of Use are enabled for your Loculus instance: Select the Terms of Use that you would like for your data.
-7. Select 'Submit sequences' at the bottom of the page.
+7. Click 'Upload' at the bottom of the page.
+8. Confirm the steps in the dialog that opens: your choice of Open data use terms (if selected), how the author names have been split into first and last names (if your metadata has authors), and what happens next. Then click 'Upload' in the dialog.
 
 ## Submit sequences via file upload
 
@@ -47,7 +48,8 @@ Uploading sequences via the website is an easy way to submit sequences without h
 3. Click the 'Submit' button.
 4. Drag-and-drop a `fasta` file with the sequences and a metadata file with the associated metadata into the box on the website, or click the 'Upload a file' link within the boxes to open a file-selection box.
 5. If Terms of Use are enabled for your Loculus instance: Select the Terms of Use that you would like for your data.
-6. Select 'Submit sequences' at the bottom of the page.
+6. Click 'Upload' at the bottom of the page.
+7. Confirm the steps in the dialog that opens: your choice of Open data use terms (if selected), how the author names have been split into first and last names (if your metadata has authors), and what happens next. Then click 'Upload' in the dialog.
 
 The data will now be processed, and you will have to approve your submission before it is finalized. You can see how to do this [here](../approve-submissions/).
 
