@@ -17,10 +17,12 @@ from ena_deposition.notifications import (
     upload_file_with_comment,
 )
 from ena_deposition.submission_db_helper import (
-    Accession,
-    AccessionVersion,
     db_init,
     highest_version_in_submission_table,
+)
+from ena_deposition.submission_types import (
+    Accession,
+    AccessionVersion,
 )
 from sqlalchemy import Engine
 

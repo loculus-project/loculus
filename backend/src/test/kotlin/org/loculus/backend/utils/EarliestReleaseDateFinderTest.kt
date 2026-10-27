@@ -8,9 +8,9 @@ import kotlinx.datetime.format
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.equalTo
 import org.junit.jupiter.api.Test
-import org.loculus.backend.api.DataUseTerms
-import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.service.submission.RawProcessedData
+import org.loculus.backend.types.DataUseTerms
+import org.loculus.backend.types.ProcessedData
 
 class EarliestReleaseDateFinderTest {
 

@@ -8,8 +8,8 @@ plugins {
     // Check here: https://kotlinlang.org/docs/gradle-configure-project.html#apply-the-plugin
     // To bump gradle version run: `./gradlew wrapper --gradle-version=VERSION && ./gradlew wrapper`
     // Then commit the changes
-    id 'org.jetbrains.kotlin.jvm' version '2.4.20'
-    id 'org.jetbrains.kotlin.plugin.spring' version '2.4.20'
+    id 'org.jetbrains.kotlin.jvm' version '2.4.21'
+    id 'org.jetbrains.kotlin.plugin.spring' version '2.4.21'
     id 'org.jlleitschuh.gradle.ktlint' version '14.2.0'
     id 'org.springdoc.openapi-gradle-plugin' version '1.9.0'
 }
@@ -62,7 +62,7 @@ dependencies {
     implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:3.1.1"
     implementation "org.springframework.boot:spring-boot-starter-flyway"
     implementation "org.flywaydb:flyway-database-postgresql" // Version managed by Spring Boot to ensure compatibility
-    implementation platform("org.jetbrains.exposed:exposed-bom:1.5.0")
+    implementation platform("org.jetbrains.exposed:exposed-bom:1.6.0")
     implementation "org.jetbrains.exposed:exposed-spring-boot4-starter"
     implementation "org.jetbrains.exposed:exposed-jdbc"
     implementation "org.jetbrains.exposed:exposed-json"
@@ -71,13 +71,13 @@ dependencies {
     implementation "org.hibernate.validator:hibernate-validator"
     implementation "org.keycloak:keycloak-admin-client:26.0.12"
     implementation("io.minio:minio:9.0.3")
-    implementation("software.amazon.awssdk:s3:2.55.6")
+    implementation("software.amazon.awssdk:s3:2.56.0")
 
     implementation "org.springframework.boot:spring-boot-starter-security-oauth2-resource-server"
     implementation "org.springframework.boot:spring-boot-starter-security"
 
     implementation 'org.apache.commons:commons-compress'
-    implementation 'com.github.luben:zstd-jni:1.5.7-20'
+    implementation 'com.github.luben:zstd-jni:1.5.7-24'
     implementation 'org.tukaani:xz:1.12'
 
     implementation("org.redundent:kotlin-xml-builder:1.9.3")

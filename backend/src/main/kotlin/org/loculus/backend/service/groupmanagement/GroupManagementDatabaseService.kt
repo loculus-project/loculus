@@ -8,16 +8,16 @@ import org.jetbrains.exposed.v1.exceptions.ExposedSQLException
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
-import org.loculus.backend.api.Address
-import org.loculus.backend.api.Group
-import org.loculus.backend.api.GroupDetails
-import org.loculus.backend.api.NewGroup
-import org.loculus.backend.api.User
 import org.loculus.backend.auth.AuthenticatedUser
-import org.loculus.backend.controller.ConflictException
-import org.loculus.backend.controller.NotFoundException
+import org.loculus.backend.errors.ConflictException
+import org.loculus.backend.errors.NotFoundException
 import org.loculus.backend.log.AuditLogger
 import org.loculus.backend.model.UNIQUE_CONSTRAINT_VIOLATION_SQL_STATE
+import org.loculus.backend.types.Address
+import org.loculus.backend.types.Group
+import org.loculus.backend.types.GroupDetails
+import org.loculus.backend.types.NewGroup
+import org.loculus.backend.types.User
 import org.loculus.backend.utils.DateProvider
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -121,20 +121,20 @@ class GroupManagementDatabaseService(
     fun getGroupIdsOfUser(authenticatedUser: AuthenticatedUser) = getGroupsOfUser(authenticatedUser).map { it.groupId }
 
     fun addUserToGroup(authenticatedUser: AuthenticatedUser, groupId: Int, usernameToAdd: String) {
-        groupManagementPreconditionValidator.validateThatUserExists(usernameToAdd)
+        val user = groupManagementPreconditionValidator.validateThatUserExists(usernameToAdd)
 
         groupManagementPreconditionValidator.validateUserIsAllowedToModifyGroup(groupId, authenticatedUser)
 
         try {
             UserGroupsTable.insert {
-                it[userNameColumn] = usernameToAdd
+                it[userNameColumn] = user.username
                 it[groupIdColumn] = groupId
             }
-            auditLogger.log(authenticatedUser.username, "Added $usernameToAdd to group $groupId")
+            auditLogger.log(authenticatedUser.username, "Added ${user.username} to group $groupId")
         } catch (e: ExposedSQLException) {
             if (e.sqlState == UNIQUE_CONSTRAINT_VIOLATION_SQL_STATE) {
                 throw ConflictException(
-                    "User $usernameToAdd is already member of the group $groupId.",
+                    "User ${user.username} is already member of the group $groupId.",
                 )
             }
             throw e
@@ -145,7 +145,7 @@ class GroupManagementDatabaseService(
         groupManagementPreconditionValidator.validateUserIsAllowedToModifyGroup(groupId, authenticatedUser)
 
         UserGroupsTable.deleteWhere {
-            (userNameColumn eq usernameToRemove) and
+            (userNameColumn.lowerCase() eq usernameToRemove.lowercase()) and
                 (groupIdColumn eq groupId)
         }
         auditLogger.log(authenticatedUser.username, "Removed $usernameToRemove from group $groupId")

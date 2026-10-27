@@ -2,18 +2,18 @@ package org.loculus.backend.service.submission
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.NullNode
-import org.loculus.backend.api.GeneticSequence
-import org.loculus.backend.api.Insertion
-import org.loculus.backend.api.MetadataMap
-import org.loculus.backend.api.Organism
-import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.config.BaseMetadata
 import org.loculus.backend.config.MetadataType
 import org.loculus.backend.config.ReferenceGenome
 import org.loculus.backend.config.ReferenceSequence
 import org.loculus.backend.config.Schema
-import org.loculus.backend.controller.ProcessingValidationException
+import org.loculus.backend.errors.ProcessingValidationException
+import org.loculus.backend.types.GeneticSequence
+import org.loculus.backend.types.Insertion
+import org.loculus.backend.types.MetadataMap
+import org.loculus.backend.types.Organism
+import org.loculus.backend.types.ProcessedData
 import org.springframework.stereotype.Component
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -98,9 +98,18 @@ private fun <T> validateNoUnknownInMetaData(data: Map<String, T>, known: List<St
     }
 }
 
-private fun validateKnownMetadataField(metadata: BaseMetadata, processedMetadataMap: MetadataMap): MetadataMap {
+/**
+ * Validates the metadata against the given fields and returns a map containing exactly those fields,
+ * with missing (non-required) fields set to null.
+ */
+private fun validateAndCompleteMetadata(metadataMap: MetadataMap, metadataFields: List<BaseMetadata>): MetadataMap {
+    validateNoUnknownInMetaData(metadataMap, metadataFields.map { it.name })
+    return metadataFields.associate { it.name to getValidatedFieldValue(it, metadataMap) }
+}
+
+private fun getValidatedFieldValue(metadata: BaseMetadata, metadataMap: MetadataMap): JsonNode {
     val fieldName = metadata.name
-    val fieldValue = processedMetadataMap[fieldName]
+    val fieldValue = metadataMap[fieldName]
 
     if (metadata.required) {
         if (fieldValue == null) {
@@ -112,12 +121,12 @@ private fun validateKnownMetadataField(metadata: BaseMetadata, processedMetadata
         }
     }
 
-    if (fieldValue != null) {
-        validateType(fieldValue, metadata)
-        return processedMetadataMap
+    if (fieldValue == null) {
+        return NullNode.instance
     }
 
-    return processedMetadataMap + (fieldName to NullNode.instance)
+    validateType(fieldValue, metadata)
+    return fieldValue
 }
 
 private fun validateType(fieldValue: JsonNode, metadata: BaseMetadata) {
@@ -177,13 +186,7 @@ class ExternalMetadataValidatorFactory(private val backendConfig: BackendConfig)
 class ExternalMetadataValidator(private val schema: Schema) {
     fun validate(externalMetadata: MetadataMap, externalMetadataUpdater: String): MetadataMap {
         val metadataFields = schema.externalMetadata.filter { it.externalMetadataUpdater == externalMetadataUpdater }
-        var processedMetadataMap = externalMetadata
-        validateNoUnknownInMetaData(processedMetadataMap, metadataFields.map { it.name })
-
-        for (metadata in metadataFields) {
-            processedMetadataMap = validateKnownMetadataField(metadata, processedMetadataMap)
-        }
-        return processedMetadataMap
+        return validateAndCompleteMetadata(externalMetadata, metadataFields)
     }
 }
 
@@ -207,16 +210,8 @@ class ProcessedSequenceEntryValidator(private val schema: Schema, private val re
         return processedDataWithAllMetadataFields
     }
 
-    private fun validateMetadata(processedData: ProcessedData<GeneticSequence>): ProcessedData<GeneticSequence> {
-        val metadataFields = schema.metadata
-        var processedMetadataMap = processedData.metadata
-        validateNoUnknownInMetaData(processedMetadataMap, metadataFields.map { it.name })
-
-        for (metadata in metadataFields) {
-            processedMetadataMap = validateKnownMetadataField(metadata, processedMetadataMap)
-        }
-        return processedData.copy(metadata = processedMetadataMap)
-    }
+    private fun validateMetadata(processedData: ProcessedData<GeneticSequence>): ProcessedData<GeneticSequence> =
+        processedData.copy(metadata = validateAndCompleteMetadata(processedData.metadata, schema.metadata))
 
     private fun validateNucleotideSequences(processedData: ProcessedData<GeneticSequence>) {
         for (segment in referenceGenome.nucleotideSequences) {

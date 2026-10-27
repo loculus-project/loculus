@@ -2,8 +2,8 @@ package org.loculus.backend.service.files
 
 import org.loculus.backend.config.S3BucketConfig
 import org.loculus.backend.config.S3Config
-import org.loculus.backend.controller.BadRequestException
-import org.loculus.backend.controller.UnprocessableEntityException
+import org.loculus.backend.errors.BadRequestException
+import org.loculus.backend.errors.UnprocessableEntityException
 import org.springframework.stereotype.Service
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider

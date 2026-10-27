@@ -1,7 +1,12 @@
+import io
 import logging
+import re
 import urllib.parse
+import xml.etree.ElementTree as ET
 from collections import OrderedDict
 from dataclasses import dataclass
+from enum import StrEnum
+from http import HTTPStatus
 
 import requests
 from pydantic import BaseModel, Field, ValidationError
@@ -17,6 +22,7 @@ from loculus_preprocessing.datatypes import (
     ProcessingAnnotation,
     RawProcessingResult,
     _internal_error_message,
+    processing_error,
     raw_internal_error,
 )
 
@@ -210,17 +216,6 @@ class TaxonomyService:
         return RawProcessingResult(datum=common_name)
 
 
-@dataclass(frozen=True)
-class ExternalServices:
-    """External services available to processing functions.
-
-    Kept separate from `ProcessingContext` since these don't vary per accession, unlike
-    `ProcessingContext`'s fields.
-    """
-
-    taxonomy_service: TaxonomyService
-
-
 FileName = str
 
 
@@ -316,3 +311,126 @@ class FileProcessingService:
         if not internal_error:
             return ProcessingAnnotation([source], [source], message)
         return ProcessingAnnotation([source], [source], _internal_error_message(message))
+
+
+# Successful ENA responses are small XML documents (a few KB). Cache hits refresh an entry's
+# position; a bioproject shared across a batch stays cached while unique biosamples and runs
+# cycle through.
+ena_cache = RequestCache(max_size=16, retries=1)
+
+
+class EnaAccessionType(StrEnum):
+    BIOPROJECT = "bioproject"
+    BIOSAMPLE = "biosample"
+    RAW_READS = "raw_reads"
+
+
+# (see https://ena-docs.readthedocs.io/en/latest/submit/general-guide/accessions.html)
+ACCESSION_PATTERNS: dict[EnaAccessionType, re.Pattern[str]] = {
+    EnaAccessionType.BIOPROJECT: re.compile(r"PRJ[EDN][A-Z][0-9]+"),
+    EnaAccessionType.BIOSAMPLE: re.compile(r"SAM[EDN][A-Z]?[0-9]+"),
+    EnaAccessionType.RAW_READS: re.compile(r"[EDS]RR[0-9]{6,}"),
+}
+# INSDC sometimes gives us SRA sample accessions instead of runs
+INSDC_INGEST_RAW_READS_PATTERN = re.compile(r"[EDS]R[RS][0-9]{6,}")
+
+
+def validate_accession_format(
+    accession: str, accession_type: EnaAccessionType, is_insdc_ingest_group: bool
+) -> tuple[list[str], RawProcessingResult | None]:
+    """Return the normalised accession(s) and None, or an empty list and a RawProcessingResult
+    with an error if any accession has an invalid format. Comma-separated lists are only allowed
+    for RAW_READS, and SRA sample accessions only for INSDC ingested RAW_READS."""
+    if accession_type == EnaAccessionType.RAW_READS:
+        accessions = list(
+            dict.fromkeys(a.strip().upper() for a in accession.split(",") if a.strip())
+        )
+    else:
+        accessions = [accession.strip().upper()]
+    if accession_type == EnaAccessionType.RAW_READS and is_insdc_ingest_group:
+        pattern = INSDC_INGEST_RAW_READS_PATTERN
+    else:
+        pattern = ACCESSION_PATTERNS[accession_type]
+    invalid = [a for a in accessions if not pattern.fullmatch(a)]
+    if invalid:
+        invalid_str = ", ".join(f"'{a}'" for a in invalid)
+        return [], processing_error(
+            f"{invalid_str} is/are malformatted, {accession_type.replace('_', ' ')} "
+            f"accessions are expected to match the pattern '{pattern.pattern}'."
+        )
+    return accessions, None
+
+
+class ENAVisibilityChecker:
+    """Used to check ENA visibility
+
+    Adapted from the ENAVisibilityChecker in
+    ena-submission/src/ena_deposition/check_external_visibility.py.
+    If anything changes in that class, check whether the update needs to
+    be applied here as well.
+    """
+
+    def __init__(
+        self,
+        timeout_seconds: int = 10,
+    ):
+        self.timeout_seconds = timeout_seconds
+
+    def check_visibility(
+        self, accession: str, accession_type: EnaAccessionType
+    ) -> RawProcessingResult:
+        """Check ENA visibility of a single accession whose format has already been validated."""
+        try:
+            response = ena_cache.get_or_fetch(
+                f"https://www.ebi.ac.uk/ena/browser/api/xml/{accession}",
+                timeout=self.timeout_seconds,
+            )
+        except requests.RequestException as e:
+            logger.warning(f"Failed to check ENA visibility of '{accession}': {e}")
+            response = None
+        if response is None or response.status_code >= HTTPStatus.INTERNAL_SERVER_ERROR:
+            return RawProcessingResult(
+                datum=accession,
+                warnings=[
+                    f"Unable to check visibility of '{accession}': could not reach ENA. Please "
+                    f"verify yourself that '{accession}' is public before proceeding or we will "
+                    "not be able to propagate your submission to the INSDC."
+                ],
+            )
+        if response.status_code != HTTPStatus.OK:
+            return RawProcessingResult(
+                datum=accession,
+                warnings=[
+                    f"Accession '{accession}' is not visible on ENA. Please make '{accession}' "
+                    "public before proceeding or we will not be able to propagate your "
+                    "submission to the INSDC."
+                ],
+            )
+        if accession_type == EnaAccessionType.BIOPROJECT and self._is_umbrella_project(
+            response.content
+        ):
+            return processing_error(
+                f"bioproject '{accession}' is an umbrella project. "
+                "Please provide the accession of a submission project instead."
+            )
+        return RawProcessingResult(datum=accession)
+
+    def _is_umbrella_project(self, xml_bytes) -> bool:
+        for _, elem in ET.iterparse(io.BytesIO(xml_bytes), events=("start",)):  # noqa: S314
+            if elem.tag == "UMBRELLA_PROJECT":
+                return True
+            if elem.tag == "SUBMISSION_PROJECT":
+                return False
+        return False
+
+
+@dataclass(frozen=True)
+class ExternalServices:
+    """External services available to processing functions.
+
+    Kept separate from `ProcessingContext` since these don't vary per accession, unlike
+    `ProcessingContext`'s fields.
+    """
+
+    taxonomy_service: TaxonomyService
+    ena_visibility_checker: ENAVisibilityChecker
