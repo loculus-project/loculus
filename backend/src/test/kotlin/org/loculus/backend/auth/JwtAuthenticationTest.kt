@@ -1,4 +1,4 @@
-package org.loculus.backend.config
+package org.loculus.backend.auth
 
 import com.nimbusds.jose.jwk.JWKSet
 import com.nimbusds.jose.jwk.RSAKey
@@ -10,8 +10,8 @@ import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
-import org.loculus.backend.controller.TEST_TOKEN_ISSUER
-import org.loculus.backend.controller.keyPair
+import org.loculus.backend.testutil.TEST_TOKEN_ISSUER
+import org.loculus.backend.testutil.keyPair
 import org.springframework.boot.autoconfigure.AutoConfigurations
 import org.springframework.boot.security.oauth2.server.resource.autoconfigure.OAuth2ResourceServerAutoConfiguration
 import org.springframework.boot.test.context.runner.ApplicationContextRunner
@@ -24,7 +24,7 @@ import java.security.interfaces.RSAPublicKey
 import java.time.Instant
 import java.util.Date
 
-class SecurityConfigTest {
+class JwtAuthenticationTest {
     private val propertyPrefix = "spring.security.oauth2.resourceserver.jwt"
 
     @Test
