@@ -2,7 +2,7 @@
 
 ## Folder structure
 
-Unversioned controllers such as `info` and `debug` live at the root of the folder. Otherwise, Each subfolder contains one version of the API. They should define a `VXAccessRules.kt` file, with endpoint access rules, and have their own sub-folders for each feature:
+Unversioned controllers such as `info` and `debug` live at the root of the folder, and have their access rules defined in `config/SecurityConfig.kt`. Otherwise, each subfolder contains one version of the API. They should define a `VXAccessRules.kt` file, with endpoint access rules, and have their own sub-folders for each feature:
 
 ```
 api/
