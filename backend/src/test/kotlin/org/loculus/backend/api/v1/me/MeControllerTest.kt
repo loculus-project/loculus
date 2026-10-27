@@ -6,6 +6,7 @@ import io.mockk.every
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.service.identity.LoculusUsersTable
@@ -55,7 +56,6 @@ class MeControllerTest(@Autowired private val mockMvc: MockMvc, @Autowired priva
     fun `v1 identity does not require a provider username but legacy authentication still does`() {
         val token = generateJwtFor("no-name", includeUsername = false)
         mockMvc.perform(get("/v1/me").withAuth(token)).andExpect(status().isOk)
-        mockMvc.perform(get("/v1/groups").withAuth(token)).andExpect(status().isForbidden)
         mockMvc.perform(get("/user/groups").withAuth(token)).andExpect(status().isUnauthorized)
         transaction { assertEquals(1L, LoculusUsersTable.selectAll().count()) }
     }
@@ -68,6 +68,23 @@ class MeControllerTest(@Autowired private val mockMvc: MockMvc, @Autowired priva
         mockMvc.perform(get("/v1/me").withAuth(generateJwtFor("new-user")))
             .andExpect(status().isServiceUnavailable)
         transaction { assertEquals(1L, LoculusUsersTable.selectAll().count()) }
+    }
+
+    @Test
+    fun `OpenAPI documents the identity response and authentication requirements`() {
+        val response = mockMvc.perform(get("/api-docs")).andExpect(status().isOk)
+            .andReturn().response.contentAsString
+        val spec = mapper.readTree(response)
+        val endpoint = spec["paths"]["/v1/me"]["get"]
+        assertTrue(endpoint["security"].any { it.has("bearerAuth") })
+        for (code in listOf("200", "401", "503")) {
+            assertTrue(endpoint["responses"].has(code), "Missing identity response $code")
+        }
+        assertTrue(endpoint["responses"]["200"]["headers"].has("Cache-Control"))
+        val properties = spec["components"]["schemas"]["MeResponse"]["properties"]
+        assertEquals(setOf("userId", "provisionedAt"), properties.fieldNames().asSequence().toSet())
+        assertEquals("uuid", properties["userId"]["format"].asText())
+        assertEquals("date-time", properties["provisionedAt"]["format"].asText())
     }
 
     @Test

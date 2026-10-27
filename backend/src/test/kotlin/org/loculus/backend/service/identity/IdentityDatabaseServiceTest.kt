@@ -1,6 +1,5 @@
 package org.loculus.backend.service.identity
 
-import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.exceptions.ExposedSQLException
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
@@ -36,8 +35,6 @@ class IdentityDatabaseServiceTest(
         assertEquals(3, setOf(first.userId, second.userId, third.userId).size)
         assertNotEquals(first.userId.toString(), identity.subject)
         assertNull(database.find(identity.copy(subject = "unknown")))
-        assertNull(database.findUsername(first.copy(externalIdentity = second.externalIdentity)))
-        assertNull(database.findUsername(first.copy(userId = UUID.randomUUID())))
     }
 
     @Test
@@ -46,8 +43,11 @@ class IdentityDatabaseServiceTest(
         val first = database.create(identity, "original")
         assertThrows<ExposedSQLException> { database.create(identity, "changed") }
         assertEquals(first, database.find(identity))
-        assertEquals("original", database.findUsername(first))
         transaction {
+            assertEquals(
+                "original",
+                ExternalIdentitiesTable.selectAll().single()[ExternalIdentitiesTable.preferredUsername],
+            )
             assertEquals(1L, LoculusUsersTable.selectAll().count())
             assertEquals(1L, ExternalIdentitiesTable.selectAll().count())
             val linked = ExternalIdentitiesTable.selectAll().single()[ExternalIdentitiesTable.linkedAt]
@@ -57,8 +57,10 @@ class IdentityDatabaseServiceTest(
 
     @Test
     fun `nullable username is supported without inventing a fallback`() {
-        val principal = database.create(ExternalIdentity(TEST_TOKEN_ISSUER, "no-name"), null)
-        assertNull(database.findUsername(principal))
+        database.create(ExternalIdentity(TEST_TOKEN_ISSUER, "no-name"), null)
+        transaction {
+            assertNull(ExternalIdentitiesTable.selectAll().single()[ExternalIdentitiesTable.preferredUsername])
+        }
     }
 
     @Test
