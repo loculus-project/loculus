@@ -1,10 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
-import axios from 'axios';
 import { type FC, useMemo } from 'react';
 
 import { versionStatuses } from '../../types/lapis';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import { type SeqSetRecord, SeqSetRecordType } from '../../types/seqSetCitation';
+import { createAuthorizedAxiosInstance } from '../../utils/createAuthorizedAxiosInstance';
 import { Spinner } from '../common/Spinner';
 
 type RecordMetadata = {
@@ -21,6 +21,7 @@ type FieldToDisplay = {
 type SeqSetRecordsTableWithMetadataProps = {
     seqSetRecords: SeqSetRecord[];
     clientConfig: ClientConfig;
+    accessToken: string | undefined;
     fieldsToDisplay?: FieldToDisplay[];
     sortByKey?: keyof SeqSetRecord;
     organismDisplayNames?: Record<string, string>;
@@ -30,9 +31,13 @@ async function queryLapisDetails(
     lapisUrl: string,
     filter: Record<string, unknown>,
     fields: string[],
+    accessToken: string | undefined,
 ): Promise<Record<string, unknown>[]> {
     try {
-        const response = await axios.post(`${lapisUrl}/sample/details`, {
+        // LAPIS requires a Keycloak-issued JWT when the deployment enables LAPIS authentication
+        // (`lapis.auth.enabled`); without a token the request is sent unauthenticated, which is
+        // correct when authentication is disabled.
+        const response = await createAuthorizedAxiosInstance(accessToken).post(`${lapisUrl}/sample/details`, {
             ...filter,
             fields,
             dataFormat: 'json',
@@ -48,6 +53,7 @@ const fetchRecordsMetadata = async (
     records: SeqSetRecord[],
     clientConfig: ClientConfig,
     fieldsToDisplay: FieldToDisplay[],
+    accessToken: string | undefined,
 ): Promise<Map<string, RecordMetadata>> => {
     const accessions = records.map((record) => record.accession);
 
@@ -78,10 +84,12 @@ const fetchRecordsMetadata = async (
         // Query versioned accessions by accessionVersion
         if (versionedAccessions.length > 0) {
             queries.push(
-                queryLapisDetails(lapisUrl, { accessionVersion: versionedAccessions }, [
-                    'accessionVersion',
-                    ...fields,
-                ]).then((data) => ({ data, keyField: 'accessionVersion' })),
+                queryLapisDetails(
+                    lapisUrl,
+                    { accessionVersion: versionedAccessions },
+                    ['accessionVersion', ...fields],
+                    accessToken,
+                ).then((data) => ({ data, keyField: 'accessionVersion' })),
             );
         }
 
@@ -92,6 +100,7 @@ const fetchRecordsMetadata = async (
                     lapisUrl,
                     { accession: bareAccessions, versionStatus: versionStatuses.latestVersion },
                     ['accession', ...fields],
+                    accessToken,
                 ).then((data) => ({ data, keyField: 'accession' })),
             );
         }
@@ -130,6 +139,7 @@ const SeqSetRecordsTableCell: FC<{ title: string; children: React.ReactNode }> =
 export const SeqSetRecordsTableWithMetadata: FC<SeqSetRecordsTableWithMetadataProps> = ({
     seqSetRecords,
     clientConfig,
+    accessToken,
     fieldsToDisplay = [
         { field: 'geoLocCountry', displayName: 'Country' },
         { field: 'sampleCollectionDate', displayName: 'Collection date' },
@@ -139,8 +149,8 @@ export const SeqSetRecordsTableWithMetadata: FC<SeqSetRecordsTableWithMetadataPr
     organismDisplayNames = {},
 }) => {
     const { data: metadataMap, isLoading } = useQuery({
-        queryKey: ['seqset-records-metadata', seqSetRecords, clientConfig, fieldsToDisplay],
-        queryFn: () => fetchRecordsMetadata(seqSetRecords, clientConfig, fieldsToDisplay),
+        queryKey: ['seqset-records-metadata', seqSetRecords, clientConfig, fieldsToDisplay, accessToken],
+        queryFn: () => fetchRecordsMetadata(seqSetRecords, clientConfig, fieldsToDisplay, accessToken),
         staleTime: 5 * 60 * 1000, // 5 minutes
     });
 

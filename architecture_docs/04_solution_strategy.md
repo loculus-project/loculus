@@ -17,6 +17,7 @@ This describes important decisions that were made to solve the problem:
   The same flag also gates the backend's public data endpoints (`get-released-data`, data-use terms, groups, files, seqset citations):
   when enabled, they likewise require a valid realm token with no role checks, and fall back to anonymous access when the flag is off.
   This does not restrict access to released data itself — it only ensures that the data is accessed through an authenticated principal:
-  the website proxies and authenticates browser traffic server-side (released data remains viewable without login), while external consumers must obtain a token.
+  the website requires a login for its data pages and sends the logged-in user's token with every LAPIS request (server-side and from the browser),
+  while external consumers must obtain a token.
 * The **website** provides a **user-friendly interface** to interact with the data.
   But we designed Loculus such that it can also be used through the API directly.

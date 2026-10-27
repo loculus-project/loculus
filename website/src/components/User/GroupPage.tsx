@@ -1,5 +1,4 @@
 import { useQuery } from '@tanstack/react-query';
-import axios from 'axios';
 import { type FC, type FormEvent, useMemo, useState, type ReactNode } from 'react';
 
 import { CumulativeSubmissionsChart, type TimeSeriesData } from './CumulativeSubmissionsChart.tsx';
@@ -12,6 +11,7 @@ import { GROUP_ID_FIELD, IS_REVOCATION_FIELD, VERSION_STATUS_FIELD } from '../..
 import type { Address, Group, GroupDetails } from '../../types/backend.ts';
 import { versionStatuses } from '../../types/lapis.ts';
 import { type ClientConfig } from '../../types/runtimeConfig.ts';
+import { createAuthorizedAxiosInstance } from '../../utils/createAuthorizedAxiosInstance.ts';
 import { displayConfirmationDialog } from '../ConfirmationDialog.js';
 import { ErrorFeedback } from '../ErrorFeedback.tsx';
 import { Button } from '../common/Button';
@@ -72,17 +72,17 @@ const InnerGroupPage: FC<GroupPageProps> = ({
     const userHasEditPrivileges = userGroups.some((group) => group.groupId === prefetchedGroupDetails.group.groupId);
 
     const { data: sequenceCounts, isLoading: sequenceCountsLoading } = useQuery({
-        queryKey: ['group-sequence-counts', groupId, clientConfig, organisms],
-        queryFn: () => fetchSequenceCounts(groupId, clientConfig, organisms),
+        queryKey: ['group-sequence-counts', groupId, clientConfig, organisms, accessToken],
+        queryFn: () => fetchSequenceCounts(groupId, clientConfig, organisms, accessToken),
     });
 
     const { data: timeSeriesData, isLoading: timeSeriesLoading } = useQuery({
-        queryKey: ['group-time-series', groupId, clientConfig, organisms, dateFieldForGroupGraph],
+        queryKey: ['group-time-series', groupId, clientConfig, organisms, dateFieldForGroupGraph, accessToken],
         queryFn: () => {
             if (dateFieldForGroupGraph === null) {
                 return Promise.resolve({});
             }
-            return fetchTimeSeriesData(groupId, clientConfig, organisms, dateFieldForGroupGraph);
+            return fetchTimeSeriesData(groupId, clientConfig, organisms, dateFieldForGroupGraph, accessToken);
         },
         enabled: dateFieldForGroupGraph !== null,
     });
@@ -311,7 +311,12 @@ const InnerGroupPage: FC<GroupPageProps> = ({
     );
 };
 
-async function fetchSequenceCounts(groupId: number, clientConfig: ClientConfig, organisms: Organism[]) {
+async function fetchSequenceCounts(
+    groupId: number,
+    clientConfig: ClientConfig,
+    organisms: Organism[],
+    accessToken: string | undefined,
+) {
     const counts: Record<string, number> = {};
     await Promise.all(
         organisms.map(async ({ key }) => {
@@ -321,7 +326,10 @@ async function fetchSequenceCounts(groupId: number, clientConfig: ClientConfig, 
                 return;
             }
             try {
-                const response = await axios.post(`${url}/sample/aggregated`, {
+                // LAPIS requires a Keycloak-issued JWT when the deployment enables LAPIS
+                // authentication (`lapis.auth.enabled`); without a token the request is sent
+                // unauthenticated, which is correct when authentication is disabled.
+                const response = await createAuthorizedAxiosInstance(accessToken).post(`${url}/sample/aggregated`, {
                     [GROUP_ID_FIELD]: groupId,
                     [VERSION_STATUS_FIELD]: versionStatuses.latestVersion,
                     [IS_REVOCATION_FIELD]: 'false',
@@ -343,6 +351,7 @@ async function fetchTimeSeriesData(
     clientConfig: ClientConfig,
     organisms: Organism[],
     metadataField: string,
+    accessToken: string | undefined,
 ) {
     const data: TimeSeriesData = {};
     await Promise.all(
@@ -353,7 +362,7 @@ async function fetchTimeSeriesData(
                 return;
             }
             try {
-                const response = await axios.post(`${url}/sample/aggregated`, {
+                const response = await createAuthorizedAxiosInstance(accessToken).post(`${url}/sample/aggregated`, {
                     [GROUP_ID_FIELD]: groupId,
                     [VERSION_STATUS_FIELD]: versionStatuses.latestVersion,
                     [IS_REVOCATION_FIELD]: 'false',
