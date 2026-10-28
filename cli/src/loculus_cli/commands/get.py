@@ -21,10 +21,11 @@ console = Console()
 def _get_lapis_client(instance_config: InstanceConfig, organism: str) -> LapisClient:
     """Build a LapisClient, attaching the logged-in user's token if available.
 
-    Instances can require a Keycloak-issued JWT on all LAPIS requests
-    (lapis.auth.enabled); the same token the CLI uses for backend requests is
-    accepted. When no user is logged in, requests are sent without an
-    Authorization header, which works on instances with auth disabled.
+    Instances with auth.requireAuthenticationForData require a Keycloak-issued
+    token on all LAPIS requests; the same token the CLI uses for backend requests
+    is accepted. When no user is logged in, requests are sent without an
+    Authorization header, which works on instances that don't require
+    authentication for data.
     """
     auth_client = AuthClient(instance_config)
     current_user = auth_client.get_current_user()

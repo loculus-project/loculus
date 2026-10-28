@@ -20,10 +20,10 @@ class LapisClient:
         username: str | None = None,
     ):
         self.lapis_url = lapis_url
-        # Deployments can require a Keycloak-issued JWT on all LAPIS requests
-        # (lapis.auth.enabled). The same token the CLI uses for backend requests is
-        # accepted by LAPIS; when no user is logged in, no Authorization header is
-        # sent, which keeps the CLI working against instances with auth disabled.
+        # Instances with auth.requireAuthenticationForData require a Keycloak-issued
+        # token on all LAPIS requests. The same token the CLI uses for backend requests
+        # is accepted by LAPIS; when no user is logged in, no Authorization header is
+        # sent, which works on instances that don't require authentication for data.
         self.auth_client = auth_client
         self.username = username
         self.client = httpx.Client(

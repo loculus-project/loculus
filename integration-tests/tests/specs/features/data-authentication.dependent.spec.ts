@@ -1,3 +1,6 @@
+import { readFile } from 'node:fs/promises';
+import { gunzipSync } from 'node:zlib';
+
 import { expect, request as playwrightRequest } from '@playwright/test';
 
 import { test } from '../../fixtures/console-warnings.fixture';
@@ -83,6 +86,36 @@ test.describe('Website with authentication required for data', () => {
         expect(new URL(request.url()).pathname).toBe('/ebola-sudan/lapis-download/sample/details');
         expect(await download.failure()).toBeNull();
     });
+
+    const compressedDownloads = [
+        { compression: 'Gzip', extension: 'gz', magicBytes: '1f8b' },
+        { compression: 'Zstandard', extension: 'zst', magicBytes: '28b52ffd' },
+    ];
+    for (const { compression, extension, magicBytes } of compressedDownloads) {
+        test(`${compression} downloads through the website keep their compressed bytes`, async ({
+            page,
+        }) => {
+            await loginTestUserWithCookies(page);
+            const searchPage = new SearchPage(page);
+            await searchPage.ebolaSudan();
+
+            await page.getByRole('button', { name: 'Download all entries' }).click();
+            await page.getByRole('radio', { name: compression }).check();
+            await page.getByLabel('I agree to the data use terms.').check();
+
+            const downloadPromise = page.waitForEvent('download');
+            await page.getByTestId('start-download').click();
+            const download = await downloadPromise;
+
+            expect(download.suggestedFilename()).toMatch(new RegExp(`\\.${extension}$`));
+            const bytes = await readFile(await download.path());
+            expect(bytes.subarray(0, magicBytes.length / 2).toString('hex')).toBe(magicBytes);
+            if (extension === 'gz') {
+                // The dialog's "Download all entries" exports the details endpoint as TSV
+                expect(gunzipSync(bytes).toString()).toMatch(/^accessionVersion\t/);
+            }
+        });
+    }
 
     test('API clients can fetch download links and file links with a Bearer token', async ({
         page,
