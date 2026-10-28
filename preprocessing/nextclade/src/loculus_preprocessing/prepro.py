@@ -20,6 +20,7 @@ from .config import (
     FILES_PREFIX,
     LENGTH,
     LENGTH_PREFIX,
+    NEXTCLADE_DATASET_PREFIX,
     NEXTCLADE_PREFIX,
     PROCESSED_PREFIX,
     AlignmentRequirement,
@@ -232,6 +233,27 @@ def add_assigned_reference(
     return InputData(datum=reference)
 
 
+def add_nextclade_dataset_and_tag(
+    spec: ProcessingSpec, unprocessed: UnprocessedAfterNextclade, config: Config
+) -> InputData:
+    if not unprocessed.nextcladeMetadata:
+        return InputData(datum=None)
+    segment = spec.args.get("segment", "main") if spec.args else "main"
+    if not isinstance(segment, str):
+        msg = f"add_nextclade_dataset_and_tag: segment must be str, got {type(segment)}"
+        raise TypeError(msg)
+    name = get_dataset_name(segment, unprocessed.nextcladeMetadata, config)
+    if not name:
+        return InputData(datum=None)
+    ds = config.get_dataset_by_name(name)
+    ds_name, ds_tag = ds.nextclade_dataset_name, ds.nextclade_dataset_tag
+    if ds_name is None:
+        return InputData(datum=None)
+    if ds_tag is None:
+        return InputData(datum=ds_name)
+    return InputData(datum=f"{ds_name} ({ds_tag})")
+
+
 def add_input_metadata(
     spec: ProcessingSpec,
     unprocessed: UnprocessedAfterNextclade,
@@ -241,6 +263,8 @@ def add_input_metadata(
     """Returns value of input_path in unprocessed metadata"""
     if input_path.startswith(ASSIGNED_REFERENCE_PREFIX):
         return add_assigned_reference(spec, unprocessed, config=config)
+    if input_path.startswith(NEXTCLADE_DATASET_PREFIX):
+        return add_nextclade_dataset_and_tag(spec, unprocessed, config=config)
     # If field starts with "nextclade.", take from nextclade metadata
     if input_path.startswith(NEXTCLADE_PREFIX):
         nextclade_path = input_path[len(NEXTCLADE_PREFIX) :]
