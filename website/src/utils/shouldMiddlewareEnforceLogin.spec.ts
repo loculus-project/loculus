@@ -9,7 +9,7 @@ const configuredOrganisms = [testOrganism, otherOrganism];
 
 describe('shouldMiddlewareEnforceLogin', () => {
     describe('without requireAuthenticationForData', () => {
-        const options = { requireAuthenticationForData: false };
+        const options = { requireAuthenticationForData: false, hasBearerToken: false };
 
         test('should return false if not specified', () => {
             expectNoLogin('/someRoute', options);
@@ -35,7 +35,7 @@ describe('shouldMiddlewareEnforceLogin', () => {
     });
 
     describe('with requireAuthenticationForData', () => {
-        const options = { requireAuthenticationForData: true };
+        const options = { requireAuthenticationForData: true, hasBearerToken: false };
 
         test('should return true on routes which always force login', () => {
             expectForceLogin('/user', options);
@@ -66,13 +66,37 @@ describe('shouldMiddlewareEnforceLogin', () => {
             expectNoLogin('/seq/LOC_000001Y.1/annotations/LOC_000001Y.1.embl', options);
             expectNoLogin('/seq/LOC_000001Y.1/rawReads/reads.fastq.gz', options);
         });
+
+        test('should return true for per-sequence downloads without a Bearer token', () => {
+            expectForceLogin('/seq/LOC_000001Y.1.fa', options);
+            expectForceLogin('/seq/LOC_000001Y.1.tsv', options);
+            expectForceLogin('/seq/LOC_000001Y.1/details.json', options);
+        });
+
+        test('should return false for per-sequence downloads with a Bearer token', () => {
+            const withBearerToken = { requireAuthenticationForData: true, hasBearerToken: true };
+            expectNoLogin('/seq/LOC_000001Y.1.fa', withBearerToken);
+            expectNoLogin('/seq/LOC_000001Y.1.tsv', withBearerToken);
+            expectNoLogin('/seq/LOC_000001Y.1/details.json', withBearerToken);
+        });
+
+        test('should still return true for the sequence HTML page with a Bearer token', () => {
+            expectForceLogin('/seq/LOC_000001Y.1', { requireAuthenticationForData: true, hasBearerToken: true });
+            expectForceLogin('/seq/LOC_000001Y.1/versions', {
+                requireAuthenticationForData: true,
+                hasBearerToken: true,
+            });
+        });
     });
 
-    function expectForceLogin(path: string, options: { requireAuthenticationForData: boolean }) {
+    function expectForceLogin(
+        path: string,
+        options: { requireAuthenticationForData: boolean; hasBearerToken: boolean },
+    ) {
         expect(shouldMiddlewareEnforceLogin(path, configuredOrganisms, options), path).toBe(true);
     }
 
-    function expectNoLogin(path: string, options: { requireAuthenticationForData: boolean }) {
+    function expectNoLogin(path: string, options: { requireAuthenticationForData: boolean; hasBearerToken: boolean }) {
         expect(shouldMiddlewareEnforceLogin(path, configuredOrganisms, options), path).toBe(false);
     }
 });

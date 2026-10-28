@@ -2,8 +2,9 @@ import type { APIRoute } from 'astro';
 import { err, ok, type Result } from 'neverthrow';
 
 import { parseAccessionVersionFromString } from './extractAccessionVersion';
-import { getAccessToken } from './getAccessToken';
+import { getForwardedAccessToken } from './getAccessToken';
 import { getConfiguredOrganisms } from '../config';
+import { LapisProblemError } from './LapisProblemError';
 import { LapisClient } from '../services/lapisClient';
 import { type ProblemDetail } from '../types/backend';
 
@@ -45,7 +46,7 @@ export function createDownloadAPIRoute(
 ): APIRoute {
     return async ({ params, redirect, request, locals }) => {
         const accessionVersion = params.accessionVersion ?? '';
-        const accessToken = getAccessToken(locals.session);
+        const accessToken = getForwardedAccessToken(request, locals.session);
 
         const isDownload = new URL(request.url).searchParams.has('download');
 
@@ -58,7 +59,7 @@ export function createDownloadAPIRoute(
         );
         if (!result.isOk()) {
             return new Response(undefined, {
-                status: 404,
+                status: result.error,
             });
         }
 
@@ -137,13 +138,17 @@ const getSequenceDataWithOrganism = async (
     }));
 };
 
+/**
+ * Returns the data, or the HTTP status to answer with: 401 if every organism rejected the token, 404 otherwise, so that
+ * API clients can tell a bad token from an unknown sequence.
+ */
 const getSequenceData = async (
     accessionVersion: string,
     fileSuffix: string,
     undefinedVersionRedirectUrl: RedirectRoute,
     getter: DataDownloader,
     accessToken: string | undefined,
-): Promise<Result<Data | Redirect, string>> => {
+): Promise<Result<Data | Redirect, number>> => {
     // We don't know which organism the accessionVersion belongs to,
     // so we just try all of them until we get a success.
     const organisms = getConfiguredOrganisms();
@@ -167,7 +172,7 @@ const getSequenceData = async (
                     }
                 }
             } else {
-                return Promise.reject(new Error(result.error.detail));
+                return Promise.reject(new LapisProblemError(result.error));
             }
         }),
     );
@@ -175,7 +180,11 @@ const getSequenceData = async (
     try {
         const firstSuccess = await Promise.any(promises);
         return firstSuccess;
-    } catch (_) {
-        return err('Could not find accessionVersion in any organism.');
+    } catch (errors) {
+        const reasons: unknown[] = errors instanceof AggregateError ? errors.errors : [];
+        const allUnauthorized =
+            reasons.length > 0 &&
+            reasons.every((reason) => reason instanceof LapisProblemError && reason.status === 401);
+        return err(allUnauthorized ? 401 : 404);
     }
 };

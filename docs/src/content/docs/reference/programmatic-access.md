@@ -65,7 +65,7 @@ The same applies to the backend's data endpoints:
 curl -H "Authorization: Bearer $access_token" "$BACKEND_URL/<organism>/get-released-data"
 ```
 
-File links in released data (`<URL of the website>/seq/<accessionVersion>/<fileCategory>/<fileName>`) and download links copied from the website's download dialog also accept the token in the `Authorization` header.
+File links in released data (`<URL of the website>/seq/<accessionVersion>/<fileCategory>/<fileName>`), the per-sequence downloads (`<URL of the website>/seq/<accessionVersion>.fa`, `/seq/<accessionVersion>.tsv` and `/seq/<accessionVersion>/details.json`), and download links copied from the website's download dialog also accept the token in the `Authorization` header.
 
 ## Using LAPIS from R
 

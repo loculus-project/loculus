@@ -153,4 +153,44 @@ test.describe('Website with authentication required for data', () => {
             await apiClient.dispose();
         }
     });
+
+    test('API clients can fetch per-sequence downloads with a Bearer token and no cookies', async ({
+        page,
+        baseURL,
+    }) => {
+        await loginTestUserWithCookies(page);
+        const searchPage = new SearchPage(page);
+        await searchPage.ebolaSudan();
+        const [{ accessionVersion }] = await searchPage.waitForSequencesInSearch(1);
+
+        const tokens = await getTestUserTokens(page.request);
+        const apiClient = await playwrightRequest.newContext({ baseURL });
+        const urls = [
+            `/seq/${accessionVersion}.fa`,
+            `/seq/${accessionVersion}.tsv`,
+            `/seq/${accessionVersion}/details.json`,
+        ];
+        try {
+            for (const url of urls) {
+                const withToken = await apiClient.get(url, {
+                    headers: { Authorization: `Bearer ${tokens!.accessToken}` },
+                });
+                expect(withToken.status(), url).toBe(200);
+
+                const withInvalidToken = await apiClient.get(url, {
+                    headers: { Authorization: 'Bearer invalid-token' },
+                });
+                expect(withInvalidToken.status(), url).toBe(401);
+
+                const withoutToken = await apiClient.get(url, { maxRedirects: 0 });
+                expect(withoutToken.status(), url).toBe(302);
+            }
+            const fasta = await apiClient.get(`/seq/${accessionVersion}.fa`, {
+                headers: { Authorization: `Bearer ${tokens!.accessToken}` },
+            });
+            expect(await fasta.text()).toMatch(/^>/);
+        } finally {
+            await apiClient.dispose();
+        }
+    });
 });

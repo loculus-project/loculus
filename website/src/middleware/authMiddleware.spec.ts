@@ -115,6 +115,7 @@ describe('OIDC authentication middleware', () => {
         mocks.shouldMiddlewareEnforceLogin.mockReturnValue(true);
         const context = {
             url: new URL('https://loculus.test/user'),
+            request: new Request('https://loculus.test/user'),
             cookies,
             locals: {},
         } as unknown as APIContext;
@@ -136,6 +137,7 @@ describe('OIDC authentication middleware', () => {
             );
             const context = {
                 url: requestedUrl,
+                request: new Request(requestedUrl),
                 cookies,
                 locals: {},
             } as unknown as APIContext;
@@ -254,6 +256,7 @@ describe('OIDC authentication middleware', () => {
         userinfo.mockResolvedValue({ sub: 'user-id', preferred_username: 'testuser' });
         const context = {
             url: new URL('https://loculus.test/seq/LOC_0001.1'),
+            request: new Request('https://loculus.test/seq/LOC_0001.1'),
             cookies,
             locals: {},
         } as unknown as APIContext;
@@ -268,6 +271,7 @@ describe('OIDC authentication middleware', () => {
     test('leaves caching headers of anonymous responses untouched', async () => {
         const context = {
             url: new URL('https://loculus.test/seq/LOC_0001.1'),
+            request: new Request('https://loculus.test/seq/LOC_0001.1'),
             cookies,
             locals: {},
         } as unknown as APIContext;
@@ -276,5 +280,26 @@ describe('OIDC authentication middleware', () => {
         const response = (await authMiddleware(context, next)) as Response;
 
         expect(response.headers.get('Cache-Control')).toBeNull();
+    });
+
+    test('tells the login check whether the request carries a Bearer token', async () => {
+        const context = {
+            url: new URL('https://loculus.test/seq/LOC_0001.1.fa'),
+            request: new Request('https://loculus.test/seq/LOC_0001.1.fa', {
+                // eslint-disable-next-line @typescript-eslint/naming-convention
+                headers: { Authorization: 'Bearer api-client-token' },
+            }),
+            cookies,
+            locals: {},
+        } as unknown as APIContext;
+        const next = vi.fn().mockResolvedValue(new Response('fasta'));
+
+        await authMiddleware(context, next);
+
+        expect(mocks.shouldMiddlewareEnforceLogin).toHaveBeenCalledWith(
+            '/seq/LOC_0001.1.fa',
+            [],
+            expect.objectContaining({ hasBearerToken: true }),
+        );
     });
 });

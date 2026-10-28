@@ -10,6 +10,7 @@ import { getInstanceLogger } from '../logger.ts';
 import { routes } from '../routes/routes.ts';
 import { KeycloakClientManager } from '../utils/KeycloakClientManager.ts';
 import { authTransactionId, consumeAuthRequest } from '../utils/authRequestCookies.ts';
+import { getBearerToken } from '../utils/getAccessToken.ts';
 import { getLoginUrl } from '../utils/getLoginUrl.ts';
 import { shouldMiddlewareEnforceLogin } from '../utils/shouldMiddlewareEnforceLogin.ts';
 
@@ -70,6 +71,7 @@ async function getValidTokenAndUserInfoFromParams(context: APIContext, client: B
 export const authMiddleware = defineMiddleware(async (context, next) => {
     let token: TokenCookie | undefined;
     let userInfo;
+    const hasBearerToken = getBearerToken(context.request) !== undefined;
 
     if (getWebsiteConfig().readOnlyMode) {
         // Read-only mode only blocks the pages that always need a login. The Helm chart rejects combining it with
@@ -77,7 +79,7 @@ export const authMiddleware = defineMiddleware(async (context, next) => {
         const enforceLogin = shouldMiddlewareEnforceLogin(
             context.url.pathname,
             getConfiguredOrganisms().map((it) => it.key),
-            { requireAuthenticationForData: false },
+            { requireAuthenticationForData: false, hasBearerToken },
         );
         if (enforceLogin) {
             return context.redirect('/503?service=readonly');
@@ -109,7 +111,10 @@ export const authMiddleware = defineMiddleware(async (context, next) => {
     const enforceLogin = shouldMiddlewareEnforceLogin(
         context.url.pathname,
         getConfiguredOrganisms().map((it) => it.key),
-        { requireAuthenticationForData: getRuntimeConfig().public.requireAuthenticationForData === true },
+        {
+            requireAuthenticationForData: getRuntimeConfig().public.requireAuthenticationForData === true,
+            hasBearerToken,
+        },
     );
 
     if (enforceLogin && (userInfo === undefined || userInfo.isErr())) {

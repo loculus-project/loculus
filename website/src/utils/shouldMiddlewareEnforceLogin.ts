@@ -10,6 +10,10 @@ const loginRoutesCache: Record<string, LoginRoutes> = {};
 // via JavaScript, where a redirect to the login page does not help. The route answers with the backend's 401 instead.
 const fileLinkRoute = /^\/seq\/[^/]+\/[^/]+\/[^/]+$/;
 
+// Per-sequence downloads. Browsers are redirected to the login page, but a request with a Bearer token is let through,
+// and the route forwards the token to LAPIS and the backend.
+const tokenForwardingRoutes = [fileLinkRoute, /^\/seq\/[^/]+\.(fa|tsv)$/, /^\/seq\/[^/]+\/details\.json$/];
+
 function getLoginRoutes(configuredOrganisms: string[]) {
     const cacheKey = configuredOrganisms.join('');
     if (!(cacheKey in loginRoutesCache)) {
@@ -38,11 +42,20 @@ function getLoginRoutes(configuredOrganisms: string[]) {
 export function shouldMiddlewareEnforceLogin(
     pathname: string,
     configuredOrganisms: string[],
-    { requireAuthenticationForData }: { requireAuthenticationForData: boolean },
+    {
+        requireAuthenticationForData,
+        hasBearerToken,
+    }: { requireAuthenticationForData: boolean; hasBearerToken: boolean },
 ) {
     const { always, data } = getLoginRoutes(configuredOrganisms);
     if (always.some((route) => route.test(pathname))) {
         return true;
     }
-    return requireAuthenticationForData && !fileLinkRoute.test(pathname) && data.some((route) => route.test(pathname));
+    if (!requireAuthenticationForData || !data.some((route) => route.test(pathname))) {
+        return false;
+    }
+    if (fileLinkRoute.test(pathname)) {
+        return false;
+    }
+    return !(hasBearerToken && tokenForwardingRoutes.some((route) => route.test(pathname)));
 }

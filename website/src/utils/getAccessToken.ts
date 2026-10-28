@@ -3,10 +3,17 @@ export function getAccessToken(session: Session | undefined): string | undefined
 }
 
 /**
- * For routes that proxy requests to other services: prefers a Bearer token sent by the caller (e.g. API clients
- * that cannot use the session cookie) over the token of the session.
+ * The token of an `Authorization: Bearer` header, e.g. sent by API clients that cannot use the session cookie.
+ * The token is not validated here; LAPIS and the backend do that.
+ */
+export function getBearerToken(request: Request): string | undefined {
+    return /^Bearer\s+(\S+)$/i.exec(request.headers.get('Authorization') ?? '')?.[1];
+}
+
+/**
+ * For routes that proxy requests to other services: prefers a Bearer token sent by the caller over the token of the
+ * session.
  */
 export function getForwardedAccessToken(request: Request, session: Session | undefined): string | undefined {
-    const bearerToken = /^Bearer\s+(\S+)$/i.exec(request.headers.get('Authorization') ?? '')?.[1];
-    return bearerToken ?? getAccessToken(session);
+    return getBearerToken(request) ?? getAccessToken(session);
 }

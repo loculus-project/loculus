@@ -7,15 +7,15 @@ import { getInstanceLogger } from '../../../logger.ts';
 import { SeqSetCitationClient } from '../../../services/seqSetCitationClient.ts';
 import type { DetailsJson } from '../../../types/detailsJson';
 import { parseAccessionVersionFromString } from '../../../utils/extractAccessionVersion.ts';
-import { getAccessToken } from '../../../utils/getAccessToken.ts';
+import { getForwardedAccessToken } from '../../../utils/getAccessToken.ts';
 
 const logger = getInstanceLogger('details.json');
 
-export const GET: APIRoute = async ({ params, locals }) => {
+export const GET: APIRoute = async ({ params, request, locals }) => {
     const { accessionVersion } = params as { accessionVersion: string };
     const { accession } = parseAccessionVersionFromString(accessionVersion);
 
-    const accessToken = getAccessToken(locals.session);
+    const accessToken = getForwardedAccessToken(request, locals.session);
 
     const sequenceCitationsPromise = seqSetsAreEnabled()
         ? SeqSetCitationClient.create().getSequenceCitations(accessToken, accession)
@@ -28,7 +28,7 @@ export const GET: APIRoute = async ({ params, locals }) => {
             `Could not find sequence details for accessionVersion ${accessionVersion}: ${sequenceDetailsTableData.error.message}`,
         );
         return new Response(`Error detected`, {
-            status: 404,
+            status: sequenceDetailsTableData.error.isUnauthorized ? 401 : 404,
         });
     }
 
