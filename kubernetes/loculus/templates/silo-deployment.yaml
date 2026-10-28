@@ -36,13 +36,13 @@ spec:
       containers:
         - name: silo
           image: "{{ $.Values.images.loculusSilo.repository }}:{{ $.Values.images.loculusSilo.tag | default $dockerTag }}"
-          command: ["/usr/local/bin/silo"]
+          command: ["/usr/local/bin/rhydb"]
           imagePullPolicy: {{ $.Values.imagePullPolicy }}
           {{- include "loculus.resources" (list "silo" $.Values $key) | nindent 10 }}
           env:
             - name: SPDLOG_LEVEL
               value: "debug"
-            - name: SILO_DATA_DIRECTORY
+            - name: RHYDB_DATA_DIRECTORY
               value: "/data/"
           ports:
             - containerPort: 8081
@@ -106,10 +106,6 @@ spec:
               value: {{ $.Values.siloImport.hardRefreshIntervalSeconds | quote }}
             - name: SILO_IMPORT_POLL_INTERVAL_SECONDS
               value: {{ $.Values.siloImport.pollIntervalSeconds | quote }}
-            - name: PATH_TO_SILO_BINARY
-              value: "/usr/local/bin/silo"
-            - name: PREPROCESSING_CONFIG
-              value: "/app/preprocessing_config.yaml"
           volumeMounts:
             - name: lapis-silo-database-config-processed
               mountPath: /preprocessing/input/reference_genomes.json
@@ -117,9 +113,6 @@ spec:
             - name: lapis-silo-database-config-processed
               mountPath: /preprocessing/input/database_config.yaml
               subPath: database_config.yaml
-            - name: lapis-silo-database-config-processed
-              mountPath: /app/preprocessing_config.yaml
-              subPath: preprocessing_config.yaml
             - name: lapis-silo-shared-data
               mountPath: /preprocessing/output
             - name: lapis-silo-input-data-cache

@@ -36,16 +36,12 @@ def make_config(
         poll_interval=1,
         silo_run_timeout=5,
         root_dir=tmp_path,
-        silo_binary=tmp_path / "silo",
-        preprocessing_config=tmp_path / "config.yaml",
         hierarchical_filters=hierarchical_filters,
     )
 
 
 def make_paths(tmp_path: Path) -> ImporterPaths:
-    silo_binary = tmp_path / "silo"
-    preprocessing_config = tmp_path / "config.yaml"
-    return ImporterPaths.from_root(tmp_path, silo_binary, preprocessing_config)
+    return ImporterPaths.from_root(tmp_path)
 
 
 def test_runner_successful_cycle(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

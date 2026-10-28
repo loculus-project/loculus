@@ -7,4 +7,8 @@ SPECIAL_ETAG_NONE = "0"
 
 # File names for downloaded data
 DATA_FILENAME = "untransformed_data.ndjson.zst"
-TRANSFORMED_DATA_FILENAME = "data.ndjson.zst"  # name is set by SILO
+TRANSFORMED_DATA_FILENAME = "data.ndjson.zst"
+
+# Configuration files mounted into the input directory
+DATABASE_CONFIG_FILENAME = "database_config.yaml"
+REFERENCE_GENOMES_FILENAME = "reference_genomes.json"

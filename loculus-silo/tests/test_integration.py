@@ -36,15 +36,11 @@ def make_config(
         poll_interval=1,
         silo_run_timeout=silo_run_timeout,
         root_dir=tmp_path,
-        silo_binary=tmp_path / "silo",
-        preprocessing_config=tmp_path / "config.yaml",
     )
 
 
 def make_paths(tmp_path: Path) -> ImporterPaths:
-    silo_binary = tmp_path / "silo"
-    preprocessing_config = tmp_path / "config.yaml"
-    return ImporterPaths.from_root(tmp_path, silo_binary, preprocessing_config)
+    return ImporterPaths.from_root(tmp_path)
 
 
 def test_full_import_cycle_with_real_zstd_data(
