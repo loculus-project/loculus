@@ -26,7 +26,8 @@ export const SequenceEntryHistoryMenu: React.FC<Props> = ({
         <>
             <DropdownMenu
                 className='hidden sm:inline-block mr-2'
-                panelClassName='top-full -right-32 text-sm w-80'
+                align='center'
+                panelClassName='text-sm w-80'
                 trigger={
                     <label
                         tabIndex={0}
