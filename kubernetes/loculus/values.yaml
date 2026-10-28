@@ -1624,6 +1624,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         type: str
         header: "Alignment and QC metrics"
         noInput: true
+        perSegment: true
         displayName: "Nextclade dataset"
         definition: "Nextclade dataset used to process the sequence."
         orderOnDetailsPage: 2710
