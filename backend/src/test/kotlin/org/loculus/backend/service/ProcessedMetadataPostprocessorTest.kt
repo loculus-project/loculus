@@ -8,10 +8,10 @@ import org.hamcrest.Matchers.not
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.loculus.backend.SpringBootTestWithoutDatabase
-import org.loculus.backend.api.Organism
-import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.service.submission.ProcessedMetadataPostprocessor
+import org.loculus.backend.types.Organism
+import org.loculus.backend.types.ProcessedData
 import org.springframework.beans.factory.annotation.Autowired
 
 @SpringBootTestWithoutDatabase

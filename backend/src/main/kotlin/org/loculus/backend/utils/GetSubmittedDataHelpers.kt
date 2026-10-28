@@ -1,7 +1,5 @@
 package org.loculus.backend.utils
 
-import org.loculus.backend.api.FileIdAndName
-import org.loculus.backend.api.SubmittedDataDownloadEntry
 import org.loculus.backend.config.FileCategory
 import org.loculus.backend.model.ACCESSION_HEADER
 import org.loculus.backend.model.FASTA_IDS_HEADER
@@ -11,6 +9,8 @@ import org.loculus.backend.model.FILES_SEPARATOR
 import org.loculus.backend.model.FILE_NAME_ID_SEPARATOR
 import org.loculus.backend.model.FastaId
 import org.loculus.backend.model.METADATA_ID_HEADER
+import org.loculus.backend.types.FileIdAndName
+import org.loculus.backend.types.SubmittedDataDownloadEntry
 import kotlin.collections.component1
 import kotlin.collections.component2
 import kotlin.collections.iterator
