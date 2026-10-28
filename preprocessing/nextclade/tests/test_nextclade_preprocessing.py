@@ -1339,67 +1339,86 @@ def test_preprocessing_without_metadata() -> None:
 
 def test_format_frameshift():
     # Test case 1: Empty input
-    assert not format_frameshift("[]")
+    assert not format_frameshift([])
 
     # Test case 2: Single frameshift
-    input_single = '[{"cdsName": "GPC", "nucRel": {"begin": 5, "end": 20}, "nucAbs": [{"begin": 97, "end": 112}], "codon": {"begin": 2, "end": 7}, "gapsLeading": {"begin": 1, "end": 2}, "gapsTrailing": {"begin": 7, "end": 8}}]'  # noqa: E501
-    expected_single = "GPC:3-7(nt:98-112)"
-    assert format_frameshift(input_single) == expected_single
+    gpc_frameshift = {
+        "cdsName": "GPC",
+        "nucRel": {"begin": 5, "end": 20},
+        "nucAbs": [{"begin": 97, "end": 112}],
+        "codon": {"begin": 2, "end": 7},
+        "gapsLeading": {"begin": 1, "end": 2},
+        "gapsTrailing": {"begin": 7, "end": 8},
+    }
+    assert format_frameshift([gpc_frameshift]) == "GPC:3-7(nt:98-112)"
 
     # Test case 3: Multiple frameshifts
-    input_multiple = '[{"cdsName": "GPC", "nucRel": {"begin": 5, "end": 20}, "nucAbs": [{"begin": 97, "end": 112}], "codon": {"begin": 2, "end": 7}, "gapsLeading": {"begin": 1, "end": 2}, "gapsTrailing": {"begin": 7, "end": 8}}, {"cdsName": "NP", "nucRel": {"begin": 10, "end": 15}, "nucAbs": [{"begin": 200, "end": 205}], "codon": {"begin": 3, "end": 5}, "gapsLeading": {"begin": 2, "end": 3}, "gapsTrailing": {"begin": 5, "end": 6}}]'  # noqa: E501
-    expected_multiple = "GPC:3-7(nt:98-112),NP:4-5(nt:201-205)"
-    assert format_frameshift(input_multiple) == expected_multiple
+    np_frameshift = {
+        "cdsName": "NP",
+        "nucRel": {"begin": 10, "end": 15},
+        "nucAbs": [{"begin": 200, "end": 205}],
+        "codon": {"begin": 3, "end": 5},
+        "gapsLeading": {"begin": 2, "end": 3},
+        "gapsTrailing": {"begin": 5, "end": 6},
+    }
+    assert (
+        format_frameshift([gpc_frameshift, np_frameshift])
+        == "GPC:3-7(nt:98-112),NP:4-5(nt:201-205)"
+    )
 
     # Test case 4: Single nucleotide frameshift
-    input_single_nuc = '[{"cdsName": "L", "nucRel": {"begin": 30, "end": 31}, "nucAbs": [{"begin": 500, "end": 501}], "codon": {"begin": 10, "end": 11}, "gapsLeading": {"begin": 9, "end": 10}, "gapsTrailing": {"begin": 11, "end": 12}}]'  # noqa: E501
-    expected_single_nuc = "L:11(nt:501)"
-    assert format_frameshift(input_single_nuc) == expected_single_nuc
+    single_nuc_frameshift = {
+        "cdsName": "L",
+        "nucRel": {"begin": 30, "end": 31},
+        "nucAbs": [{"begin": 500, "end": 501}],
+        "codon": {"begin": 10, "end": 11},
+        "gapsLeading": {"begin": 9, "end": 10},
+        "gapsTrailing": {"begin": 11, "end": 12},
+    }
+    assert format_frameshift([single_nuc_frameshift]) == "L:11(nt:501)"
 
 
 def test_format_stop_codon():
     # Test case 1: Empty input
-    assert not format_stop_codon("[]")
+    assert not format_stop_codon([])
 
     # Test case 2: Single stop codon
-    input_single = '[{"cdsName": "GPC", "codon": 123}]'
-    expected_single = "GPC:124"
-    assert format_stop_codon(input_single) == expected_single
+    assert format_stop_codon([{"cdsName": "GPC", "codon": 123}]) == "GPC:124"
 
     # Test case 3: Multiple stop codons
-    input_multiple = '[{"cdsName": "GPC", "codon": 123}, {"cdsName": "NP", "codon": 456}]'
-    expected_multiple = "GPC:124,NP:457"
-    assert format_stop_codon(input_multiple) == expected_multiple
+    input_multiple = [{"cdsName": "GPC", "codon": 123}, {"cdsName": "NP", "codon": 456}]
+    assert format_stop_codon(input_multiple) == "GPC:124,NP:457"
 
     # Test case 4: Stop codon at position 0
-    input_zero = '[{"cdsName": "L", "codon": 0}]'
-    expected_zero = "L:1"
-    assert format_stop_codon(input_zero) == expected_zero
+    assert format_stop_codon([{"cdsName": "L", "codon": 0}]) == "L:1"
 
 
 def test_process_phenotype_values():
-    assert process_phenotype_values("[]", {"name": "NAI"}).datum is None
+    assert process_phenotype_values([], {"name": "NAI"}).datum is None
     assert (
         process_phenotype_values(
-            '[{"name": "NAI","cds": "NA","value": 0.0}, {"name": "Other","cds": "NA","value": 1.0}]',
+            [
+                {"name": "NAI", "cds": "NA", "value": 0.0},
+                {"name": "Other", "cds": "NA", "value": 1.0},
+            ],
             {"name": "NAI"},
         ).datum
         == "0.0"
     )
     assert (
         process_phenotype_values(
-            '[{"name": "NAI","cds": "NA","value": None}, {"name": "Other","cds": "NA","value": 1.0}]',
+            [
+                {"name": "NAI", "cds": "NA", "value": None},
+                {"name": "Other", "cds": "NA", "value": 1.0},
+            ],
             {"name": "NAI"},
         ).datum
         is None
     )
-    assert process_phenotype_values('[{"name": "NAI","cds": "NA","value": 0.0}]', {}).datum is None
-    invalid = process_phenotype_values("Malformed JSON", {"name": "NAI"})
+    assert process_phenotype_values([{"name": "NAI", "cds": "NA", "value": 0.0}], {}).datum is None
+    invalid = process_phenotype_values(["not a phenotype entry"], {"name": "NAI"})  # type: ignore[list-item]
     assert invalid.datum is None
-    assert (
-        "Internal Error. Phenotype value processing failed: invalid syntax"
-        in invalid.errors[0].message
-    )
+    assert "Internal Error. Phenotype value processing failed" in invalid.errors[0].message
 
 
 def test_reformat_authors_from_loculus_to_embl_style():
@@ -1517,16 +1536,16 @@ def test_get_seq_features_marks_a_gene_partial_when_its_cds_is_truncated(
 
 
 def test_process_clade_founder_values():
-    json_string = Path(MUTATIONS_FROM_FOUNDER_CLADE).read_text(encoding="utf-8")
+    mutations = json.loads(Path(MUTATIONS_FROM_FOUNDER_CLADE).read_text(encoding="utf-8"))
     assert (
-        process_mutations_from_clade_founder(json_string, {}).datum
+        process_mutations_from_clade_founder(mutations, {}).datum
         == "HA1:N63K HA1:F79V HA1:S144N HA1:N158D HA1:I160K HA1:T328A"
     )
 
 
 def test_process_labeled_mutations():
-    json_string = Path(LABELED_PRIVATE_MUTATIONS).read_text(encoding="utf-8")
-    assert process_labeled_mutations(json_string, {}).datum == "NA:H275Y"
+    mutations = json.loads(Path(LABELED_PRIVATE_MUTATIONS).read_text(encoding="utf-8"))
+    assert process_labeled_mutations(mutations, {}).datum == "NA:H275Y"
 
 
 def test_get_seq_features_marks_the_truncated_end_by_its_coordinate_not_its_strand():

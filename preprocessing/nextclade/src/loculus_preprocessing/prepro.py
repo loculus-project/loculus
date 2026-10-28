@@ -196,23 +196,18 @@ def add_nextclade_metadata(
 
     match nextclade_path:
         case "frameShifts":
-            result = None if raw is None else str(raw)
-            return process_frameshifts(result)
+            return process_frameshifts(raw)
         case "qc.stopCodons.stopCodons":
-            result = None if raw is None else str(raw)
-            return process_stop_codons(result)
+            return process_stop_codons(raw)
         case "phenotypeValues":
-            result = None if raw is None else str(raw)
-            return process_phenotype_values(result, spec.args)
-        case "cladeFounderInfo.aaMutations.*.privateSubstitutions":
-            result = None if raw is None else str(raw)
-            return process_mutations_from_clade_founder(result, spec.args)
-        case "cladeNodeAttrFounderInfo.outbreak.aaMutations.*.privateSubstitutions":
-            result = None if raw is None else str(raw)
-            return process_mutations_from_clade_founder(result, spec.args)
+            return process_phenotype_values(raw, spec.args)
+        case (
+            "cladeFounderInfo.aaMutations.*.privateSubstitutions"
+            | "cladeNodeAttrFounderInfo.outbreak.aaMutations.*.privateSubstitutions"
+        ):
+            return process_mutations_from_clade_founder(raw, spec.args)
         case "privateAaMutations.*.labeledSubstitutions.substitution":
-            result = None if raw is None else str(raw)
-            return process_labeled_mutations(result, spec.args)
+            return process_labeled_mutations(raw, spec.args)
         case _:
             return InputData(datum=str(raw))
 
