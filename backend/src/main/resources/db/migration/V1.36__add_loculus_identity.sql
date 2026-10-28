@@ -15,4 +15,4 @@ create table external_identities (
 );
 create index external_identities_user_id_idx on external_identities(user_id);
 comment on column external_identities.preferred_username is
-    'Initial provider username snapshot; temporarily used for legacy group memberships. Not synchronized.';
+    'Provider username recorded when the identity is linked. Not synchronized or used as an identity key.';
