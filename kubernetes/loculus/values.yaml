@@ -1621,7 +1621,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         orderOnDetailsPage: 1120
         ingest: ncbiSraAccessions
       - name: nextcladeDatasetAndTag
-        type: str
+        type: string
         header: "Alignment and QC metrics"
         noInput: true
         perSegment: true
