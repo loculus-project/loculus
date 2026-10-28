@@ -11,6 +11,7 @@ vi.mock('axios', () => ({ default: { request: vi.fn() } }));
 
 vi.mock('../../../../config', () => ({
     getRuntimeConfig: () => ({ serverSide: { lapisUrls: { ebola: 'http://lapis-ebola:8080' } } }),
+    getConfiguredOrganisms: () => [{ key: 'ebola' }],
     getLapisUrl: (serverSide: { lapisUrls: Record<string, string> }, organism: string) =>
         serverSide.lapisUrls[organism],
 }));
@@ -38,18 +39,25 @@ beforeEach(() => {
 function callRoute(
     endpoint: string,
     {
+        organism = 'ebola',
         session = loggedIn,
         init = {},
         query = '',
         requestHeaders,
-    }: { session?: Session; init?: RequestInit; query?: string; requestHeaders?: Record<string, string> } = {},
+    }: {
+        organism?: string;
+        session?: Session;
+        init?: RequestInit;
+        query?: string;
+        requestHeaders?: Record<string, string>;
+    } = {},
 ): Promise<Response> {
-    const request = new Request(`http://website/ebola/lapis-download/sample/${endpoint}${query}`, init);
+    const request = new Request(`http://website/${organism}/lapis-download/sample/${endpoint}${query}`, init);
     if (requestHeaders !== undefined) {
         // The test environment (happy-dom) drops forbidden headers such as Accept-Encoding from Request, unlike browsers
         Object.defineProperty(request, 'headers', { value: new Headers(requestHeaders) });
     }
-    const context = { params: { organism: 'ebola', endpoint }, request, locals: { session } } as unknown as APIContext;
+    const context = { params: { organism, endpoint }, request, locals: { session } } as unknown as APIContext;
     return (init.method === 'POST' ? POST(context) : GET(context)) as Promise<Response>;
 }
 
@@ -172,6 +180,13 @@ describe('LAPIS download proxy route', () => {
         const { value } = await response.body!.getReader().read();
 
         expect(new TextDecoder().decode(value)).toBe('first chunk');
+    });
+
+    test('answers 404 for an organism that is not configured, without contacting LAPIS', async () => {
+        const response = await callRoute('details', { organism: 'unknownOrganism' });
+
+        expect(response.status).toBe(404);
+        expect(requestMock).not.toHaveBeenCalled();
     });
 
     test.each(['aggregated', 'nucleotideMutations', 'details/extra', '../admin', 'alignedAminoAcidSequences'])(

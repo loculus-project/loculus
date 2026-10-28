@@ -3,7 +3,7 @@ import { Readable } from 'node:stream';
 import type { APIRoute } from 'astro';
 import axios from 'axios';
 
-import { getLapisUrl, getRuntimeConfig } from '../../../../config';
+import { getConfiguredOrganisms, getLapisUrl, getRuntimeConfig } from '../../../../config';
 import { createAuthorizationHeader } from '../../../../utils/createAuthorizationHeader';
 import { getForwardedAccessToken } from '../../../../utils/getAccessToken';
 
@@ -23,6 +23,10 @@ const forwardedResponseHeaders = ['Content-Type', 'Content-Disposition', 'Conten
 async function proxyToLapis({ params, request, locals }: Parameters<APIRoute>[0]): Promise<Response> {
     const { organism, endpoint } = params;
     if (organism === undefined || endpoint === undefined || !downloadEndpoints.test(endpoint)) {
+        return new Response(undefined, { status: 404 });
+    }
+    // getLapisUrl throws for an organism without a LAPIS URL, so check the organism first
+    if (!getConfiguredOrganisms().some(({ key }) => key === organism)) {
         return new Response(undefined, { status: 404 });
     }
 
