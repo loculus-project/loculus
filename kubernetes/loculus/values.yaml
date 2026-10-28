@@ -1620,6 +1620,15 @@ defaultOrganismConfig: &defaultOrganismConfig
         header: "INSDC"
         orderOnDetailsPage: 1120
         ingest: ncbiSraAccessions
+      - name: nextcladeDatasetAndTag
+        type: str
+        header: "Alignment and QC metrics"
+        noInput: true
+        displayName: "Nextclade dataset"
+        definition: "Nextclade dataset used to process the sequence."
+        orderOnDetailsPage: 2710
+        preprocessing:
+          inputs: {input: NEXTCLADE_DATASET}
       - name: totalSnps
         type: int
         isSequenceFilter: true
