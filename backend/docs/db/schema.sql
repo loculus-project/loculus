@@ -324,7 +324,7 @@ ALTER TABLE public.external_identities OWNER TO postgres;
 -- Name: COLUMN external_identities.preferred_username; Type: COMMENT; Schema: public; Owner: postgres
 --
 
-COMMENT ON COLUMN public.external_identities.preferred_username IS 'Initial provider username snapshot; temporarily used for legacy group memberships. Not synchronized.';
+COMMENT ON COLUMN public.external_identities.preferred_username IS 'Provider username recorded when the identity is linked. Not synchronized or used as an identity key.';
 
 
 --
