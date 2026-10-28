@@ -31,7 +31,7 @@ const MODE_CONFIGS: Record<HierarchicalFieldMode, ModeConfig> = {
 
 interface HierarchicalFieldProps {
     lapisUrl: string;
-    accessToken?: string;
+    accessToken: string | undefined;
     lapisSearchParameters: LapisSearchParameters;
     field: MetadataFilter;
     fieldValue: string;

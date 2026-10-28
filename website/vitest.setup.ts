@@ -10,17 +10,6 @@ import { afterAll, afterEach, beforeAll, beforeEach, vi } from 'vitest';
 
 mockAnimationsApi();
 
-// KeycloakClientManager performs real OpenID issuer discovery against Keycloak when first
-// used; in tests it must never touch the network. Specs that need to control the client
-// (e.g. lapisClient.spec.ts) mock this module themselves, which takes precedence over this
-// default.
-vi.mock('./src/utils/KeycloakClientManager.ts', () => ({
-    // eslint-disable-next-line @typescript-eslint/naming-convention -- must match the real export
-    KeycloakClientManager: {
-        getClient: vi.fn(),
-    },
-}));
-
 import {
     type GetSequencesResponse,
     type Group,

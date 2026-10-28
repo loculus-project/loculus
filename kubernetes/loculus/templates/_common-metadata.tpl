@@ -620,12 +620,20 @@ fields:
 {{- end}}
 
 {{- define "loculus.publicRuntimeConfig" }}
-{{- $lapisUrlTemplate := include "loculus.lapisUrlTemplate" . }}
+{{- $publicRuntimeConfig := $.Values.public }}
+{{- $lapisUrlTemplate := "" }}
+{{- if $publicRuntimeConfig.lapisUrlTemplate }}
+  {{- $lapisUrlTemplate = $publicRuntimeConfig.lapisUrlTemplate }}
+{{- else if eq $.Values.environment "server" }}
+  {{- $lapisUrlTemplate = printf "https://lapis%s%s/%s" $.Values.subdomainSeparator $.Values.host "%organism%" }}
+{{- else }}
+  {{- $lapisUrlTemplate = printf "http://%s:8080/%%organism%%" $.Values.localHost }}
+{{- end }}
 {{- $externalLapisUrlConfig := dict "lapisUrlTemplate" $lapisUrlTemplate "config" $.Values }}
             "backendUrl": "{{ include "loculus.backendUrl" . }}",
             "lapisUrls": {{- include "loculus.generateExternalLapisUrls" $externalLapisUrlConfig | fromYaml | toJson }},
             "keycloakUrl":  "{{ include "loculus.keycloakUrl" . }}",
-            "lapisAuthEnabled": {{- if ($.Values.lapis.auth).enabled }}true{{- else }}false{{- end }}
+            "requireAuthenticationForData": {{ $.Values.auth.requireAuthenticationForData }}
 {{- end }}
 
 

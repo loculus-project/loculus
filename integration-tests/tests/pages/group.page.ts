@@ -58,19 +58,9 @@ export class GroupPage {
 
         await this.page.getByRole('button', { name: 'Create group' }).click();
 
-        // The group page is served by the website behind the auth middleware (it is a gated
-        // data route when LAPIS authentication is enabled); the first load of a test run can
-        // exceed Playwright's default 5s timeout while Keycloak keys are still cold.
-        await this.page.waitForURL(/\/group\/\d+/);
-        await this.page.waitForLoadState('load');
-
         // Dynamic assertions using the provided groupData
-        await expect(this.page.getByRole('cell', { name: groupData.institution })).toBeVisible({
-            timeout: 20_000,
-        });
-        await expect(this.page.getByRole('cell', { name: groupData.email })).toBeVisible({
-            timeout: 20_000,
-        });
+        await expect(this.page.getByRole('cell', { name: groupData.institution })).toBeVisible();
+        await expect(this.page.getByRole('cell', { name: groupData.email })).toBeVisible();
 
         // Combine address lines if addressLine2 exists
         const fullAddress = groupData.addressLine2
@@ -78,9 +68,7 @@ export class GroupPage {
             : groupData.addressLine1;
         await expect(this.page.getByRole('cell', { name: fullAddress })).toBeVisible();
 
-        await expect(this.page.getByRole('heading', { name: groupData.name })).toBeVisible({
-            timeout: 20_000,
-        });
+        await expect(this.page.getByRole('heading', { name: groupData.name })).toBeVisible();
 
         // Extract and return the group ID from the URL
         const url = this.page.url();

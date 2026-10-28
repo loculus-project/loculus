@@ -1638,6 +1638,12 @@
           "default": true,
           "description": "If true, allows users to register new accounts in Keycloak."
         },
+        "requireAuthenticationForData": {
+          "groups": ["auth"],
+          "type": "boolean",
+          "default": false,
+          "description": "If true, released data is only available to authenticated principals: LAPIS and the backend's otherwise public data endpoints (get-released-data, data-use-terms, groups, files/get, seqset and citation endpoints) require a Bearer token issued by this instance's Keycloak realm. Signature, expiry and issuer are checked; no roles are required. Cannot be combined with `fileSharing.outputFileUrlType: s3`, whose public S3 links would bypass authentication, or with `readOnlyMode`, which disables login."
+        },
         "identityProviders": {
           "type": "object",
           "additionalProperties": false,
@@ -2101,29 +2107,6 @@
           "description": "Number of threads for HTTP connections in SILO API",
           "default": 16,
           "minimum": 1
-        }
-      },
-      "additionalProperties": false
-    },
-    "lapis": {
-      "groups": ["services"],
-      "type": "object",
-      "description": "Configuration for the LAPIS component",
-      "properties": {
-        "auth": {
-          "groups": ["services"],
-          "type": "object",
-          "description": "Configuration for LAPIS authentication",
-          "properties": {
-            "enabled": {
-              "groups": ["services"],
-              "type": "boolean",
-              "description": "Require Keycloak-issued JWTs on all LAPIS endpoints (opt-in per deployment). When true, LAPIS validates Bearer tokens via the Keycloak JWKS endpoint; requests without a valid token are rejected with 401. Health probes and API docs endpoints remain public. The same flag also enables JWT authentication on the Loculus backend's public data endpoints (get-released-data, data-use-terms, groups, files/get, and the seqset citation endpoints): with the flag on, these require any valid Keycloak realm token (no role or audience checks), and stay anonymous when the flag is off.",
-              "default": false
-            }
-          },
-          "additionalProperties": false,
-          "required": ["enabled"]
         }
       },
       "additionalProperties": false

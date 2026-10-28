@@ -15,7 +15,7 @@ type ReferenceSelectorProps = {
     fieldValues: FieldValues;
     setSomeFieldValues: SetSomeFieldValues;
     lapisUrl: string;
-    accessToken?: string;
+    accessToken: string | undefined;
     lapisSearchParameters: LapisSearchParameters;
     segmentName: string;
 };

@@ -36,8 +36,9 @@ spec:
             - containerPort: 8080
           args:
             - "--silo.url=http://loculus-silo-service-{{ $key }}:8081"
-            {{- if $.Values.lapis.auth.enabled }}
+            {{- if $.Values.auth.requireAuthenticationForData }}
             - "--spring.security.oauth2.resourceserver.jwt.jwk-set-uri=http://loculus-keycloak-service:8083/realms/loculus/protocol/openid-connect/certs"
+            - {{ printf "--spring.security.oauth2.resourceserver.jwt.issuer-uri=%s/realms/loculus" (include "loculus.keycloakUrl" $ | trimSuffix "/") | quote }}
             {{- end }}
           env:
             - name: JVM_OPTS
@@ -57,11 +58,8 @@ spec:
             failureThreshold: 36 # 3 minutes to start
           readinessProbe:
             httpGet:
-              {{- if $.Values.lapis.auth.enabled }}
-              {{- /* /sample/info is not in LAPIS's PUBLIC_ROUTES (see its OAuthConfig), so with auth
-              enabled it would answer 401 and keep the pod NotReady forever. /actuator/health is
-              public and covers the LAPIS process itself; unlike /sample/info it does not also
-              gate readiness on SILO being reachable. */}}
+              {{- if $.Values.auth.requireAuthenticationForData }}
+              {{- /* /sample/info requires a token when authentication is on; /actuator/health stays public */}}
               path: /actuator/health
               {{- else }}
               path: /sample/info

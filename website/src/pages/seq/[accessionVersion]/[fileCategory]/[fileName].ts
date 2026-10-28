@@ -3,7 +3,7 @@ import type { APIRoute } from 'astro';
 import { getRuntimeConfig } from '../../../../config';
 import { createAuthorizationHeader } from '../../../../utils/createAuthorizationHeader';
 import { parseAccessionVersionFromString } from '../../../../utils/extractAccessionVersion';
-import { getAccessToken } from '../../../../utils/getAccessToken';
+import { getForwardedAccessToken } from '../../../../utils/getAccessToken';
 
 // Allow requests from any origin
 // Same as the backend allows on /files/get, which this route proxies
@@ -12,14 +12,17 @@ function withCorsHeader(headers: Headers): Headers {
     return headers;
 }
 
-async function proxyToBackend({ params, locals }: Parameters<APIRoute>[0], method: 'GET' | 'HEAD'): Promise<Response> {
+async function proxyToBackend(
+    { params, locals, request }: Parameters<APIRoute>[0],
+    method: 'GET' | 'HEAD',
+): Promise<Response> {
     const runtimeConfig = getRuntimeConfig();
     const { accessionVersion, fileCategory, fileName } = params;
     const { accession, version } = parseAccessionVersionFromString(accessionVersion!);
 
     const backendUrl = `${runtimeConfig.serverSide.backendUrl}/files/get/${accession}/${version}/${encodeURIComponent(fileCategory!)}/${encodeURIComponent(fileName!)}`;
 
-    const accessToken = getAccessToken(locals.session);
+    const accessToken = getForwardedAccessToken(request, locals.session);
 
     const response = await fetch(backendUrl, {
         method,

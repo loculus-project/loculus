@@ -19,6 +19,7 @@ import { TableColumnSelectorModal } from './TableColumnSelectorModal.tsx';
 import { useSearchPageState } from './useSearchPageState.ts';
 import { type QueryState } from './useStateSyncedWithUrlQueryParams.ts';
 import { getLapisUrl } from '../../config.ts';
+import { routes } from '../../routes/routes.ts';
 import { fetchDetailsFromLapis } from '../../services/lapisClientSideApi.ts';
 import { lapisClientHooks } from '../../services/serviceHooks.ts';
 import { DATA_USE_TERMS_FIELD, pageSize } from '../../settings';
@@ -159,7 +160,8 @@ const InnerSearchFullUI = ({
     const lapisUrl = getLapisUrl(clientConfig, organism);
     const downloadUrlGenerator = new DownloadUrlGenerator(
         organism,
-        lapisUrl,
+        // Links and form submissions cannot send the access token, so downloads then go through the website
+        clientConfig.requireAuthenticationForData === true ? routes.lapisDownloadProxy(organism) : lapisUrl,
         dataUseTermsEnabled,
         schema.richFastaHeaderFields,
     );
@@ -391,7 +393,6 @@ const InnerSearchFullUI = ({
                                 richFastaHeaderFields={schema.richFastaHeaderFields}
                                 selectedReferenceNames={referenceSelection?.selectedReferences}
                                 referenceIdentifierField={schema.referenceIdentifierField}
-                                accessToken={accessToken}
                             />
                             {isReleasedPage && accessToken !== undefined && groupId !== undefined && (
                                 <DownloadSubmittedDataButton
@@ -404,9 +405,10 @@ const InnerSearchFullUI = ({
                                     fetchAccessions={fetchAccessions}
                                 />
                             )}
+                            {/* External tools fetch the LAPIS URLs themselves and cannot authenticate */}
                             {linkOuts !== undefined &&
                                 linkOuts.length > 0 &&
-                                clientConfig.lapisAuthEnabled !== true && (
+                                clientConfig.requireAuthenticationForData !== true && (
                                     <LinkOutMenu
                                         downloadUrlGenerator={downloadUrlGenerator}
                                         sequenceFilter={downloadFilter}

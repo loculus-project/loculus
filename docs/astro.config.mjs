@@ -84,6 +84,7 @@ export default defineConfig({
                         'reference/fasta-format',
                         'reference/glossary',
                         'reference/helm-chart-config',
+                        'reference/programmatic-access',
                         {
                             label: 'Upgrade guides',
                             items: [{ autogenerate: { directory: 'reference/upgrade-guides' } }],

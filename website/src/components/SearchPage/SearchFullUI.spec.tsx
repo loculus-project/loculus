@@ -332,6 +332,25 @@ describe('SearchFullUI', () => {
         });
     });
 
+    it.each([
+        { requireAuthenticationForData: false, expectedDownloadBase: 'http://lapis.dummy.url' },
+        { requireAuthenticationForData: true, expectedDownloadBase: `/${testOrganism}/lapis-download` },
+    ])(
+        'downloads from $expectedDownloadBase when requireAuthenticationForData is $requireAuthenticationForData',
+        async ({ requireAuthenticationForData, expectedDownloadBase }) => {
+            renderSearchFullUI({ clientConfig: { ...testConfig.public, requireAuthenticationForData } });
+
+            await userEvent.click(screen.getByRole('button', { name: 'Download all entries' }));
+            const agreementCheckbox = screen.queryByLabelText('I agree to the data use terms.');
+            if (agreementCheckbox !== null) {
+                await userEvent.click(agreementCheckbox);
+            }
+
+            const downloadLink = screen.getByRole('link', { name: 'Download' });
+            expect(downloadLink.getAttribute('href')).toMatch(new RegExp(`^${expectedDownloadBase}/sample/`));
+        },
+    );
+
     it('toggle column visibility', async () => {
         renderSearchFullUI({});
         // expect we can't see field 4

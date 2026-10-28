@@ -34,9 +34,6 @@ async function queryLapisDetails(
     accessToken: string | undefined,
 ): Promise<Record<string, unknown>[]> {
     try {
-        // LAPIS requires a Keycloak-issued JWT when the deployment enables LAPIS authentication
-        // (`lapis.auth.enabled`); without a token the request is sent unauthenticated, which is
-        // correct when authentication is disabled.
         const response = await createAuthorizedAxiosInstance(accessToken).post(`${lapisUrl}/sample/details`, {
             ...filter,
             fields,

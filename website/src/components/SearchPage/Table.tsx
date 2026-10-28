@@ -9,6 +9,7 @@ import type { Schema } from '../../types/config.ts';
 import type { FileEntry, Metadatum, OrderBy, OrderDirection } from '../../types/lapis.ts';
 import { deduplicateSemicolonSeparated } from '../../utils/deduplicateSemicolonSeparated';
 import { formatNumberWithDefaultLocale } from '../../utils/formatNumber.tsx';
+import { toSameOriginFileUrl } from '../../utils/toSameOriginFileUrl.ts';
 import MaterialSymbolsClose from '~icons/material-symbols/close';
 import MaterialSymbolsSearchOff from '~icons/material-symbols/search-off';
 import MdiTriangle from '~icons/mdi/triangle';
@@ -112,7 +113,7 @@ const FileLink: FC<FileLinkProps> = ({ fileEntry, columnWidth }) => {
     return (
         <a
             ref={ref}
-            href={fileEntry.url}
+            href={toSameOriginFileUrl(fileEntry.url)}
             className='truncate inline-block align-top hover:underline'
             style={{ maxWidth: getColumnWidthStyle(columnWidth) }}
             data-tooltip-id={isTruncated ? 'table-tip' : undefined}

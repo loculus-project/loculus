@@ -15,19 +15,19 @@ export type OrganismStatistics = {
     recentSequences: number;
     lastUpdatedAt: DateTime | undefined;
 };
-type OrganismStatisticsMap = Map<string, OrganismStatistics | undefined>;
+type OrganismStatisticsMap = Map<string, OrganismStatistics>;
 
 const TIMEOUT_MS = 500;
 
 export const getOrganismStatisticsMap = async (
     organismNames: string[],
     numberDaysAgo: number,
-    authorization?: string,
+    accessToken: string | undefined,
 ): Promise<OrganismStatisticsMap> => {
     const statistics = await Promise.all(
-        organismNames.map((organism) => getOrganismStatistics(organism, numberDaysAgo, authorization)),
+        organismNames.map((organism) => getOrganismStatistics(organism, numberDaysAgo, accessToken)),
     );
-    const result = new Map<string, OrganismStatistics | undefined>();
+    const result = new Map<string, OrganismStatistics>();
     for (let i = 0; i < organismNames.length; i++) {
         result.set(organismNames[i], statistics[i]);
     }
@@ -37,21 +37,19 @@ export const getOrganismStatisticsMap = async (
 const getOrganismStatistics = async (
     organism: string,
     numberDaysAgo: number,
-    authorization?: string,
-): Promise<OrganismStatistics | undefined> => {
-    const [totalAndLastUpdatedAt, recent] = await Promise.all([
-        withTimeout(getTotalAndLastUpdatedAt(organism, authorization), TIMEOUT_MS, undefined),
-        withTimeout(getRecent(organism, numberDaysAgo, authorization), TIMEOUT_MS, undefined),
+    accessToken: string | undefined,
+): Promise<OrganismStatistics> => {
+    const [{ total, lastUpdatedAt }, recent] = await Promise.all([
+        withTimeout(getTotalAndLastUpdatedAt(organism, accessToken), TIMEOUT_MS, {
+            total: -1,
+            lastUpdatedAt: undefined,
+        }),
+        withTimeout(getRecent(organism, numberDaysAgo, accessToken), TIMEOUT_MS, 0),
     ]);
-    if (totalAndLastUpdatedAt === undefined || recent === undefined) {
-        // LAPIS unreachable or rejected the request (e.g. anonymous request while
-        // `lapisAuthEnabled`): hide the statistics instead of showing misleading zeros.
-        return undefined;
-    }
     return {
-        totalSequences: totalAndLastUpdatedAt.total,
+        totalSequences: total,
         recentSequences: recent,
-        lastUpdatedAt: totalAndLastUpdatedAt.lastUpdatedAt,
+        lastUpdatedAt,
     };
 };
 
@@ -62,22 +60,25 @@ const withTimeout = <T>(promise: Promise<T>, ms: number, defaultValue: T): Promi
 
 const getTotalAndLastUpdatedAt = async (
     organism: string,
-    authorization?: string,
-): Promise<{ total: number; lastUpdatedAt: DateTime | undefined } | undefined> => {
-    const client = LapisClient.createForOrganism(organism, authorization);
-    const result = await client.call('aggregated', {
-        [VERSION_STATUS_FIELD]: versionStatuses.latestVersion,
-        [IS_REVOCATION_FIELD]: 'false',
-    });
-    if (result.isErr()) {
-        return undefined;
-    }
-    return {
-        total: result.value.data[0].count,
-        lastUpdatedAt: DateTime.fromSeconds(Number.parseInt(result.value.info.dataVersion, 10), {
-            zone: FixedOffsetZone.utcInstance,
-        }),
-    };
+    accessToken: string | undefined,
+): Promise<{ total: number; lastUpdatedAt: DateTime | undefined }> => {
+    const client = LapisClient.createForOrganism(organism, accessToken);
+    return (
+        await client.call('aggregated', {
+            [VERSION_STATUS_FIELD]: versionStatuses.latestVersion,
+            [IS_REVOCATION_FIELD]: 'false',
+        })
+    )
+        .map((x) => ({
+            total: x.data[0].count,
+            lastUpdatedAt: DateTime.fromSeconds(Number.parseInt(x.info.dataVersion, 10), {
+                zone: FixedOffsetZone.utcInstance,
+            }),
+        }))
+        .unwrapOr({
+            total: 0,
+            lastUpdatedAt: undefined,
+        });
 };
 
 const hasEarliestReleaseDateField = (organism: string): boolean =>
@@ -106,24 +107,25 @@ const getRecentFilter = (organism: string, numberDaysAgo: number): Record<string
  * This trade-off allows for a simpler, more efficient query
  * without needing to fetch individual accession lists.
  */
-const getRecent = async (
-    organism: string,
-    numberDaysAgo: number,
-    authorization?: string,
-): Promise<number | undefined> => {
+const getRecent = async (organism: string, numberDaysAgo: number, accessToken: string | undefined): Promise<number> => {
     const recentFilter = getRecentFilter(organism, numberDaysAgo);
-    const client = LapisClient.createForOrganism(organism, authorization);
-    const recentlyReleasedTotal = await client.call('aggregated', {
-        ...recentFilter,
-        version: 1,
-    });
-    const recentlyReleasedThenRevokedTotal = await client.call('aggregated', {
-        ...recentFilter,
-        version: 1,
-        [VERSION_STATUS_FIELD]: versionStatuses.revoked,
-    });
-    if (recentlyReleasedTotal.isErr() || recentlyReleasedThenRevokedTotal.isErr()) {
-        return undefined;
-    }
-    return recentlyReleasedTotal.value.data[0].count - recentlyReleasedThenRevokedTotal.value.data[0].count;
+    const client = LapisClient.createForOrganism(organism, accessToken);
+    const recentlyReleasedTotal = (
+        await client.call('aggregated', {
+            ...recentFilter,
+            version: 1,
+        })
+    )
+        .map((x) => x.data[0].count)
+        .unwrapOr(0);
+    const recentlyReleasedThenRevokedTotal = (
+        await client.call('aggregated', {
+            ...recentFilter,
+            version: 1,
+            [VERSION_STATUS_FIELD]: versionStatuses.revoked,
+        })
+    )
+        .map((x) => x.data[0].count)
+        .unwrapOr(0);
+    return recentlyReleasedTotal - recentlyReleasedThenRevokedTotal;
 };

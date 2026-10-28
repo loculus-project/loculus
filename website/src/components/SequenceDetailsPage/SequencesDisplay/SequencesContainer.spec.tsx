@@ -39,6 +39,7 @@ function renderSequenceViewer(
     render(
         <QueryClientProvider client={queryClient}>
             <SequencesContainer
+                accessToken={undefined}
                 organism={testOrganism}
                 accessionVersion={accessionVersion}
                 clientConfig={testConfig.public}

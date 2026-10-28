@@ -51,7 +51,7 @@ const latestSeqSetVersion = seqSetVersionsResponse.isOk()
     ? Math.max(...seqSetVersionsResponse.value.map((s) => s.seqSetVersion))
     : undefined;
 const seqSetAuthorResponse = seqSetResponse.isOk()
-    ? await seqSetClient.getAuthor(seqSetResponse.value.createdBy, accessToken)
+    ? await seqSetClient.getAuthor(accessToken, seqSetResponse.value.createdBy)
     : err();
 
 const accessions = seqSetRecordsResponse.unwrapOr([]).map((record) => record.accession);

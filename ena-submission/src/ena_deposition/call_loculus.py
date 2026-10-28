@@ -143,7 +143,7 @@ def get_group_info(config: Config, group_id: int) -> Group:
     headers = {"Content-Type": "application/json"}
 
     try:
-        response = make_request(HTTPMethod.GET, url, config, headers=headers, auth=False)
+        response = make_request(HTTPMethod.GET, url, config, headers=headers)
     except requests.exceptions.HTTPError as err:
         logger.error(f"Error fetching group info for {group_id} from Loculus: {err}")
         raise requests.exceptions.HTTPError from err
@@ -179,6 +179,8 @@ def fetch_released_entries(config: Config, organism: str) -> Iterator[dict[str, 
     headers = {
         "Content-Type": "application/json",
         "X-Request-ID": request_id,
+        # Required when the instance sets auth.requireAuthenticationForData
+        "Authorization": f"Bearer {get_jwt(config)}",
     }
     logger.info(f"Fetching released data from {url} with request id {request_id}")
 
@@ -239,17 +241,20 @@ def canonical_fastq_extension(file_name: str) -> str:
     raise RuntimeError(msg)
 
 
-def download_file(url: str, path: str, timeout: float) -> None:
+def download_file(url: str, path: str, timeout: float, config: Config) -> None:
     """
     Stream the contents of `url` into `path`.
 
     For raw reads the url points at the backend's
-    `/files/get/{accession}/{version}/{fileCategory}/{fileName}` endpoint, which responds
-    with a 307 redirect to a pre-signed S3 URL - requests follows the redirect automatically
-    and drops the Authorization header once the redirect target's host differs from the
-    backend's.
+    `/files/get/{accession}/{version}/{fileCategory}/{fileName}` endpoint (or the website's
+    canonical file link, which proxies it), which responds with a 307 redirect to a
+    pre-signed S3 URL - requests follows the redirect automatically and drops the
+    Authorization header once the redirect target's host differs from the backend's.
+    The Authorization header is required when the instance sets
+    auth.requireAuthenticationForData.
     """
-    with requests.get(url, stream=True, timeout=timeout) as response:
+    headers = {"Authorization": f"Bearer {get_jwt(config)}"}
+    with requests.get(url, headers=headers, stream=True, timeout=timeout) as response:
         response.raise_for_status()
         # 1 MiB balances syscall/loop overhead against per-download memory;
         # throughput is S3-bound above a few hundred KiB.
@@ -288,7 +293,7 @@ def download_fastq_files(
         )
         file_path = os.path.join(dir, file_name + file_extension)
 
-        download_file(file_entry["url"], file_path, config.s3_request_timeout_seconds)
+        download_file(file_entry["url"], file_path, config.s3_request_timeout_seconds, config)
 
         fastq_files.append(file_path)
 

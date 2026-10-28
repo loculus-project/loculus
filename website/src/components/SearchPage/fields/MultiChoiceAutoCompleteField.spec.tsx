@@ -56,6 +56,7 @@ describe('MultiChoiceAutoCompleteField', () => {
                 optionsProvider={{
                     type: 'generic',
                     lapisUrl,
+                    accessToken: undefined,
                     lapisSearchParameters,
                     fieldName: field.name,
                 }}
@@ -125,6 +126,7 @@ describe('MultiChoiceAutoCompleteField', () => {
                 optionsProvider={{
                     type: 'generic',
                     lapisUrl,
+                    accessToken: undefined,
                     lapisSearchParameters,
                     fieldName: field.name,
                 }}

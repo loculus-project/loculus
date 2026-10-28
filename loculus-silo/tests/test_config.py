@@ -65,3 +65,28 @@ def test_hierarchical_filters_invalid_json(monkeypatch: pytest.MonkeyPatch) -> N
 
     with pytest.raises(RuntimeError, match="HIERARCHICAL_FILTERS must be valid JSON"):
         ImporterConfig.from_env()
+
+
+def test_config_reads_keycloak_credentials(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("BACKEND_BASE_URL", "http://example.com/base")
+    monkeypatch.setenv("KEYCLOAK_TOKEN_URL", "http://keycloak/token")
+    monkeypatch.setenv("KEYCLOAK_USERNAME", "user")
+    monkeypatch.setenv("KEYCLOAK_PASSWORD", "password")
+
+    config = ImporterConfig.from_env()
+
+    assert config.keycloak_token_url == "http://keycloak/token"  # ruff:ignore[hardcoded-password-string]
+    assert config.keycloak_username == "user"
+    assert config.keycloak_password == "password"  # ruff:ignore[hardcoded-password-string]
+
+
+def test_config_requires_keycloak_credentials_with_token_url(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("BACKEND_BASE_URL", "http://example.com/base")
+    monkeypatch.setenv("KEYCLOAK_TOKEN_URL", "http://keycloak/token")
+    monkeypatch.delenv("KEYCLOAK_USERNAME", raising=False)
+    monkeypatch.delenv("KEYCLOAK_PASSWORD", raising=False)
+
+    with pytest.raises(RuntimeError, match="KEYCLOAK_USERNAME and KEYCLOAK_PASSWORD"):
+        ImporterConfig.from_env()

@@ -36,7 +36,8 @@ class SecurityConfig {
     fun securityFilterChain(
         httpSecurity: HttpSecurity,
         keycloakAuthoritiesConverter: KeycloakAuthenticationConverter,
-        @Value("\${loculus.security.require-data-endpoint-auth:false}") requireDataEndpointAuth: Boolean,
+        @Value("\${${BackendSpringProperty.REQUIRE_AUTHENTICATION_FOR_DATA}:false}")
+        requireAuthenticationForData: Boolean,
     ): SecurityFilterChain = httpSecurity
         .authorizeHttpRequests { auth ->
             auth.requestMatchers(
@@ -49,7 +50,7 @@ class SecurityConfig {
                 "/swagger-ui/**",
             ).permitAll()
             auth.requestMatchers(HttpMethod.OPTIONS).permitAll()
-            v0AccessRules(auth, requireDataEndpointAuth)
+            v0AccessRules(auth, requireAuthenticationForData)
             auth.requestMatchers(*debugEndpoints).hasAuthority(SUPER_USER)
             auth.anyRequest().authenticated()
         }

@@ -34,7 +34,7 @@ describe('fetchDetailsFromLapis', () => {
             }),
         );
 
-        const result = await fetchDetailsFromLapis(lapisUrl, { country: 'Germany' });
+        const result = await fetchDetailsFromLapis(lapisUrl, { country: 'Germany' }, undefined);
 
         expect(result.data).toEqual([{ country: 'Germany' }]);
     });

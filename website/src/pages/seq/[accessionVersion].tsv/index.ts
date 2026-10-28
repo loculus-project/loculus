@@ -8,8 +8,8 @@ export const GET: APIRoute = createDownloadAPIRoute(
     'text/tab-separated-values',
     'tsv',
     routes.sequenceEntryTsvPage,
-    (accessionVersion: string, organism: string, authorization?: string) => {
-        const lapisClient = LapisClient.createForOrganism(organism, authorization);
+    (accessionVersion: string, organism: string, accessToken: string | undefined) => {
+        const lapisClient = LapisClient.createForOrganism(organism, accessToken);
         return lapisClient.getSequenceEntryVersionDetailsTsv(accessionVersion);
     },
 );

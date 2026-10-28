@@ -31,18 +31,6 @@ import { createAuthorizedAxiosInstance } from '../utils/createAuthorizedAxiosIns
 import { fastaEntryToString, parseFasta } from '../utils/parseFasta.ts';
 import type { BaseType } from '../utils/sequenceTypeHelpers.ts';
 
-/**
- * Creates the axios instance used for all LAPIS requests of a `LapisClient`.
- *
- * When an authorization token is given (the logged-in user's access token; deployments with
- * `lapis.auth.enabled` require one), it is attached as `Authorization: Bearer ...` header to
- * every request. Without a token, requests are sent unauthenticated (fine for deployments
- * where LAPIS authentication is disabled).
- */
-function createLapisAxiosInstance(authorization: string | undefined): AxiosInstance {
-    return createAuthorizedAxiosInstance(authorization);
-}
-
 export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
     private readonly axiosInstance: AxiosInstance;
 
@@ -65,12 +53,12 @@ export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
         this.axiosInstance = axiosInstance;
     }
 
-    public static createForOrganism(organism: string, authorization?: string) {
+    public static createForOrganism(organism: string, accessToken: string | undefined) {
         return this.create(
             getLapisUrl(getRuntimeConfig().serverSide, organism),
             getSchema(organism),
             getInstanceLogger('lapisClient'),
-            authorization,
+            accessToken,
         );
     }
 
@@ -78,9 +66,9 @@ export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
         lapisUrl: string,
         schema: Schema,
         logger: InstanceLogger = getInstanceLogger('lapisClient'),
-        authorization?: string,
+        accessToken?: string,
     ) {
-        return new LapisClient(lapisUrl, lapisApi, logger, schema, createLapisAxiosInstance(authorization));
+        return new LapisClient(lapisUrl, lapisApi, logger, schema, createAuthorizedAxiosInstance(accessToken));
     }
 
     public getSequenceEntryVersionDetails(accessionVersion: string) {

@@ -59,19 +59,7 @@
   {{ end }}
 {{ end }}
 
-{{/* the external (public) LAPIS url template, with %organism% as the placeholder */}}
-{{- define "loculus.lapisUrlTemplate" -}}
-{{- $publicRuntimeConfig := $.Values.public }}
-{{- if $publicRuntimeConfig.lapisUrlTemplate }}
-  {{- $publicRuntimeConfig.lapisUrlTemplate -}}
-{{- else if eq $.Values.environment "server" }}
-  {{- printf "https://lapis%s%s/%s" $.Values.subdomainSeparator $.Values.host "%organism%" -}}
-{{- else }}
-  {{- printf "http://%s:8080/%%organism%%" $.Values.localHost -}}
-{{- end -}}
-{{- end }}
-
-{{/* generates external LAPIS urls from { config, lapisUrlTemplate } */}}
+{{/* generates external LAPIS urls from { config, host } */}}
 {{ define "loculus.generateExternalLapisUrls"}}
 {{ $lapisUrlTemplate := .lapisUrlTemplate }}
 {{ range $key, $organism := (.config.organisms | default .config.defaultOrganisms) }}

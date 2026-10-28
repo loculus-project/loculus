@@ -16,7 +16,7 @@ export type Option = {
 type GenericOptionsProvider = {
     type: 'generic';
     lapisUrl: string;
-    accessToken?: string;
+    accessToken: string | undefined;
     lapisSearchParameters: LapisSearchParameters;
     fieldName: string;
 };
@@ -25,7 +25,7 @@ type GenericOptionsProvider = {
 type LineageOptionsProvider = {
     type: 'lineage';
     lapisUrl: string;
-    accessToken?: string;
+    accessToken: string | undefined;
     lapisSearchParameters: LapisSearchParameters;
     fieldName: string;
     includeSublineages: boolean;

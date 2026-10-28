@@ -26,7 +26,7 @@ type SequenceContainerProps = {
     segmentReferences?: SegmentReferenceSelections;
     accessionVersion: string;
     clientConfig: ClientConfig;
-    accessToken?: string;
+    accessToken: string | undefined;
     referenceGenomesInfo: ReferenceGenomesInfo;
     loadSequencesAutomatically: boolean;
 };
@@ -74,7 +74,7 @@ type SequenceTabsProps = {
     organism: string;
     accessionVersion: string;
     clientConfig: ClientConfig;
-    accessToken?: string;
+    accessToken: string | undefined;
     segments: SegmentInfo[];
     sequenceType: SequenceType;
     setType: Dispatch<SetStateAction<SequenceType>>;

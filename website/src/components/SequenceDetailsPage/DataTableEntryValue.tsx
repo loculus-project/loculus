@@ -11,6 +11,7 @@ import type { MutationBadgeData } from '../../types/config.ts';
 import type { FileEntry } from '../../types/lapis.ts';
 import type { ReferenceGenomesInfo } from '../../types/referencesGenomes.ts';
 import { getReferenceDisplayNameMap } from '../../utils/sequenceTypeHelpers.ts';
+import { toSameOriginFileUrl } from '../../utils/toSameOriginFileUrl.ts';
 
 interface Props {
     data: TableDataEntry;
@@ -126,10 +127,10 @@ export const FileListComponent: React.FC<{ jsonString: string }> = ({ jsonString
         <ul>
             {fileEntries.map((fileEntry) => (
                 <li key={fileEntry.fileId}>
-                    <a href={fileEntry.url} className='underline mr-2'>
+                    <a href={toSameOriginFileUrl(fileEntry.url)} className='underline mr-2'>
                         {fileEntry.name}
                     </a>
-                    <FileSizeComponent url={fileEntry.url} />
+                    <FileSizeComponent url={toSameOriginFileUrl(fileEntry.url)} />
                 </li>
             ))}
         </ul>

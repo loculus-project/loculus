@@ -326,9 +326,6 @@ async function fetchSequenceCounts(
                 return;
             }
             try {
-                // LAPIS requires a Keycloak-issued JWT when the deployment enables LAPIS
-                // authentication (`lapis.auth.enabled`); without a token the request is sent
-                // unauthenticated, which is correct when authentication is disabled.
                 const response = await createAuthorizedAxiosInstance(accessToken).post(`${url}/sample/aggregated`, {
                     [GROUP_ID_FIELD]: groupId,
                     [VERSION_STATUS_FIELD]: versionStatuses.latestVersion,

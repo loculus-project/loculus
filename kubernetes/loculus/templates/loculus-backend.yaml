@@ -1,4 +1,10 @@
 {{- $dockerTag := include "loculus.dockerTag" .Values }}
+{{- if and .Values.auth.requireAuthenticationForData (eq .Values.fileSharing.outputFileUrlType "s3") }}
+{{- fail "auth.requireAuthenticationForData cannot be combined with fileSharing.outputFileUrlType: s3, whose public S3 links would bypass authentication. Use 'website' or 'backend'." }}
+{{- end }}
+{{- if and .Values.auth.requireAuthenticationForData .Values.readOnlyMode }}
+{{- fail "auth.requireAuthenticationForData cannot be combined with readOnlyMode: read-only mode disables login, so nobody could access the data." }}
+{{- end }}
 {{- if not .Values.disableBackend }}
 ---
 apiVersion: apps/v1
@@ -74,6 +80,7 @@ spec:
             - "--spring.datasource.username=$(DB_USERNAME)"
             - "--spring.security.oauth2.resourceserver.jwt.jwk-set-uri=http://loculus-keycloak-service:8083/realms/loculus/protocol/openid-connect/certs"
             - {{ printf "--spring.security.oauth2.resourceserver.jwt.issuer-uri=%s/realms/loculus" (include "loculus.keycloakUrl" . | trimSuffix "/") | quote }}
+            - "--loculus.security.require-authentication-for-data={{ .Values.auth.requireAuthenticationForData }}"
             - "--loculus.cleanup.task.reset-stale-in-processing-after-seconds={{- .Values.preprocessingTimeout | default 120 }}"
             - "--loculus.pipeline-version-upgrade-check.interval-seconds={{- .Values.pipelineVersionUpgradeCheckIntervalSeconds | default 10 }}"
             - "--loculus.s3.enabled=$(S3_ENABLED)"
@@ -133,10 +140,6 @@ spec:
             - name: CROSSREF_WRITE_ENABLED
               value: {{$.Values.seqSets.crossRef.writeEnabled | quote }}
            {{- end }}
-          {{- if $.Values.lapis.auth.enabled }}
-            - name: LOCULUS_SECURITY_REQUIRE_DATA_ENDPOINT_AUTH
-              value: "true"
-          {{- end }}
             - name: BACKEND_KEYCLOAK_PASSWORD
               valueFrom:
                 secretKeyRef:

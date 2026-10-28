@@ -39,11 +39,11 @@ private val gatedHeadEndpoints = listOf(
 )
 
 /**
- * With `loculus.security.require-data-endpoint-auth=true`, the public data endpoints
+ * With `loculus.security.require-authentication-for-data=true`, the public data endpoints
  * require any valid JWT (no role check), while infrastructure endpoints stay public.
  */
-@EndpointTest(properties = ["loculus.security.require-data-endpoint-auth=true"])
-class DataEndpointAuthEnabledEndpointTest(
+@EndpointTest(properties = ["loculus.security.require-authentication-for-data=true"])
+class RequireAuthenticationForDataEnabledEndpointTest(
     @Autowired private val mockMvc: MockMvc,
     @Autowired private val convenienceClient: SubmissionConvenienceClient,
     @Autowired private val groupManagementClient: GroupManagementControllerClient,
@@ -113,11 +113,11 @@ class DataEndpointAuthEnabledEndpointTest(
 }
 
 /**
- * Default (`loculus.security.require-data-endpoint-auth=false`): the data endpoints
+ * Default (`loculus.security.require-authentication-for-data=false`): the data endpoints
  * stay anonymous, i.e. behaviour is unchanged.
  */
 @EndpointTest
-class DataEndpointAuthDisabledEndpointTest(
+class RequireAuthenticationForDataDisabledEndpointTest(
     @Autowired private val mockMvc: MockMvc,
     @Autowired private val convenienceClient: SubmissionConvenienceClient,
 ) {

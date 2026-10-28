@@ -15,7 +15,7 @@ type Props = {
     organism: string;
     accessionVersion: string;
     clientConfig: ClientConfig;
-    accessToken?: string;
+    accessToken: string | undefined;
     sequenceType: SequenceType;
     useLapisMultiSegmentedEndpoint: boolean;
 };

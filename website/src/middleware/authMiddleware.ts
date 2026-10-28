@@ -11,7 +11,7 @@ import { routes } from '../routes/routes.ts';
 import { KeycloakClientManager } from '../utils/KeycloakClientManager.ts';
 import { authTransactionId, consumeAuthRequest } from '../utils/authRequestCookies.ts';
 import { getLoginUrl } from '../utils/getLoginUrl.ts';
-import { isLapisDataRoute, shouldMiddlewareEnforceLogin } from '../utils/shouldMiddlewareEnforceLogin.ts';
+import { shouldMiddlewareEnforceLogin } from '../utils/shouldMiddlewareEnforceLogin.ts';
 
 export const ACCESS_TOKEN_COOKIE = 'access_token';
 export const REFRESH_TOKEN_COOKIE = 'refresh_token';
@@ -20,24 +20,6 @@ enum TokenVerificationError {
     EXPIRED,
     REQUEST_ERROR,
     INVALID_TOKEN,
-}
-
-/**
- * JWKS clients keyed by their `jwks_uri`. jwks-rsa caches the signing keys internally (and
- * refreshes them on key rotation), but only per client instance: creating a new client for
- * every request would re-fetch the keys from Keycloak on each verified token, adding a
- * Keycloak round trip to every page load. With LAPIS authentication enabled, the auth
- * middleware gates many data routes, so this cache matters for first-request latency.
- */
-const jwksClients = new Map<string, JwksRsa.JwksClient>();
-
-function getJwksClient(jwksUri: string): JwksRsa.JwksClient {
-    let client = jwksClients.get(jwksUri);
-    if (client === undefined) {
-        client = new JwksRsa.JwksClient({ jwksUri });
-        jwksClients.set(jwksUri, client);
-    }
-    return client;
 }
 
 const logger = getInstanceLogger('LoginMiddleware');
@@ -88,10 +70,15 @@ async function getValidTokenAndUserInfoFromParams(context: APIContext, client: B
 export const authMiddleware = defineMiddleware(async (context, next) => {
     let token: TokenCookie | undefined;
     let userInfo;
-    const configuredOrganisms = getConfiguredOrganisms().map((it) => it.key);
 
     if (getWebsiteConfig().readOnlyMode) {
-        const enforceLogin = shouldMiddlewareEnforceLogin(context.url.pathname, configuredOrganisms);
+        // Read-only mode only blocks the pages that always need a login. The Helm chart rejects combining it with
+        // auth.requireAuthenticationForData, since nobody could log in to see the data pages.
+        const enforceLogin = shouldMiddlewareEnforceLogin(
+            context.url.pathname,
+            getConfiguredOrganisms().map((it) => it.key),
+            { requireAuthenticationForData: false },
+        );
         if (enforceLogin) {
             return context.redirect('/503?service=readonly');
         }
@@ -119,10 +106,11 @@ export const authMiddleware = defineMiddleware(async (context, next) => {
         logger.warn(`Keycloak client not available, pretending user logged out`);
     }
 
-    const enforceLogin =
-        shouldMiddlewareEnforceLogin(context.url.pathname, configuredOrganisms) ||
-        (getRuntimeConfig().public.lapisAuthEnabled === true &&
-            isLapisDataRoute(context.url.pathname, configuredOrganisms));
+    const enforceLogin = shouldMiddlewareEnforceLogin(
+        context.url.pathname,
+        getConfiguredOrganisms().map((it) => it.key),
+        { requireAuthenticationForData: getRuntimeConfig().public.requireAuthenticationForData === true },
+    );
 
     if (enforceLogin && (userInfo === undefined || userInfo.isErr())) {
         if (client === undefined) {
@@ -161,8 +149,21 @@ export const authMiddleware = defineMiddleware(async (context, next) => {
         token,
     };
 
-    return next();
+    return preventSharedCaching(await next());
 });
+
+/**
+ * Pages rendered for a logged-in user embed the user's access token (it is passed to the React components),
+ * so shared caches (CDNs, proxies) must never store them.
+ */
+function preventSharedCaching(response: Response) {
+    try {
+        response.headers.set('Cache-Control', 'private, no-store');
+    } catch {
+        // Some responses (e.g. from Response.redirect()) have immutable headers; they don't contain a token.
+    }
+    return response;
+}
 
 async function getTokenFromCookie(context: APIContext, client: BaseClient) {
     const accessToken = context.cookies.get(ACCESS_TOKEN_COOKIE)?.value;
@@ -208,7 +209,9 @@ async function verifyToken(accessToken: string, client: BaseClient) {
         });
     }
 
-    const jwksClient = getJwksClient(client.issuer.metadata.jwks_uri);
+    const jwksClient = new JwksRsa.JwksClient({
+        jwksUri: client.issuer.metadata.jwks_uri,
+    });
 
     try {
         const signingKey = await jwksClient.getSigningKey(kid);

@@ -84,7 +84,7 @@ interface SearchFormProps {
     organism: string;
     filterSchema: MetadataFilterSchema;
     clientConfig: ClientConfig;
-    accessToken?: string;
+    accessToken: string | undefined;
     fieldValues: FieldValues;
     setSomeFieldValues: SetSomeFieldValues;
     lapisUrl: string;
@@ -429,7 +429,7 @@ export const SearchForm = ({
 interface SearchFieldProps {
     field: GroupedMetadataFilter | MetadataFilter;
     lapisUrl: string;
-    accessToken?: string;
+    accessToken: string | undefined;
     fieldValues: FieldValues;
     setSomeFieldValues: SetSomeFieldValues;
     lapisSearchParameters: LapisSearchParameters;
@@ -551,7 +551,7 @@ interface AdvancedOptionsModalProps {
     fieldValues: FieldValues;
     setSomeFieldValues: SetSomeFieldValues;
     lapisUrl: string;
-    accessToken?: string;
+    accessToken: string | undefined;
     lapisSearchParameters: LapisSearchParameters;
 }
 

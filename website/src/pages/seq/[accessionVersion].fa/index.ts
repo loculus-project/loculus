@@ -11,8 +11,8 @@ export const GET: APIRoute = createDownloadAPIRoute(
     'text/x-fasta',
     'fa',
     routes.sequenceEntryFastaPage,
-    async (accessionVersion: string, organism: string, authorization?: string) => {
-        const lapisClient = LapisClient.createForOrganism(organism, authorization);
+    async (accessionVersion: string, organism: string, accessToken: string | undefined) => {
+        const lapisClient = LapisClient.createForOrganism(organism, accessToken);
 
         const referenceGenomesInfo = getReferenceGenomes(organism);
 

@@ -1,49 +1,41 @@
 ---
 title: Programmatic access
-description: How to access Loculus data programmatically, including authenticated LAPIS access
+description: How to access Loculus data programmatically, including instances that require authentication for data access
 ---
 
-The primary way to query and download released Loculus data programmatically is the [LAPIS](https://github.com/GenSpectrum/LAPIS) API. There is one LAPIS instance per [organism](./glossary/#organism); you can find the exact LAPIS host URLs on the "API Documentation" page of the instance you are using (linked in the footer of the website, also available under `<URL of the website>/api-documentation`).
+The primary way to query and download released data programmatically is the [LAPIS](https://github.com/GenSpectrum/LAPIS) API. There is one LAPIS instance per [organism](../glossary/#organism); you can find the LAPIS URLs on the "API Documentation" page of the instance (linked in the website footer, also available under `<URL of the website>/api-documentation`).
 
-Depending on the configuration of the instance, LAPIS requires authentication: every request must carry a valid Bearer token issued by the instance's [Keycloak](./glossary/#keycloak) server. The API documentation pages (Swagger UI, OpenAPI docs) and health endpoints remain accessible without a token.
+Instances can require authentication for data access (Helm value `auth.requireAuthenticationForData`, see the [Helm chart config](../helm-chart-config/#authenticated-data-access)). Then every LAPIS request, and every request to the backend's data endpoints, must carry a Bearer token issued by the instance's [Keycloak](../glossary/#keycloak). Any valid token of the instance is accepted; no special roles are needed. The LAPIS API documentation (Swagger UI) stays accessible without a token.
 
-The website of an instance is also affected: when LAPIS authentication is enabled, the pages that display released data (search, sequence pages, seqsets, group pages) require logging in, and the website forwards the logged-in user's token to LAPIS. The homepage remains publicly accessible; its per-organism sequence counts are hidden from anonymous visitors instead. Other pages of the website (e.g. documentation, submission pages) also remain accessible without an account.
-
-If you use the Loculus command-line interface, no manual token handling is required: after `loculus auth login`, the CLI attaches your token to LAPIS requests automatically (the `get` commands query LAPIS directly).
+If you use the Loculus command-line interface, you don't need to handle tokens yourself: after `loculus auth login`, the CLI sends your token with its LAPIS requests.
 
 ## Checking whether authentication is required
 
-Send a request without a token and inspect the response:
+Send a request without a token:
 
 ```bash
 curl -i "$LAPIS_URL/sample/details?limit=1"
 ```
 
-- `200 OK` — the instance does not require LAPIS authentication.
-- `401 Unauthorized` — LAPIS authentication is enabled; obtain a token as described below.
+- `200 OK`: no authentication is required.
+- `401 Unauthorized`: obtain a token as described below.
 
 ## Obtaining a token
 
 ### With user credentials
 
-If you have a user account on the instance, you can request a token from Keycloak using your username and password. Follow the instructions in [Authenticate via API](../for-users/authenticate-via-api/) — that page is the canonical description of this flow, including a ready-to-use `curl` example.
-
-A token obtained this way can be used for both the backend API and the LAPIS API of the same instance.
+If you have an account on the instance, request a token from Keycloak with your username and password as described in [Authenticate via API](../../for-users/authenticate-via-api/). The token works for both the backend and LAPIS of that instance.
 
 :::note
-Tokens are only valid for a limited time (the exact lifetime is configured per instance). When a token expires, request a new one; an expired token results in a `401 Unauthorized` response.
+Tokens are valid for a limited time (10 hours by default, configured per instance). Expired tokens are rejected with `401 Unauthorized`; request a new one.
 :::
 
-### For automated access (client credentials grant)
+### For automated access
 
-For scripts, pipelines and other machine-to-machine access that should not use personal credentials, use the OAuth2 _client credentials_ grant. This requires a dedicated confidential Keycloak client with a service account; ask the administrators of the instance to register one for you and provide you with its client ID and secret.
-
-If you administer your own instance, you can create such a client in the Keycloak admin console (or via the Keycloak admin API): create a client with _Client authentication_ enabled and _Service accounts roles_ activated. Then obtain a token as follows:
+For scripts and pipelines that should not use personal credentials, use the OAuth2 _client credentials_ grant. This needs a confidential Keycloak client with a service account; ask the administrators of the instance for a client ID and secret. Administrators can create such a client in the Keycloak admin console (enable _Client authentication_ and _Service accounts roles_).
 
 ```bash
 KEYCLOAK_TOKEN_URL="<Your_Keycloak_URL>/realms/loculus/protocol/openid-connect/token"
-CLIENT_ID="YOUR_CLIENT_ID"
-CLIENT_SECRET="YOUR_CLIENT_SECRET"
 
 token_response=$(curl -X POST "$KEYCLOAK_TOKEN_URL" --fail-with-body \
   -H 'Content-Type: application/x-www-form-urlencoded' \
@@ -51,73 +43,43 @@ token_response=$(curl -X POST "$KEYCLOAK_TOKEN_URL" --fail-with-body \
 access_token=$(echo "$token_response" | jq -r '.access_token')
 ```
 
-Note that the response is first stored in a variable and only then passed to `jq`: with `curl --fail-with-body` an error response makes `curl` exit with a non-zero status (so the script stops there), whereas piping the output straight into `jq` would silently produce the string `null`.
-
-## Backend data endpoints
-
-The same flag that enables LAPIS authentication (`lapis.auth.enabled`) also gates the Loculus backend's public data endpoints. When it is enabled, the following backend endpoints require a valid Bearer token (any valid Keycloak realm token — no role or audience checks, same semantics as LAPIS):
-
-- `GET /*/get-released-data`
-- `GET /data-use-terms/*`
-- `GET /groups/*`
-- `GET` and `HEAD /files/get/**`
-- `GET /get-seqset`, `GET /get-seqset-records`, `GET /get-seqset-citations`, `GET /get-sequence-citations`, `GET /get-author` (only on instances with seqsets enabled)
-
-Attach the token the same way as for LAPIS:
-
-```bash
-curl -H "Authorization: Bearer $access_token" "$BACKEND_URL/dummyOrganism/get-released-data"
-```
-
-Requests without a valid token are rejected with `401 Unauthorized`. Endpoints that require specific roles (e.g. the preprocessing pipeline endpoints) and the infrastructure endpoints (`/`, health, API docs, Swagger UI) are not affected by this flag.
-
 ## Using the token
 
-Attach the token to every LAPIS request in the `Authorization` header:
-
-```bash
-curl -H "Authorization: Bearer $access_token" "$LAPIS_URL/sample/details?limit=1"
-```
-
-The same header works for `POST` requests (LAPIS accepts filters both as query parameters and as a JSON request body) and for all output formats, e.g. downloading data as FASTA or TSV:
+Send the token in the `Authorization` header. This works for all LAPIS endpoints, `GET` and `POST` requests, and all output formats:
 
 ```bash
 curl -H "Authorization: Bearer $access_token" \
   "$LAPIS_URL/sample/details?country=Switzerland&dataFormat=tsv" \
-  -o sequences.tsv
+  -o metadata.tsv
 ```
+
+The same applies to the backend's data endpoints:
+
+- `GET /<organism>/get-released-data`
+- `GET /data-use-terms/<accession>`
+- `GET /groups/<groupId>`
+- `GET` and `HEAD /files/get/...`
+- `GET /get-seqset`, `/get-seqset-records`, `/get-seqset-citations`, `/get-sequence-citations` and `/get-author` (on instances with seqsets enabled)
+
+```bash
+curl -H "Authorization: Bearer $access_token" "$BACKEND_URL/<organism>/get-released-data"
+```
+
+File links in released data (`<URL of the website>/seq/<accessionVersion>/<fileCategory>/<fileName>`) and download links copied from the website's download dialog also accept the token in the `Authorization` header.
 
 ## Using LAPIS from R
 
-The [lapisR](https://github.com/GenSpectrum/lapisR) package is the most convenient way to query LAPIS from R. At the time of writing, it does not yet support attaching authentication headers, so it cannot be used directly against instances with LAPIS authentication enabled (upstream support is being coordinated). Until then, you can query LAPIS from R with [httr2](https://httr2.r-lib.org/), adding the header manually:
+With [httr2](https://httr2.r-lib.org/), add the header to each request (for example if your version of [lapisR](https://github.com/GenSpectrum/lapisR) cannot send it):
 
 ```r
 library(httr2)
 
-keycloak_token_url <- "<Your_Keycloak_URL>/realms/loculus/protocol/openid-connect/token"
-lapis_url <- "<Your_LAPIS_URL>"
+access_token <- "<Your_Access_Token>"
 
-resp <- keycloak_token_url |>
-  request() |>
-  req_body_form(
-    username = "YOUR_USERNAME",
-    password = "YOUR_PASSWORD",
-    grant_type = "password",
-    client_id = "backend-client"
-  ) |>
-  req_perform()
-
-access_token <- resp_body_json(resp)$access_token
-
-# Query LAPIS with the token attached
-request(lapis_url) |>
-  req_url_path("sample", "details") |>
+request("<Your_LAPIS_URL>") |>
+  req_url_path_append("sample", "details") |>
   req_url_query(limit = 1) |>
   req_headers(Authorization = paste("Bearer", access_token)) |>
   req_perform() |>
   resp_body_json()
 ```
-
-## Enabling LAPIS authentication on your own instance
-
-Whether LAPIS requires a Bearer token is configured per deployment through the Helm chart flag `lapis.auth.enabled` (see the [Helm chart config](./helm-chart-config/)). When enabled, LAPIS validates tokens against the Keycloak realm of the instance; no role or audience checks are performed — any valid token issued by the realm is accepted. The same flag also enables JWT authentication on the backend data endpoints listed above. Flipping the flag back to `false` disables the requirement again (for both LAPIS and the backend data endpoints).

@@ -43,6 +43,7 @@ object BackendSpringProperty {
     const val ENABLE_SEQSETS = "loculus.enable-seqsets"
     const val SEQSET_CITATIONS_RUN_EVERY_MINUTES = "loculus.seqset-citations.run-every-minutes"
     const val CLEAN_UP_AUX_TABLE_RUN_EVERY_HOURS = "loculus.maintenance.clean-up-aux-table.run-every-hours"
+    const val REQUIRE_AUTHENTICATION_FOR_DATA = "loculus.security.require-authentication-for-data"
 
     const val S3_ENABLED = "loculus.s3.enabled"
     const val S3_GC_ENABLED = "loculus.s3.gc-enabled"

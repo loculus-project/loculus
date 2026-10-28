@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 
-import { isLapisDataRoute, shouldMiddlewareEnforceLogin } from './shouldMiddlewareEnforceLogin';
+import { shouldMiddlewareEnforceLogin } from './shouldMiddlewareEnforceLogin';
 import { testOrganism } from '../../vitest.setup.ts';
 import { routes } from '../routes/routes.ts';
 
@@ -8,70 +8,71 @@ const otherOrganism = 'otherOrganism';
 const configuredOrganisms = [testOrganism, otherOrganism];
 
 describe('shouldMiddlewareEnforceLogin', () => {
-    test('should return false if not specified', () => {
-        expectNoLogin('/someRoute');
+    describe('without requireAuthenticationForData', () => {
+        const options = { requireAuthenticationForData: false };
+
+        test('should return false if not specified', () => {
+            expectNoLogin('/someRoute', options);
+        });
+
+        test('should return false for empty string', () => {
+            expectNoLogin('', options);
+        });
+
+        test('should return true on routes which should force login', () => {
+            expectForceLogin('/user', options);
+            expectForceLogin('/user/someUsername', options);
+        });
+
+        test('should return false for various public routes', () => {
+            expectNoLogin(`/${testOrganism}/search`, options);
+            expectNoLogin(`/`, options);
+            expectNoLogin(`/${testOrganism}`, options);
+            expectNoLogin(routes.sequenceEntryDetailsPage('id_002156'), options);
+            expectNoLogin('/seqsets/1.1', options);
+            expectNoLogin('/group/123', options);
+        });
     });
 
-    test('should return false for empty string', () => {
-        expectNoLogin('');
+    describe('with requireAuthenticationForData', () => {
+        const options = { requireAuthenticationForData: true };
+
+        test('should return true on routes which always force login', () => {
+            expectForceLogin('/user', options);
+            expectForceLogin('/user/someUsername', options);
+        });
+
+        test('should return true for pages that show released data', () => {
+            expectForceLogin(`/${testOrganism}/search`, options);
+            expectForceLogin(`/${testOrganism}/search?query=1`, options);
+            expectForceLogin(`/${testOrganism}/submission/123/released`, options);
+            expectForceLogin(routes.sequenceEntryDetailsPage('LOC_000001Y.1'), options);
+            expectForceLogin('/seq/LOC_000001Y.1.fa', options);
+            expectForceLogin('/seq/LOC_000001Y.1/versions', options);
+            expectForceLogin('/seqsets/1.1', options);
+            expectForceLogin('/group/123', options);
+        });
+
+        test('should return false for pages without released data', () => {
+            expectNoLogin('/', options);
+            expectNoLogin('/docs', options);
+            expectNoLogin('/api-documentation', options);
+            expectNoLogin('/auth/callback', options);
+            expectNoLogin(`/${testOrganism}/submission/123`, options);
+            expectNoLogin('/unconfiguredOrganism/search', options);
+        });
+
+        test('should return false for file links, which answer with 401 themselves', () => {
+            expectNoLogin('/seq/LOC_000001Y.1/annotations/LOC_000001Y.1.embl', options);
+            expectNoLogin('/seq/LOC_000001Y.1/rawReads/reads.fastq.gz', options);
+        });
     });
 
-    test('should return true on routes which should force login', () => {
-        expectForceLogin('/user');
-        expectForceLogin('/user/someUsername');
-    });
-
-    test('should return false for various public routes', () => {
-        expectNoLogin(`/${testOrganism}/search`);
-        expectNoLogin(`/`);
-        expectNoLogin(`/${testOrganism}`);
-        expectNoLogin(routes.sequenceEntryDetailsPage('id_002156'));
-    });
-
-    function expectForceLogin(path: string) {
-        expect(shouldMiddlewareEnforceLogin(path, configuredOrganisms), path).toBe(true);
+    function expectForceLogin(path: string, options: { requireAuthenticationForData: boolean }) {
+        expect(shouldMiddlewareEnforceLogin(path, configuredOrganisms, options), path).toBe(true);
     }
 
-    function expectNoLogin(path: string) {
-        expect(shouldMiddlewareEnforceLogin(path, configuredOrganisms), path).toBe(false);
-    }
-});
-
-describe('isLapisDataRoute', () => {
-    test('should return true for all LAPIS-data-serving routes', () => {
-        expectIsDataRoute(`/${testOrganism}/search`);
-        expectIsDataRoute(`/${testOrganism}/search?query=1`);
-        expectIsDataRoute(`/${testOrganism}/submission/123/released`);
-        expectIsDataRoute(routes.sequenceEntryDetailsPage('LOC_000001Y.1'));
-        expectIsDataRoute('/seq/LOC_000001Y.1.fa');
-        expectIsDataRoute('/seq/LOC_000001Y.1/versions');
-        expectIsDataRoute('/seqsets/1.1');
-        expectIsDataRoute('/group/123');
-    });
-
-    test('should return false for non-data routes', () => {
-        expectIsNoDataRoute('/');
-        expectIsNoDataRoute('/user');
-        expectIsNoDataRoute('/docs');
-        expectIsNoDataRoute('/api-documentation');
-        expectIsNoDataRoute('/auth/callback');
-        expectIsNoDataRoute(`/${testOrganism}/submission/123`);
-        expectIsNoDataRoute('/unconfigured-organism/search');
-    });
-
-    test('should return false for file-proxy endpoints, which self-gate', () => {
-        expectIsNoDataRoute('/seq/LOC_000001Y.1/annotations/LOC_000001Y.1.embl');
-        expectIsNoDataRoute('/seq/LOC_000001Y.1/original_data/metadata.tsv');
-        // Detail pages and versions pages still require login.
-        expectIsDataRoute('/seq/LOC_000001Y.1');
-        expectIsDataRoute('/seq/LOC_000001Y.1/versions');
-    });
-
-    function expectIsDataRoute(path: string) {
-        expect(isLapisDataRoute(path, configuredOrganisms), path).toBe(true);
-    }
-
-    function expectIsNoDataRoute(path: string) {
-        expect(isLapisDataRoute(path, configuredOrganisms), path).toBe(false);
+    function expectNoLogin(path: string, options: { requireAuthenticationForData: boolean }) {
+        expect(shouldMiddlewareEnforceLogin(path, configuredOrganisms, options), path).toBe(false);
     }
 });

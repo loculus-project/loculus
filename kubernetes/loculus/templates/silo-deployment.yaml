@@ -110,7 +110,7 @@ spec:
               value: "/usr/local/bin/silo"
             - name: PREPROCESSING_CONFIG
               value: "/app/preprocessing_config.yaml"
-            {{- if $.Values.lapis.auth.enabled }}
+            {{- if $.Values.auth.requireAuthenticationForData }}
             - name: KEYCLOAK_TOKEN_URL
               value: {{ $keycloakTokenUrl | quote }}
             - name: KEYCLOAK_USERNAME

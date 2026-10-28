@@ -7,13 +7,6 @@ import { testServer } from '../../vitest.setup.ts';
 import type { Schema } from '../types/config.ts';
 import type { InsertionsResponse } from '../types/lapis.ts';
 
-vi.mock('../utils/KeycloakClientManager.ts', () => ({
-    // eslint-disable-next-line @typescript-eslint/naming-convention -- must match the real export
-    KeycloakClientManager: {
-        getClient: vi.fn(),
-    },
-}));
-
 const schema: Schema = {
     organismName: 'organism',
     metadata: [],

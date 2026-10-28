@@ -28,11 +28,11 @@ export type SequenceDetailsTableDataResult = Promise<Result<TableData | Redirect
 export const getSequenceDetailsTableData = async (
     accessionVersion: string,
     organism: string,
-    authorization?: string,
+    accessToken: string | undefined,
 ): SequenceDetailsTableDataResult => {
     const { accession, version } = parseAccessionVersionFromString(accessionVersion);
 
-    const lapisClient = LapisClient.createForOrganism(organism, authorization);
+    const lapisClient = LapisClient.createForOrganism(organism, accessToken);
     const backendClient = createBackendClient();
 
     if (version === undefined) {
@@ -49,7 +49,7 @@ export const getSequenceDetailsTableData = async (
     const [tableDataResult, sequenceEntryHistoryResult, dataUseHistoryResult] = await Promise.all([
         getTableData(accessionVersion, schema, referenceGenomesInfo, lapisClient),
         lapisClient.getAllSequenceEntryHistoryForAccession(accession),
-        backendClient.getDataUseTermsHistory(authorization, accession),
+        backendClient.getDataUseTermsHistory(accessToken, accession),
     ]);
 
     return Result.combine([tableDataResult, sequenceEntryHistoryResult, dataUseHistoryResult]).map(

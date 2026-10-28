@@ -36,15 +36,7 @@ export function backendClientHooks(clientConfig: ClientConfig) {
     return new ZodiosHooks('loculus', new Zodios(clientConfig.backendUrl, backendApi));
 }
 
-/**
- * React-query hooks for direct browser→LAPIS calls.
- *
- * `accessToken` (the logged-in user's token, passed down from the server-rendered pages like
- * in the submission flows) is attached as `Authorization: Bearer ...` header to every request;
- * without a token, requests are sent unauthenticated (deployments with LAPIS authentication
- * disabled).
- */
-export function lapisClientHooks(lapisUrl: string, accessToken?: string) {
+export function lapisClientHooks(lapisUrl: string, accessToken: string | undefined) {
     const zodiosHooks = new ZodiosHooks(
         'lapis',
         new Zodios(lapisUrl, lapisApi, {
@@ -147,7 +139,7 @@ export function seqSetCitationClientHooks(clientConfig: ClientConfig) {
 export function useSequenceEntryHistory(
     lapisUrl: string,
     accession: string | undefined,
-    accessToken?: string,
+    accessToken: string | undefined,
 ): UseQueryResult<SequenceEntryHistory, Error> {
     return useQuery({
         queryKey: ['sequence-entry-history', lapisUrl, accession, accessToken],

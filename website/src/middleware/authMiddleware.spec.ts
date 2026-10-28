@@ -6,11 +6,35 @@ const mocks = vi.hoisted(() => ({
     getClient: vi.fn(),
     loggerInfo: vi.fn(),
     shouldMiddlewareEnforceLogin: vi.fn(),
+    verifyToken: vi.fn(),
+}));
+
+vi.mock('jsonwebtoken', async (importOriginal) => {
+    const actual = await importOriginal<{ default: object }>();
+    return {
+        default: {
+            ...actual.default,
+            decode: () => ({ header: { kid: 'test-kid' } }),
+            verify: mocks.verifyToken,
+        },
+    };
+});
+
+vi.mock('jwks-rsa', () => ({
+    default: {
+        // eslint-disable-next-line @typescript-eslint/naming-convention -- must match the real export
+        JwksClient: class {
+            getSigningKey() {
+                return Promise.resolve({ getPublicKey: () => 'test-public-key' });
+            }
+        },
+    },
 }));
 
 vi.mock('../config.ts', () => ({
     getConfiguredOrganisms: () => [],
     getRuntimeConfig: () => ({
+        public: {},
         insecureCookies: false,
         oidcTransactionCookieSecret: 'test-oidc-transaction-cookie-secret',
     }),
@@ -60,12 +84,16 @@ describe('OIDC authentication middleware', () => {
             state: searchParams.get('state') ?? undefined,
         };
     });
+    const userinfo = vi.fn();
     const client = {
         callback,
         callbackParams,
+        userinfo,
         issuer: {
             metadata: {
                 issuer: 'https://auth.test/realms/loculus',
+                // eslint-disable-next-line @typescript-eslint/naming-convention
+                jwks_uri: 'https://auth.test/realms/loculus/protocol/openid-connect/certs',
             },
         },
     } as unknown as BaseClient;
@@ -216,5 +244,37 @@ describe('OIDC authentication middleware', () => {
         );
         expect(callback).not.toHaveBeenCalled();
         expect(consumeAuthRequest(cookies, 'expected-state')).toBeUndefined();
+    });
+
+    test('prevents shared caching of responses rendered for a logged-in user', async () => {
+        values.set('access_token', 'access-token');
+        values.set('refresh_token', 'refresh-token');
+        mocks.verifyToken.mockReturnValue({});
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        userinfo.mockResolvedValue({ sub: 'user-id', preferred_username: 'testuser' });
+        const context = {
+            url: new URL('https://loculus.test/seq/LOC_0001.1'),
+            cookies,
+            locals: {},
+        } as unknown as APIContext;
+        const next = vi.fn().mockResolvedValue(new Response('page'));
+
+        const response = (await authMiddleware(context, next)) as Response;
+
+        expect(context.locals.session?.isLoggedIn).toBe(true);
+        expect(response.headers.get('Cache-Control')).toBe('private, no-store');
+    });
+
+    test('leaves caching headers of anonymous responses untouched', async () => {
+        const context = {
+            url: new URL('https://loculus.test/seq/LOC_0001.1'),
+            cookies,
+            locals: {},
+        } as unknown as APIContext;
+        const next = vi.fn().mockResolvedValue(new Response('page'));
+
+        const response = (await authMiddleware(context, next)) as Response;
+
+        expect(response.headers.get('Cache-Control')).toBeNull();
     });
 });

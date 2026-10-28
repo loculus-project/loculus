@@ -15,13 +15,13 @@ export const GET: APIRoute = async ({ params, locals }) => {
     const { accessionVersion } = params as { accessionVersion: string };
     const { accession } = parseAccessionVersionFromString(accessionVersion);
 
-    const authorization = getAccessToken(locals.session);
+    const accessToken = getAccessToken(locals.session);
 
     const sequenceCitationsPromise = seqSetsAreEnabled()
-        ? SeqSetCitationClient.create().getSequenceCitations(authorization, accession)
+        ? SeqSetCitationClient.create().getSequenceCitations(accessToken, accession)
         : undefined;
 
-    const sequenceDetailsTableData = await findOrganismAndData(accessionVersion, authorization);
+    const sequenceDetailsTableData = await findOrganismAndData(accessionVersion, accessToken);
 
     if (sequenceDetailsTableData.isErr()) {
         logger.warn(

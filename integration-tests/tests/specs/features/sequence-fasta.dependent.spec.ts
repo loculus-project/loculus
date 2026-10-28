@@ -9,8 +9,7 @@ test.describe('Sequence FASTA endpoint', () => {
         const accessionVersions = await searchPage.waitForSequencesInSearch(1);
         const { accessionVersion } = accessionVersions[0];
 
-        // `page.request` shares the browser context's session cookies (the route is gated
-        // behind a login when LAPIS authentication is enabled).
+        // page.request shares the session cookies of the browser, needed with auth.requireAuthenticationForData
         const response = await page.request.get(`${baseURL}/seq/${accessionVersion}.fa`);
 
         expect(response.ok()).toBe(true);

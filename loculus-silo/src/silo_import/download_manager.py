@@ -133,7 +133,7 @@ def _download_file(
 
 
 # Type for download function (allows test mocking)
-DownloadFunc = Callable[..., HttpResponse]
+DownloadFunc = Callable[[str, Path, str | None, int, str | None], HttpResponse]
 
 
 class DownloadManager:
@@ -146,37 +146,6 @@ class DownloadManager:
     ) -> None:
         self.download_func = download_func or _download_file
         self.token_fetcher = token_fetcher
-
-    def _fetch_release(
-        self,
-        config: ImporterConfig,
-        data_path: Path,
-        last_etag: str,
-    ) -> HttpResponse:
-        """Download the release from the backend, attaching auth if configured."""
-        logger.info("Requesting released data from %s", config.released_data_endpoint)
-        kwargs = {}
-        if self.token_fetcher is not None:
-            kwargs["auth_token"] = self.token_fetcher.get_token()
-        response = self.download_func(
-            config.released_data_endpoint,
-            data_path,
-            last_etag,
-            300,
-            **kwargs,
-        )
-
-        if response.status_code >= BAD_REQUEST:
-            msg = (
-                f"Failed to download data: HTTP {response.status_code}."
-                f"Headers: {response.headers} Body: "
-                + data_path.read_text(encoding="utf-8", errors="replace")
-                if data_path.exists()
-                else "missing"
-            )
-            raise RuntimeError(msg)
-
-        return response
 
     def download_release(
         self,
@@ -209,7 +178,26 @@ class DownloadManager:
         transformed_path = download_dir / TRANSFORMED_DATA_FILENAME
 
         try:  # ruff:ignore[too-many-statements-in-try-clause]
-            response = self._fetch_release(config, data_path, last_etag)
+            # Download data from backend
+            logger.info("Requesting released data from %s", config.released_data_endpoint)
+            auth_token = self.token_fetcher.get_token() if self.token_fetcher is not None else None
+            response = self.download_func(
+                config.released_data_endpoint,
+                data_path,
+                last_etag,
+                300,
+                auth_token,
+            )
+
+            if response.status_code >= BAD_REQUEST:
+                msg = (
+                    f"Failed to download data: HTTP {response.status_code}."
+                    f"Headers: {response.headers} Body: "
+                    + data_path.read_text(encoding="utf-8", errors="replace")
+                    if data_path.exists()
+                    else "missing"
+                )
+                raise RuntimeError(msg)
 
             # Check for 304 Not Modified
             if response.status_code == 304:  # ruff:ignore[magic-value-comparison]
