@@ -19,9 +19,10 @@ beforeEach(() => {
 
 afterEach(() => vi.unstubAllGlobals());
 
-function callRoute(session: Session): Promise<Response> {
+function callRoute(session: Session, requestHeaders: Record<string, string> = {}): Promise<Response> {
     const params = { accessionVersion: 'LOC_0001.1', fileCategory: 'rawReads', fileName: 'reads.fastq.gz' };
-    return GET({ params, locals: { session } } as unknown as APIContext) as Promise<Response>;
+    const request = new Request('http://website/seq/LOC_0001.1/rawReads/reads.fastq.gz', { headers: requestHeaders });
+    return GET({ params, locals: { session }, request } as unknown as APIContext) as Promise<Response>;
 }
 
 const backendRequest = () => {
@@ -39,6 +40,21 @@ describe('file download proxy route', () => {
     test('sends an Authorization header with bearer token when logged in', async () => {
         await callRoute({ isLoggedIn: true, token: { accessToken: 'my-token', refreshToken: 'my-refresh-token' } });
         expect(authHeader()).toBe('Bearer my-token');
+    });
+
+    test('forwards a bearer token sent by the caller', async () => {
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        await callRoute({ isLoggedIn: false }, { Authorization: 'Bearer api-client-token' });
+        expect(authHeader()).toBe('Bearer api-client-token');
+    });
+
+    test("prefers the caller's bearer token over the session token", async () => {
+        await callRoute(
+            { isLoggedIn: true, token: { accessToken: 'my-token', refreshToken: 'my-refresh-token' } },
+            // eslint-disable-next-line @typescript-eslint/naming-convention
+            { Authorization: 'Bearer api-client-token' },
+        );
+        expect(authHeader()).toBe('Bearer api-client-token');
     });
 
     test('hands the S3 redirect to the browser rather than downloading the file itself', async () => {

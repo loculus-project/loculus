@@ -12,6 +12,7 @@ from pathlib import Path
 
 import requests
 
+from .auth import TokenFetcher
 from .config import ImporterConfig
 from .constants import (
     DATA_FILENAME,
@@ -86,6 +87,7 @@ def _download_file(
     output_path: Path,
     etag: str | None = None,
     timeout: int = 300,
+    auth_token: str | None = None,
 ) -> HttpResponse:
     """
     Download a file using requests.
@@ -95,6 +97,7 @@ def _download_file(
         output_path: Where to save the response body
         etag: Optional ETag for conditional request
         timeout: Request timeout in seconds
+        auth_token: Optional JWT sent as a Bearer token
 
     Returns:
         HttpResponse with status code and headers
@@ -105,6 +108,8 @@ def _download_file(
     headers = {}
     if etag and etag != "0":
         headers["If-None-Match"] = etag
+    if auth_token:
+        headers["Authorization"] = f"Bearer {auth_token}"
 
     try:  # ruff:ignore[too-many-statements-in-try-clause]
         session = requests.Session()
@@ -128,14 +133,19 @@ def _download_file(
 
 
 # Type for download function (allows test mocking)
-DownloadFunc = Callable[[str, Path, str | None, int], HttpResponse]
+DownloadFunc = Callable[[str, Path, str | None, int, str | None], HttpResponse]
 
 
 class DownloadManager:
     """Manages downloading and validating data releases."""
 
-    def __init__(self, download_func: DownloadFunc | None = None) -> None:
+    def __init__(
+        self,
+        download_func: DownloadFunc | None = None,
+        token_fetcher: TokenFetcher | None = None,
+    ) -> None:
         self.download_func = download_func or _download_file
+        self.token_fetcher = token_fetcher
 
     def download_release(
         self,
@@ -170,11 +180,13 @@ class DownloadManager:
         try:  # ruff:ignore[too-many-statements-in-try-clause]
             # Download data from backend
             logger.info("Requesting released data from %s", config.released_data_endpoint)
+            auth_token = self.token_fetcher.get_token() if self.token_fetcher is not None else None
             response = self.download_func(
                 config.released_data_endpoint,
                 data_path,
                 last_etag,
                 300,
+                auth_token,
             )
 
             if response.status_code >= BAD_REQUEST:

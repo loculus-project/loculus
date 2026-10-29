@@ -17,6 +17,8 @@ disableRawReadsProcessingService: false
 disableEnaSubmission: true
 auth:
   verifyEmail: false
+  # Exercise the stricter setup in e2e: released data is only available to authenticated users
+  requireAuthenticationForData: true
 host: localhost:3000
 insecureCookies: true
 allowLocalhostAuthRedirects: true

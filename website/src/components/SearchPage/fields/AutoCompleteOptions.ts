@@ -16,6 +16,7 @@ export type Option = {
 type GenericOptionsProvider = {
     type: 'generic';
     lapisUrl: string;
+    accessToken: string | undefined;
     lapisSearchParameters: LapisSearchParameters;
     fieldName: string;
 };
@@ -24,6 +25,7 @@ type GenericOptionsProvider = {
 type LineageOptionsProvider = {
     type: 'lineage';
     lapisUrl: string;
+    accessToken: string | undefined;
     lapisSearchParameters: LapisSearchParameters;
     fieldName: string;
     includeSublineages: boolean;
@@ -50,6 +52,7 @@ export type AutocompleteOptionsHook = () => {
 
 const createGenericOptionsHook = (
     lapisUrl: string,
+    accessToken: string | undefined,
     fieldName: string,
     lapisSearchParameters: LapisSearchParameters,
 ): AutocompleteOptionsHook => {
@@ -65,7 +68,7 @@ const createGenericOptionsHook = (
     const lapisParams = { fields: [fieldName], ...otherFields };
 
     return function hook() {
-        const { data, isPending, error, mutate } = lapisClientHooks(lapisUrl).useAggregated();
+        const { data, isPending, error, mutate } = lapisClientHooks(lapisUrl, accessToken).useAggregated();
 
         const options: Option[] = (data?.data ?? [])
             .filter(
@@ -164,6 +167,7 @@ function aggregateCounts(
 
 const createLineageOptionsHook = (
     lapisUrl: string,
+    accessToken: string | undefined,
     fieldName: string,
     lapisSearchParameters: LapisSearchParameters,
     includeSublineages: boolean,
@@ -187,13 +191,13 @@ const createLineageOptionsHook = (
             isPending: aggregatedEndpointIsPending,
             error: aggregatedEndpointError,
             mutate,
-        } = lapisClientHooks(lapisUrl).useAggregated();
+        } = lapisClientHooks(lapisUrl, accessToken).useAggregated();
 
         const {
             data: lineageDefinition,
             isLoading: definitionIsLoading,
             error: definitionEndpointError,
-        } = lapisClientHooks(lapisUrl).useLineageDefinition(
+        } = lapisClientHooks(lapisUrl, accessToken).useLineageDefinition(
             {
                 params: {
                     column: fieldName,
@@ -260,6 +264,7 @@ export const createOptionsProviderHook = (optionsProvider: OptionsProvider): Aut
             return useCallback(
                 createGenericOptionsHook(
                     optionsProvider.lapisUrl,
+                    optionsProvider.accessToken,
                     optionsProvider.fieldName,
                     optionsProvider.lapisSearchParameters,
                 ),
@@ -270,6 +275,7 @@ export const createOptionsProviderHook = (optionsProvider: OptionsProvider): Aut
             return useCallback(
                 createLineageOptionsHook(
                     optionsProvider.lapisUrl,
+                    optionsProvider.accessToken,
                     optionsProvider.fieldName,
                     optionsProvider.lapisSearchParameters,
                     optionsProvider.includeSublineages,

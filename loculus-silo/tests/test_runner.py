@@ -4,7 +4,7 @@ from __future__ import annotations
 import time
 from pathlib import Path
 from typing import Final
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from helpers import (
@@ -17,8 +17,10 @@ from helpers import (
     read_ndjson_file,
 )
 from silo_import import lineage
+from silo_import.auth import TokenFetcher
 from silo_import.config import HierarchicalServiceUrl, ImporterConfig, MetadataField
-from silo_import.download_manager import DownloadManager
+from silo_import.download_manager import DownloadManager, HttpResponse
+from silo_import.errors import NotModifiedError
 from silo_import.paths import ImporterPaths
 from silo_import.runner import ImporterRunner
 
@@ -293,3 +295,28 @@ def test_runner_skips_filter_refetch_when_taxa_unchanged(
 
     # Second run sees identical taxa → no second POST
     assert len(post_calls) == 1
+
+
+def test_download_manager_sends_token_from_token_fetcher(tmp_path: Path) -> None:
+    config = make_config(tmp_path)
+    paths = make_paths(tmp_path)
+    paths.ensure_directories()
+    token_fetcher = MagicMock(spec=TokenFetcher)
+    token_fetcher.get_token.return_value = "test-token"
+    received_tokens: list[str | None] = []
+
+    def download_func(
+        url: str,  # ruff:ignore[unused-function-argument]
+        output_path: Path,  # ruff:ignore[unused-function-argument]
+        etag: str | None,  # ruff:ignore[unused-function-argument]
+        timeout: int,  # ruff:ignore[unused-function-argument]
+        auth_token: str | None,
+    ) -> HttpResponse:
+        received_tokens.append(auth_token)
+        return HttpResponse(status_code=304, headers={})
+
+    manager = DownloadManager(download_func=download_func, token_fetcher=token_fetcher)
+    with pytest.raises(NotModifiedError):
+        manager.download_release(config, paths, 'W/"123"')
+
+    assert received_tokens == ["test-token"]

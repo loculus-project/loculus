@@ -76,7 +76,7 @@ export function RevisionDiff({
     referenceGenomesInfo,
 }: RevisionDiffProps) {
     const [hideUnchangedFields, setHideUnchangedFields] = useState(true);
-    const history = useSequenceEntryHistory(getLapisUrl(clientConfig, organism), current.accession);
+    const history = useSequenceEntryHistory(getLapisUrl(clientConfig, organism), current.accession, accessToken);
     const previousVersion = history.data ? getLatestAccessionVersionForRevision(history.data)?.version : undefined;
     const previous = backendClientHooks(clientConfig).useGetDataToEdit(
         {

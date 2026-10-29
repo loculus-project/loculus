@@ -54,6 +54,7 @@ describe('SingleChoiceAutoCompleteField', () => {
                 optionsProvider={{
                     type: 'generic',
                     lapisUrl,
+                    accessToken: undefined,
                     lapisSearchParameters,
                     fieldName: field.name,
                 }}
@@ -91,6 +92,7 @@ describe('SingleChoiceAutoCompleteField', () => {
                 optionsProvider={{
                     type: 'generic',
                     lapisUrl,
+                    accessToken: undefined,
                     lapisSearchParameters,
                     fieldName: field.name,
                 }}
@@ -121,6 +123,7 @@ describe('SingleChoiceAutoCompleteField', () => {
                 optionsProvider={{
                     type: 'generic',
                     lapisUrl,
+                    accessToken: undefined,
                     lapisSearchParameters,
                     fieldName: field.name,
                 }}
@@ -147,6 +150,7 @@ describe('SingleChoiceAutoCompleteField', () => {
                 optionsProvider={{
                     type: 'generic',
                     lapisUrl,
+                    accessToken: undefined,
                     lapisSearchParameters,
                     fieldName: field.name,
                 }}
@@ -178,6 +182,7 @@ describe('SingleChoiceAutoCompleteField', () => {
                 optionsProvider={{
                     type: 'generic',
                     lapisUrl,
+                    accessToken: undefined,
                     lapisSearchParameters,
                     fieldName: field.name,
                 }}
@@ -212,6 +217,7 @@ describe('SingleChoiceAutoCompleteField', () => {
                 optionsProvider={{
                     type: 'generic',
                     lapisUrl,
+                    accessToken: undefined,
                     lapisSearchParameters,
                     fieldName: field.name,
                 }}
@@ -244,6 +250,7 @@ describe('SingleChoiceAutoCompleteField', () => {
                 optionsProvider={{
                     type: 'generic',
                     lapisUrl,
+                    accessToken: undefined,
                     lapisSearchParameters,
                     fieldName: field.name,
                 }}
@@ -279,6 +286,7 @@ describe('SingleChoiceAutoCompleteField', () => {
                 optionsProvider={{
                     type: 'generic',
                     lapisUrl,
+                    accessToken: undefined,
                     lapisSearchParameters,
                     fieldName: field.name,
                 }}

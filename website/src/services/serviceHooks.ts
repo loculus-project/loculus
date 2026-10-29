@@ -17,6 +17,7 @@ import {
 import { problemDetail } from '../types/backend.ts';
 import { sequenceEntryHistory, type SequenceEntryHistory, type SequenceRequest } from '../types/lapis.ts';
 import type { ClientConfig } from '../types/runtimeConfig.ts';
+import { createAuthorizedAxiosInstance } from '../utils/createAuthorizedAxiosInstance.ts';
 import { fastaEntries } from '../utils/parseFasta.ts';
 import { isAlignedSequence, isUnalignedSequence, type SequenceType } from '../utils/sequenceTypeHelpers.ts';
 
@@ -35,8 +36,14 @@ export function backendClientHooks(clientConfig: ClientConfig) {
     return new ZodiosHooks('loculus', new Zodios(clientConfig.backendUrl, backendApi));
 }
 
-export function lapisClientHooks(lapisUrl: string) {
-    const zodiosHooks = new ZodiosHooks('lapis', new Zodios(lapisUrl, lapisApi, { transform: false }));
+export function lapisClientHooks(lapisUrl: string, accessToken: string | undefined) {
+    const zodiosHooks = new ZodiosHooks(
+        'lapis',
+        new Zodios(lapisUrl, lapisApi, {
+            axiosInstance: createAuthorizedAxiosInstance(accessToken),
+            transform: false,
+        }),
+    );
     return {
         // All POST hooks must include retry options manually to enable retries
         useAggregated: () => zodiosHooks.useAggregated({}, { ...LAPIS_RETRY_OPTIONS }),
@@ -132,11 +139,15 @@ export function seqSetCitationClientHooks(clientConfig: ClientConfig) {
 export function useSequenceEntryHistory(
     lapisUrl: string,
     accession: string | undefined,
+    accessToken: string | undefined,
 ): UseQueryResult<SequenceEntryHistory, Error> {
     return useQuery({
-        queryKey: ['sequence-entry-history', lapisUrl, accession],
+        queryKey: ['sequence-entry-history', lapisUrl, accession, accessToken],
         queryFn: async (): Promise<SequenceEntryHistory> => {
-            const client = new Zodios(lapisUrl, lapisApi, { transform: false });
+            const client = new Zodios(lapisUrl, lapisApi, {
+                axiosInstance: createAuthorizedAxiosInstance(accessToken),
+                transform: false,
+            });
 
             // @ts-expect-error Zod issue: https://github.com/colinhacks/zod/issues/3136
             const response = await client.details({

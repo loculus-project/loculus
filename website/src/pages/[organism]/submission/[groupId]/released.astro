@@ -52,6 +52,7 @@ const loadReleasedSequences = async (group: Group) => {
         referenceGenomesInfo,
         hiddenFieldValues,
         cleanedOrganism.key,
+        accessToken,
     );
     return { group, hiddenFieldValues, data, totalCount };
 };

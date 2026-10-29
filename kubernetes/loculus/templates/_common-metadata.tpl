@@ -632,7 +632,8 @@ fields:
 {{- $externalLapisUrlConfig := dict "lapisUrlTemplate" $lapisUrlTemplate "config" $.Values }}
             "backendUrl": "{{ include "loculus.backendUrl" . }}",
             "lapisUrls": {{- include "loculus.generateExternalLapisUrls" $externalLapisUrlConfig | fromYaml | toJson }},
-            "keycloakUrl":  "{{ include "loculus.keycloakUrl" . }}"
+            "keycloakUrl":  "{{ include "loculus.keycloakUrl" . }}",
+            "requireAuthenticationForData": {{ $.Values.auth.requireAuthenticationForData }}
 {{- end }}
 
 

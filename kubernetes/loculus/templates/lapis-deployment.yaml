@@ -36,6 +36,10 @@ spec:
             - containerPort: 8080
           args:
             - "--silo.url=http://loculus-silo-service-{{ $key }}:8081"
+            {{- if $.Values.auth.requireAuthenticationForData }}
+            - "--spring.security.oauth2.resourceserver.jwt.jwk-set-uri=http://loculus-keycloak-service:8083/realms/loculus/protocol/openid-connect/certs"
+            - {{ printf "--spring.security.oauth2.resourceserver.jwt.issuer-uri=%s/realms/loculus" (include "loculus.keycloakUrl" $ | trimSuffix "/") | quote }}
+            {{- end }}
           env:
             - name: JVM_OPTS
               value: -XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -XX:+UseG1GC -XX:MaxHeapFreeRatio=5 -XX:MinHeapFreeRatio=2 -XX:MaxGCPauseMillis=100
@@ -54,7 +58,12 @@ spec:
             failureThreshold: 36 # 3 minutes to start
           readinessProbe:
             httpGet:
+              {{- if $.Values.auth.requireAuthenticationForData }}
+              {{- /* /sample/info requires a token when authentication is on; /actuator/health stays public */}}
+              path: /actuator/health
+              {{- else }}
               path: /sample/info
+              {{- end }}
               port: 8080
             periodSeconds: 10
             failureThreshold: 3

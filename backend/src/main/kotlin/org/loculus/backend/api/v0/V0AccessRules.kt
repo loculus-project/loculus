@@ -36,9 +36,14 @@ private val adminEndpoints = arrayOf(
     "/admin/*",
 )
 
-fun v0AccessRules(auth: AuthorizeHttpRequestsConfigurer<HttpSecurity>.AuthorizationManagerRequestMatcherRegistry) {
-    auth.requestMatchers(HttpMethod.GET, *getEndpointsThatArePublic).permitAll()
-    auth.requestMatchers(HttpMethod.HEAD, *headEndpointsThatArePublic).permitAll()
+fun v0AccessRules(
+    auth: AuthorizeHttpRequestsConfigurer<HttpSecurity>.AuthorizationManagerRequestMatcherRegistry,
+    requireDataEndpointAuth: Boolean,
+) {
+    if (!requireDataEndpointAuth) {
+        auth.requestMatchers(HttpMethod.GET, *getEndpointsThatArePublic).permitAll()
+        auth.requestMatchers(HttpMethod.HEAD, *headEndpointsThatArePublic).permitAll()
+    }
     auth.requestMatchers(*endpointsForPreprocessingPipeline).hasAuthority(PREPROCESSING_PIPELINE)
     auth.requestMatchers(
         *endpointsForExternalMetadataUpdater,

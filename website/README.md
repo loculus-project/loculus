@@ -39,6 +39,17 @@ specified in the `CONFIG_DIR` environment variable:
 
 Check our tests and examples for working config files.
 
+### Authenticated data access
+
+With the Helm value `auth.requireAuthenticationForData` (`requireAuthenticationForData` in `runtime_config.json`),
+LAPIS and the backend's data endpoints only answer requests with a valid token. The website then:
+
+-   sends the logged-in user's access token with all LAPIS and backend data requests, server-side and from the browser,
+-   requires a login for the pages that show released data (see `shouldMiddlewareEnforceLogin.ts`),
+-   streams search page downloads through `/<organism>/lapis-download/...`, because links and forms cannot send the token.
+
+Without the flag, no token is needed and requests without a session are sent unauthenticated.
+
 ## Logging
 
 The website writes logs to stdout.

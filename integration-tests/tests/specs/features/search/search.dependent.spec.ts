@@ -1,5 +1,5 @@
 import { expect } from '@playwright/test';
-import { test } from '../../../fixtures/console-warnings.fixture';
+import { test } from '../../../fixtures/logged-in.fixture';
 import { SearchPage } from '../../../pages/search.page';
 
 test.describe('Search', () => {

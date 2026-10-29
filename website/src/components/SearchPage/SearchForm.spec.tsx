@@ -89,6 +89,7 @@ const renderSearchForm = ({
         fieldValues,
         setSomeFieldValues,
         lapisUrl: 'http://lapis.dummy.url',
+        accessToken: undefined,
         searchVisibilities,
         setASearchVisibility,
         referenceGenomesInfo: referenceGenomesInfo,
@@ -190,6 +191,7 @@ describe('SearchForm', () => {
                     fieldValues={{}}
                     setSomeFieldValues={setSomeFieldValues}
                     lapisUrl='http://lapis.dummy.url'
+                    accessToken={undefined}
                     searchVisibilities={defaultSearchVisibilities}
                     setASearchVisibility={setASearchVisibility}
                     referenceGenomesInfo={SINGLE_SEG_MULTI_REF_REFERENCEGENOMES}

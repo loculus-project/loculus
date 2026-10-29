@@ -15,6 +15,7 @@ and how they interact with each other and external participants.
 * Users can either
     * use the website to browse the data and download sequences
     * or use LAPIS directly to query the data (e.g. for automated analysis).
+      Deployments can require a token issued by the instance's Keycloak for this (`auth.requireAuthenticationForData`).
 * Submitters can 
   * log in via Keycloak 
   * submit new sequence data via the website
@@ -34,6 +35,7 @@ This diagram shows how Loculus utilizes
 
 * LAPIS provides an HTTP API to query the sequence data.
   * LAPIS is used by the website, but it can also be used by users directly. 
+    With `auth.requireAuthenticationForData`, LAPIS requires a Bearer token; the website sends the logged-in user's token.
 * The SILO API is a query engine that stores the data in memory to provide fast access.
   LAPIS accesses it via HTTP. 
 * The SILO preprocessing fetches data from the Loculus backend in a regular interval,

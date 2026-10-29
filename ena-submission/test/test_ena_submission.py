@@ -788,7 +788,10 @@ class DownloadFastqFilesTests(unittest.TestCase):
         response.__enter__.return_value = response
         response.__exit__.return_value = False
         response.iter_content.return_value = [content if content is not None else self.CONTENT]
-        with mock.patch("ena_deposition.call_loculus.requests.get", return_value=response):
+        with (
+            mock.patch("ena_deposition.call_loculus.requests.get", return_value=response),
+            mock.patch("ena_deposition.call_loculus.get_jwt", return_value="test-token"),
+        ):
             return download_fastq_files(
                 self.config, self._metadata(name), "LOC_0001TLY", self.tmp_dir
             )

@@ -670,7 +670,7 @@ def get_revisions(
         return revised_sequences
 
 
-def mock_download_file_side_effect(url: str, path: str, timeout: float) -> None:  # noqa: ARG001
+def mock_download_file_side_effect(url: str, path: str, timeout: float, config: Config) -> None:  # noqa: ARG001
     """Fake side effect for `download_file`: copy a fixture fastq instead of fetching from S3."""
     assert url.startswith(RAW_READS_URL_PREFIX), f"unexpected download url {url}"
     filename = url.rsplit("/", 1)[-1]

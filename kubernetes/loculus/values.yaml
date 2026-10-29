@@ -2863,6 +2863,7 @@ defaultOrganisms:
                 sequence: "[[URL:https://alejandra-gonzalezsanchez.github.io/loculus-evs/enterovirus/evd68/3D-evd68.fasta]]"
 auth:
   verifyEmail: false
+  requireAuthenticationForData: false
   resetPasswordAllowed: true
   registrationAllowed: true
 insecureCookies: false

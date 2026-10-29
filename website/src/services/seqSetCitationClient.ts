@@ -23,7 +23,35 @@ export class SeqSetCitationClient extends ZodiosWrapperClient<typeof seqSetCitat
         });
     }
 
-    public getAuthor(username: string) {
-        return this.call('getAuthor', { params: { username } });
+    public getAuthor(accessToken: string | undefined, username: string) {
+        return this.call('getAuthor', { headers: createAuthorizationHeader(accessToken), params: { username } });
+    }
+
+    public getSeqSetVersions(accessToken: string | undefined, seqSetId: string) {
+        return this.call('getSeqSetVersions', {
+            headers: createAuthorizationHeader(accessToken),
+            params: { seqSetId },
+        });
+    }
+
+    public getSeqSetRecords(accessToken: string | undefined, seqSetId: string, version: string) {
+        return this.call('getSeqSetRecords', {
+            headers: createAuthorizationHeader(accessToken),
+            params: { seqSetId, version },
+        });
+    }
+
+    public getSeqSetCitations(accessToken: string | undefined, seqSetId: string, version: string) {
+        return this.call('getSeqSetCitations', {
+            headers: createAuthorizationHeader(accessToken),
+            params: { seqSetId, version },
+        });
+    }
+
+    public getSequenceCitations(accessToken: string | undefined, accession: string) {
+        return this.call('getSequenceCitations', {
+            headers: createAuthorizationHeader(accessToken),
+            params: { accession }, // Display citations across all accession versions
+        });
     }
 }

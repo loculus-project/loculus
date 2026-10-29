@@ -30,6 +30,7 @@ const getAggregate = async (
 export const getSeqSetStatistics = async (
     accessions: string[],
     fieldOptions: string[],
+    accessToken: string | undefined,
 ): Promise<Result<AggregateRow[], ProblemDetail>> => {
     if (accessions.length === 0) {
         return ok([]);
@@ -42,7 +43,7 @@ export const getSeqSetStatistics = async (
     const organisms = getConfiguredOrganisms();
     const aggregateResponses = await Promise.all(
         organisms.flatMap((organism) => {
-            const client = LapisClient.createForOrganism(organism.key);
+            const client = LapisClient.createForOrganism(organism.key, accessToken);
             const schema = getSchema(organism.key);
 
             // Find the first field option that exists in the schema metadata, and skip if none are found

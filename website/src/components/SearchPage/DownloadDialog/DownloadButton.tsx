@@ -20,7 +20,7 @@ const CopyUrlButton: FC<{ url: string }> = ({ url }) => {
 
     const handleCopy = () => {
         navigator.clipboard
-            .writeText(url)
+            .writeText(new URL(url, window.location.href).href)
             .then(() => {
                 setCopied(true);
                 setTimeout(() => setCopied(false), 2000);

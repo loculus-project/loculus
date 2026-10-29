@@ -3,7 +3,7 @@ import json
 import logging
 import os
 import sys
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 import click
@@ -17,7 +17,7 @@ class Config:
     organism: str
     segmented: str
     nucleotide_sequences: list[str]
-    slack_hook: str
+    slack_hook: str = field(repr=False)
     backend_url: str
 
 

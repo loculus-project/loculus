@@ -210,6 +210,7 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
                 <SeqSetRecordsTableWithMetadata
                     seqSetRecords={getPaginatedSeqSetRecords()}
                     clientConfig={clientConfig}
+                    accessToken={accessToken}
                     fieldsToDisplay={fieldsToDisplay}
                     organismDisplayNames={organismDisplayNames}
                 />

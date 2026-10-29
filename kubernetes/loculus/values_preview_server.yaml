@@ -74,6 +74,8 @@ auth:
     from: "noreply@loculus.org"
     envelopeFrom: "noreply@loculus.org"
   verifyEmail: false
+  # Released data is only available to authenticated users (LAPIS and backend data endpoints)
+  requireAuthenticationForData: true
   resetPasswordAllowed: true
   registrationAllowed: true
   identityProviders:

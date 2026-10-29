@@ -19,6 +19,7 @@ import { TableColumnSelectorModal } from './TableColumnSelectorModal.tsx';
 import { useSearchPageState } from './useSearchPageState.ts';
 import { type QueryState } from './useStateSyncedWithUrlQueryParams.ts';
 import { getLapisUrl } from '../../config.ts';
+import { routes } from '../../routes/routes.ts';
 import { fetchDetailsFromLapis } from '../../services/lapisClientSideApi.ts';
 import { lapisClientHooks } from '../../services/serviceHooks.ts';
 import { DATA_USE_TERMS_FIELD, pageSize } from '../../settings';
@@ -159,12 +160,13 @@ const InnerSearchFullUI = ({
     const lapisUrl = getLapisUrl(clientConfig, organism);
     const downloadUrlGenerator = new DownloadUrlGenerator(
         organism,
-        lapisUrl,
+        // Links and form submissions cannot send the access token, so downloads then go through the website
+        clientConfig.requireAuthenticationForData === true ? routes.lapisDownloadProxy(organism) : lapisUrl,
         dataUseTermsEnabled,
         schema.richFastaHeaderFields,
     );
 
-    const hooks = lapisClientHooks(lapisUrl);
+    const hooks = lapisClientHooks(lapisUrl, accessToken);
     const aggregatedHook = hooks.useAggregated();
     const detailsHook = hooks.useDetails();
 
@@ -216,13 +218,17 @@ const InnerSearchFullUI = ({
     const linkOutSequenceCount = downloadFilter.sequenceCount() ?? totalSequences;
 
     const fetchAccessions = useCallback(async (): Promise<string[]> => {
-        const response = await fetchDetailsFromLapis(lapisUrl, {
-            ...lapisSearchParameters,
-            fields: [schema.primaryKey],
-            limit: MAX_SUBMITTED_DATA_DOWNLOAD_ENTRIES + 1,
-        });
+        const response = await fetchDetailsFromLapis(
+            lapisUrl,
+            {
+                ...lapisSearchParameters,
+                fields: [schema.primaryKey],
+                limit: MAX_SUBMITTED_DATA_DOWNLOAD_ENTRIES + 1,
+            },
+            accessToken,
+        );
         return response.data.map((item) => String(item[schema.primaryKey]));
-    }, [lapisUrl, lapisSearchParameters, schema.primaryKey]);
+    }, [lapisUrl, accessToken, lapisSearchParameters, schema.primaryKey]);
 
     const [oldData, setOldData] = useState<TableSequenceData[] | null>(null);
     const [oldCount, setOldCount] = useState<number | null>(null);
@@ -273,6 +279,7 @@ const InnerSearchFullUI = ({
                 <SearchForm
                     organism={organism}
                     clientConfig={clientConfig}
+                    accessToken={accessToken}
                     referenceGenomesInfo={referenceGenomesInfo}
                     fieldValues={fieldValues}
                     setSomeFieldValues={setSomeFieldValues}
@@ -398,17 +405,20 @@ const InnerSearchFullUI = ({
                                     fetchAccessions={fetchAccessions}
                                 />
                             )}
-                            {linkOuts !== undefined && linkOuts.length > 0 && (
-                                <LinkOutMenu
-                                    downloadUrlGenerator={downloadUrlGenerator}
-                                    sequenceFilter={downloadFilter}
-                                    sequenceCount={linkOutSequenceCount}
-                                    linkOuts={linkOuts}
-                                    dataUseTermsEnabled={dataUseTermsEnabled}
-                                    referenceGenomesInfo={referenceGenomesInfo}
-                                    referenceSelection={referenceSelection}
-                                />
-                            )}
+                            {/* External tools fetch the LAPIS URLs themselves and cannot authenticate */}
+                            {linkOuts !== undefined &&
+                                linkOuts.length > 0 &&
+                                clientConfig.requireAuthenticationForData !== true && (
+                                    <LinkOutMenu
+                                        downloadUrlGenerator={downloadUrlGenerator}
+                                        sequenceFilter={downloadFilter}
+                                        sequenceCount={linkOutSequenceCount}
+                                        linkOuts={linkOuts}
+                                        dataUseTermsEnabled={dataUseTermsEnabled}
+                                        referenceGenomesInfo={referenceGenomesInfo}
+                                        referenceSelection={referenceSelection}
+                                    />
+                                )}
                         </div>
                     </div>
 

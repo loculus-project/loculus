@@ -25,6 +25,38 @@ The configuration for the Helm chart is provided as a YAML file. It has the foll
 
 <SchemaDocs group='auth' fieldColumnClass='w-56' />
 
+### Authenticated data access
+
+Setting `auth.requireAuthenticationForData: true` makes released data available
+only to authenticated users and services. Any valid token issued by the
+instance's Keycloak realm is accepted; no roles are required.
+
+- **LAPIS** requires a Bearer token on all endpoints except health checks and
+  the API documentation.
+- **Backend** endpoints that are otherwise public (`get-released-data`,
+  `data-use-terms`, `groups`, `files/get` and the seqset and citation
+  endpoints) require a Bearer token.
+- **Website:** the pages that show released data (search, sequence pages,
+  seqsets, group pages) redirect anonymous visitors to the login page. The
+  homepage stays public but only shows sequence counts to logged-in users.
+  Downloads from the search page go through the website, which adds the
+  user's token. Link-outs to external tools are hidden, because those tools
+  fetch data from LAPIS themselves and cannot authenticate.
+- **Internal services:** the SILO importer and ENA deposition authenticate
+  with their service accounts.
+
+The flag cannot be combined with `fileSharing.outputFileUrlType: s3`, because
+public S3 links would bypass authentication, or with `readOnlyMode`, which
+disables login. With `outputFileUrlType: backend`,
+file links work with a token, but the website cannot show file sizes.
+
+Pages opened in the browser keep using the access token they were rendered
+with. If a page stays open longer than the access token lifetime (10 hours by
+default), reload it.
+
+See [Programmatic access](../programmatic-access/) for how API users obtain
+and use tokens.
+
 ## Database deployments
 
 <SchemaDocs group='db' fieldColumnClass='w-72' />

@@ -51,7 +51,7 @@ Keycloak is an [open-source identity and access management software](https://git
 
 ### LAPIS
 
-LAPIS is an [open-source software](https://github.com/GenSpectrum/LAPIS) for querying genomic sequences. It provides convenient APIs to filter and download data and get aggregated information. It uses [SILO](#silo) for the main computations. Users may directly use the LAPIS APIs to retrieve data and there is an [R package](https://github.com/GenSpectrum/lapisR) under development. In Loculus, there is a LAPIS instance for each [organism](#organism).
+LAPIS is an [open-source software](https://github.com/GenSpectrum/LAPIS) for querying genomic sequences. It provides convenient APIs to filter and download data and get aggregated information. It uses [SILO](#silo) for the main computations. Users may directly use the LAPIS APIs to retrieve data and there is an [R package](https://github.com/GenSpectrum/lapisR) under development. In Loculus, there is a LAPIS instance for each [organism](#organism). Instances can require a Bearer token for LAPIS requests; see [Programmatic access](../programmatic-access/).
 
 ### Metadata
 

@@ -10,6 +10,7 @@ import { getInstanceLogger } from '../logger.ts';
 import { routes } from '../routes/routes.ts';
 import { KeycloakClientManager } from '../utils/KeycloakClientManager.ts';
 import { authTransactionId, consumeAuthRequest } from '../utils/authRequestCookies.ts';
+import { getBearerToken } from '../utils/getAccessToken.ts';
 import { getLoginUrl } from '../utils/getLoginUrl.ts';
 import { shouldMiddlewareEnforceLogin } from '../utils/shouldMiddlewareEnforceLogin.ts';
 
@@ -70,11 +71,15 @@ async function getValidTokenAndUserInfoFromParams(context: APIContext, client: B
 export const authMiddleware = defineMiddleware(async (context, next) => {
     let token: TokenCookie | undefined;
     let userInfo;
+    const hasBearerToken = getBearerToken(context.request) !== undefined;
 
     if (getWebsiteConfig().readOnlyMode) {
+        // Read-only mode only blocks the pages that always need a login. The Helm chart rejects combining it with
+        // auth.requireAuthenticationForData, since nobody could log in to see the data pages.
         const enforceLogin = shouldMiddlewareEnforceLogin(
             context.url.pathname,
             getConfiguredOrganisms().map((it) => it.key),
+            { requireAuthenticationForData: false, hasBearerToken },
         );
         if (enforceLogin) {
             return context.redirect('/503?service=readonly');
@@ -106,6 +111,10 @@ export const authMiddleware = defineMiddleware(async (context, next) => {
     const enforceLogin = shouldMiddlewareEnforceLogin(
         context.url.pathname,
         getConfiguredOrganisms().map((it) => it.key),
+        {
+            requireAuthenticationForData: getRuntimeConfig().public.requireAuthenticationForData === true,
+            hasBearerToken,
+        },
     );
 
     if (enforceLogin && (userInfo === undefined || userInfo.isErr())) {
@@ -145,8 +154,21 @@ export const authMiddleware = defineMiddleware(async (context, next) => {
         token,
     };
 
-    return next();
+    return preventSharedCaching(await next());
 });
+
+/**
+ * Pages rendered for a logged-in user embed the user's access token (it is passed to the React components),
+ * so shared caches (CDNs, proxies) must never store them.
+ */
+function preventSharedCaching(response: Response) {
+    try {
+        response.headers.set('Cache-Control', 'private, no-store');
+    } catch {
+        // Some responses (e.g. from Response.redirect()) have immutable headers; they don't contain a token.
+    }
+    return response;
+}
 
 async function getTokenFromCookie(context: APIContext, client: BaseClient) {
     const accessToken = context.cookies.get(ACCESS_TOKEN_COOKIE)?.value;

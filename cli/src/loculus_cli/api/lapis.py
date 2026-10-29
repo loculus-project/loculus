@@ -5,6 +5,7 @@ from typing import Any
 import httpx
 from pydantic import ValidationError
 
+from ..auth.client import AuthClient
 from ..utils.console import get_stderr_console
 from .models import LapisAggregatedResponse, LapisResponse, LapisSequenceResponse
 
@@ -12,14 +13,31 @@ from .models import LapisAggregatedResponse, LapisResponse, LapisSequenceRespons
 class LapisClient:
     """Client for LAPIS API."""
 
-    def __init__(self, lapis_url: str):
+    def __init__(
+        self,
+        lapis_url: str,
+        auth_client: AuthClient | None = None,
+        username: str | None = None,
+    ):
         self.lapis_url = lapis_url
+        # Instances with auth.requireAuthenticationForData require a Keycloak-issued
+        # token on all LAPIS requests. The same token the CLI uses for backend requests
+        # is accepted by LAPIS; when no user is logged in, no Authorization header is
+        # sent, which works on instances that don't require authentication for data.
+        self.auth_client = auth_client
+        self.username = username
         self.client = httpx.Client(
             base_url=lapis_url,
             timeout=60.0,  # LAPIS queries can take longer
             follow_redirects=True,
         )
         self.stderr_console = get_stderr_console()
+
+    def _get_auth_headers(self) -> dict[str, str]:
+        """Get Authorization headers if a user is logged in."""
+        if self.auth_client is not None and self.username:
+            return self.auth_client.get_auth_headers(self.username)
+        return {}
 
     def _log_request(self, response: httpx.Response) -> None:
         """Log the API request to stderr."""
@@ -57,7 +75,9 @@ class LapisClient:
             params["fields"] = ",".join(fields)
 
         try:
-            response = self.client.get(url, params=params)
+            response = self.client.get(
+                url, params=params, headers=self._get_auth_headers()
+            )
             self._log_request(response)
             response.raise_for_status()
             return LapisResponse.model_validate(response.json())
@@ -89,7 +109,9 @@ class LapisClient:
             params["orderBy"] = order_by
 
         try:
-            response = self.client.get(url, params=params)
+            response = self.client.get(
+                url, params=params, headers=self._get_auth_headers()
+            )
             self._log_request(response)
             response.raise_for_status()
             return LapisAggregatedResponse.model_validate(response.json())
@@ -132,7 +154,7 @@ class LapisClient:
 
         try:
             # Request FASTA format
-            headers = {"Accept": "text/x-fasta"}
+            headers = {"Accept": "text/x-fasta", **self._get_auth_headers()}
             response = self.client.get(url, params=params, headers=headers)
             self._log_request(response)
             response.raise_for_status()
@@ -209,7 +231,7 @@ class LapisClient:
 
         try:
             # Request FASTA format
-            headers = {"Accept": "text/x-fasta"}
+            headers = {"Accept": "text/x-fasta", **self._get_auth_headers()}
             response = self.client.get(url, params=params, headers=headers)
             self._log_request(response)
             response.raise_for_status()

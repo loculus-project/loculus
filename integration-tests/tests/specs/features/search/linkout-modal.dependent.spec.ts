@@ -1,6 +1,7 @@
 import { expect } from '@playwright/test';
-import { test } from '../../../fixtures/console-warnings.fixture';
+import { test } from '../../../fixtures/logged-in.fixture';
 import { SearchPage } from '../../../pages/search.page';
+import { isAuthenticationForDataRequired } from '../../../utils/dataAuthentication';
 
 async function mockWindowOpen(page: import('@playwright/test').Page) {
     await page.evaluate(() => {
@@ -20,6 +21,14 @@ async function getOpenedUrls(page: import('@playwright/test').Page) {
 }
 
 test.describe('Search linkout data use terms modal', () => {
+    test.beforeEach(async ({ page }) => {
+        // Link-outs are hidden then, see data-authentication.dependent.spec.ts
+        test.skip(
+            await isAuthenticationForDataRequired(page.request),
+            'auth.requireAuthenticationForData is on',
+        );
+    });
+
     test('can be opened, closed, and launched with both data-use options', async ({ page }) => {
         const searchPage = new SearchPage(page);
         await searchPage.ebolaSudan();

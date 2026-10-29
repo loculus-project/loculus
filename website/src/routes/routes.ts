@@ -16,6 +16,7 @@ export const routes = {
     apiDocumentationPage: () => '/api-documentation',
     organismStartPage: (organism: string) => `/${organism}`,
     searchPage: (organism: string) => withOrganism(organism, `/search`),
+    lapisDownloadProxy: (organism: string) => withOrganism(organism, `/lapis-download`),
     metadataTemplate: (organism: string, format: UploadAction, fileType: TemplateFileType) =>
         withOrganism(organism, `/submission/template?format=${format}&fileType=${fileType}`),
     metadataOverview: (organism: string) => withOrganism(organism, `/metadata-overview`),

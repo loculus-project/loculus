@@ -13,5 +13,5 @@ You can find the exact API host URLs on the "API Documentation" page of the inst
 ## Which APIs should you use?
 
 - **Backend:** The backend service is the central service. It should be used for data submission and submitting group management and is also the API that the preprocessing pipeline talks to.
-- **LAPIS:** The [LAPIS service](https://github.com/GenSpectrum/LAPIS) contains the released data and should be used to query and download data.
+- **LAPIS:** The [LAPIS service](https://github.com/GenSpectrum/LAPIS) contains the released data and should be used to query and download data. Instances can require a Bearer token for LAPIS requests; see [Programmatic access](../../reference/programmatic-access/).
 - **Keycloak:** The [Keycloak](https://www.keycloak.org/) service is used for authentication and should be used to obtain authentication tokens and user profile management.

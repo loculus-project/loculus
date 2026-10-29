@@ -12,5 +12,8 @@ This describes important decisions that were made to solve the problem:
   LAPIS is a separate HTTP API.
   The backend and the preprocessing pipeline enrich and validate the uploaded data such that it can safely be loaded into LAPIS/SILO.
   Whenever users access sequence data, the primary data source should be LAPIS.
+  Deployments can require that released data is only accessed by authenticated principals (Helm value `auth.requireAuthenticationForData`):
+  LAPIS and the backend's otherwise public data endpoints then accept any valid token of the instance's Keycloak realm, without role checks.
+  The website requires a login for its data pages and sends the user's token with its requests; internal services use their service accounts.
 * The **website** provides a **user-friendly interface** to interact with the data.
   But we designed Loculus such that it can also be used through the API directly.

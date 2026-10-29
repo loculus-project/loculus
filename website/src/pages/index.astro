@@ -3,17 +3,24 @@ import Faq from '../components/IndexPage/FAQ.mdx';
 import OrganismCardGrid from '../components/IndexPage/OrganismCardGrid.astro';
 import WelcomeMessage from '../components/IndexPage/WelcomeMessage.astro';
 import { getOrganismStatisticsMap } from '../components/IndexPage/getOrganismStatistics';
-import { getConfiguredOrganisms, getWebsiteConfig } from '../config';
+import { getConfiguredOrganisms, getRuntimeConfig, getWebsiteConfig } from '../config';
 import BaseLayout from '../layouts/BaseLayout.astro';
+import { getAccessToken } from '../utils/getAccessToken';
 const websiteConfig = getWebsiteConfig();
 const { name: websiteName, welcomeMessageHTML } = websiteConfig;
 import '../styles/mdcontainer.css';
 
 const numberDaysAgoStatistics = 30;
-const organismStatisticsMap = await getOrganismStatisticsMap(
-    getConfiguredOrganisms().map((organism) => organism.key),
-    numberDaysAgoStatistics,
-);
+const accessToken = getAccessToken(Astro.locals.session);
+// The homepage stays public; without a token, LAPIS would reject the statistics requests.
+const showStatistics = accessToken !== undefined || getRuntimeConfig().public.requireAuthenticationForData !== true;
+const organismStatisticsMap = showStatistics
+    ? await getOrganismStatisticsMap(
+          getConfiguredOrganisms().map((organism) => organism.key),
+          numberDaysAgoStatistics,
+          accessToken,
+      )
+    : new Map();
 ---
 
 <BaseLayout title='Home'>

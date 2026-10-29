@@ -4,6 +4,7 @@ import logging
 import shutil
 import time
 
+from .auth import TokenFetcher
 from .config import ImporterConfig, MetadataField
 from .constants import SPECIAL_ETAG_NONE
 from .download_manager import DownloadManager
@@ -28,7 +29,14 @@ class ImporterRunner:
         self.paths.ensure_directories()
         self._clear_download_directories()
         self.silo = SiloRunner(paths.silo_binary, paths.preprocessing_config)
-        self.download_manager = DownloadManager()
+        token_fetcher = None
+        if config.keycloak_token_url:
+            token_fetcher = TokenFetcher(
+                config.keycloak_token_url,
+                config.keycloak_username or "",
+                config.keycloak_password or "",
+            )
+        self.download_manager = DownloadManager(token_fetcher=token_fetcher)
         self.current_etag = SPECIAL_ETAG_NONE
         self.last_hard_refresh: float = 0
         self.hierarchical_filter_values: dict[MetadataField, set[str]] = {}

@@ -31,6 +31,7 @@ const MODE_CONFIGS: Record<HierarchicalFieldMode, ModeConfig> = {
 
 interface HierarchicalFieldProps {
     lapisUrl: string;
+    accessToken: string | undefined;
     lapisSearchParameters: LapisSearchParameters;
     field: MetadataFilter;
     fieldValue: string;
@@ -43,6 +44,7 @@ export const HierarchicalField: FC<HierarchicalFieldProps> = ({
     fieldValue,
     setSomeFieldValues,
     lapisUrl,
+    accessToken,
     lapisSearchParameters,
     mode = 'default',
 }) => {
@@ -87,6 +89,7 @@ export const HierarchicalField: FC<HierarchicalFieldProps> = ({
                 optionsProvider={{
                     type: 'lineage',
                     lapisUrl,
+                    accessToken,
                     lapisSearchParameters,
                     fieldName: field.name,
                     includeSublineages,
