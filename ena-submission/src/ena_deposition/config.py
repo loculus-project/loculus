@@ -5,7 +5,7 @@ from enum import StrEnum
 
 import dotenv
 import yaml
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from ena_deposition.ena_types import MoleculeType, Topology
 
@@ -97,11 +97,11 @@ class Config(BaseModel):
     keycloak_token_url: str
     keycloak_client_id: str
     username: str
-    password: str
+    password: str = Field(repr=False)
 
     # Details for connecting to the ENA submission state database
     db_username: str
-    db_password: str
+    db_password: str = Field(repr=False)
     db_url: str
     db_name: str
 
@@ -112,7 +112,7 @@ class Config(BaseModel):
     # ENA specific configuration is set in secure_ena_connection()
     test: bool
     ena_submission_url: str
-    ena_submission_password: str
+    ena_submission_password: str = Field(repr=False)
     ena_submission_username: str
     ena_reports_service_url: str
     submit_to_ena_prod: bool = False
@@ -126,8 +126,8 @@ class Config(BaseModel):
     suppressed_list_test_url: str | None
 
     # Slack configuration must be provided via environment variables or config
-    slack_hook: str | None
-    slack_token: str | None
+    slack_hook: str | None = Field(repr=False)
+    slack_token: str | None = Field(repr=False)
     slack_channel_id: str | None
 
     enaOrganisms: dict[EnaOrganismName, EnaOrganismDetails]  # noqa: N815
