@@ -80,6 +80,18 @@ def test_config_reads_keycloak_credentials(monkeypatch: pytest.MonkeyPatch) -> N
     assert config.keycloak_password == "password"  # ruff:ignore[hardcoded-password-string]
 
 
+def test_config_repr_does_not_leak_keycloak_password(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("BACKEND_BASE_URL", "http://example.com/base")
+    monkeypatch.setenv("KEYCLOAK_TOKEN_URL", "http://keycloak/token")
+    monkeypatch.setenv("KEYCLOAK_USERNAME", "user")
+    monkeypatch.setenv("KEYCLOAK_PASSWORD", "s3cret-value")
+
+    config = ImporterConfig.from_env()
+
+    assert "s3cret-value" not in repr(config)
+    assert "s3cret-value" not in str(config)
+
+
 def test_config_requires_keycloak_credentials_with_token_url(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

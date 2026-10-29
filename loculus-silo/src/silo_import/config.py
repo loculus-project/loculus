@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 MetadataField = str
@@ -22,7 +22,7 @@ class ImporterConfig:
     hierarchical_filters: dict[MetadataField, HierarchicalServiceUrl] | None = None
     keycloak_token_url: str | None = None
     keycloak_username: str | None = None
-    keycloak_password: str | None = None
+    keycloak_password: str | None = field(default=None, repr=False)
 
     @classmethod
     def from_env(cls) -> ImporterConfig:
