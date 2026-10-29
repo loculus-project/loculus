@@ -114,7 +114,7 @@ class Config(BaseModel):
     backend_host: str = ""  # base API URL and organism - populated in get_config if left empty
     keycloak_host: str = "http://127.0.0.1:8083"
     keycloak_user: str = "preprocessing_pipeline"
-    keycloak_password: str = "preprocessing_pipeline"  # noqa: S105
+    keycloak_password: str = Field(default="preprocessing_pipeline", repr=False)  # noqa: S105
     keycloak_token_path: str = "realms/loculus/protocol/openid-connect/token"  # noqa: S105
 
     organism: str = "mpox"
