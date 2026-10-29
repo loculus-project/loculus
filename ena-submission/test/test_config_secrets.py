@@ -1,3 +1,5 @@
+# ruff: noqa: S101 (allow asserts in tests)
+
 import pytest
 from ena_deposition.config import Config
 
