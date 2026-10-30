@@ -1,9 +1,9 @@
-import MUIPagination from '@mui/material/Pagination';
 import { type FC, type MouseEvent, useState, useMemo } from 'react';
 
 import useClientFlag from '../../hooks/isClient';
 import { routes } from '../../routes/routes';
 import type { SeqSet } from '../../types/seqSetCitation';
+import { Pagination } from '../common/Pagination';
 import MdiTriangle from '~icons/mdi/triangle';
 import MdiTriangleDown from '~icons/mdi/triangle-down';
 
@@ -100,7 +100,7 @@ export const SeqSetList: FC<SeqSetListProps> = ({ seqSets }) => {
         window.location.href = routes.seqSetPage(`${seqSetId}.${seqSetVersion}`);
     };
 
-    const handleChangePage = (_: unknown, newPage: number) => {
+    const handleChangePage = (newPage: number) => {
         setPage(newPage);
     };
 
@@ -194,13 +194,10 @@ export const SeqSetList: FC<SeqSetListProps> = ({ seqSets }) => {
             {seqSets.length === 0 ? (
                 <p className='px-8 py-8'> You have no SeqSets yet. </p>
             ) : (
-                <MUIPagination
+                <Pagination
                     className='py-4 w-full flex justify-center'
                     page={page}
                     count={getMaxPages()}
-                    color='primary'
-                    variant='outlined'
-                    shape='rounded'
                     onChange={handleChangePage}
                 />
             )}

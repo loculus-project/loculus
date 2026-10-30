@@ -1,4 +1,3 @@
-import MUIPagination from '@mui/material/Pagination';
 import { AxiosError } from 'axios';
 import { type FC, useState } from 'react';
 import { toast } from 'react-toastify';
@@ -17,6 +16,7 @@ import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader
 import { getThemeColor } from '../../utils/getThemeColor';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { Button } from '../common/Button.tsx';
+import { Pagination } from '../common/Pagination.tsx';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 import MdiDotsGrid from '~icons/mdi/dots-grid';
 import MdiViewGrid from '~icons/mdi/view-grid';
@@ -214,14 +214,11 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
                     organismDisplayNames={organismDisplayNames}
                 />
                 {getMaxPages() > 1 ? (
-                    <MUIPagination
+                    <Pagination
                         className='my-4 w-full flex justify-center'
                         page={page}
                         count={getMaxPages()}
-                        color='primary'
-                        variant='outlined'
-                        shape='rounded'
-                        onChange={(_, newPage) => {
+                        onChange={(newPage) => {
                             setPage(newPage);
                         }}
                     />
