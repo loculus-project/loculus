@@ -28,7 +28,7 @@ from .datatypes import (
     FastaId,
     GeneName,
     GenericSequence,
-    NextcladeDataset,
+    NextcladeDatasetInfo,
     NucleotideInsertion,
     NucleotideSequence,
     ProcessingAnnotation,
@@ -808,8 +808,8 @@ def enrich_with_nextclade(  # noqa: PLR0914
     segment_assignment_map = batch.sequenceNameToFastaId
     alerts: Alerts = batch.alerts
 
-    nextclade_datasets: dict[AccessionVersion, dict[SegmentName, NextcladeDataset]] = defaultdict(
-        dict
+    nextclade_datasets: dict[AccessionVersion, dict[SequenceName, NextcladeDatasetInfo]] = (
+        defaultdict(dict)
     )
     aligned_nucleotide_sequences: dict[
         AccessionVersion, dict[SegmentName, NucleotideSequence | None]
@@ -843,7 +843,11 @@ def enrich_with_nextclade(  # noqa: PLR0914
                 continue
 
             if sequence_and_dataset.nextclade_dataset_name:
-                dataset = NextcladeDataset(
+                server = (
+                    sequence_and_dataset.nextclade_dataset_server or config.nextclade_dataset_server
+                )
+                dataset = NextcladeDatasetInfo(
+                    server=server,
                     name=sequence_and_dataset.nextclade_dataset_name,
                     tag=read_dataset_tag(f"{dataset_dir}/{name}")
                     or sequence_and_dataset.nextclade_dataset_tag,
