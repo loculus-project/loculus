@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 from typing import Any, Final, Literal, cast
 
 import pytz
+from pydantic import SecretStr
 from sqlalchemy import (
     DateTime,
     Engine,
@@ -56,8 +57,10 @@ def convert_jdbc_to_psycopg2(jdbc_url: str) -> str:
     return f"postgresql+psycopg2://{host}:{port}/{dbname}"
 
 
-def db_init(db_password_default: str, db_username_default: str, db_url_default: str) -> Engine:
-    db_password = os.getenv("DB_PASSWORD") or db_password_default
+def db_init(
+    db_password_default: SecretStr, db_username_default: str, db_url_default: str
+) -> Engine:
+    db_password = os.getenv("DB_PASSWORD") or db_password_default.get_secret_value()
     db_username = os.getenv("DB_USERNAME") or db_username_default
     db_url = os.getenv("DB_URL") or db_url_default
 

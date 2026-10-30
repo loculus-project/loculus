@@ -239,7 +239,7 @@ def send_slack_notification_with_file(
     Path(output_file).write_text(json.dumps(entries_to_submit), encoding="utf-8")
 
     logger.info("Sending slack notification with file")
-    if not slack_config.slack_hook:
+    if not slack_config.slack_hook.get_secret_value():
         logger.info("Could not find slack hook, cannot send message")
         return
     try:
