@@ -26,7 +26,7 @@ def update_lineage_definitions(
         # required for dummy organisms
         logger.info("No pipeline version found; writing empty lineage definitions")
         for lineage in config.lineage_definitions:
-            _write_text(paths.input_dir / f"{lineage}.yaml", "{}\n")
+            _write_text(paths.lineage_definition_path(lineage), "{}\n")
         return
 
     for lineage, item in config.lineage_definitions.items():
@@ -40,7 +40,7 @@ def update_lineage_definitions(
 
         logger.info("Downloading lineage definitions for pipeline version %s", pipeline_version)
         try:
-            _download_lineage_file(lineage_url, paths.input_dir / f"{lineage}.yaml")
+            _download_lineage_file(lineage_url, paths.lineage_definition_path(lineage))
         except requests.RequestException as exc:
             msg = f"Failed to download lineage definitions: {exc}"
             raise RuntimeError(msg) from exc
@@ -72,7 +72,7 @@ def fetch_updated_hierarchy(
     service_url: HierarchicalServiceUrl,
     paths: ImporterPaths,
 ) -> None:
-    destination = paths.input_dir / f"{file_base}.yaml"
+    destination = paths.lineage_definition_path(file_base)
     if not values:
         logger.info("No values for filter '%s'; writing empty file", file_base)
         _write_text(destination, "{}\n")

@@ -17,8 +17,6 @@ class ImporterConfig:
     poll_interval: int
     silo_run_timeout: int
     root_dir: Path
-    silo_binary: Path
-    preprocessing_config: Path
     hierarchical_filters: dict[MetadataField, HierarchicalServiceUrl] | None = None
 
     @classmethod
@@ -58,10 +56,6 @@ class ImporterConfig:
         silo_run_timeout = int(env.get("SILO_RUN_TIMEOUT_SECONDS", "3600"))
         root_raw = env.get("ROOT_DIR")
         root_dir = Path(root_raw).resolve() if root_raw else Path("/")
-        silo_binary = Path(env.get("PATH_TO_SILO_BINARY", "/usr/local/bin/silo"))
-        preprocessing_config = Path(
-            env.get("PREPROCESSING_CONFIG", "/app/preprocessing_config.yaml")
-        )
 
         return cls(
             backend_base_url=backend_base_url.rstrip("/"),
@@ -70,14 +64,17 @@ class ImporterConfig:
             poll_interval=poll_interval,
             silo_run_timeout=silo_run_timeout,
             root_dir=root_dir,
-            silo_binary=silo_binary,
-            preprocessing_config=preprocessing_config,
             hierarchical_filters=hierarchical_filters,
         )
 
     @property
     def released_data_endpoint(self) -> str:
         return f"{self.backend_base_url}/get-released-data?compression=zstd"
+
+    @property
+    def lineage_names(self) -> list[str]:
+        """Names of all lineage definition files the importer writes to the input directory."""
+        return [*(self.lineage_definitions or {}), *(self.hierarchical_filters or {})]
 
 
 def _parse_hierarchical_filters(

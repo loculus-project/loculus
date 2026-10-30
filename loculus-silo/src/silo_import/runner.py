@@ -14,7 +14,7 @@ from .errors import (
     RecordCountMismatchError,
 )
 from .filesystem import prune_timestamped_directories, safe_remove
-from .instruct_silo import SiloRunner
+from .instruct_silo import PreprocessingInputs, SiloRunner
 from .lineage import update_hierarchical_filters, update_lineage_definitions
 from .paths import ImporterPaths
 
@@ -27,7 +27,17 @@ class ImporterRunner:
         self.paths = paths
         self.paths.ensure_directories()
         self._clear_download_directories()
-        self.silo = SiloRunner(paths.silo_binary, paths.preprocessing_config)
+        self.silo = SiloRunner(
+            PreprocessingInputs(
+                database_config=paths.database_config_path,
+                reference_genomes=paths.reference_genomes_path,
+                input_file=paths.silo_input_data_path,
+                lineage_definitions=[
+                    paths.lineage_definition_path(name) for name in config.lineage_names
+                ],
+                output_dir=paths.output_dir,
+            )
+        )
         self.download_manager = DownloadManager()
         self.current_etag = SPECIAL_ETAG_NONE
         self.last_hard_refresh: float = 0

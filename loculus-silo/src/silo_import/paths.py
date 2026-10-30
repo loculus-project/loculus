@@ -4,6 +4,8 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from .constants import (
+    DATABASE_CONFIG_FILENAME,
+    REFERENCE_GENOMES_FILENAME,
     TRANSFORMED_DATA_FILENAME,
 )
 
@@ -14,11 +16,11 @@ class ImporterPaths:
     input_dir: Path
     output_dir: Path
     silo_input_data_path: Path
-    silo_binary: Path
-    preprocessing_config: Path
+    database_config_path: Path
+    reference_genomes_path: Path
 
     @classmethod
-    def from_root(cls, root: Path, silo_binary: Path, preprocessing_config: Path) -> ImporterPaths:
+    def from_root(cls, root: Path) -> ImporterPaths:
         preprocessing_dir = (root / "preprocessing").resolve()
         input_dir = preprocessing_dir / "input"
         output_dir = preprocessing_dir / "output"
@@ -27,9 +29,12 @@ class ImporterPaths:
             input_dir=input_dir,
             output_dir=output_dir,
             silo_input_data_path=input_dir / TRANSFORMED_DATA_FILENAME,
-            silo_binary=silo_binary,
-            preprocessing_config=preprocessing_config,
+            database_config_path=input_dir / DATABASE_CONFIG_FILENAME,
+            reference_genomes_path=input_dir / REFERENCE_GENOMES_FILENAME,
         )
+
+    def lineage_definition_path(self, lineage_name: str) -> Path:
+        return self.input_dir / f"{lineage_name}.yaml"
 
     def ensure_directories(self) -> None:
         self.input_dir.mkdir(parents=True, exist_ok=True)

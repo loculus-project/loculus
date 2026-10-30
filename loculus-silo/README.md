@@ -3,7 +3,7 @@
 Python service that retrieves released datasets from the Loculus backend, transforms them
 for SILO, and runs SILO preprocessing directly.
 
-The importer downloads data from the Loculus backend, [transforms it into the format required by SILO](https://github.com/GenSpectrum/LAPIS-SILO/tree/main/tools/legacyNdjsonTransformer), and runs SILO preprocessing only if the following conditions hold:
+The importer downloads data from the Loculus backend, [transforms it into the format required by SILO](https://github.com/GenSpectrum/LAPIS-SILO/tree/main/tools/legacyNdjsonTransformer), and runs SILO preprocessing through the [RhyDB python bindings](https://github.com/RhyOrg/RhyDB/blob/main/documentation/python_bindings.md) only if the following conditions hold:
 
 1. The data is in a valid format (e.g. ndjson format where each line is a valid json, has number of expected records, and the pipeline version exists and is a valid integer if a lineage definition is required).
 2. The lineage definitions file can be produced if it is required.
@@ -14,6 +14,9 @@ The importer downloads data from the Loculus backend, [transforms it into the fo
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
+# rhydb is not on PyPI yet: pick the wheel matching your platform and python version from
+# https://github.com/RhyOrg/RhyDB/releases/tag/v0.17.3 (keep the version in sync with the Dockerfile)
+python -m pip install "https://github.com/RhyOrg/RhyDB/releases/download/v0.17.3/rhydb-0.17.3-cp311-cp311-macosx_15_0_arm64.whl"
 python -m pip install -e ".[test]"
 cargo install --git https://github.com/GenSpectrum/LAPIS-SILO.git --rev 8d38b2739524cca52857d9d09ff05e9373cea4df
 BACKEND_BASE_URL="http://localhost:8079/organism" python -m silo_import
