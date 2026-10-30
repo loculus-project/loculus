@@ -49,7 +49,7 @@ Uploading sequences via the website is an easy way to submit sequences without h
 4. Drag-and-drop a `fasta` file with the sequences and a metadata file with the associated metadata into the box on the website, or click the 'Upload a file' link within the boxes to open a file-selection box.
 5. If Terms of Use are enabled for your Loculus instance: Select the Terms of Use that you would like for your data.
 6. Click 'Upload' at the bottom of the page.
-7. Confirm the steps in the dialog that opens: your choice of Open data use terms (if selected), how the author names have been split into first and last names (if your metadata has authors), and what happens next. Then click 'Upload' in the dialog.
+7. Move through the confirmation wizard that opens. Then click 'Upload' in the dialog.
 
 The data will now be processed, and you will have to approve your submission before it is finalized. You can see how to do this [here](../approve-submissions/).
 
