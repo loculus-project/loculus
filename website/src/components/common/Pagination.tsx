@@ -7,7 +7,7 @@ import MdiChevronRight from '~icons/mdi/chevron-right';
 type PaginationProps = {
     count: number;
     page: number;
-    onPageChange: (page: number) => void;
+    onChange: (page: number) => void;
     className?: string;
 };
 
@@ -28,7 +28,7 @@ const getPageItems = (page: number, count: number): PageItem[] => {
 
 const itemClassName = 'h-8 min-w-8 px-1.5 mx-[3px] flex items-center justify-center rounded text-sm';
 
-export const Pagination: FC<PaginationProps> = ({ count, page, onPageChange, className }) => {
+export const Pagination: FC<PaginationProps> = ({ count, page, onChange, className }) => {
     const pageButton = (
         target: number,
         isDisabled: boolean,
@@ -46,7 +46,7 @@ export const Pagination: FC<PaginationProps> = ({ count, page, onPageChange, cla
             disabled={isDisabled}
             aria-label={label}
             aria-current={isSelected ? 'page' : undefined}
-            onClick={() => onPageChange(target)}
+            onClick={() => onChange(target)}
         >
             {content}
         </Button>
