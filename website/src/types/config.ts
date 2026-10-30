@@ -40,8 +40,25 @@ export const linkMenuItem = z.object({
     url: z.string(),
 });
 
+export const customDisplayTypes = z.enum([
+    'badge',
+    'dataUseTerms',
+    'fileList',
+    'generatedBadge',
+    'geoLocation',
+    'hostSpecies',
+    'htmlTemplate',
+    'lengthCompleteness',
+    'link',
+    'linkWithMenu',
+    'list',
+    'percentage',
+    'submittingGroup',
+    'variantReference',
+] as const);
+
 export const customDisplay = z.object({
-    type: z.string(),
+    type: customDisplayTypes,
     url: z.string().optional(),
     html: z.string().optional(),
     badge: z.array(segmentedMutations).optional(),
@@ -115,6 +132,7 @@ export type InputFieldOption = z.infer<typeof inputFieldOption>;
 export type InputField = z.infer<typeof inputField>;
 export type LinkMenuItem = z.infer<typeof linkMenuItem>;
 export type CustomDisplay = z.infer<typeof customDisplay>;
+export type CustomDisplayType = z.infer<typeof customDisplayTypes>;
 export type Metadata = z.infer<typeof metadata>;
 export type MetadataType = z.infer<typeof metadataPossibleTypes>;
 export type MutationBadgeData = z.infer<typeof mutationBadgeData>;
