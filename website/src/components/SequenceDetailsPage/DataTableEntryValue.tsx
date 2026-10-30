@@ -153,6 +153,36 @@ const FileSizeComponent: React.FC<{ url: string }> = ({ url }) => {
     return <span className='text-gray-400'>({prettyFormatBytes(fileSize)})</span>;
 };
 
+const NextcladeDatasetInfoComponent: React.FC<{ jsonString: string }> = ({ jsonString }) => {
+    const entries = JSON.parse(jsonString) as TableDataEntry[];
+    const findByPrefix = (prefix: string) => entries.find((e) => e.name.startsWith(prefix))?.value.toString();
+
+    const datasetServer = findByPrefix('nextcladeDatasetServer');
+    const datasetName = findByPrefix('nextcladeDatasetName');
+    const datasetTag = findByPrefix('nextcladeDatasetTag');
+
+    let displayText: string;
+    if (datasetName && datasetTag) {
+        displayText = `${datasetName} (${datasetTag})`;
+    } else {
+        displayText = datasetName ?? '';
+    }
+
+    if (datasetName && datasetTag && datasetServer) {
+        return (
+            <a
+                href={`${datasetServer.replace(/\/$/, '')}/${datasetName}/${datasetTag}/pathogen.json`}
+                target='_blank'
+                className='underline'
+            >
+                {displayText}
+            </a>
+        );
+    }
+
+    return <>{displayText}</>;
+};
+
 const prettyFormatBytes = (bytes: number): string => {
     if (bytes === 0) {
         return '0 bytes';
@@ -255,6 +285,9 @@ const CustomDisplayComponent: React.FC<Props> = ({ data, dataUseTermsHistory, re
                 )}
                 {customDisplay?.type === 'fileList' && typeof value == 'string' && (
                     <FileListComponent jsonString={value} />
+                )}
+                {customDisplay?.type === 'nextcladeDatasetInfo' && typeof value == 'string' && (
+                    <NextcladeDatasetInfoComponent jsonString={value} />
                 )}
             </div>
         </div>
