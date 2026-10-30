@@ -37,7 +37,7 @@ def slack_conn_init(
 
     def get_secret_param(env_name: str, default: SecretStr | None) -> SecretStr:
         return SecretStr(
-            get_param(env_name, default.get_secret_value() if default is not None else None)
+            get_param(env_name, default.get_secret_value() if default else None)
         )
 
     return SlackConfig(
