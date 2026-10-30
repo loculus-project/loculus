@@ -1,13 +1,14 @@
 import Papa from 'papaparse';
 
-import { CompressedFile, RawFile, splitFileExtensions } from './FileUpload/fileProcessing';
+import type { ProcessedFile } from './FileUpload/fileProcessing';
 
 /**
- * Preprocessing requires exactly one comma per author: it separates the last name from the first name(s).
- * `Xu,` (first name unknown) is accepted, but `Anna Xu` and `Smith, Anna, Jr.` are rejected.
+ * Preprocessing requires exactly one comma per author, separating a non-empty last name from the first name(s).
+ * `Xu,` (first name unknown) is accepted, but `Anna Xu`, `Smith, Anna, Jr.` and `, Anna` are rejected.
  */
 export type ParsedAuthor =
-    { status: 'ok'; firstName: string; lastName: string } | { status: 'missingComma' | 'tooManyCommas'; raw: string };
+    | { status: 'ok'; firstName: string; lastName: string }
+    | { status: 'missingComma' | 'tooManyCommas' | 'missingLastName'; raw: string };
 
 export type AuthorListOccurrence = {
     authors: string;
@@ -15,8 +16,9 @@ export type AuthorListOccurrence = {
 };
 
 /**
- * Splits an authors string in the Loculus format (`Last, First; Last, First`) into last and first names,
- * mirroring how preprocessing interprets it.
+ * Splits an authors string in the Loculus format (`Last, First; Last, First`) into last and first names.
+ * This approximates preprocessing, which is the source of truth: it only checks the commas and that a last name
+ * is present, not the allowed characters, and does not reformat names.
  */
 export const parseAuthors = (authors: string): ParsedAuthor[] =>
     authors
@@ -28,6 +30,7 @@ export const parseAuthors = (authors: string): ParsedAuthor[] =>
             if (parts.length === 1) return { status: 'missingComma', raw: author };
             if (parts.length > 2) return { status: 'tooManyCommas', raw: author };
             const [lastName, firstName] = parts;
+            if (lastName.trim() === '') return { status: 'missingLastName', raw: author };
             return {
                 status: 'ok',
                 firstName: firstName.trim().replace(/\s+/g, ' '),
@@ -40,17 +43,12 @@ export const parseAuthors = (authors: string): ParsedAuthor[] =>
  * together with the number of entries that use each list.
  */
 export const extractAuthorLists = async (
-    metadataFile: File,
+    metadataFile: ProcessedFile,
     authorsFields: string[],
 ): Promise<AuthorListOccurrence[]> => {
     if (authorsFields.length === 0) return [];
 
-    const processedFile =
-        splitFileExtensions(metadataFile).compressionExtension !== null
-            ? new CompressedFile(metadataFile)
-            : new RawFile(metadataFile);
-
-    const text = await processedFile.text();
+    const text = await metadataFile.text();
 
     const parsed = Papa.parse<string[]>(text, { delimiter: '\t', skipEmptyLines: true });
     if (parsed.data.length === 0) return [];

@@ -7,6 +7,12 @@ import { ModalBox } from '../common/ModalBox';
 
 const MAX_DISPLAYED_AUTHOR_LISTS = 100;
 
+const AUTHOR_PROBLEM_LABELS = {
+    missingComma: 'missing comma',
+    tooManyCommas: 'too many commas',
+    missingLastName: 'missing last name',
+} as const;
+
 const AuthorNamesTable: FC<{ authorLists: AuthorListOccurrence[] }> = ({ authorLists }) => {
     const displayedAuthorLists = authorLists.slice(0, MAX_DISPLAYED_AUTHOR_LISTS);
     const numberOfHiddenAuthorLists = authorLists.length - displayedAuthorLists.length;
@@ -47,9 +53,7 @@ const AuthorNamesTable: FC<{ authorLists: AuthorListOccurrence[] }> = ({ authorL
                                             {author.raw}
                                             <span className='italic'>
                                                 {' '}
-                                                (
-                                                {author.status === 'missingComma' ? 'missing comma' : 'too many commas'}
-                                                : this author will be rejected)
+                                                ({AUTHOR_PROBLEM_LABELS[author.status]}: this author will be rejected)
                                             </span>
                                         </td>
                                     )}

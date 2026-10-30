@@ -122,7 +122,7 @@ const InnerDataUploadForm = ({
             return;
         }
 
-        const { metadataFile, sequenceFile, submissionId } = sequenceDataResult.value;
+        const { metadataFile, processedMetadataFile, sequenceFile, submissionId } = sequenceDataResult.value;
 
         if (submissionId === undefined && inputMode === 'form') {
             onError('No ID specified.');
@@ -172,7 +172,7 @@ const InnerDataUploadForm = ({
         }
         let authorLists;
         try {
-            authorLists = await extractAuthorLists(metadataFile, authorsFields);
+            authorLists = await extractAuthorLists(processedMetadataFile, authorsFields);
         } catch (error) {
             void logger.error(`Failed to read metadata file for the author check: ${stringifyMaybeAxiosError(error)}`);
             onError(`Could not read the metadata file: ${error instanceof Error ? error.message : String(error)}`);

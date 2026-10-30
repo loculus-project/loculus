@@ -1,15 +1,19 @@
 import { describe, expect, test } from 'vitest';
 
+import { RawFile } from './FileUpload/fileProcessing';
 import { extractAuthorLists, parseAuthors } from './authorNames';
 
 describe('parseAuthors', () => {
-    test('splits authors into first and last names and flags missing or extra commas', () => {
-        expect(parseAuthors('Smith, Anna; Perez,  Tom J.; Xu,; Anna Smith; Garcia, Maria, Okafor, Chinedu;')).toEqual([
+    test('splits authors into first and last names and flags malformed authors', () => {
+        expect(
+            parseAuthors('Smith, Anna; Perez,  Tom J.; Xu,; Anna Smith; Garcia, Maria, Okafor, Chinedu; , Anna;'),
+        ).toEqual([
             { status: 'ok', firstName: 'Anna', lastName: 'Smith' },
             { status: 'ok', firstName: 'Tom J.', lastName: 'Perez' },
             { status: 'ok', firstName: '', lastName: 'Xu' },
             { status: 'missingComma', raw: 'Anna Smith' },
             { status: 'tooManyCommas', raw: 'Garcia, Maria, Okafor, Chinedu' },
+            { status: 'missingLastName', raw: ', Anna' },
         ]);
     });
 });
@@ -27,7 +31,7 @@ describe('extractAuthorLists', () => {
             'metadata.tsv',
         );
 
-        expect(await extractAuthorLists(file, ['authors'])).toEqual([
+        expect(await extractAuthorLists(new RawFile(file), ['authors'])).toEqual([
             { authors: 'Smith, Anna; Perez, Tom', numberOfEntries: 2 },
             { authors: 'Xu, X.', numberOfEntries: 1 },
         ]);
