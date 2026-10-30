@@ -1,12 +1,14 @@
 package org.loculus.backend.config
 
 import org.loculus.backend.api.v0.v0AccessRules
+import org.loculus.backend.api.v1.v1AccessRules
 import org.loculus.backend.auth.KeycloakAuthenticationConverter
 import org.loculus.backend.auth.LoggingAccessDeniedHandler
 import org.loculus.backend.auth.LoggingAuthenticationEntryPoint
 import org.loculus.backend.auth.Roles.SUPER_USER
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.core.annotation.Order
 import org.springframework.http.HttpMethod
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
@@ -30,6 +32,24 @@ class SecurityConfig {
     private val debugEndpoints = arrayOf(
         "/debug/*",
     )
+
+    // New contracts do not require Keycloak's preferred_username to authenticate.
+    // They share Spring's configured JWT decoder, but resolve Loculus identity explicitly in controllers.
+    @Bean
+    @Order(1)
+    fun v1SecurityFilterChain(httpSecurity: HttpSecurity): SecurityFilterChain = httpSecurity
+        .securityMatcher("/v1/**")
+        .authorizeHttpRequests { auth ->
+            v1AccessRules(auth)
+            auth.requestMatchers(HttpMethod.OPTIONS).permitAll()
+            auth.anyRequest().authenticated()
+        }
+        .oauth2ResourceServer { oauth2 ->
+            oauth2.jwt { }
+                .authenticationEntryPoint(LoggingAuthenticationEntryPoint(BearerTokenAuthenticationEntryPoint()))
+                .accessDeniedHandler(LoggingAccessDeniedHandler(defaultAccessDeniedHandler))
+        }
+        .build()
 
     @Bean
     fun securityFilterChain(

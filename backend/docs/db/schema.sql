@@ -306,6 +306,28 @@ CREATE TABLE public.data_use_terms_table (
 ALTER TABLE public.data_use_terms_table OWNER TO postgres;
 
 --
+-- Name: external_identities; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.external_identities (
+    issuer text NOT NULL,
+    subject text NOT NULL,
+    user_id uuid NOT NULL,
+    preferred_username text,
+    linked_at timestamp without time zone NOT NULL
+);
+
+
+ALTER TABLE public.external_identities OWNER TO postgres;
+
+--
+-- Name: COLUMN external_identities.preferred_username; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.external_identities.preferred_username IS 'Provider username recorded when the identity is linked. Not synchronized or used as an identity key.';
+
+
+--
 -- Name: external_metadata; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -414,6 +436,25 @@ ALTER SEQUENCE public.groups_table_group_id_seq OWNER TO postgres;
 --
 
 ALTER SEQUENCE public.groups_table_group_id_seq OWNED BY public.groups_table.group_id;
+
+
+--
+-- Name: loculus_users; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.loculus_users (
+    id uuid NOT NULL,
+    provisioned_at timestamp without time zone NOT NULL
+);
+
+
+ALTER TABLE public.loculus_users OWNER TO postgres;
+
+--
+-- Name: COLUMN loculus_users.provisioned_at; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.loculus_users.provisioned_at IS 'UTC time this account was provisioned into Loculus, not its creation time at the identity provider.';
 
 
 --
@@ -835,6 +876,14 @@ ALTER TABLE ONLY public.current_processing_pipeline
 
 
 --
+-- Name: external_identities external_identities_issuer_subject_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.external_identities
+    ADD CONSTRAINT external_identities_issuer_subject_key PRIMARY KEY (issuer, subject);
+
+
+--
 -- Name: external_metadata external_metadata_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -864,6 +913,14 @@ ALTER TABLE ONLY public.flyway_schema_history
 
 ALTER TABLE ONLY public.groups_table
     ADD CONSTRAINT groups_table_pkey PRIMARY KEY (group_id);
+
+
+--
+-- Name: loculus_users loculus_users_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.loculus_users
+    ADD CONSTRAINT loculus_users_pkey PRIMARY KEY (id);
 
 
 --
@@ -991,6 +1048,13 @@ ALTER TABLE ONLY public.user_groups_table
 --
 
 CREATE INDEX data_use_terms_table_accession_idx ON public.data_use_terms_table USING btree (accession);
+
+
+--
+-- Name: external_identities_user_id_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX external_identities_user_id_idx ON public.external_identities USING btree (user_id);
 
 
 --
@@ -1180,6 +1244,14 @@ CREATE TRIGGER update_tracker_trigger_upd AFTER UPDATE ON public.sequence_entrie
 --
 
 CREATE TRIGGER update_tracker_trigger_upd AFTER UPDATE ON public.sequence_entries_preprocessed_data REFERENCING NEW TABLE AS changed_rows FOR EACH STATEMENT EXECUTE FUNCTION public.update_preprocessed_data_tracker();
+
+
+--
+-- Name: external_identities external_identities_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.external_identities
+    ADD CONSTRAINT external_identities_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.loculus_users(id);
 
 
 --
