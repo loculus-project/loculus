@@ -114,7 +114,7 @@ def warn_potentially_invalid_authors(authors: str) -> bool:
 
 def get_spaced_hyphenated_words(authors: str) -> list[str]:
     """Hyphenated words with whitespace around the hyphen, e.g. "Smith - Jones" or "Anna -Maria" """
-    return re.findall(r"[^\s,;]*(?:\s+-\s*|-\s+)[^\s,;]*", authors)
+    return re.findall(r"[^\s,;]+(?:\s+-\s*|-\s+)[^\s,;]+", authors)
 
 
 def remove_hyphen_spacing(authors: str) -> str:
@@ -808,7 +808,7 @@ class ProcessingFunctions:
             dangling_hyphen_names = get_names_with_leading_or_trailing_hyphen(
                 remove_hyphen_spacing(authors)
             )
-            if dangling_hyphen_names:
+            if dangling_hyphen_names and not allow_all_ascii:
                 names_to_show = ", ".join(f"'{name}'" for name in dangling_hyphen_names)
                 return RawProcessingResult(
                     errors=[

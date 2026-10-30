@@ -105,6 +105,21 @@ test_case_definitions = [
         group_id=1,
     ),
     Case(
+        name="insdc_ingest group can submit names starting or ending with a hyphen",
+        input_metadata={
+            "name_required": "name",
+            "authors": "Smith-, Anna; Perez, -Tom",
+        },
+        accession_id="24",
+        expected_metadata={
+            "name_required": "name",
+            "concatenated_string": "LOC_24.1",
+            "required_collection_date": None,
+            "authors": "Smith-, Anna; Perez, -Tom",
+        },
+        group_id=1,
+    ),
+    Case(
         name="invalid_option",
         input_metadata={
             "continent": "Afrika",
