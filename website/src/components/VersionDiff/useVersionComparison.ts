@@ -84,6 +84,7 @@ export function useVersionComparison(accession: string, versions: SequenceEntryH
         staleTime: STALE_TIME_MS,
         // Keep the previous comparison rendered while a new pair loads, so the table doesn't
         // unmount and the page doesn't jump scroll position.
+        // eslint-disable-next-line @typescript-eslint/no-deprecated -- Required in TanStack Query v4; migrate to placeholderData when upgrading to v5.
         keepPreviousData: true,
     });
 
