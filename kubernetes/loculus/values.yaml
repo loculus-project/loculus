@@ -1620,17 +1620,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         header: "INSDC"
         orderOnDetailsPage: 1120
         ingest: ncbiSraAccessions
-      - name: nextcladeDatasetServer
-        type: string
-        header: "Alignment and QC metrics"
-        noInput: true
-        perSegment: true
-        displayName: "Nextclade server"
-        definition: "Server that hosts the nextclade dataset used to analyse this sequence."
-        orderOnDetailsPage: 2701
-        preprocessing:
-          inputs: {input: NEXTCLADE_SERVER}
-      - name: nextcladeDatasetAndTag
+      - name: nextcladeDatasetName
         type: string
         header: "Alignment and QC metrics"
         noInput: true
@@ -1639,7 +1629,27 @@ defaultOrganismConfig: &defaultOrganismConfig
         definition: "Nextclade dataset used to process the sequence."
         orderOnDetailsPage: 2710
         preprocessing:
-          inputs: {input: NEXTCLADE_DATASET}
+          inputs: {input: NEXTCLADE_DATASET_NAME}
+      - name: nextcladeDatasetTag
+        type: string
+        header: "Alignment and QC metrics"
+        noInput: true
+        perSegment: true
+        displayName: "Nextclade dataset tag"
+        definition: "Version tag of the Nextclade dataset used to process the sequence."
+        orderOnDetailsPage: 2711
+        preprocessing:
+          inputs: {input: NEXTCLADE_DATASET_TAG}
+      - name: nextcladeDatasetServer
+        type: string
+        header: "Alignment and QC metrics"
+        noInput: true
+        perSegment: true
+        displayName: "Nextclade dataset server"
+        definition: "Server that hosts the Nextclade dataset used to process the sequence."
+        orderOnDetailsPage: 2712
+        preprocessing:
+          inputs: {input: NEXTCLADE_DATASET_SERVER}
       - name: totalSnps
         type: int
         isSequenceFilter: true
