@@ -162,7 +162,9 @@ def post_webin_with_retry(config: Config, xml: dict[str, Any]) -> requests.Respo
         # The only change is removing response.raise_for_status()
         return requests.post(
             config.ena_submission_url,
-            auth=HTTPBasicAuth(config.ena_submission_username, config.ena_submission_password),
+            auth=HTTPBasicAuth(
+                config.ena_submission_username, config.ena_submission_password.get_secret_value()
+            ),
             files=xml,
             timeout=config.ena_http_timeout_seconds,
         )
@@ -182,7 +184,9 @@ def ena_http_get_with_retry(config: Config, url: str) -> requests.Response:
     def _do_get():
         return requests.get(
             url,
-            auth=HTTPBasicAuth(config.ena_submission_username, config.ena_submission_password),
+            auth=HTTPBasicAuth(
+                config.ena_submission_username, config.ena_submission_password.get_secret_value()
+            ),
             timeout=config.ena_http_timeout_seconds,
         )
 
@@ -217,7 +221,7 @@ def post_webin_cli(
         f"-manifest={manifest_filename}",
         f"-outputdir={tmpdir.name}",
         "-test" if config.test else "",
-        f"-password={config.ena_submission_password}",
+        f"-password={config.ena_submission_password.get_secret_value()}",
     ]
     # Remove empty strings from the list
     subprocess_args = [arg for arg in subprocess_args_with_emtpy_strings if arg]

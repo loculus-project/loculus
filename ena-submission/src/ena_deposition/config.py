@@ -5,7 +5,7 @@ from enum import StrEnum
 
 import dotenv
 import yaml
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, SecretStr
 
 from ena_deposition.ena_types import MoleculeType, Topology
 
@@ -97,11 +97,11 @@ class Config(BaseModel):
     keycloak_token_url: str
     keycloak_client_id: str
     username: str
-    password: str = Field(repr=False)
+    password: SecretStr
 
     # Details for connecting to the ENA submission state database
     db_username: str
-    db_password: str = Field(repr=False)
+    db_password: SecretStr
     db_url: str
     db_name: str
 
@@ -112,7 +112,7 @@ class Config(BaseModel):
     # ENA specific configuration is set in secure_ena_connection()
     test: bool
     ena_submission_url: str
-    ena_submission_password: str = Field(repr=False)
+    ena_submission_password: SecretStr
     ena_submission_username: str
     ena_reports_service_url: str
     submit_to_ena_prod: bool = False
