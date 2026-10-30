@@ -17,7 +17,7 @@
         "@typescript-eslint/eslint-plugin": "^8.72.0",
         "@typescript-eslint/parser": "^8.72.0",
         "eslint": "^10.13.0",
-        "eslint-plugin-unicorn": "^78.0.0",
+        "eslint-plugin-unicorn": "^79.0.0",
         "papaparse": "^5.7.0",
         "prettier": "^3.9.10",
         "typescript": "~6.0.3",
