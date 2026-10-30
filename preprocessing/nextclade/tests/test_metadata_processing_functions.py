@@ -521,6 +521,30 @@ test_case_definitions = [
         ),
     ),
     Case(
+        name="error_name_starting_or_ending_with_hyphen_in_authors",
+        input_metadata={
+            "name_required": "name",
+            "ncbi_required_collection_date": "2022-11-01",
+            "authors": "Smith-, Anna; Perez, - Tom; Xu, X.",
+        },
+        accession_id="12",
+        expected_metadata={
+            "name_required": "name",
+            "required_collection_date": "2022-11-01",
+            "concatenated_string": "LOC_12.1/2022-11-01",
+        },
+        expected_errors=build_processing_annotations(
+            [
+                ProcessingAnnotationHelper(
+                    ["authors"],
+                    ["authors"],
+                    "Invalid name(s): 'Smith-', '-Tom'. Names must not start or end with a hyphen.",
+                ),
+            ]
+        ),
+        expected_warnings=[],
+    ),
+    Case(
         name="non_latin_characters_authors",
         input_metadata={
             "name_required": "name",

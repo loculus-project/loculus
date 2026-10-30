@@ -122,6 +122,12 @@ def remove_hyphen_spacing(authors: str) -> str:
     return re.sub(r"\s*-\s*", "-", authors)
 
 
+def get_names_with_leading_or_trailing_hyphen(authors: str) -> list[str]:
+    """Names that start or end with a hyphen, e.g. "-Jones" or "Smith-" """
+    words = re.split(r"[,;\s]+", authors)
+    return [word for word in words if word.startswith("-") or word.endswith("-")]
+
+
 def reformat_authors_from_latin_to_ascii(authors: str) -> str:
     return unicodedata.normalize("NFKD", authors).encode("ascii", "ignore").decode("ascii")
 
@@ -794,6 +800,18 @@ class ProcessingFunctions:
                     "Authors list contains 'and'. This may indicate a misformatted "
                     "authors list. Authors should always be separated by semi-colons only e.g. "
                     "`Smith, Anna; Perez, Tom J.; Xu, X.L.`."
+                )
+            dangling_hyphen_names = get_names_with_leading_or_trailing_hyphen(
+                remove_hyphen_spacing(authors)
+            )
+            if dangling_hyphen_names:
+                names_to_show = ", ".join(f"'{name}'" for name in dangling_hyphen_names)
+                return RawProcessingResult(
+                    errors=[
+                        (f"Invalid name(s): {names_to_show}. "
+                        "Names must not start or end with a hyphen.")
+                    ],
+                    warnings=warnings,
                 )
             hyphenated_words = get_spaced_hyphenated_words(authors)
             if hyphenated_words:
