@@ -20,6 +20,9 @@ from .config import (
     FILES_PREFIX,
     LENGTH,
     LENGTH_PREFIX,
+    NEXTCLADE_DATASET_NAME_PREFIX,
+    NEXTCLADE_DATASET_SERVER_PREFIX,
+    NEXTCLADE_DATASET_TAG_PREFIX,
     NEXTCLADE_PREFIX,
     PROCESSED_PREFIX,
     AlignmentRequirement,
@@ -38,6 +41,7 @@ from .datatypes import (
     GeneName,
     InputData,
     InputMetadata,
+    NextcladeDatasetInfo,
     NucleotideInsertion,
     NucleotideSequence,
     ProcessedData,
@@ -232,6 +236,43 @@ def add_assigned_reference(
     return InputData(datum=reference)
 
 
+def get_nextclade_dataset_info(
+    spec: ProcessingSpec, unprocessed: UnprocessedAfterNextclade, config: Config
+) -> NextcladeDatasetInfo | None:
+    """Returns the Nextclade dataset that produced the results for the segment in spec args"""
+    if not unprocessed.nextcladeMetadata:
+        return None
+    segment = spec.args.get("segment", "main") if spec.args else "main"
+    if not isinstance(segment, str):
+        msg = f"get_nextclade_dataset_info: segment must be str, got {type(segment)}"
+        raise TypeError(msg)
+    name = get_dataset_name(segment, unprocessed.nextcladeMetadata, config)
+    if not name:
+        return None
+    return unprocessed.nextcladeDatasets.get(name)
+
+
+def add_nextclade_dataset_name(
+    spec: ProcessingSpec, unprocessed: UnprocessedAfterNextclade, config: Config
+) -> InputData:
+    dataset = get_nextclade_dataset_info(spec, unprocessed, config)
+    return InputData(datum=dataset.name if dataset else None)
+
+
+def add_nextclade_dataset_tag(
+    spec: ProcessingSpec, unprocessed: UnprocessedAfterNextclade, config: Config
+) -> InputData:
+    dataset = get_nextclade_dataset_info(spec, unprocessed, config)
+    return InputData(datum=dataset.tag if dataset else None)
+
+
+def add_nextclade_dataset_server(
+    spec: ProcessingSpec, unprocessed: UnprocessedAfterNextclade, config: Config
+) -> InputData:
+    dataset = get_nextclade_dataset_info(spec, unprocessed, config)
+    return InputData(datum=dataset.server if dataset else None)
+
+
 def add_input_metadata(
     spec: ProcessingSpec,
     unprocessed: UnprocessedAfterNextclade,
@@ -241,6 +282,12 @@ def add_input_metadata(
     """Returns value of input_path in unprocessed metadata"""
     if input_path.startswith(ASSIGNED_REFERENCE_PREFIX):
         return add_assigned_reference(spec, unprocessed, config=config)
+    if input_path.startswith(NEXTCLADE_DATASET_NAME_PREFIX):
+        return add_nextclade_dataset_name(spec, unprocessed, config=config)
+    if input_path.startswith(NEXTCLADE_DATASET_TAG_PREFIX):
+        return add_nextclade_dataset_tag(spec, unprocessed, config=config)
+    if input_path.startswith(NEXTCLADE_DATASET_SERVER_PREFIX):
+        return add_nextclade_dataset_server(spec, unprocessed, config=config)
     # If field starts with "nextclade.", take from nextclade metadata
     if input_path.startswith(NEXTCLADE_PREFIX):
         nextclade_path = input_path[len(NEXTCLADE_PREFIX) :]
