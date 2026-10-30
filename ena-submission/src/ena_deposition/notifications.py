@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 
 import requests
+from pydantic import SecretStr
 from slack_sdk import WebClient, web
 
 logger = logging.getLogger(__name__)
@@ -13,15 +14,15 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class SlackConfig:
-    slack_hook: str
-    slack_token: str
+    slack_hook: SecretStr
+    slack_token: SecretStr
     slack_channel_id: str
     last_notification_sent: datetime | None
 
 
 def slack_conn_init(
-    slack_hook_default: str | None,
-    slack_token_default: str | None,
+    slack_hook_default: SecretStr | None,
+    slack_token_default: SecretStr | None,
     slack_channel_id_default: str | None,
 ) -> SlackConfig:
     def get_param(env_name: str, default: str | None) -> str:
@@ -34,9 +35,14 @@ def slack_conn_init(
             raise ValueError(error_msg)
         return value
 
+    def get_secret_param(env_name: str, default: SecretStr | None) -> SecretStr:
+        return SecretStr(
+            get_param(env_name, default.get_secret_value() if default is not None else None)
+        )
+
     return SlackConfig(
-        slack_hook=get_param("SLACK_HOOK", slack_hook_default),
-        slack_token=get_param("SLACK_TOKEN", slack_token_default),
+        slack_hook=get_secret_param("SLACK_HOOK", slack_hook_default),
+        slack_token=get_secret_param("SLACK_TOKEN", slack_token_default),
         slack_channel_id=get_param("SLACK_CHANNEL_ID", slack_channel_id_default),
         last_notification_sent=None,
     )
@@ -44,10 +50,12 @@ def slack_conn_init(
 
 def notify(config: SlackConfig, text: str):
     """Send slack notification using slack hook"""
-    if not config.slack_hook:
+    if not config.slack_hook.get_secret_value():
         return
     try:
-        requests.post(config.slack_hook, data=json.dumps({"text": text}), timeout=10)
+        requests.post(
+            config.slack_hook.get_secret_value(), data=json.dumps({"text": text}), timeout=10
+        )
     except requests.exceptions.RequestException as e:
         logger.error(f"Error sending slack notification: {e}")
 
@@ -56,7 +64,7 @@ def upload_file_with_comment(
     config: SlackConfig, file_path: str, comment: str
 ) -> web.SlackResponse:
     """Upload file with comment to slack channel"""
-    client = WebClient(token=config.slack_token)
+    client = WebClient(token=config.slack_token.get_secret_value())
     output_file_zip = os.path.basename(file_path) + ".zip"
     zip = zipfile.ZipFile(output_file_zip, "w", zipfile.ZIP_DEFLATED)
     zip.write(file_path)
@@ -76,7 +84,7 @@ def send_slack_notification(
     Sends a slack notification if current time is over slack_retry_threshold_min minutes
     since slack_config.last_notification_sent.
     """
-    if not slack_config.slack_hook:
+    if not slack_config.slack_hook.get_secret_value():
         logger.info("Could not find slack hook cannot send message")
         return
     if (

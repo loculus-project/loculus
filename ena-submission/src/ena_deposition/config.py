@@ -5,7 +5,7 @@ from enum import StrEnum
 
 import dotenv
 import yaml
-from pydantic import BaseModel, Field, SecretStr
+from pydantic import BaseModel, SecretStr
 
 from ena_deposition.ena_types import MoleculeType, Topology
 
@@ -126,8 +126,8 @@ class Config(BaseModel):
     suppressed_list_test_url: str | None
 
     # Slack configuration must be provided via environment variables or config
-    slack_hook: str | None = Field(repr=False)
-    slack_token: str | None = Field(repr=False)
+    slack_hook: SecretStr | None
+    slack_token: SecretStr | None
     slack_channel_id: str | None
 
     enaOrganisms: dict[EnaOrganismName, EnaOrganismDetails]  # noqa: N815

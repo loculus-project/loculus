@@ -90,6 +90,7 @@ from ena_deposition.trigger_submission_to_ena import upload_sequences
 from ena_deposition.upload_external_metadata_to_loculus import (
     get_external_metadata_and_send_to_loculus,
 )
+from pydantic import SecretStr
 from sqlalchemy import Engine
 
 CONFIG_FILE = "./test/test_config.yaml"
@@ -854,8 +855,8 @@ class TestSubmission:
         delete_all_records(self.db_engine)
         # for testing set last_notification_sent to 1 day ago
         self.slack_config = SlackConfig(
-            slack_hook=self.config.slack_hook or "",
-            slack_token=self.config.slack_token or "",
+            slack_hook=self.config.slack_hook or SecretStr(""),
+            slack_token=self.config.slack_token or SecretStr(""),
             slack_channel_id=self.config.slack_channel_id or "",
             last_notification_sent=datetime.now(tz=pytz.utc) - timedelta(days=1),
         )
