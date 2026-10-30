@@ -17,6 +17,7 @@ type Props = {
     clientConfig: ClientConfig;
     sequenceType: SequenceType;
     useLapisMultiSegmentedEndpoint: boolean;
+    isRestricted?: boolean;
 };
 
 export const SequencesViewer: FC<Props> = ({
@@ -25,6 +26,7 @@ export const SequencesViewer: FC<Props> = ({
     clientConfig,
     sequenceType,
     useLapisMultiSegmentedEndpoint,
+    isRestricted = false,
 }) => {
     const { data, error, isLoading } = lapisClientHooks(getLapisUrl(clientConfig, organism)).useGetSequence(
         accessionVersion,
@@ -55,7 +57,11 @@ export const SequencesViewer: FC<Props> = ({
     return (
         <div className='relative'>
             <div className='absolute top-0 right-0 z-10'>
-                <SequenceActionButtons sequenceName={sequenceName} sequence={data.sequence} />
+                <SequenceActionButtons
+                    sequenceName={sequenceName}
+                    sequence={data.sequence}
+                    isRestricted={isRestricted}
+                />
             </div>
             <div className='h-80 overflow-auto'>
                 <FixedLengthTextViewer text={data.sequence} maxLineLength={LINE_LENGTH} header={header} />
