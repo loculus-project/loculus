@@ -112,6 +112,17 @@ def warn_potentially_invalid_authors(authors: str) -> bool:
     return bool(";" not in authors and len(authors_split) > 3)  # noqa: PLR2004
 
 
+def get_inconsistently_hyphenated_words(authors: str) -> list[str]:
+    """Words with inconsistent spacing around a hyphen, e.g. "Smith- Jones" or "Anna -Maria" """
+    words = re.split(r"[,;\s]+", authors)
+    return [word for word in words if word != "-" and (word.startswith("-") or word.endswith("-"))]
+
+
+def fix_hyphen_spacing(authors: str) -> str:
+    """Add a space on both sides of hyphens that only have a space on one side"""
+    return re.sub(r"(?<=\S)-\s+|\s+-(?=\S)", " - ", authors)
+
+
 def reformat_authors_from_latin_to_ascii(authors: str) -> str:
     return unicodedata.normalize("NFKD", authors).encode("ascii", "ignore").decode("ascii")
 
@@ -784,6 +795,16 @@ class ProcessingFunctions:
                     "Authors list contains 'and'. This may indicate a misformatted "
                     "authors list. Authors should always be separated by semi-colons only e.g. "
                     "`Smith, Anna; Perez, Tom J.; Xu, X.L.`."
+                )
+            hyphenated_words = get_inconsistently_hyphenated_words(authors)
+            if hyphenated_words:
+                formatted_authors = fix_hyphen_spacing(formatted_authors)
+                words_to_show = ", ".join(f"'{word}'" for word in hyphenated_words)
+                warnings.append(
+                    f"Authors list contains inconsistent spacing around hyphens: {words_to_show}. "
+                    "Hyphenated names should contain spaces around the hyphen, "
+                    "e.g. `Smith - Jones, Anna - Maria`. "
+                    "Spaces have been added around these hyphens automatically."
                 )
             return RawProcessingResult(datum=formatted_authors, warnings=warnings)
         invalid_names = get_invalid_author_names(authors, allow_all_ascii)
