@@ -50,12 +50,7 @@ export const extractAuthorLists = async (
             ? new CompressedFile(metadataFile)
             : new RawFile(metadataFile);
 
-    let text: string;
-    try {
-        text = await processedFile.text();
-    } catch {
-        return [];
-    }
+    const text = await processedFile.text();
 
     const parsed = Papa.parse<string[]>(text, { delimiter: '\t', skipEmptyLines: true });
     if (parsed.data.length === 0) return [];

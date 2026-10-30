@@ -170,7 +170,14 @@ const InnerDataUploadForm = ({
         if (action === 'submit' && dataUseTermsEnabled && dataUseTermsType === openDataUseTermsOption) {
             confirmationSteps.push({ type: 'openDataUseTerms' });
         }
-        const authorLists = await extractAuthorLists(metadataFile, authorsFields);
+        let authorLists;
+        try {
+            authorLists = await extractAuthorLists(metadataFile, authorsFields);
+        } catch (error) {
+            void logger.error(`Failed to read metadata file for the author check: ${stringifyMaybeAxiosError(error)}`);
+            onError(`Could not read the metadata file: ${error instanceof Error ? error.message : String(error)}`);
+            return;
+        }
         if (authorLists.length > 0) {
             confirmationSteps.push({ type: 'authorNames', authorLists });
         }
