@@ -17,14 +17,10 @@ WHERE se.accession = sepd.accession
   AND se.version = sepd.version;
 
 -- The partial indexes filter on literal status values. An unknown status would vanish from the queue.
--- A CHECK rather than an enum, so it can be added NOT VALID and changed later.
+-- A CHECK rather than an enum, so it can be changed later.
 ALTER TABLE sequence_entries_preprocessed_data
     ADD CONSTRAINT sequence_entries_preprocessed_data_status_check
-    CHECK (processing_status IN ('UNPROCESSED', 'IN_PROCESSING', 'PROCESSED'))
-    NOT VALID;
-
-ALTER TABLE sequence_entries_preprocessed_data
-    VALIDATE CONSTRAINT sequence_entries_preprocessed_data_status_check;
+    CHECK (processing_status IN ('UNPROCESSED', 'IN_PROCESSING', 'PROCESSED'));
 
 -- Pipeline versions with a queue. New entries are queued for each of them, initialized_at is set once the backfill completes.
 CREATE TABLE preprocessing_queue_versions (
