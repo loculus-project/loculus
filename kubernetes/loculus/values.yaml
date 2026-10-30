@@ -1628,6 +1628,10 @@ defaultOrganismConfig: &defaultOrganismConfig
         displayName: "Nextclade dataset"
         definition: "Nextclade dataset used to process the sequence."
         orderOnDetailsPage: 2710
+        customDisplay:
+          type: nextcladeDatasetInfo
+          displayGroup: nextcladeDatasetInfo
+          label: Nextclade dataset
         preprocessing:
           inputs: {input: NEXTCLADE_DATASET_NAME}
       - name: nextcladeDatasetTag
@@ -1638,6 +1642,10 @@ defaultOrganismConfig: &defaultOrganismConfig
         displayName: "Nextclade dataset tag"
         definition: "Version tag of the Nextclade dataset used to process the sequence."
         orderOnDetailsPage: 2711
+        customDisplay:
+          type: nextcladeDatasetInfo
+          displayGroup: nextcladeDatasetInfo
+          label: Nextclade dataset
         preprocessing:
           inputs: {input: NEXTCLADE_DATASET_TAG}
       - name: nextcladeDatasetServer
@@ -1648,6 +1656,10 @@ defaultOrganismConfig: &defaultOrganismConfig
         displayName: "Nextclade dataset server"
         definition: "Server that hosts the Nextclade dataset used to process the sequence."
         orderOnDetailsPage: 2712
+        customDisplay:
+          type: nextcladeDatasetInfo
+          displayGroup: nextcladeDatasetInfo
+          label: Nextclade dataset
         preprocessing:
           inputs: {input: NEXTCLADE_DATASET_SERVER}
       - name: totalSnps
