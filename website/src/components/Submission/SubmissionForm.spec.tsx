@@ -1,5 +1,6 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { closeAll } from 'react-confirm-alert';
 import { toast } from 'react-toastify';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
@@ -98,12 +99,15 @@ const testResponse: SubmissionIdMapping[] = [
 
 /** The wizard's final button has the same name as the page's Upload button, so look it up inside the wizard. */
 async function clickUploadInWizard() {
-    await userEvent.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Upload' }));
+    const wizard = await screen.findByRole('dialog', { name: 'Confirm submission' });
+    await userEvent.click(within(wizard).getByRole('button', { name: 'Upload' }));
 }
 
 describe('SubmitForm', () => {
     afterEach(() => {
         vi.clearAllMocks();
+        // The wizard is rendered outside the test container, so close it in case a test left it open
+        closeAll();
     });
 
     test.each<InputMode>(['bulk', 'form'])(
