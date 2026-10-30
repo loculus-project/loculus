@@ -27,6 +27,8 @@ SET processing_status = 'UNPROCESSED',
 WHERE processing_status = 'IN_PROCESSING';
 
 -- A row in processing has an owner and an expiry, any other row has neither. Validated in part 3.
+-- Added here so
+  claims from old backends without the queue are rejected once the locks are released.
 ALTER TABLE sequence_entries_preprocessed_data
     ADD CONSTRAINT sequence_entries_preprocessed_data_ownership_check
     CHECK (
