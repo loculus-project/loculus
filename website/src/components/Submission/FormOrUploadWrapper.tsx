@@ -31,6 +31,8 @@ export type InputMode = 'form' | 'bulk';
  */
 export type SequenceData = {
     metadataFile: File;
+    /** The same metadata, readable as TSV text (decompressed, or converted from Excel). */
+    processedMetadataFile: ProcessedFile;
     sequenceFile?: File;
     submissionId?: string;
 };
@@ -165,6 +167,7 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
 
                         return ok({
                             metadataFile: mFile.inner(),
+                            processedMetadataFile: mFile,
                             sequenceFile,
                             submissionId,
                         });
@@ -229,6 +232,7 @@ export const FormOrUploadWrapper: FC<FormOrUploadWrapperProps> = ({
 
                         return ok({
                             metadataFile: mFile.inner(),
+                            processedMetadataFile: mFile,
                             sequenceFile: sequenceFile?.inner(),
                         });
                     }

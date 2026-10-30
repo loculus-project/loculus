@@ -8,6 +8,7 @@ import {
     prepareTmpDirForSingleUpload,
     uploadFilesFromTmpDir,
 } from '../utils/file-upload-helpers';
+import { clickThroughConfirmationWizard } from '../utils/confirmation-wizard-helpers';
 import { waitForUrlReportingAlerts } from '../utils/navigation-helpers';
 
 class SubmissionPage {
@@ -53,7 +54,7 @@ class SubmissionPage {
 
     async clickSubmit() {
         await this.page
-            .getByRole('button', { name: 'Upload and proceed to Approval' })
+            .getByRole('button', { name: 'Upload', exact: true })
             .click({ timeout: 10_000 });
     }
 
@@ -61,12 +62,7 @@ class SubmissionPage {
     async submitSequence(): Promise<ReviewPage> {
         await this.clickSubmit();
 
-        // 'Continue under Open terms' only shows if we are submitting under open terms - but we don't know in this function
-        // Void because we're waiting for the review page anyway, so no need to wait for this specifically
-        void this.page
-            .getByRole('button', { name: 'Continue under Open terms' })
-            .click({ timeout: 3_000 })
-            .catch(() => {});
+        await clickThroughConfirmationWizard(this.page);
 
         await waitForUrlReportingAlerts(this.page, '**/review', { timeout: 15_000 });
         return new ReviewPage(this.page);

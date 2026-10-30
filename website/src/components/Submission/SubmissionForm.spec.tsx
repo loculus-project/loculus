@@ -1,5 +1,6 @@
-import { render, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { closeAll } from 'react-confirm-alert';
 import { toast } from 'react-toastify';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
@@ -69,6 +70,7 @@ function renderSubmissionForm({
                     ],
                 ])
             }
+            authorsFields={['authors']}
             submissionDataTypes={{
                 consensusSequences: allowSubmissionOfConsensusSequences,
                 maxSequencesPerEntry: 1,
@@ -80,6 +82,13 @@ function renderSubmissionForm({
 }
 
 const metadataFile = new File(['content'], 'metadata.tsv', { type: 'text/plain' });
+const metadataFileWithAuthors = new File(
+    [
+        'submissionId\tauthors\nheader0\tSmith, Anna; Perez, Tom J.; Anna Xu\nheader1\tSmith, Anna; Perez, Tom J.; Anna Xu\n',
+    ],
+    'metadata.tsv',
+    { type: 'text/plain' },
+);
 const sequencesFile = new File(['content'], 'sequences.fasta', { type: 'text/plain' });
 const sequenceFile = new File(['content'], 'sequence.txt', { type: 'text/plain' });
 
@@ -88,9 +97,17 @@ const testResponse: SubmissionIdMapping[] = [
     { accession: '1', version: 1, submissionId: 'header1' },
 ];
 
+/** The wizard's final button has the same name as the page's Upload button, so look it up inside the wizard. */
+async function clickUploadInWizard() {
+    const wizard = await screen.findByRole('dialog', { name: 'Confirm submission' });
+    await userEvent.click(within(wizard).getByRole('button', { name: 'Upload' }));
+}
+
 describe('SubmitForm', () => {
     afterEach(() => {
         vi.clearAllMocks();
+        // The wizard is rendered outside the test container, so close it in case a test left it open
+        closeAll();
     });
 
     test.each<InputMode>(['bulk', 'form'])(
@@ -119,15 +136,73 @@ describe('SubmitForm', () => {
             );
             await userEvent.click(getByLabelText(/I confirm that I have the legal right to submit this data/i));
 
-            const submitButton = getByRole('button', { name: 'Upload and proceed to Approval' });
+            const submitButton = getByRole('button', { name: 'Upload' });
             await userEvent.click(submitButton);
             await userEvent.click(await findByRole('button', { name: 'Continue under Open terms' }));
+            await clickUploadInWizard();
 
             await waitFor(() => {
                 expect(toast.error).not.toHaveBeenCalled();
             });
         },
     );
+
+    async function uploadMetadataWithAuthorsAndClickSubmit({ dataUseTermsEnabled = true } = {}) {
+        const renderResult = renderSubmissionForm({ dataUseTermsEnabled });
+        const { getByLabelText, getByRole } = renderResult;
+
+        await userEvent.upload(getByLabelText(/metadata file/i), metadataFileWithAuthors);
+        await userEvent.upload(getByLabelText(/sequence file/i), sequencesFile);
+        if (dataUseTermsEnabled) {
+            await userEvent.click(
+                getByLabelText(/I confirm I have not and will not submit this data independently to INSDC/i),
+            );
+            await userEvent.click(getByLabelText(/I confirm that I have the legal right to submit this data/i));
+        }
+        await userEvent.click(getByRole('button', { name: 'Upload' }));
+
+        return renderResult;
+    }
+
+    test('should confirm open data use terms, then how author names are split, then explain what happens next', async () => {
+        mockRequest.backend.submit(200, testResponse);
+        mockRequest.backend.getGroupsOfUser();
+
+        const { getByRole, findByRole, getByText } = await uploadMetadataWithAuthorsAndClickSubmit();
+
+        expect(getByText('Step 1 of 3')).toBeVisible();
+        await userEvent.click(await findByRole('button', { name: 'Continue under Open terms' }));
+
+        expect(getByText('Step 2 of 3')).toBeVisible();
+        expect(getByRole('heading', { name: 'Are first and last names assigned correctly?' })).toBeVisible();
+        const rows = getByRole('table').querySelectorAll<HTMLTableRowElement>('tbody tr');
+        expect(Array.from(rows).map((row) => Array.from(row.cells).map((cell) => cell.textContent))).toEqual([
+            ['Anna', 'Smith'],
+            ['Tom J.', 'Perez'],
+            ['Anna Xu (missing comma: this author will be rejected)'],
+        ]);
+
+        await userEvent.click(getByRole('button', { name: 'Names are correct' }));
+
+        expect(getByText('Step 3 of 3')).toBeVisible();
+        expect(getByRole('heading', { name: 'What happens next' })).toBeVisible();
+        expect(getByText('The sequences will not be released until you review and release them.')).toBeVisible();
+        await clickUploadInWizard();
+
+        await waitFor(() => {
+            expect(toast.error).not.toHaveBeenCalled();
+        });
+    });
+
+    test('should go back from the author names step to the data use terms step', async () => {
+        const { getByRole, findByRole, queryByRole } = await uploadMetadataWithAuthorsAndClickSubmit();
+
+        await userEvent.click(await findByRole('button', { name: 'Continue under Open terms' }));
+        await userEvent.click(getByRole('button', { name: 'Back' }));
+
+        expect(getByRole('button', { name: 'Continue under Open terms' })).toBeVisible();
+        expect(queryByRole('heading', { name: 'Are first and last names assigned correctly?' })).toBeNull();
+    });
 
     test('should answer with feedback that a file is missing', async () => {
         mockRequest.backend.submit(200, testResponse);
@@ -141,7 +216,7 @@ describe('SubmitForm', () => {
         );
         await userEvent.click(getByLabelText(/I confirm that I have the legal right to submit this data/i));
 
-        const submitButton = getByRole('button', { name: 'Upload and proceed to Approval' });
+        const submitButton = getByRole('button', { name: 'Upload' });
         await userEvent.click(submitButton);
 
         await waitFor(() => {
@@ -165,7 +240,7 @@ describe('SubmitForm', () => {
         );
         await userEvent.click(getByLabelText(/I confirm that I have the legal right to submit this data/i));
 
-        const submitButton = getByRole('button', { name: 'Upload and proceed to Approval' });
+        const submitButton = getByRole('button', { name: 'Upload' });
         await userEvent.click(submitButton);
 
         await waitFor(() => {
@@ -189,7 +264,7 @@ describe('SubmitForm', () => {
         );
         await userEvent.click(getByLabelText(/I confirm that I have the legal right to submit this data/i));
 
-        const submitButton = getByRole('button', { name: 'Upload and proceed to Approval' });
+        const submitButton = getByRole('button', { name: 'Upload' });
         await userEvent.click(submitButton);
 
         await waitFor(() => {
@@ -239,7 +314,7 @@ describe('SubmitForm', () => {
         await userEvent.upload(getByLabelText(/Sequence file/i), sequencesFile);
         await userEvent.click(getByLabelText(/I confirm that I have the legal right to submit this data/i));
 
-        const submitButton = getByRole('button', { name: 'Upload and proceed to Approval' });
+        const submitButton = getByRole('button', { name: 'Upload' });
         await userEvent.click(submitButton);
         await waitFor(() => {
             expect(toast.error).toHaveBeenCalledWith(
@@ -270,9 +345,10 @@ describe('SubmitForm', () => {
         );
         await userEvent.click(getByLabelText(/I confirm that I have the legal right to submit this data/i));
 
-        const submitButton = getByRole('button', { name: 'Upload and proceed to Approval' });
+        const submitButton = getByRole('button', { name: 'Upload' });
         await userEvent.click(submitButton);
         await userEvent.click(await findByRole('button', { name: 'Continue under Open terms' }));
+        await clickUploadInWizard();
 
         await waitFor(() => {
             expect(toast.error).toHaveBeenCalledWith(expect.stringContaining(receivedUnexpectedMessageFromBackend), {
@@ -296,9 +372,10 @@ describe('SubmitForm', () => {
         );
         await userEvent.click(getByLabelText(/I confirm that I have the legal right to submit this data/i));
 
-        const submitButton = getByRole('button', { name: 'Upload and proceed to Approval' });
+        const submitButton = getByRole('button', { name: 'Upload' });
         await userEvent.click(submitButton);
         await userEvent.click(await findByRole('button', { name: 'Continue under Open terms' }));
+        await clickUploadInWizard();
 
         await waitFor(() => {
             expect(toast.error).not.toHaveBeenCalled();
@@ -311,7 +388,10 @@ describe('SubmitForm', () => {
             mockRequest.backend.submit(200, testResponse);
             mockRequest.backend.getGroupsOfUser();
 
-            const { getByLabelText, getByRole } = renderSubmissionForm({ dataUseTermsEnabled: false, inputMode });
+            const { getByLabelText, getByRole, findByRole, queryByText } = renderSubmissionForm({
+                dataUseTermsEnabled: false,
+                inputMode,
+            });
 
             switch (inputMode) {
                 case 'form': {
@@ -327,8 +407,12 @@ describe('SubmitForm', () => {
                 }
             }
 
-            const submitButton = getByRole('button', { name: 'Upload and proceed to Approval' });
+            const submitButton = getByRole('button', { name: 'Upload' });
             await userEvent.click(submitButton);
+
+            expect(await findByRole('heading', { name: 'What happens next' })).toBeVisible();
+            expect(queryByText(/Step \d of \d/)).toBeNull();
+            await clickUploadInWizard();
 
             await waitFor(() => {
                 expect(toast.error).not.toHaveBeenCalled();
