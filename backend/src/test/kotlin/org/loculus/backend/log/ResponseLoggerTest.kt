@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.loculus.backend.controller.LoculusCustomHeaders
+import org.loculus.backend.api.LoculusCustomHeaders
 import org.slf4j.LoggerFactory
 import org.slf4j.MDC
 import org.springframework.http.ResponseEntity
