@@ -38,9 +38,9 @@ export const Pagination: FC<PaginationProps> = ({ count, page, onChange, classNa
     ) => (
         <Button
             type='button'
-            className={`${itemClassName} border ${
+            className={`${itemClassName} border transition-colors duration-250 ${
                 isSelected
-                    ? 'border-primary-400 bg-primary-100 text-primary-700'
+                    ? 'border-primary-400 bg-primary-100 text-primary-700 hover:bg-primary-200'
                     : 'border-gray-300 text-gray-800 hover:bg-gray-100'
             } ${isDisabled ? 'opacity-40 pointer-events-none' : ''}`}
             disabled={isDisabled}
