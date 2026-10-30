@@ -16,7 +16,7 @@ The form submits a single individual sequence entry, to submit multiple sequence
 5. Enter the metadata information about your sequence, as well as the unaligned nucleotide sequence(s).
 6. If Terms of Use are enabled for your Loculus instance: Select the Terms of Use that you would like for your data.
 7. Click 'Upload' at the bottom of the page.
-8. Confirm the steps in the dialog that opens: your choice of Open data use terms (if selected), how the author names have been split into first and last names (if your metadata has authors), and what happens next. Then click 'Upload' in the dialog.
+8. Move through the wizard that opens, and confirm you wish to Upload the data.
 
 ## Submit sequences via file upload
 
