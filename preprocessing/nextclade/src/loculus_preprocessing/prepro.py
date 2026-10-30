@@ -243,15 +243,12 @@ def add_nextclade_dataset_and_tag(
         msg = f"add_nextclade_dataset_and_tag: segment must be str, got {type(segment)}"
         raise TypeError(msg)
     name = get_dataset_name(segment, unprocessed.nextcladeMetadata, config)
-    if not name:
+    if not name or name not in unprocessed.nextcladeDatasets:
         return InputData(datum=None)
-    ds = config.get_dataset_by_name(name)
-    ds_name, ds_tag = ds.nextclade_dataset_name, ds.nextclade_dataset_tag
-    if ds_name is None:
-        return InputData(datum=None)
-    if ds_tag is None:
-        return InputData(datum=ds_name)
-    return InputData(datum=f"{ds_name} ({ds_tag})")
+    dataset = unprocessed.nextcladeDatasets[name]
+    if dataset.tag is None:
+        return InputData(datum=dataset.name)
+    return InputData(datum=f"{dataset.name} ({dataset.tag})")
 
 
 def add_input_metadata(

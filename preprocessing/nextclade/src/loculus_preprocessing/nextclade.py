@@ -25,6 +25,7 @@ from .datatypes import (
     AminoAcidInsertion,
     AminoAcidSequence,
     AnnotationSourceType,
+    NextcladeDataset,
     FastaId,
     GeneName,
     GenericSequence,
@@ -774,6 +775,17 @@ def assign_segment_for_alignment(
     return batch
 
 
+def read_dataset_tag(dataset_path: str) -> str | None:
+    """Returns the tag of a downloaded Nextclade dataset, if its pathogen.json records one"""
+    pathogen_json = os.path.join(dataset_path, "pathogen.json")
+    try:
+        with open(pathogen_json, encoding="utf-8") as f:
+            return json.load(f).get("version", {}).get("tag")
+    except (OSError, json.JSONDecodeError) as e:
+        logger.warning(f"Could not read dataset tag from {pathogen_json}: {e}")
+        return None
+
+
 def enrich_with_nextclade(  # noqa: PLR0914
     unprocessed: Sequence[UnprocessedEntry], dataset_dir: str, config: Config
 ) -> dict[AccessionVersion, UnprocessedAfterNextclade]:
@@ -796,6 +808,9 @@ def enrich_with_nextclade(  # noqa: PLR0914
     segment_assignment_map = batch.sequenceNameToFastaId
     alerts: Alerts = batch.alerts
 
+    nextclade_datasets: dict[AccessionVersion, dict[SegmentName, NextcladeDataset]] = defaultdict(
+        dict
+    )
     aligned_nucleotide_sequences: dict[
         AccessionVersion, dict[SegmentName, NucleotideSequence | None]
     ] = defaultdict(dict)
@@ -817,15 +832,24 @@ def enrich_with_nextclade(  # noqa: PLR0914
             result_dir_seg = result_dir + "/" + name
             input_file = result_dir_seg + "/input.fasta"
             os.makedirs(os.path.dirname(input_file), exist_ok=True)
-            is_empty: bool = True
+            ids_in_input: list[AccessionVersion] = []
             with open(input_file, "w", encoding="utf-8") as f:
                 for id, seg_dict in unaligned_nucleotide_sequences.items():
                     if name in seg_dict and seg_dict[name] is not None:
                         f.write(f">{id}\n")
                         f.write(f"{seg_dict[name]}\n")
-                        is_empty = False
-            if is_empty:
+                        ids_in_input.append(id)
+            if not ids_in_input:
                 continue
+
+            if sequence_and_dataset.nextclade_dataset_name:
+                dataset = NextcladeDataset(
+                    name=sequence_and_dataset.nextclade_dataset_name,
+                    tag=read_dataset_tag(f"{dataset_dir}/{name}")
+                    or sequence_and_dataset.nextclade_dataset_tag,
+                )
+                for id in ids_in_input:
+                    nextclade_datasets[id][name] = dataset
 
             if config.require_nextclade_sort_match:
                 alerts = check_nextclade_sort_matches(
@@ -886,6 +910,7 @@ def enrich_with_nextclade(  # noqa: PLR0914
             metadata=dict(entry.metadata),
             context=entry.context,
             files=entry.files,
+            nextcladeDatasets=nextclade_datasets[id],
             nextcladeMetadata=nextclade_metadata[id],
             unalignedNucleotideSequences=unaligned_nucleotide_sequences[id],
             alignedNucleotideSequences=aligned_nucleotide_sequences[id],
