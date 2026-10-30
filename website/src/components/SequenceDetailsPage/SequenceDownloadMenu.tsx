@@ -16,7 +16,6 @@ export const SequenceDownloadMenu: FC<Props> = ({ accessionVersion, showFastaDow
     const isClient = useClientFlag();
     const { onDownloadLinkClick, confirmationDialog } = useRestrictedUseDownloadConfirmation(isRestricted);
 
-    // Restricted downloads need the confirmation dialog, so keep them unclickable until hydration completes.
     const itemClassName = `block px-4 py-2 outlineButtonDropdownItem ${isRestricted && !isClient ? 'pointer-events-none cursor-wait' : ''}`;
 
     return (

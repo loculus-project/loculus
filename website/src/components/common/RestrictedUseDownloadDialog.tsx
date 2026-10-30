@@ -32,10 +32,6 @@ export const RestrictedUseDownloadDialog: FC<RestrictedUseDownloadDialogProps> =
     </BaseDialog>
 );
 
-/**
- * Asks the user to agree to the Restricted Use Terms before a download of restricted data goes ahead.
- * Unrestricted downloads go ahead immediately. Render `confirmationDialog` somewhere in the component tree.
- */
 export const useRestrictedUseDownloadConfirmation = (isRestricted: boolean) => {
     const [pendingDownload, setPendingDownload] = useState<(() => void) | null>(null);
 

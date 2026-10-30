@@ -2,10 +2,6 @@ import React from 'react';
 
 import { routes } from '../../routes/routes';
 
-/**
- * Wording shown in the confirmation dialog before downloading restricted-use data.
- * Kept in its own file so that deployments can override it like `RestrictedUseWarning`.
- */
 const RestrictedUseDownloadTerms: React.FC = () => {
     return (
         <>
