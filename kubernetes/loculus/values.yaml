@@ -1620,6 +1620,16 @@ defaultOrganismConfig: &defaultOrganismConfig
         header: "INSDC"
         orderOnDetailsPage: 1120
         ingest: ncbiSraAccessions
+      - name: nextcladeDatasetServer
+        type: string
+        header: "Alignment and QC metrics"
+        noInput: true
+        perSegment: true
+        displayName: "Nextclade server"
+        definition: "Server that hosts the nextclade dataset used to analyse this sequence."
+        orderOnDetailsPage: 2701
+        preprocessing:
+          inputs: {input: NEXTCLADE_SERVER}
       - name: nextcladeDatasetAndTag
         type: string
         header: "Alignment and QC metrics"

@@ -126,7 +126,8 @@ FunctionArgs = dict[ArgName, ArgValue]
 
 
 @dataclass
-class NextcladeDataset:
+class NextcladeDatasetInfo:
+    server: str
     name: str
     tag: str | None
 
@@ -136,7 +137,7 @@ class UnprocessedAfterNextclade:
     metadata: InputMetadata
     context: ProcessingContext
     files: dict[FileCategory, list[FileIdAndNameAndReadUrl]] | None
-    nextcladeDatasets: dict[SequenceName, NextcladeDataset]  # noqa: N815
+    nextcladeDatasets: dict[SequenceName, NextcladeDatasetInfo]  # noqa: N815
     # Derived metadata produced by Nextclade
     nextcladeMetadata: dict[SequenceName, Any] | None  # noqa: N815
     unalignedNucleotideSequences: dict[SequenceName, NucleotideSequence | None]  # noqa: N815
