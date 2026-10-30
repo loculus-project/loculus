@@ -56,7 +56,7 @@ export const customDisplayTypes = z.enum([
     'submittingGroup',
     'variantReference',
 ] as const);
-
+]);
 export const customDisplay = z.object({
     type: customDisplayTypes,
     url: z.string().optional(),
