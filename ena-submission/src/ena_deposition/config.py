@@ -5,7 +5,7 @@ from enum import StrEnum
 
 import dotenv
 import yaml
-from pydantic import BaseModel, SecretStr
+from pydantic import BaseModel, Field, SecretStr
 
 from ena_deposition.ena_types import MoleculeType, Topology
 
