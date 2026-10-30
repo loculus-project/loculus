@@ -7,6 +7,13 @@ export type ReferenceAccession = {
     insdcAccessionFull?: string;
 };
 
+export type SegmentNextcladeDataset = {
+    segmentName: string;
+    name: string;
+    tag?: string;
+    server?: string;
+};
+
 export type SegmentName = string;
 export type ReferenceName = string;
 export type GeneName = string;

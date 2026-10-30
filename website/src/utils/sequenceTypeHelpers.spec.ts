@@ -5,6 +5,7 @@ import type { SegmentReferenceSelections } from './sequenceTypeHelpers';
 import {
     getSegmentAndGeneInfo,
     getInsdcAccessionsFromSegmentReferences,
+    getNextcladeDatasetsFromSegmentReferences,
     lapisNameToDisplayName,
     segmentsWithMultipleReferences,
     allReferencesSelected,
@@ -181,5 +182,38 @@ describe('allReferencesSelected', () => {
 
     it('false when all multi-reference segments have a selection', () => {
         expect(allReferencesSelected(SINGLE_SEG_MULTI_REF_REFERENCEGENOMES, { main: 'ref1' })).toBe(true);
+    });
+});
+
+describe('getNextcladeDatasetsFromSegmentReferences', () => {
+    it('returns nothing when the pipeline version has no datasets', () => {
+        const out = getNextcladeDatasetsFromSegmentReferences(SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES, undefined, {
+            main: null,
+        });
+
+        expect(out).toEqual([]);
+    });
+
+    it('multi segment + single reference per segment: returns the dataset of each configured segment', () => {
+        const out = getNextcladeDatasetsFromSegmentReferences(
+            MULTI_SEG_SINGLE_REF_REFERENCEGENOMES,
+            { S: { singleReference: { name: 'dataset/S', tag: 'tagS' } } },
+            { S: null, L: null },
+        );
+
+        expect(out).toEqual([{ segmentName: 'S', name: 'dataset/S', tag: 'tagS' }]);
+    });
+
+    it('single segment + multiple references: uses the dataset of the selected reference', () => {
+        const datasets = { main: { ref1: { name: 'dataset/1' }, ref2: { name: 'dataset/2' } } };
+
+        expect(
+            getNextcladeDatasetsFromSegmentReferences(SINGLE_SEG_MULTI_REF_REFERENCEGENOMES, datasets, {
+                main: 'ref2',
+            }),
+        ).toEqual([{ segmentName: 'main', name: 'dataset/2' }]);
+        expect(
+            getNextcladeDatasetsFromSegmentReferences(SINGLE_SEG_MULTI_REF_REFERENCEGENOMES, datasets, { main: null }),
+        ).toEqual([]);
     });
 });
