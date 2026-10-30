@@ -12,7 +12,7 @@ const AuthorNamesTable: FC<{ authorLists: AuthorListOccurrence[] }> = ({ authorL
     const numberOfHiddenAuthorLists = authorLists.length - displayedAuthorLists.length;
 
     return (
-        <div className='mt-4 space-y-4'>
+        <div className='mt-4 max-h-[45vh] space-y-4 overflow-y-auto pr-1'>
             {displayedAuthorLists.map(({ authors, numberOfEntries }, listIndex) => (
                 <div key={authors}>
                     {authorLists.length > 1 && (
