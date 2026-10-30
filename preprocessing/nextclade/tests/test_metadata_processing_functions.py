@@ -491,18 +491,18 @@ test_case_definitions = [
         ),
     ),
     Case(
-        name="warn_inconsistent_hyphen_spacing_in_authors",
+        name="warn_spaced_hyphen_in_authors",
         input_metadata={
             "name_required": "name",
             "ncbi_required_collection_date": "2022-11-01",
-            "authors": "Smith- Jones, Anna; Perez, Tom -Juan",
+            "authors": "Smith- Jones, Anna; Perez, Tom -Juan; Xu - Li, X.",
         },
         accession_id="12",
         expected_metadata={
             "name_required": "name",
             "required_collection_date": "2022-11-01",
             "concatenated_string": "LOC_12.1/2022-11-01",
-            "authors": "Smith - Jones, Anna; Perez, Tom - Juan",
+            "authors": "Smith-Jones, Anna; Perez, Tom-Juan; Xu-Li, X.",
         },
         expected_errors=[],
         expected_warnings=build_processing_annotations(
@@ -511,10 +511,10 @@ test_case_definitions = [
                     ["authors"],
                     ["authors"],
                     (
-                        "Authors list contains inconsistent spacing around hyphens: "
-                        "'Smith-', '-Juan'. Hyphenated names should contain spaces around "
-                        "the hyphen, e.g. `Smith - Jones, Anna - Maria`. "
-                        "Spaces have been added around these hyphens automatically."
+                        "Authors list contains spaces around hyphens: "
+                        "'Smith- Jones', 'Tom -Juan', 'Xu - Li'. Hyphenated names should not "
+                        "contain spaces around the hyphen, e.g. `Smith-Jones, Anna-Maria`. "
+                        "Spaces around these hyphens have been removed automatically."
                     ),
                 ),
             ]
