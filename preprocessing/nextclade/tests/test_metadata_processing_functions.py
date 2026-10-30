@@ -495,14 +495,14 @@ test_case_definitions = [
         input_metadata={
             "name_required": "name",
             "ncbi_required_collection_date": "2022-11-01",
-            "authors": "Smith- Jones, Anna; Perez, Tom -Juan; Xu - Li, X.",
+            "authors": "Smith- Jones, Anna; Perez, Tom -Juan; Xu - Li, X.; Lee, Tom - J",
         },
         accession_id="12",
         expected_metadata={
             "name_required": "name",
             "required_collection_date": "2022-11-01",
             "concatenated_string": "LOC_12.1/2022-11-01",
-            "authors": "Smith-Jones, Anna; Perez, Tom-Juan; Xu-Li, X.",
+            "authors": "Smith-Jones, Anna; Perez, Tom-Juan; Xu-Li, X.; Lee, Tom-J.",
         },
         expected_errors=[],
         expected_warnings=build_processing_annotations(
@@ -512,7 +512,8 @@ test_case_definitions = [
                     ["authors"],
                     (
                         "Authors list contains spaces around hyphens: "
-                        "'Smith- Jones', 'Tom -Juan', 'Xu - Li'. Hyphenated names should not "
+                        "'Smith- Jones', 'Tom -Juan', 'Xu - Li', 'Tom - J'. Hyphenated names "
+                        "should not "
                         "contain spaces around the hyphen, e.g. `Smith-Jones, Anna-Maria`. "
                         "Spaces around these hyphens have been removed automatically."
                     ),
@@ -744,6 +745,10 @@ accepted_authors = {
     "McGregor, Ewan": "McGregor, Ewan",
     "'t Hooft, Gerard": "'t Hooft, Gerard",
     "Tandoc, A. 3rd": "Tandoc, A. 3rd",
+    "Perez, J-P": "Perez, J.-P.",
+    "Perez, J.-P.": "Perez, J.-P.",
+    "Perez, Anna-Maria": "Perez, Anna-Maria",
+    "Perez, Tom-J": "Perez, Tom-J.",
 }
 # Only accepted for the INSDC ingest group
 accepted_authors_all_ascii = [

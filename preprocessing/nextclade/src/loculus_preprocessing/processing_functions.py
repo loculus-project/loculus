@@ -148,6 +148,19 @@ def check_latin_characters(authors: str) -> tuple[list[str], list[str]]:
     return (errors, warnings)
 
 
+def format_first_name(name: str, last_name: str) -> str:
+    if len(name) == 1:
+        return f"{name.upper()}."
+    if len(name) == 2 and name[1] == ".":
+        return name.upper()
+    if len(name) <= 4 and name.isupper() and "." not in name and not last_name.isupper():
+        return " ".join(f"{char}." for char in name)
+    if re.fullmatch(r"(?:[A-Za-z]\.)+[A-Za-z]+\.?", name):
+        letters = [ch.upper() for ch in re.findall(r"[A-Za-z]", name)]
+        return " ".join(f"{ch}." for ch in letters)
+    return name
+
+
 def format_authors(authors: str) -> str:
     authors_list = [author for author in authors.split(";") if author]
     loculus_authors = []
@@ -164,19 +177,10 @@ def format_authors(authors: str) -> str:
             first_name = re.sub(r"[ .](II|III|IV|V|VI)$", "", first_name, flags=re.IGNORECASE)
         first_names = []
         for name in first_name.split():
-            if len(name) == 1:
-                first_names.append(f"{name.upper()}.")
-            elif len(name) == 2 and name[1] == ".":
-                first_names.append(f"{name.upper()}")
-            elif len(name) <= 4 and name.isupper() and "." not in name and not last_name.isupper():
-                initials = " ".join(f"{char}." for char in name)
-                first_names.append(initials)
-            elif re.fullmatch(r"(?:[A-Za-z]\.)+[A-Za-z]+\.?", name):
-                letters = [ch.upper() for ch in re.findall(r"[A-Za-z]", name)]
-                initials = " ".join(f"{ch}." for ch in letters)
-                first_names.append(initials)
-            else:
-                first_names.append(name)
+            # Format each part of a hyphenated name separately, e.g. "J-P" -> "J.-P."
+            first_names.append(
+                "-".join(format_first_name(part, last_name) for part in name.split("-"))
+            )
         formated_first_name = " ".join(first_names)
         if suffix:
             formated_first_name = f"{formated_first_name} {suffix}"
@@ -789,7 +793,7 @@ class ProcessingFunctions:
             return RawProcessingResult(warnings=warnings, errors=errors)
 
         if valid_authors(authors, allow_all_ascii):
-            formatted_authors = format_authors(authors)
+            formatted_authors = format_authors(remove_hyphen_spacing(authors))
             if warn_potentially_invalid_authors(authors):
                 warnings.append(
                     "The authors list might not be using the Loculus format. "
@@ -808,14 +812,15 @@ class ProcessingFunctions:
                 names_to_show = ", ".join(f"'{name}'" for name in dangling_hyphen_names)
                 return RawProcessingResult(
                     errors=[
-                        (f"Invalid name(s): {names_to_show}. "
-                        "Names must not start or end with a hyphen.")
+                        (
+                            f"Invalid name(s): {names_to_show}. "
+                            "Names must not start or end with a hyphen."
+                        )
                     ],
                     warnings=warnings,
                 )
             hyphenated_words = get_spaced_hyphenated_words(authors)
             if hyphenated_words:
-                formatted_authors = remove_hyphen_spacing(formatted_authors)
                 words_to_show = ", ".join(f"'{word}'" for word in hyphenated_words)
                 warnings.append(
                     f"Authors list contains spaces around hyphens: {words_to_show}. "
