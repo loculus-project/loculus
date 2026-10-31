@@ -207,9 +207,9 @@ class SubmissionDatabaseService(
             }
         }
 
-        // Blocks concurrent inserts, so every entry is either seen by the backfill or queued by its submission.
-        TransactionManager.current().exec("LOCK TABLE sequence_entries IN SHARE ROW EXCLUSIVE MODE")
-        val currentPipelineVersion = getCurrentProcessingPipelineVersion(organism)
+        // Serialize with version retirement for this organism, while allowing submissions.
+        // A submission that misses both registration and backfill is picked up by the repair task.
+        val currentPipelineVersion = CurrentProcessingPipelineTable.getVersionForShare(organism.name)
         if (pipelineVersion < currentPipelineVersion) {
             throw UnprocessableEntityException(
                 "The processing pipeline version $pipelineVersion is not accepted anymore. " +
@@ -252,8 +252,8 @@ class SubmissionDatabaseService(
         }
     }
 
-    // Queues entries that missed the enqueue at submission, e.g. ones a backend from before the queue
-    // accepted during a rolling deploy. Versions whose backfill has not finished are left to the backfill.
+    // Repairs submissions that missed a newly registered version and its initial backfill.
+    // Versions whose backfill has not finished are left to the backfill.
     fun enqueueMissingPreprocessingEntries() {
         val queueVersions = PreprocessingQueueVersionsTable
         // Retiring a version deletes its row and waits for this lock, so nothing is queued for it afterwards.
@@ -1766,8 +1766,8 @@ class SubmissionDatabaseService(
 
             if (pipelineNeedsUpdate) {
                 log.info { "Updating current processing pipeline to newer version: $newVersion" }
-                // Blocks inserts, so nothing is queued for the version retired below.
-                exec("LOCK TABLE sequence_entries IN SHARE ROW EXCLUSIVE MODE")
+                // Submissions and registrations share-lock this organism's version row.
+                // Wait for them before retiring queues, without locking sequence_entries.
                 CurrentProcessingPipelineTable.updatePipelineVersion(
                     organismName,
                     newVersion,

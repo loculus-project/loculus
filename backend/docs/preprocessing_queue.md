@@ -1,7 +1,7 @@
 # Preprocessing queue and leases
 
 Preprocessing pipelines fetch work from `extract-unprocessed-data` and send results back to `submit-processed-data`.
-This document describes how the backend hands out work so that several pipeline pods, and several pipeline versions, can run at the same time without processing an entry twice or losing it.
+This document describes how several pipeline pods and pipeline versions can claim work and return results safely.
 
 See also the [pipeline specification](../../preprocessing/specification.md) for the API contract seen by a pipeline.
 
@@ -55,7 +55,7 @@ WHERE <keys match candidates>
 - `leaseUntil` is the claim time plus `loculus.cleanup.task.reset-stale-in-processing-after-seconds`. The Helm chart sets this from `preprocessingTimeout` (600 s by default).
 - The claimed rows are then streamed back, selected by `processing_attempt_id`. Each NDJSON line carries `processingAttemptId` and `leaseUntil` (Unix seconds).
 
-A lease cannot be extended. A pipeline that takes longer than the lease for a batch loses it, so `preprocessingTimeout` must comfortably exceed the time to process one batch.
+A lease cannot be extended. Cleanup can reset a claim after its expiry, so `preprocessingTimeout` must comfortably exceed the time to process one batch.
 
 ## Submitting results
 
@@ -91,13 +91,15 @@ It runs in the same transaction that inserts the sequence entries.
 
 The first `extract-unprocessed-data` call for an unregistered pipeline version creates its queue, in two transactions:
 
-1. **Register** (`registerPreprocessingQueueVersion`). This takes `LOCK TABLE sequence_entries IN SHARE ROW EXCLUSIVE MODE`, checks that the version is not older than the current one, and inserts the version with `initialized_at = NULL`.
-   - The lock waits for submissions already in progress and blocks new ones until the registration commits.
-   - After the commit, every entry was either inserted before (and is picked up by the backfill) or is inserted after (and is queued by its own submission, which now sees the version).
-   - The lock is held only for this short transaction, but it blocks submissions for all organisms meanwhile.
-2. **Backfill** (`backfillPreprocessingQueue`). This inserts an `UNPROCESSED` row for every non-revoked entry of the organism that has none for this version, then sets `initialized_at`.
+1. **Register** (`registerPreprocessingQueueVersion`). Read the current pipeline version for this organism `FOR SHARE`. Reject older versions, then insert the requested version with `initialized_at = NULL`.
+   - The row lock coordinates registration with version retirement for this organism.
+   - Submissions take the same shared lock. They can continue while a version is registered.
+   - Registration does not lock `sequence_entries`.
+2. **Backfill** (`backfillPreprocessingQueue`). Insert an `UNPROCESSED` row for every non-revoked entry of the organism that has none for this version, then set `initialized_at`.
    - The version row is read `FOR UPDATE SKIP LOCKED`, so only one caller runs the backfill.
-   - Concurrent callers skip it, find an empty queue, and poll again later.
+   - Concurrent callers skip it and poll again later if no jobs are available.
+
+A submission already in progress can miss both registration and backfill. The repair task queues its missing jobs after the submission commits.
 
 Before the queue, these rows were created a batch at a time as pipelines claimed them.
 Now they are all created in one `INSERT ... SELECT` when the first pod of a new version starts polling.
@@ -107,8 +109,10 @@ Splitting the backfill into chunks would avoid this if it becomes a problem.
 
 ### Retiring a pipeline version
 
-When `UseNewerProcessingPipelineVersionTask` switches an organism to a newer pipeline version, it deletes the older versions from `preprocessing_queue_versions` under the same `sequence_entries` lock.
-After that, no submission queues entries for them. Their processed data is deleted by `cleanUpOutdatedPreprocessingData` as before.
+When `UseNewerProcessingPipelineVersionTask` switches an organism to a newer pipeline version, it locks that organism's row in `current_processing_pipeline` `FOR UPDATE`.
+It waits for submissions and registrations that hold the shared row lock, then updates the current version and deletes older versions from `preprocessing_queue_versions`.
+Other organisms can continue writing to `sequence_entries`.
+After retirement, submissions no longer queue entries for older versions. Their processed data is deleted by `cleanUpOutdatedPreprocessingData` as before.
 A pipeline of a retired version is rejected by the version check during registration.
 
 ### Entries that missed the enqueue
@@ -117,39 +121,4 @@ A pipeline of a retired version is rejected by the version check during registra
 For every version whose backfill has completed, it inserts the missing `UNPROCESSED` rows and logs a warning with the count.
 It reads the version rows `FOR KEY SHARE`, so retiring a version waits for it and nothing is queued for a retired version.
 
-It exists for the rolling deploy below. Once no backend from before the queue can still be running, nothing should go missing, and the task can be removed.
-
-## Rolling out the queue onto a running instance
-
-The queue is introduced by four migrations, which Flyway applies when the first new backend pod starts:
-
-1. `V1.36__expand_preprocessing_work_queue` adds `organism`, `processing_attempt_id` and `lease_until`, backfills `organism` on existing rows, and adds the status check, `preprocessing_queue_versions` and the indexes. It takes no table lock, but the `organism` backfill updates every row.
-2. `V1.37__activate_preprocessing_work_queue` takes `SHARE ROW EXCLUSIVE` on `sequence_entries` and `ACCESS EXCLUSIVE` on `sequence_entries_preprocessed_data`. Both wait for open claims of an old backend. It then fills in `organism` on rows created since V1.36 and makes it `NOT NULL`. Every row still `IN_PROCESSING` is reset to `UNPROCESSED`, because those claims have no attempt id and can never be submitted. Finally it adds the ownership check as `NOT VALID`, so it is already enforced on new writes.
-3. `V1.38__populate_preprocessing_work_queue` registers the current pipeline version of every organism, plus any newer version that already has results, as initialized. It then queues every non-revoked entry for each of them and validates the ownership check.
-4. `V1.39__preprocessed_data_tracker_reads_organism_column` makes the update-tracker trigger read `organism` from the row instead of joining `sequence_entries`.
-
-`sequence_entries_preprocessed_data` is unreadable while V1.37 runs, and V1.38 is one large insert.
-Both are proportional to the number of sequence entries.
-
-### Old backend pods during the rollout
-
-Until Kubernetes has replaced every old backend pod, some requests are still served by code from before the queue:
-
-- **Submissions** create entries without queue rows. `EnqueueMissingPreprocessingEntriesTask` queues them, at the latest one interval after the old pod accepted them.
-- **Edits** delete the processed row instead of resetting it, and the task queues the entry again.
-- **The old clean-up task** deletes stale `IN_PROCESSING` rows instead of resetting them. The task queues those entries again, and a late result for the deleted claim is rejected with `422`.
-- **Claims** fail for entries without a queue row, because the old insert does not set `organism`, which is now `NOT NULL`. For all other entries the old anti-join finds nothing, because their rows already exist.
-- **Results** sent to an old pod fail the ownership check, because the old update marks the row `PROCESSED` without clearing `processing_attempt_id`.
-
-In short, an old pod can make requests fail, but it cannot corrupt the queue.
-Pipelines retry, and expired leases are returned by the clean-up task.
-
-### Preprocessing pipelines
-
-`submit-processed-data` now requires `processingAttemptId` on every line.
-A pipeline that does not send it back has all its results rejected, so pipelines must be upgraded together with the backend.
-In the meantime, their claims expire and the entries are handed out again.
-
-### After the rollout
-
-Once no old backend can be running, remove `EnqueueMissingPreprocessingEntriesTask` and `enqueueMissingPreprocessingEntries`, together with its setting and test.
+This task is required during normal operation. Submissions can commit after a new version's initial backfill and need a later repair run. Some jobs therefore wait for the next successful run. The recurring search for missing jobs also adds database work.

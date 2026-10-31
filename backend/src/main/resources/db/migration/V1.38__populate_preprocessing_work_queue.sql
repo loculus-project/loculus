@@ -31,6 +31,3 @@ JOIN preprocessing_queue_versions qv
   ON qv.organism = se.organism
 WHERE NOT se.is_revocation
 ON CONFLICT (accession, version, pipeline_version) DO NOTHING;
-
-ALTER TABLE sequence_entries_preprocessed_data
-    VALIDATE CONSTRAINT sequence_entries_preprocessed_data_ownership_check;

@@ -5,7 +5,7 @@ import org.jetbrains.exposed.v1.datetime.datetime
 
 const val PREPROCESSING_QUEUE_VERSIONS_TABLE_NAME = "preprocessing_queue_versions"
 
-// Pipeline versions with a queue. The enqueue trigger reads it, initialized_at is set once the backfill completes.
+// Pipeline versions with a queue. initialized_at is set once the backfill completes.
 object PreprocessingQueueVersionsTable : Table(PREPROCESSING_QUEUE_VERSIONS_TABLE_NAME) {
     val organismColumn = varchar("organism", 255)
     val pipelineVersionColumn = long("pipeline_version")

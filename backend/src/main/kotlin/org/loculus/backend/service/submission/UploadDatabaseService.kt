@@ -38,6 +38,7 @@ import org.loculus.backend.service.submission.MetadataUploadAuxTable.uploadedAtC
 import org.loculus.backend.service.submission.SequenceUploadAuxTable.compressedSequenceDataColumn
 import org.loculus.backend.service.submission.SequenceUploadAuxTable.fastaIdColumn
 import org.loculus.backend.service.submission.SequenceUploadAuxTable.sequenceUploadIdColumn
+import org.loculus.backend.service.submission.dbtables.CurrentProcessingPipelineTable
 import org.loculus.backend.service.submission.dbtables.PreprocessingQueueVersionsTable
 import org.loculus.backend.types.Organism
 import org.loculus.backend.types.PreprocessingStatus.UNPROCESSED
@@ -250,7 +251,7 @@ class UploadDatabaseService(
             result.toList()
         } ?: emptyList()
 
-        enqueueForPreprocessing(uploadId)
+        enqueueForPreprocessing(uploadId, submissionParams.organism)
 
         if (submissionParams is SubmissionParams.OriginalSubmissionParams) {
             log.debug { "Setting data use terms for submission $uploadId to ${submissionParams.dataUseTerms}" }
@@ -279,8 +280,10 @@ class UploadDatabaseService(
     }
 
     // Queues the new entries for each registered pipeline version of their organism.
-    // Must run in the transaction that inserted them: registering a version waits for it, so its backfill sees them.
-    private fun enqueueForPreprocessing(uploadId: String) {
+    // Keep the enqueue in the submission transaction and prevent retirement until it commits.
+    // Concurrent registration is allowed. The repair task covers versions this submission misses.
+    private fun enqueueForPreprocessing(uploadId: String, organism: Organism) {
+        CurrentProcessingPipelineTable.getVersionForShare(organism.name)
         val upload = MetadataUploadAuxTable
         val queueVersions = PreprocessingQueueVersionsTable
         val queue = SequenceEntriesPreprocessedDataTable

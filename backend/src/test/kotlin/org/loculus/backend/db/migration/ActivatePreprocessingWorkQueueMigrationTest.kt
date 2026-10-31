@@ -56,7 +56,7 @@ class ActivatePreprocessingWorkQueueMigrationTest {
             }
 
             postgres.connection().use(::assertLegacyClaimWasMigrated)
-            migrateTo(postgres, "1.39")
+            migrateTo(postgres, "1.38")
         } finally {
             postgres.stop()
         }
@@ -146,6 +146,15 @@ class ActivatePreprocessingWorkQueueMigrationTest {
                 assertNull(result.getObject("lease_until"))
                 assertNull(result.getObject("started_processing_at"))
                 assertFalse(result.next())
+            }
+            statement.executeQuery(
+                """
+                SELECT convalidated FROM pg_constraint
+                WHERE conname = 'sequence_entries_preprocessed_data_ownership_check'
+                """.trimIndent(),
+            ).use { result ->
+                assertTrue(result.next())
+                assertTrue(result.getBoolean(1))
             }
         }
     }

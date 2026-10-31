@@ -231,7 +231,7 @@ open class SubmissionController(
             return ResponseEntity.status(HttpStatus.NOT_MODIFIED).eTag(lastDatabaseWriteETag).build()
         }
 
-        // The first worker of a new pipeline version populates its queue, in two short transactions.
+        // Register the version and fill its queue in separate transactions.
         val queueState = submissionDatabaseService.registerPreprocessingQueueVersion(organism, pipelineVersion)
         if (queueState == PreprocessingQueueState.NEEDS_BACKFILL) {
             submissionDatabaseService.backfillPreprocessingQueue(organism, pipelineVersion)

@@ -12,9 +12,6 @@ WHERE se.accession = sepd.accession
   AND se.version = sepd.version
   AND sepd.organism IS NULL;
 
-ALTER TABLE sequence_entries_preprocessed_data
-    ALTER COLUMN organism SET NOT NULL;
-
 UPDATE sequence_entries_preprocessed_data
 SET processing_status = 'UNPROCESSED',
     processing_attempt_id = NULL,
@@ -26,10 +23,11 @@ SET processing_status = 'UNPROCESSED',
     warnings = NULL
 WHERE processing_status = 'IN_PROCESSING';
 
--- A row in processing has an owner and an expiry, any other row has neither. Validated in part 3.
--- Added here so
-  claims from old backends without the queue are rejected once the locks are released.
+-- A row in processing has an owner and an expiry, any other row has neither.
+-- Reject claims from old backends without the queue once the locks are released.
+-- Check organism and ownership in one ALTER TABLE, so they share one table scan.
 ALTER TABLE sequence_entries_preprocessed_data
+    ALTER COLUMN organism SET NOT NULL,
     ADD CONSTRAINT sequence_entries_preprocessed_data_ownership_check
     CHECK (
         (
@@ -43,5 +41,18 @@ ALTER TABLE sequence_entries_preprocessed_data
             AND processing_attempt_id IS NULL
             AND lease_until IS NULL
         )
-    )
-    NOT VALID;
+    );
+
+-- Rows now always carry organism, so the tracker no longer needs to join sequence_entries.
+CREATE OR REPLACE FUNCTION update_preprocessed_data_tracker()
+RETURNS TRIGGER AS $$
+BEGIN
+    INSERT INTO table_update_tracker (table_name, organism, pipeline_version, last_time_updated)
+    SELECT TG_TABLE_NAME, cr.organism, cr.pipeline_version, timezone('UTC', CURRENT_TIMESTAMP)
+    FROM changed_rows cr
+    GROUP BY cr.organism, cr.pipeline_version
+    ON CONFLICT (table_name, organism, pipeline_version)
+    DO UPDATE SET last_time_updated = timezone('UTC', CURRENT_TIMESTAMP);
+    RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;

@@ -1,8 +1,8 @@
 -- Preprocessing work queue, part 1 of 3: columns, constraint and indexes.
 -- Every entry gets an UNPROCESSED row up front. A claim is a single UPDATE ... FOR UPDATE SKIP LOCKED.
--- organism is copied onto the row so the claim is served by one partial index without heap fetches.
+-- organism lets candidate selection use a partial index without joining sequence_entries.
 -- processing_attempt_id and lease_until turn a claim into a lease. A result needs the matching id.
--- The organism backfill runs here, outside the ACCESS EXCLUSIVE lock taken in part 2.
+-- This migration holds ACCESS EXCLUSIVE until commit, including the backfill and index creation.
 
 ALTER TABLE sequence_entries_preprocessed_data
     ADD COLUMN organism TEXT,
