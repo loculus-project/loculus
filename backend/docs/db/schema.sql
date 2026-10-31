@@ -126,11 +126,9 @@ CREATE FUNCTION public.update_preprocessed_data_tracker() RETURNS trigger
     AS $$
 BEGIN
     INSERT INTO table_update_tracker (table_name, organism, pipeline_version, last_time_updated)
-    SELECT TG_TABLE_NAME, se.organism, cr.pipeline_version, timezone('UTC', CURRENT_TIMESTAMP)
+    SELECT TG_TABLE_NAME, cr.organism, cr.pipeline_version, timezone('UTC', CURRENT_TIMESTAMP)
     FROM changed_rows cr
-    JOIN sequence_entries se
-      ON se.accession = cr.accession AND se.version = cr.version
-    GROUP BY se.organism, cr.pipeline_version
+    GROUP BY cr.organism, cr.pipeline_version
     ON CONFLICT (table_name, organism, pipeline_version)
     DO UPDATE SET last_time_updated = timezone('UTC', CURRENT_TIMESTAMP);
     RETURN NULL;
@@ -438,6 +436,19 @@ CREATE TABLE public.metadata_upload_aux_table (
 ALTER TABLE public.metadata_upload_aux_table OWNER TO postgres;
 
 --
+-- Name: preprocessing_queue_versions; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.preprocessing_queue_versions (
+    organism text NOT NULL,
+    pipeline_version bigint NOT NULL,
+    initialized_at timestamp without time zone
+);
+
+
+ALTER TABLE public.preprocessing_queue_versions OWNER TO postgres;
+
+--
 -- Name: seqset_citation_source; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -623,8 +634,13 @@ CREATE TABLE public.sequence_entries_preprocessed_data (
     errors jsonb,
     warnings jsonb,
     processing_status text NOT NULL,
-    started_processing_at timestamp without time zone NOT NULL,
-    finished_processing_at timestamp without time zone
+    started_processing_at timestamp without time zone,
+    finished_processing_at timestamp without time zone,
+    organism text NOT NULL,
+    processing_attempt_id uuid,
+    lease_until timestamp without time zone,
+    CONSTRAINT sequence_entries_preprocessed_data_ownership_check CHECK ((((processing_status = 'IN_PROCESSING'::text) AND (processing_attempt_id IS NOT NULL) AND (lease_until IS NOT NULL)) OR ((processing_status = ANY (ARRAY['UNPROCESSED'::text, 'PROCESSED'::text])) AND (processing_attempt_id IS NULL) AND (lease_until IS NULL)))),
+    CONSTRAINT sequence_entries_preprocessed_data_status_check CHECK ((processing_status = ANY (ARRAY['UNPROCESSED'::text, 'IN_PROCESSING'::text, 'PROCESSED'::text])))
 );
 
 
@@ -883,6 +899,14 @@ ALTER TABLE ONLY public.metadata_upload_aux_table
 
 
 --
+-- Name: preprocessing_queue_versions preprocessing_queue_versions_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.preprocessing_queue_versions
+    ADD CONSTRAINT preprocessing_queue_versions_pkey PRIMARY KEY (organism, pipeline_version);
+
+
+--
 -- Name: seqset_citation_source seqset_citation_source_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1005,6 +1029,27 @@ CREATE INDEX files_upload_requested_at_idx ON public.files USING btree (upload_r
 --
 
 CREATE INDEX flyway_schema_history_s_idx ON public.flyway_schema_history USING btree (success);
+
+
+--
+-- Name: sepd_processing_attempt_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX sepd_processing_attempt_idx ON public.sequence_entries_preprocessed_data USING btree (processing_attempt_id) WHERE (processing_attempt_id IS NOT NULL);
+
+
+--
+-- Name: sepd_stale_lease_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX sepd_stale_lease_idx ON public.sequence_entries_preprocessed_data USING btree (lease_until) WHERE ((processing_status = 'IN_PROCESSING'::text) AND (lease_until IS NOT NULL));
+
+
+--
+-- Name: sepd_unprocessed_claim_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX sepd_unprocessed_claim_idx ON public.sequence_entries_preprocessed_data USING btree (organism, pipeline_version, accession, version) WHERE (processing_status = 'UNPROCESSED'::text);
 
 
 --

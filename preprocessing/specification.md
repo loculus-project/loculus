@@ -39,8 +39,8 @@ To retrieve unpreprocessed data, the preprocessing pipeline sends a POST request
 In the unprocessed NDJSON, each line contains a sequence entry represented as a JSON object and looks as follows:
 
 ```json
-{"accession": 1, "version": 1, "data": {"metadata": {...}, "unalignedNucleotideSequences": {...}, "files": {...}}, "submitter": insdc_ingest_user, ...}
-{"accession": 2, "version": 1, "data": {"metadata": {...}, "unalignedNucleotideSequences": {...}, "files": {...}}, "submitter": john_smith, ...}
+{"accession": 1, "version": 1, "processingAttemptId": "0d4f…", "leaseUntil": 1720305313, "data": {"metadata": {...}, "unalignedNucleotideSequences": {...}, "files": {...}}, "submitter": insdc_ingest_user, ...}
+{"accession": 2, "version": 1, "processingAttemptId": "0d4f…", "leaseUntil": 1720305313, "data": {"metadata": {...}, "unalignedNucleotideSequences": {...}, "files": {...}}, "submitter": john_smith, ...}
 ```
 
 The `metadata` field contains a flat JSON object in which all values are strings. The fields and values correspond to the columns and values as provided by the submitter. Fields present in the metadata file header but left empty by the submitter will be returned as "". Only columns present in the submission metadata file will be keys in the JSON object - independent of the metadata schema.
@@ -49,12 +49,16 @@ The `files` field contains a JSON object in which the keys are the names of the 
 
 The primary key is `[accession,version]`. The preprocessing pipeline must be able to handle getting the same sequence entry twice with different versions.
 
+Each returned entry is leased to the pipeline: `processingAttemptId` identifies the claim and must be sent back unchanged with the processed data, `leaseUntil` is the Unix timestamp until which the claim is held. If no result has arrived by then, the entry is returned to the queue and handed out again, and from that point on results for the old claim are rejected with a `422` error. The lease length is the backend's `preprocessingTimeout`. See the [backend documentation](../backend/docs/preprocessing_queue.md) for how the queue and leases work.
+
 One JSON object has the following fields:
 
 ```js
 {
     accession: integer,
     version: integer,
+    processingAttemptId: string,
+    leaseUntil: integer,
     data: {
         metadata: Record<string, string>,
         unalignedNucleotideSequences: Record<string, string>,
@@ -83,6 +87,7 @@ In the NDJSON, each row contains a sequence entry version and a list of errors a
 {
     accession,
     version,
+    processingAttemptId,
     errors,
     warnings,
     data: {

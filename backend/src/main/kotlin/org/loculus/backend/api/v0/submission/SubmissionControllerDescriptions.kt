@@ -42,6 +42,8 @@ A submitting group is a set of users that share access to the same sequence entr
 const val EXTRACT_UNPROCESSED_DATA_DESCRIPTION = """
 Extract unprocessed accession versions. This is supposed to be used as input for the preprocessing pipeline.
 Returns a stream of NDJSON and sets the status of each accession version to 'IN_PROCESSING'.
+Each line carries a 'processingAttemptId' that identifies this claim and a 'leaseUntil' timestamp. If no result
+arrives before the lease expires, the accession version is handed out again.
 """
 const val EXTRACT_UNPROCESSED_DATA_RESPONSE_DESCRIPTION = """
 Sequence data as input for the preprocessing pipeline.
@@ -67,6 +69,8 @@ will roll back all previously inserted data. It is the responsibility of the pro
 content of the data is correct. If the pipeline is unable to provide valid data, it should submit the data with errors.
 In this case, no validation will be performed and the status of the accession version will be set to 'HAS_ERRORS'.
 The user can then edit the data and submit a corrected version.
+Each line must carry the 'processingAttemptId' it was claimed with. Once a claim has expired and the entry has
+been returned to the queue or handed to another pipeline, results for the old claim are rejected.
 """
 
 const val SUBMIT_PROCESSED_DATA_ERROR_RESPONSE_DESCRIPTION = """
