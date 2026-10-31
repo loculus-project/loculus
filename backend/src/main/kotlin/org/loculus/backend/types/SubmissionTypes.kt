@@ -239,10 +239,21 @@ data class ReleasedData(
 )
 
 data class ExternalSubmittedData(
-    override val accession: Accession,
-    override val version: Version,
+    val accession: Accession,
+    @Schema(
+        description = "If set, the external metadata only applies to this accession version. " +
+            "If omitted, the external metadata applies to all versions of the accession " +
+            "(including future revisions). Version-scoped external metadata takes precedence " +
+            "over accession-scoped external metadata.",
+        nullable = true,
+    )
+    val version: Version? = null,
     val externalMetadata: MetadataMap,
-) : AccessionVersionInterface
+) {
+    fun displayAccessionOrAccessionVersion() = if (version == null) accession else "$accession.$version"
+
+    fun toAccessionVersionOrNull() = version?.let { AccessionVersion(accession, it) }
+}
 
 @JsonDeserialize(using = InsertionDeserializer::class)
 data class Insertion(

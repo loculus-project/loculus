@@ -5,9 +5,13 @@ import org.jetbrains.exposed.v1.datetime.datetime
 import org.loculus.backend.service.jacksonSerializableJsonb
 import org.loculus.backend.types.MetadataMap
 
-const val EXTERNAL_METADATA_TABLE_NAME = "external_metadata"
+const val ACCESSION_VERSION_EXTERNAL_METADATA_TABLE_NAME = "accession_version_external_metadata"
 
-object ExternalMetadataTable : Table(EXTERNAL_METADATA_TABLE_NAME) {
+/**
+ * External metadata that applies to a single accession version.
+ * It takes precedence over the accession-scoped [AccessionExternalMetadataTable].
+ */
+object AccessionVersionExternalMetadataTable : Table(ACCESSION_VERSION_EXTERNAL_METADATA_TABLE_NAME) {
     val accessionColumn = varchar("accession", 255)
     val versionColumn = long("version")
     val updaterIdColumn = varchar("external_metadata_updater", 255)

@@ -592,7 +592,7 @@ def get_project_and_sample_results(
         error_msg = f"Entry {submission_row.accession} not found in project_table"
         raise RuntimeError(error_msg)
     sample_accession = (
-        sample_rows[0].result.get("ena_sample_accession") if sample_rows[0].result else None
+        sample_rows[0].result.get(EnaResultField.BIOSAMPLE) if sample_rows[0].result else None
     )
     study_accession = (
         project_rows[0].result.get(EnaResultField.BIOPROJECT) if project_rows[0].result else None

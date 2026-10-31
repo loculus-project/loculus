@@ -141,7 +141,13 @@ Update metadata of an existing accession with data from an external source with 
 The following rules apply:
  - Given sequence entries must exist (identified by the column 'accession' in the metadata file) 
  - The user is authorized to use this endpoint
- - The last accession version is in status  'APPROVED_FOR_RELEASE', i.e. can be released externally
+ - If 'version' is given: that accession version is in status 'APPROVED_FOR_RELEASE', i.e. can be released externally
+ - If 'version' is omitted: at least one version of the accession is in status 'APPROVED_FOR_RELEASE'
+
+External metadata can be scoped to an accession version (by providing 'version') or to all versions of an accession
+(by omitting 'version'). Accession-scoped external metadata also applies to future revisions of the accession.
+The released metadata is built as an overlay: processed metadata, then accession-scoped external metadata,
+then accession-version-scoped external metadata, i.e. if a field is present in several layers the most specific value wins.
 
 This endpoint performs validation (type validation, missing/required fields) on the metadata.
 If any of above is not fulfilled, this will return an error and roll back the whole transaction.

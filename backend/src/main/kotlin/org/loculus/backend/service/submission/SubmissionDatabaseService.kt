@@ -23,6 +23,7 @@ import org.jetbrains.exposed.v1.core.booleanParam
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.greaterEq
 import org.jetbrains.exposed.v1.core.inList
+import org.jetbrains.exposed.v1.core.isNotNull
 import org.jetbrains.exposed.v1.core.less
 import org.jetbrains.exposed.v1.core.max
 import org.jetbrains.exposed.v1.core.not
@@ -44,6 +45,7 @@ import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.TransactionManager
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.jdbc.update
+import org.jetbrains.exposed.v1.jdbc.upsert
 import org.jetbrains.exposed.v1.json.extract
 import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.config.BackendConfig
@@ -66,8 +68,9 @@ import org.loculus.backend.service.serialize
 import org.loculus.backend.service.submission.SequenceEntriesTable.accessionColumn
 import org.loculus.backend.service.submission.SequenceEntriesTable.groupIdColumn
 import org.loculus.backend.service.submission.SequenceEntriesTable.versionColumn
+import org.loculus.backend.service.submission.dbtables.AccessionExternalMetadataTable
+import org.loculus.backend.service.submission.dbtables.AccessionVersionExternalMetadataTable
 import org.loculus.backend.service.submission.dbtables.CurrentProcessingPipelineTable
-import org.loculus.backend.service.submission.dbtables.ExternalMetadataTable
 import org.loculus.backend.types.AccessionVersion
 import org.loculus.backend.types.AccessionVersionInterface
 import org.loculus.backend.types.AccessionVersionSubmittedMetadata
@@ -82,6 +85,7 @@ import org.loculus.backend.types.FileIdAndMaybeReleasedAt
 import org.loculus.backend.types.FileIdAndNameAndReadUrl
 import org.loculus.backend.types.GeneticSequence
 import org.loculus.backend.types.GetSequenceResponse
+import org.loculus.backend.types.MetadataMap
 import org.loculus.backend.types.Organism
 import org.loculus.backend.types.PreprocessingAnnotation
 import org.loculus.backend.types.PreprocessingStatus.IN_PROCESSING
@@ -423,7 +427,7 @@ class SubmissionDatabaseService(
                         e,
                     )
                 }
-            accessionVersions.add(submittedExternalMetadata.displayAccessionVersion())
+            accessionVersions.add(submittedExternalMetadata.displayAccessionOrAccessionVersion())
 
             insertExternalMetadata(
                 submittedExternalMetadata,
@@ -446,12 +450,21 @@ class SubmissionDatabaseService(
         organism: Organism,
         externalMetadataUpdater: String,
     ) {
-        accessionPreconditionValidator.validate {
-            thatAccessionVersionExists(submittedExternalMetadata)
-                .andThatSequenceEntriesAreInStates(
-                    listOf(Status.APPROVED_FOR_RELEASE),
-                )
-                .andThatOrganismIs(organism)
+        val accessionVersion = submittedExternalMetadata.toAccessionVersionOrNull()
+        if (accessionVersion != null) {
+            accessionPreconditionValidator.validate {
+                thatAccessionVersionExists(accessionVersion)
+                    .andThatSequenceEntriesAreInStates(
+                        listOf(Status.APPROVED_FOR_RELEASE),
+                    )
+                    .andThatOrganismIs(organism)
+            }
+        } else {
+            accessionPreconditionValidator.validate {
+                thatAccessionsExist(listOf(submittedExternalMetadata.accession))
+                    .andThatOrganismIs(organism)
+            }
+            throwIfAccessionHasNoReleasedVersion(submittedExternalMetadata.accession)
         }
         validateExternalMetadata(
             submittedExternalMetadata,
@@ -459,29 +472,38 @@ class SubmissionDatabaseService(
             externalMetadataUpdater,
         )
 
-        val numberInserted =
-            ExternalMetadataTable.update(
-                where = {
-                    (ExternalMetadataTable.accessionColumn eq submittedExternalMetadata.accession) and
-                        (ExternalMetadataTable.versionColumn eq submittedExternalMetadata.version) and
-                        (ExternalMetadataTable.updaterIdColumn eq externalMetadataUpdater)
-                },
-            ) {
-                it[accessionColumn] = submittedExternalMetadata.accession
-                it[versionColumn] = submittedExternalMetadata.version
+        if (accessionVersion != null) {
+            AccessionVersionExternalMetadataTable.upsert {
+                it[accessionColumn] = accessionVersion.accession
+                it[versionColumn] = accessionVersion.version
                 it[updaterIdColumn] = externalMetadataUpdater
                 it[externalMetadataColumn] = submittedExternalMetadata.externalMetadata
                 it[updatedAtColumn] = dateProvider.getCurrentDateTime()
             }
+        } else {
+            AccessionExternalMetadataTable.upsert {
+                it[accessionColumn] = submittedExternalMetadata.accession
+                it[updaterIdColumn] = externalMetadataUpdater
+                it[externalMetadataColumn] = submittedExternalMetadata.externalMetadata
+                it[updatedAtColumn] = dateProvider.getCurrentDateTime()
+            }
+        }
+    }
 
-        if (numberInserted != 1) {
-            ExternalMetadataTable.insert {
-                it[accessionColumn] = submittedExternalMetadata.accession
-                it[versionColumn] = submittedExternalMetadata.version
-                it[updaterIdColumn] = externalMetadataUpdater
-                it[externalMetadataColumn] = submittedExternalMetadata.externalMetadata
-                it[updatedAtColumn] = dateProvider.getCurrentDateTime()
+    private fun throwIfAccessionHasNoReleasedVersion(accession: Accession) {
+        val hasReleasedVersion = SequenceEntriesTable
+            .select(SequenceEntriesTable.accessionColumn)
+            .where {
+                (SequenceEntriesTable.accessionColumn eq accession) and
+                    SequenceEntriesTable.releasedAtTimestampColumn.isNotNull()
             }
+            .limit(1)
+            .any()
+
+        if (!hasReleasedVersion) {
+            throw UnprocessableEntityException(
+                "Accession $accession has no version in status ${Status.APPROVED_FOR_RELEASE}",
+            )
         }
     }
 
