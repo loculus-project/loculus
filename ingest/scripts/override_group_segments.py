@@ -31,6 +31,7 @@ import json
 import logging
 import os
 import pathlib
+import dataclasses
 from dataclasses import dataclass
 from typing import Any, Final
 
@@ -64,7 +65,7 @@ class Config:
     nucleotide_sequences: list[str]
     segmented: bool
     organism: str
-    slack_hook: str = ""
+    slack_hook: str = dataclasses.field(default="", repr=False)
 
 
 @dataclass

@@ -1,5 +1,5 @@
-from dataclasses import dataclass, fields
 import json
+from dataclasses import dataclass, fields
 from pathlib import Path
 from typing import Annotated
 
@@ -11,14 +11,14 @@ FileUrl = str
 
 
 class FileIdAndNameAndReadUrl(BaseModel):
-    fileId: FileId  # noqa: N815
+    fileId: FileId
     name: FileName
     url: FileUrl
 
 
 class RequestWithFiles(BaseModel):
     files: list[FileIdAndNameAndReadUrl]
-    accessionVersion: str  # noqa: N815
+    accessionVersion: str
 
 
 NULL_BYTE_PLACEHOLDER = "<NUL>"
@@ -49,7 +49,7 @@ SanitizedText = Annotated[str, AfterValidator(sanitize_for_json)]
 
 
 class Annotation(BaseModel):
-    fileNames: list[SanitizedText]  # noqa: N815
+    fileNames: list[SanitizedText]
     message: SanitizedText
 
 

@@ -114,7 +114,7 @@ class Config(BaseModel):
     backend_host: str = ""  # base API URL and organism - populated in get_config if left empty
     keycloak_host: str = "http://127.0.0.1:8083"
     keycloak_user: str = "preprocessing_pipeline"
-    keycloak_password: str = "preprocessing_pipeline"  # noqa: S105
+    keycloak_password: str = Field(default="preprocessing_pipeline", repr=False)
     keycloak_token_path: str = "realms/loculus/protocol/openid-connect/token"  # noqa: S105
 
     organism: str = "mpox"
@@ -376,7 +376,7 @@ def get_config(config_file: str | None = None, ignore_args: bool = False) -> Con
     if config_file_path:
         with open(config_file_path, encoding="utf-8") as file:
             yaml_config = yaml.safe_load(file)
-            logger.debug(f"Loaded config from {config_file_path}: {yaml_config}")
+            logger.debug(f"Loaded config from {config_file_path}")
         config = Config(**yaml_config)
     else:
         config = Config()
