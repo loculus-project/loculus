@@ -1,5 +1,3 @@
-# ruff: noqa: S101
-
 import pytest
 
 from raw_reads_processing.datatypes import Annotation, sanitize_for_json
