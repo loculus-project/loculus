@@ -1,6 +1,6 @@
 import gzip
 import shutil
-import subprocess  # noqa: S404
+import subprocess
 import sys
 import time
 from pathlib import Path
@@ -43,7 +43,7 @@ def _bam(tmp_path: Path, samtools: str, records: list[str]) -> Path:
         ).encode("utf-8", errors="surrogateescape")
     )
     bam = tmp_path / "input.bam"
-    subprocess.run(  # noqa: S603
+    subprocess.run(
         [samtools, "view", "-b", "-o", str(bam), str(sam)],
         check=True,
         capture_output=True,
@@ -143,7 +143,7 @@ def test_corruption_after_the_initial_records_is_rejected(tmp_path, samtools):
         offset += int.from_bytes(contents[offset + 16 : offset + 18], "little") + 1
     contents[blocks[-3] + 20] ^= 0xFF
     bam.write_bytes(contents)
-    subprocess.run(  # noqa: S603
+    subprocess.run(
         [samtools, "quickcheck", "-u", str(bam)], check=True, capture_output=True
     )
     with pytest.raises(InvalidSubmission):

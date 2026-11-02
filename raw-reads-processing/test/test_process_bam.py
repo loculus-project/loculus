@@ -1,3 +1,4 @@
+# ruff: noqa: PLC0414
 import subprocess
 
 import pytest
@@ -7,7 +8,11 @@ from test_deacon import (
     FIXTURES_DIR,
     _parse_fastq_records,
     _random_read,
+)
+from test_deacon import (
     deacon_index as deacon_index,
+)
+from test_deacon import (
     deacon_server as deacon_server,
 )
 

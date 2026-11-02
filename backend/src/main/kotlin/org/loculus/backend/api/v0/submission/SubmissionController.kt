@@ -436,6 +436,10 @@ open class SubmissionController(
             "Part of pagination parameters. Number of sequences per page. " +
                 "If page or size are not provided, all sequences are returned.",
         ) @RequestParam(required = false) size: Int?,
+        @Parameter(
+            description = "Include compact review data and revision comparisons, without sequence strings. " +
+                "Requires page >= 0 and size between 1 and 100.",
+        ) @RequestParam(defaultValue = "false") includeReviewData: Boolean,
     ): GetSequenceResponse = submissionDatabaseService.getSequences(
         authenticatedUser,
         organism,
@@ -444,6 +448,7 @@ open class SubmissionController(
         processingResultFilter,
         page,
         size,
+        includeReviewData,
     )
 
     @Operation(description = "Retrieve unprocessed metadata of submitted accession versions.")

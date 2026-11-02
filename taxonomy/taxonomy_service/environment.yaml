@@ -2,14 +2,14 @@ name: loculus-taxonomy-service
 channels:
   - conda-forge
 dependencies:
-  - fastapi=0.135.1
-  - pydantic=2.12.5
-  - pytest=9.0.2
-  - python=3.14.3
-  - ca-certificates=2026.10.19 # >=2026.10.19 drops distrusted emSign ECC Root CA - G3
-  - certifi=2026.10.19
-  - requests=2.32.5
-  - ruff=0.15.7
-  - uv=0.10.9
-  - uvicorn=0.41.0
+  - fastapi=0.162.0
+  - pydantic=2.14.2
+  - pytest=9.2.0
+  - python=3.15.2
+  - ca-certificates=2026.10.23 # >=2026.10.19 drops distrusted emSign ECC Root CA - G3
+  - certifi=2026.10.23
+  - requests=2.34.2
+  - ruff=0.17.3
+  - uv=0.13.6
+  - uvicorn=0.54.0
   - pyyaml=6.0.3

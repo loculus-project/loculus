@@ -1,6 +1,6 @@
 import gzip
 import logging
-import subprocess  # noqa: S404
+import subprocess
 import tempfile
 import time
 from dataclasses import dataclass
@@ -98,7 +98,7 @@ def _check_samtools_result(
 def _run_samtools(
     args: list[str], file_name: FileName, bam_path: Path, deadline: float
 ) -> str:
-    result = subprocess.run(  # noqa: S603
+    result = subprocess.run(
         ["samtools", *args],
         check=False,
         capture_output=True,
@@ -163,13 +163,11 @@ def _extract_fasta(
         (directory / "collate.log").open("w+b") as collate_log,
         (directory / "fasta.log").open("w+b") as fasta_log,
     ):
-        view = subprocess.Popen(  # noqa: S603
-            view_args, stdout=subprocess.PIPE, stderr=view_log
-        )
+        view = subprocess.Popen(view_args, stdout=subprocess.PIPE, stderr=view_log)
         collate = fasta = None
         try:
             try:
-                collate = subprocess.Popen(  # noqa: S603
+                collate = subprocess.Popen(
                     collate_args,
                     stdin=view.stdout,
                     stdout=subprocess.PIPE,
@@ -181,7 +179,7 @@ def _extract_fasta(
                 if view.stdout is not None:
                     view.stdout.close()
             try:
-                fasta = subprocess.Popen(  # noqa: S603
+                fasta = subprocess.Popen(
                     fasta_args,
                     stdin=collate.stdout,
                     stdout=subprocess.DEVNULL,

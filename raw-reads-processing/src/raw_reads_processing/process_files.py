@@ -3,6 +3,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 import requests
+
 from raw_reads_processing.bam_preparation import prepare_bam_for_deacon
 from raw_reads_processing.config import Config
 from raw_reads_processing.datatypes import (
@@ -11,6 +12,7 @@ from raw_reads_processing.datatypes import (
     FileName,
     RequestWithFiles,
 )
+from raw_reads_processing.deacon import validate_bam_with_deacon, validate_with_deacon
 from raw_reads_processing.errors import ProcessingFailure
 from raw_reads_processing.file_format_validation import (
     FileFormat,
@@ -19,7 +21,6 @@ from raw_reads_processing.file_format_validation import (
     validate_file_numbers,
     validate_with_readtools,
 )
-from raw_reads_processing.deacon import validate_bam_with_deacon, validate_with_deacon
 
 logger = logging.getLogger(__name__)
 
