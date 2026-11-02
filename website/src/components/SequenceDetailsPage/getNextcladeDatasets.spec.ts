@@ -45,9 +45,9 @@ describe('getNextcladeDatasets', () => {
 
 describe('getNextcladeDatasetUrl', () => {
     test('builds the pathogen.json url', () => {
-        expect(
-            getNextcladeDatasetUrl({ segment: 'main', name: 'a/b', tag: 't', server: 'https://example.com/' }),
-        ).toBe('https://example.com/a/b/t/pathogen.json');
+        expect(getNextcladeDatasetUrl({ segment: 'main', name: 'a/b', tag: 't', server: 'https://example.com/' })).toBe(
+            'https://example.com/a/b/t/pathogen.json',
+        );
     });
 
     test('returns undefined when tag or server are missing', () => {
