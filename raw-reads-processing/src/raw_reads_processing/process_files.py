@@ -3,6 +3,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 import requests
+
 from raw_reads_processing.config import Config
 from raw_reads_processing.datatypes import (
     Annotation,
@@ -10,6 +11,7 @@ from raw_reads_processing.datatypes import (
     FileName,
     RequestWithFiles,
 )
+from raw_reads_processing.deacon import validate_with_deacon
 from raw_reads_processing.errors import ProcessingFailure
 from raw_reads_processing.file_format_validation import (
     validate_compression,
@@ -17,7 +19,6 @@ from raw_reads_processing.file_format_validation import (
     validate_file_numbers,
     validate_with_readtools,
 )
-from raw_reads_processing.deacon import validate_with_deacon
 
 logger = logging.getLogger(__name__)
 

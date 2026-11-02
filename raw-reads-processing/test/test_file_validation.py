@@ -1,5 +1,3 @@
-# ruff: noqa: S101
-
 import gzip
 import subprocess
 import sys
