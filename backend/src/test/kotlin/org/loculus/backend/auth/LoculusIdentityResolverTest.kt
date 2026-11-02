@@ -1,5 +1,6 @@
 package org.loculus.backend.auth
 
+import io.mockk.Called
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -58,6 +59,15 @@ class LoculusIdentityResolverTest {
     }
 
     @Test
+    fun `missing and blank issuers fail before database access`() {
+        for (issuer in listOf(null, "", "   ")) {
+            val error = assertThrows<UnauthorizedException> { resolver.resolve(jwt("subject-1", issuer)) }
+            assertEquals("Token is missing a usable issuer.", error.message)
+        }
+        verify { database wasNot Called }
+    }
+
+    @Test
     fun `storage outage is unavailable without exposing database details`() {
         every { database.find(identity) } throws DataAccessResourceFailureException("private database hostname")
         val error = assertThrows<ServiceUnavailableException> { resolver.resolve(jwt("subject-1")) }
@@ -93,10 +103,10 @@ class LoculusIdentityResolverTest {
         ServerErrorMessage("SERROR\u0000C23505\u0000Mduplicate key\u0000n$constraint\u0000\u0000"),
     )
 
-    private fun jwt(subject: String?): Jwt = Jwt.withTokenValue("not-a-real-token")
+    private fun jwt(subject: String?, issuer: String? = identity.issuer): Jwt = Jwt.withTokenValue("not-a-real-token")
         .header("alg", "RS256")
-        .issuer(identity.issuer)
         .claim("preferred_username", "testuser")
+        .apply { if (issuer != null) claim("iss", issuer) }
         .apply { if (subject != null) claim("sub", subject) }
         .build()
 }

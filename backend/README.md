@@ -172,4 +172,5 @@ Controllers and public schemas live in `org.loculus.backend.api.v1`; shared logi
 in `auth` and `service`. Existing group endpoints and membership storage are unchanged.
 
 See the [implementation guide](src/main/kotlin/org/loculus/backend/api/README.md#implementing-auth-for-v1-endpoints)
-for an example using the v1 identity endpoint. Resource-authorization examples are deferred.
+for the existing v1 identity endpoint and a proposed resource-authorization example.
+Resource authorization is not implemented by this change.
