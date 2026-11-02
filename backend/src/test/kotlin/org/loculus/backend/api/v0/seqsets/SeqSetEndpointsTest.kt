@@ -40,7 +40,7 @@ class SeqSetEndpointsTest(@Autowired private val client: SeqSetCitationsControll
     @ParameterizedTest
     @MethodSource("authorizationTestCases")
     fun `GIVEN invalid authorization token WHEN performing action THEN returns 401 Unauthorized`(scenario: Scenario) {
-        expectUnauthorizedResponse(isModifyingRequest = scenario.isModifying) {
+        expectUnauthorizedResponse {
             scenario.testFunction(it, client)
         }
     }
@@ -233,27 +233,15 @@ class SeqSetEndpointsTest(@Autowired private val client: SeqSetCitationsControll
     }
 
     companion object {
-        data class Scenario(
-            val testFunction: (String?, SeqSetCitationsControllerClient) -> ResultActions,
-            val isModifying: Boolean,
-        )
+        data class Scenario(val testFunction: (String?, SeqSetCitationsControllerClient) -> ResultActions)
 
         @JvmStatic
         fun authorizationTestCases(): List<Scenario> = listOf(
-            Scenario({ jwt, client -> client.createSeqSet(MOCK_SEQSET_NAME, jwt = jwt) }, true),
-            Scenario({ jwt, client -> client.updateSeqSet(MOCK_SEQSET_ID, MOCK_SEQSET_NAME, jwt = jwt) }, true),
-            Scenario({ jwt, client -> client.getSeqSetsOfUser(jwt = jwt) }, false),
-            Scenario({ jwt, client -> client.deleteSeqSet(MOCK_SEQSET_ID, jwt = jwt) }, true),
-            Scenario(
-                { jwt, client ->
-                    client.createSeqSetDOI(
-                        MOCK_SEQSET_ID,
-                        MOCK_SEQSET_VERSION,
-                        jwt = jwt,
-                    )
-                },
-                true,
-            ),
+            Scenario { jwt, client -> client.createSeqSet(MOCK_SEQSET_NAME, jwt = jwt) },
+            Scenario { jwt, client -> client.updateSeqSet(MOCK_SEQSET_ID, MOCK_SEQSET_NAME, jwt = jwt) },
+            Scenario { jwt, client -> client.getSeqSetsOfUser(jwt = jwt) },
+            Scenario { jwt, client -> client.deleteSeqSet(MOCK_SEQSET_ID, jwt = jwt) },
+            Scenario { jwt, client -> client.createSeqSetDOI(MOCK_SEQSET_ID, MOCK_SEQSET_VERSION, jwt = jwt) },
         )
     }
 }

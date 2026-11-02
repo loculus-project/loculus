@@ -62,7 +62,7 @@ class SubmitEndpointTest(
 
     @Test
     fun `GIVEN invalid authorization token THEN returns 401 Unauthorized`() {
-        expectUnauthorizedResponse(isModifyingRequest = true) { jwt ->
+        expectUnauthorizedResponse { jwt ->
             submissionControllerClient.submit(
                 DefaultFiles.metadataFile,
                 DefaultFiles.sequencesFile,
