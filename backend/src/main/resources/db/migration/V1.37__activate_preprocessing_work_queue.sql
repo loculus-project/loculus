@@ -44,6 +44,7 @@ ALTER TABLE sequence_entries_preprocessed_data
     );
 
 -- Rows now always carry organism, so the tracker no longer needs to join sequence_entries.
+-- Sorted so that statements writing several versions lock the tracker rows in the same order and cannot deadlock.
 CREATE OR REPLACE FUNCTION update_preprocessed_data_tracker()
 RETURNS TRIGGER AS $$
 BEGIN
