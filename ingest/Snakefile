@@ -32,7 +32,8 @@ segment_detection_method: SegmentDetectionMethod | None = (
     None  # align uses nextclade align to determine segments it is slower but more precise, minimizer uses nextclade sort and requires a minimizer index
 )
 LOG_LEVEL = config.get("log_level", "INFO")
-NCBI_API_KEY = os.getenv("NCBI_API_KEY")
+# NCBI_API_KEY is expanded by the shell at runtime (see `datasets download` below) instead of
+# being interpolated by Snakemake, so it doesn't show up in the printed shell commands
 NCBI_GATEWAY_URL = config.get("ncbi_gateway_url")
 MIRROR_BUCKET = config.get("mirror_bucket", "")
 CHECK_ENA_DEPOSITION = config.get("check_ena_deposition", False)
@@ -125,7 +126,6 @@ rule fetch_inflate_ncbi_dataset_package:
         dataset_sequences="results/ncbi_dataset/data/genomic.fna",
     params:
         taxon_id=TAXON_ID,
-        api_key=f"--api-key {NCBI_API_KEY}" if NCBI_API_KEY else "",
         gateway=f"--gateway-url {NCBI_GATEWAY_URL}" if NCBI_GATEWAY_URL else "",
         use_mirror=bool(MIRROR_BUCKET),
         mirror_url=f"{MIRROR_BUCKET.strip('/')}/{TAXON_ID}.tar.zst",
@@ -142,7 +142,7 @@ rule fetch_inflate_ncbi_dataset_package:
             datasets download virus genome taxon {params.taxon_id} \
                 --no-progressbar \
                 --filename {params.compressed_package_zip} \
-                {params.api_key} \
+                ${{NCBI_API_KEY:+--api-key "$NCBI_API_KEY"}} \
                 {params.gateway} \
                 && {params.unzip} \
                     -o {params.compressed_package_zip} \
@@ -408,7 +408,6 @@ if CALCULATE_GROUPS_OVERRIDE_JSON:
             marker="results/{source}_assembly/.fetch_inflate_complete",
         params:
             taxon_id=TAXON_ID,
-            api_key=f"--api-key {NCBI_API_KEY}" if NCBI_API_KEY else "",
             gateway=f"--gateway-url {NCBI_GATEWAY_URL}" if NCBI_GATEWAY_URL else "",
             use_mirror=bool(MIRROR_BUCKET),
             mirror_url=lambda wc: f"{MIRROR_BUCKET.strip('/')}/{TAXON_ID}-assembly-{wc.source}.tar.zst",
@@ -427,7 +426,7 @@ if CALCULATE_GROUPS_OVERRIDE_JSON:
                     --assembly-source {wildcards.source} \
                     --no-progressbar --dehydrated \
                     --filename {params.compressed_package_zip} \
-                    {params.api_key} \
+                    ${{NCBI_API_KEY:+--api-key "$NCBI_API_KEY"}} \
                     {params.gateway} \
                     && {params.unzip} \
                         -o {params.compressed_package_zip} \

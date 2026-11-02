@@ -20,7 +20,11 @@ from ena_deposition.create_raw_reads import (
     create_manifest_object as create_raw_reads_manifest_object,
 )
 from ena_deposition.create_sample import construct_sample_set_object
-from ena_deposition.ena_submission_helper import create_manifest, get_project_xml, get_sample_xml
+from ena_deposition.ena_builders import (
+    create_manifest,
+    get_project_xml,
+    get_sample_xml,
+)
 from ena_deposition.submission_db_helper import (
     ProjectTableEntry,
     SampleTableEntry,

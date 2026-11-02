@@ -65,7 +65,8 @@ from ena_deposition.create_sample import (
 from ena_deposition.create_sample import (
     sync_state_with_submission_table as create_sample_sync_state_with_submission_table,
 )
-from ena_deposition.ena_submission_helper import CreationResult, create_manifest
+from ena_deposition.ena_builders import create_manifest
+from ena_deposition.ena_client import CreationResult
 from ena_deposition.loculus_models import Group
 from ena_deposition.notifications import SlackConfig
 from ena_deposition.submission_db_helper import (
@@ -73,8 +74,6 @@ from ena_deposition.submission_db_helper import (
     ProjectTableEntry,
     RawReadsTableEntry,
     SampleTableEntry,
-    Status,
-    StatusAll,
     SubmissionTableEntry,
     add_to_db,
     db_init,
@@ -83,10 +82,15 @@ from ena_deposition.submission_db_helper import (
     in_submission_table,
     update_db_where_conditions,
 )
+from ena_deposition.submission_types import (
+    Status,
+    StatusAll,
+)
 from ena_deposition.trigger_submission_to_ena import upload_sequences
 from ena_deposition.upload_external_metadata_to_loculus import (
     get_external_metadata_and_send_to_loculus,
 )
+from pydantic import SecretStr
 from sqlalchemy import Engine
 
 CONFIG_FILE = "./test/test_config.yaml"
@@ -851,8 +855,8 @@ class TestSubmission:
         delete_all_records(self.db_engine)
         # for testing set last_notification_sent to 1 day ago
         self.slack_config = SlackConfig(
-            slack_hook=self.config.slack_hook or "",
-            slack_token=self.config.slack_token or "",
+            slack_hook=self.config.slack_hook or SecretStr(""),
+            slack_token=self.config.slack_token or SecretStr(""),
             slack_channel_id=self.config.slack_channel_id or "",
             last_notification_sent=datetime.now(tz=pytz.utc) - timedelta(days=1),
         )
@@ -1498,7 +1502,7 @@ class TestRevisionWithAssemblyManifestChangeTests(TestSubmission):
 
 
 class TestInsdcRawReadsAccessionInManifest(TestSubmission):
-    @patch("ena_deposition.ena_submission_helper.post_webin_with_retry", autospec=True)
+    @patch("ena_deposition.ena_client.post_webin_with_retry", autospec=True)
     @patch("ena_deposition.create_assembly.create_ena_assembly", autospec=True)
     @patch("ena_deposition.call_loculus.get_group_info", autospec=True)
     def test_run_ref_written_to_manifest(

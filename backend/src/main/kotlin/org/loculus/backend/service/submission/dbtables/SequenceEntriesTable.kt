@@ -9,11 +9,11 @@ import org.jetbrains.exposed.v1.core.max
 import org.jetbrains.exposed.v1.core.wrapAsExpression
 import org.jetbrains.exposed.v1.datetime.datetime
 import org.jetbrains.exposed.v1.jdbc.select
-import org.loculus.backend.api.AccessionVersionInterface
-import org.loculus.backend.api.Organism
-import org.loculus.backend.api.SubmittedData
-import org.loculus.backend.api.toPairs
 import org.loculus.backend.service.jacksonSerializableJsonb
+import org.loculus.backend.types.AccessionVersionInterface
+import org.loculus.backend.types.Organism
+import org.loculus.backend.types.SubmittedData
+import org.loculus.backend.types.toPairs
 
 const val SEQUENCE_ENTRIES_TABLE_NAME = "sequence_entries"
 

@@ -4,13 +4,13 @@ import io.mockk.every
 import io.mockk.mockk
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
-import org.loculus.backend.api.Organism
-import org.loculus.backend.api.SubmittedData
 import org.loculus.backend.config.BackendConfig
-import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.service.submission.CompressionDictService
 import org.loculus.backend.service.submission.CompressionService
 import org.loculus.backend.service.submission.DictEntry
+import org.loculus.backend.testutil.DEFAULT_ORGANISM
+import org.loculus.backend.types.Organism
+import org.loculus.backend.types.SubmittedData
 
 class CompressionServiceTest {
     private val compressionDictServiceMock = mockk<CompressionDictService>()

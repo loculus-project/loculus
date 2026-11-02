@@ -8,13 +8,11 @@ import pytz
 from sqlalchemy import Engine
 
 from .config import Config, EnaResultField, MetadataMapping
-from .ena_submission_helper import (
+from .ena_builders import get_alias
+from .ena_client import (
     CreationResult,
     accession_exists,
     create_ena_sample,
-    get_alias,
-    retry_failed_submissions_for_matching_errors,
-    set_accession_does_not_exist_error,
 )
 from .ena_types import (
     ProjectLink,
@@ -30,8 +28,6 @@ from .ena_types import (
 from .notifications import SlackConfig, send_slack_notification, slack_conn_init
 from .submission_db_helper import (
     SampleTableEntry,
-    Status,
-    StatusAll,
     SubmissionTableEntry,
     add_to_db,
     db_init,
@@ -39,8 +35,14 @@ from .submission_db_helper import (
     find_errors_or_stuck_in_db,
     is_latest_revision,
     is_revision,
+    retry_failed_submissions_for_matching_errors,
+    set_accession_does_not_exist_error,
     update_db_where_conditions,
     update_with_retry,
+)
+from .submission_types import (
+    Status,
+    StatusAll,
 )
 
 logger = logging.getLogger(__name__)

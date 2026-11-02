@@ -25,7 +25,8 @@ spec:
       {{- include "loculus.podScheduling" $ | nindent 6 }}
       initContainers:
         - name: download-taxonomy-db
-          image: alpine:3
+          image: "{{ $.Values.images.alpine.repository }}:{{ $.Values.images.alpine.tag }}"
+          imagePullPolicy: "{{ $.Values.images.alpine.pullPolicy }}"
           command: ["sh", "-c"]
           args:
             - |

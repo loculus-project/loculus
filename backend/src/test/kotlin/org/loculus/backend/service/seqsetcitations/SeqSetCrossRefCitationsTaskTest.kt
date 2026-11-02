@@ -2,9 +2,9 @@ package org.loculus.backend.service.seqsetcitations
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
-import org.loculus.backend.api.CitationContributor
-import org.loculus.backend.api.CitationSource
-import org.loculus.backend.api.SeqSetCitationSource
+import org.loculus.backend.types.CitationContributor
+import org.loculus.backend.types.CitationSource
+import org.loculus.backend.types.SeqSetCitationSource
 
 class SeqSetCrossRefCitationsTaskTest {
     private fun citationSource(

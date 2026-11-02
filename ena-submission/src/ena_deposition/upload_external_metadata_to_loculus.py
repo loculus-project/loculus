@@ -22,13 +22,13 @@ from .submission_db_helper import (
     ProjectTableEntry,
     RawReadsTableEntry,
     SampleTableEntry,
-    StatusAll,
     SubmissionTableEntry,
     db_init,
     find_conditions_in_db,
     find_stuck_in_submission_db,
     update_with_retry,
 )
+from .submission_types import StatusAll
 
 logger = logging.getLogger(__name__)
 
@@ -283,15 +283,15 @@ def upload_handle_errors(
     config: Config,
     slack_config: SlackConfig,
     time_threshold: int = 15,
-    slack_time_threshold: int = 12,
+    slack_retry_threshold_min: int = 12 * 60,
 ):
     """
     - time_threshold: (minutes)
-    - slack_time_threshold: (hours)
+    - slack_retry_threshold_min: (minutes)
 
     1. Find all entries in submission_table in state HAS_ERRORS_EXT_METADATA_UPLOAD
        over time_threshold
-    2. If time since last slack_notification is over slack_time_threshold send notification
+    2. If time since last slack_notification is over slack_retry_threshold_min send notification
     """
     entries_with_errors = find_stuck_in_submission_db(
         db_engine,
@@ -307,7 +307,7 @@ def upload_handle_errors(
             error_msg,
             slack_config,
             time=datetime.now(tz=pytz.utc),
-            slack_retry_threshold_min=slack_time_threshold,
+            slack_retry_threshold_min=slack_retry_threshold_min,
         )
 
 

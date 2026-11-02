@@ -8,10 +8,10 @@ import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 import org.loculus.backend.SpringBootTestWithoutDatabase
-import org.loculus.backend.api.CitationContributor
-import org.loculus.backend.api.CitationSource
-import org.loculus.backend.api.SeqSetCitationSource
 import org.loculus.backend.config.BackendConfig
+import org.loculus.backend.types.CitationContributor
+import org.loculus.backend.types.CitationSource
+import org.loculus.backend.types.SeqSetCitationSource
 import org.loculus.backend.utils.DateProvider
 import org.springframework.beans.factory.annotation.Autowired
 import java.time.Instant

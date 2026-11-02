@@ -1,11 +1,11 @@
 package org.loculus.backend.service.submission
 
 import com.github.luben.zstd.Zstd
-import org.loculus.backend.api.GeneticSequence
-import org.loculus.backend.api.Organism
-import org.loculus.backend.api.ProcessedData
-import org.loculus.backend.api.SubmittedData
 import org.loculus.backend.config.BackendConfig
+import org.loculus.backend.types.GeneticSequence
+import org.loculus.backend.types.Organism
+import org.loculus.backend.types.ProcessedData
+import org.loculus.backend.types.SubmittedData
 import org.springframework.stereotype.Service
 import java.nio.charset.StandardCharsets
 import java.util.Base64

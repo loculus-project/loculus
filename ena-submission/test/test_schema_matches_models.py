@@ -18,7 +18,10 @@ from typing import Any
 
 import pytest
 from ena_deposition.config import get_config
-from ena_deposition.submission_db_helper import Base, db_init
+from ena_deposition.submission_db_helper import (
+    Base,
+    db_init,
+)
 from sqlalchemy import Engine, MetaData, Table
 from sqlalchemy.types import JSON, Boolean, DateTime, Integer, String, TypeEngine
 

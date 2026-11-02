@@ -26,6 +26,27 @@ Install the Helm chart:
 helm install loculus kubernetes/loculus -f my-values.yaml
 ```
 
+## Mirrored container images
+
+External Helm images and selected CI images use `ghcr.io/loculus-project/mirror`.
+Each Helm image can be overridden under `images` in `values.yaml`.
+Dockerfile base images, k3s and tooling images such as yamlfmt are outside this mirror.
+
+To update an image:
+
+1. Add its upstream tag to [mirror-images.txt](../.github/mirror-images.txt).
+2. Merge the list change and wait for `mirror-images`, or have a maintainer run that
+   workflow manually on the branch. Existing tags are never overwritten.
+3. For a new package, an organization admin must make it public in GHCR package
+   settings. CI and deployments pull without credentials.
+4. Update consumers in a subsequent commit or PR. PR checks require every referenced
+   mirror tag to be listed and publicly available, without publishing anything.
+
+Tags are updated manually. Keep the PostgreSQL server version in Helm, tests and
+the backend and ENA submission READMEs in sync. The schema-dump PostgreSQL client
+has its own version. Its Flyway CLI pin is also separate from backend `flyway-core`
+and should be updated with migration compatibility checks.
+
 ## Local development/testing with k3d
 
 ### Prerequisites
@@ -132,7 +153,7 @@ Install the chart to deploy the services:
 
 ArgoCD will aim to build preview instances for any open PR with the `preview` label. It may take 5 minutes for an instance to appear. The preview will appear at `[branch_name].loculus.org`. Long branch names are shortened, and some special characters are not supported. You can find the exact URL in the ArgoCD UI: https://argocd.k3s.pathoplexus.org/ (login details are on [Slack](https://loculus.slack.com/archives/C05G172HL6L/p1698940904615039)).
 
-The preview is intended to simulate the full backend and associated containers. It may be necessary to update this directory when changes are made to how containers need to be deployed. It you would like to test your changes on a persistent DB add `developmentDatabasePersistence: true` to your `values.yaml`.
+The preview is intended to simulate the full backend and associated containers. It may be necessary to update this directory when changes are made to how containers need to be deployed. By default, a preview's databases are reset on every new commit. If you would like to test your changes on a persistent DB, add the `preview-persistent` label alongside the `preview` label. This overlays `values_preview_persistent_server.yaml`, which sets `developmentDatabasePersistence: true`. Similarly, add the `preview-raw-reads` label to enable raw reads processing (`values_preview_raw_reads_server.yaml`).
 
 We do not currently support branch names containing characters that can't go in domain names with the exception of '/' and '\_' (see [kubernetes/appset.yaml](https://github.com/loculus-project/loculus/blob/main/kubernetes/appset.yaml) for details).
 

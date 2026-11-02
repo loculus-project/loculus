@@ -290,8 +290,9 @@ export const SearchForm = ({
 
     return (
         <QueryClientProvider client={queryClient}>
-            <div className='text-right -mb-10 md:hidden'>
-                <Button onClick={toggleMobileOpen} size='xs' variant='primary'>
+            <div className='md:hidden'>
+                <Button onClick={toggleMobileOpen} variant='outline' className='w-full'>
+                    <MaterialSymbolsTune className='mr-1.5 h-4 w-4' aria-hidden='true' />
                     Modify search query
                 </Button>
             </div>
@@ -300,7 +301,7 @@ export const SearchForm = ({
                 className={`${
                     isMobileOpen ? 'translate-y-0' : 'translate-y-full'
                 } fixed bottom-0 left-0 w-full bg-white h-4/5 rounded-t-lg overflow-auto offCanvasTransform
-                      md:translate-y-0 md:static md:h-auto md:overflow-visible md:min-w-72`}
+                      md:translate-none md:static md:h-auto md:overflow-visible md:min-w-72`}
             >
                 <div className='shadow-xl rounded-r-lg px-4 pt-4'>
                     <h2 className='text-lg font-semibold flex-1 md:hidden mb-2'>Search query</h2>

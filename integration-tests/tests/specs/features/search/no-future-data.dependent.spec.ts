@@ -23,6 +23,6 @@ test.describe('The search page', () => {
         await fromInput.fill(tomorrowStr);
         await fromInput.press('Enter');
 
-        await expect(page.getByText(/No data/i)).toBeVisible();
+        await expect(page.getByText(/No matching sequences/i)).toBeVisible();
     });
 });

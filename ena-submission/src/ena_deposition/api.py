@@ -9,7 +9,12 @@ from sqlalchemy import Engine, select
 from sqlalchemy.orm import Session
 
 from .config import Config, EnaResultField
-from .submission_db_helper import AssemblyTableEntry, SampleTableEntry, Status, db_init
+from .submission_db_helper import (
+    AssemblyTableEntry,
+    SampleTableEntry,
+    db_init,
+)
+from .submission_types import Status
 
 logger = logging.getLogger(__name__)
 

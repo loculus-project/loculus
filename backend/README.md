@@ -21,7 +21,7 @@ All commands mentioned in this section are run from the `backend` directory unle
    -e POSTGRES_USER=postgres \
    -e POSTGRES_PASSWORD=unsecure \
    -p 5432:5432 \
-   postgres:latest
+   postgres:15.19
    ```
 
 2. Start the backend (including test config):
@@ -60,12 +60,43 @@ You need to set:
 --loculus.config.path=../website/tests/config/backend_config.json
 ```
 
-- the url to fetch the public key for JWT verification
-  (corresponding to the `jwks_uri` value in the `/.well-known/openid-configuration` endpoint of the Keycloak server):
+- the URL to fetch public signing keys for JWT verification
+  (corresponding to the `jwks_uri` value in the realm's `/realms/loculus/.well-known/openid-configuration` endpoint):
 
 ```sh
 --spring.security.oauth2.resourceserver.jwt.jwk-set-uri=http://localhost:8083/realms/loculus/protocol/openid-connect/certs
 ```
+
+- the expected issuer, which must exactly match the access token's `iss` claim
+  (corresponding to the `issuer` value in the realm's `/realms/loculus/.well-known/openid-configuration` endpoint):
+
+```sh
+--spring.security.oauth2.resourceserver.jwt.issuer-uri=http://localhost:8083/realms/loculus
+```
+
+Both settings are required and serve different purposes:
+
+- **`jwk-set-uri`: where to fetch public signing keys** to verify token signatures. This can be an internal service URL.
+- **`issuer-uri`: which issuer to trust.** The token's `iss` must exactly match this value. We configure `jwk-set-uri` separately so the backend can fetch signing keys through the internal network, even when the issuer uses a public HTTPS URL. For example, the preprocessing pipeline in Pathoplexus production requests tokens from Keycloak over internal HTTP, but those tokens identify the public HTTPS issuer. The backend validates that issuer while fetching signing keys internally.
+
+The backend checks that each token has a valid signature, is within its allowed validity period,
+and names the issuer configured by the operator. It does not trust an issuer simply because a token names it.
+
+Helm derives it from the public Keycloak URL (`public.keycloakUrl` when overridden) plus
+`/realms/loculus`; standard chart upgrades need no manual Keycloak changes. Standalone backend
+launches must supply it explicitly.
+
+`start_dev.sh` and IntelliJ default to the localhost issuer above. For a different issuer,
+edit the IntelliJ argument or run:
+
+```sh
+OIDC_ISSUER_URI=https://authentication.example.org/realms/loculus ./start_dev.sh
+```
+
+This changes only the expected issuer, not the JWKS URL or other Keycloak connection settings.
+Website `--from-live` configuration does not set these backend properties either.
+Missing or mismatched token issuers produce `401`; matching existing tokens need no renewal.
+Verify browser and pipeline issuers before upgrading a custom deployment.
 
 We use Flyway, so that the service can provision an empty/existing DB without any manual steps in between. On startup scripts in `src/main/resources/db/migration` are executed in order, i.e. `V1__*.sql` before `V2__*.sql` if they didn't run before, so that the DB is always up-to-date. (For more info on the naming convention, see [this](https://www.red-gate.com/blog/database-devops/flyway-naming-patterns-matter) blog post.)
 
