@@ -72,9 +72,9 @@ class GroupManagementDatabaseService(
     }
 
     fun updateGroup(groupId: Int, group: NewGroup, authenticatedUser: AuthenticatedUser): Group {
-        groupManagementPreconditionValidator.validateGroupFields(group)
         groupManagementPreconditionValidator.validateThatUserExists(authenticatedUser.username)
         groupManagementPreconditionValidator.validateUserIsAllowedToModifyGroup(groupId, authenticatedUser)
+        groupManagementPreconditionValidator.validateGroupFields(group)
 
         val groupEntity = GroupEntity.findById(groupId) ?: throw NotFoundException("Group $groupId does not exist.")
 

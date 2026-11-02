@@ -1,17 +1,21 @@
 package org.loculus.backend.service.groupmanagement
 
+import com.ninjasquad.springmockk.MockkBean
 import io.mockk.every
 import io.mockk.mockk
 import org.hamcrest.CoreMatchers.containsString
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
+import org.keycloak.representations.idm.UserRepresentation
 import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.errors.UnprocessableEntityException
+import org.loculus.backend.service.KeycloakAdapter
 import org.loculus.backend.testutil.DEFAULT_GROUP
 import org.loculus.backend.testutil.DEFAULT_USER_NAME
 import org.loculus.backend.testutil.EndpointTest
@@ -20,9 +24,19 @@ import org.springframework.beans.factory.annotation.Autowired
 
 @EndpointTest
 class GroupManagementDatabaseServiceTest(@Autowired private val service: GroupManagementDatabaseService) {
+    @MockkBean
+    lateinit var keycloakAdapter: KeycloakAdapter
+
     private val user = mockk<AuthenticatedUser>().also {
         every { it.username } returns DEFAULT_USER_NAME
         every { it.isSuperUser } returns false
+    }
+
+    @BeforeEach
+    fun setup() {
+        every { keycloakAdapter.getUsersWithName(any()) } answers {
+            listOf(UserRepresentation().apply { username = firstArg<String>().lowercase() })
+        }
     }
 
     @Test
