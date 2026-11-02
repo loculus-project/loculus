@@ -201,6 +201,9 @@ class TaxonomyService:
     def get_scientific_name(self, tax_id: str, error_if_failed: bool) -> RawProcessingResult:
         try:
             taxa = self._get(f"/taxa/{tax_id}")
+            if len(taxa) > 1:
+                msg = f"Taxonomy service returned {len(taxa)} for taxon id '{tax_id}'."
+                raise TaxonomyServiceError(msg)
         except TaxonomyServiceError as e:
             return raw_internal_error(str(e))
 
@@ -214,6 +217,9 @@ class TaxonomyService:
     def get_common_name(self, tax_id: str) -> RawProcessingResult:
         try:
             taxa = self._get(f"/taxa/{tax_id}?find_common_name=true")
+            if len(taxa) > 1:
+                msg = f"Taxonomy service returned {len(taxa)} for taxon id '{tax_id}'."
+                raise TaxonomyServiceError(msg)
         except TaxonomyServiceError as e:
             return raw_internal_error(str(e))
 
