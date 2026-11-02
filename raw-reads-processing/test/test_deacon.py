@@ -1,5 +1,3 @@
-# ruff: noqa: S101
-
 import gzip
 import shutil
 import time
@@ -15,8 +13,11 @@ from raw_reads_processing.datatypes import (
     FileIdAndNameAndReadUrl,
     RequestWithFiles,
 )
-from raw_reads_processing.errors import InvalidSubmission, ProcessingFailure
-from raw_reads_processing.errors import FALSE_POSITIVE_HINT
+from raw_reads_processing.errors import (
+    FALSE_POSITIVE_HINT,
+    InvalidSubmission,
+    ProcessingFailure,
+)
 
 
 def _config() -> Config:
