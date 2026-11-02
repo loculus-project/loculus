@@ -1,6 +1,6 @@
 package org.loculus.backend.utils
 
-import org.loculus.backend.api.AccessionVersionInterface
+import org.loculus.backend.types.AccessionVersionInterface
 
 typealias Accession = String
 typealias Version = Long

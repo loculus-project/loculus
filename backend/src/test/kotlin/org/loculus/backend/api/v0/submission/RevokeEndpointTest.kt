@@ -1,0 +1,168 @@
+package org.loculus.backend.api.v0.submission
+
+import org.hamcrest.Matchers.containsString
+import org.junit.jupiter.api.Test
+import org.loculus.backend.api.v0.submission.SubmitFiles.DefaultFiles
+import org.loculus.backend.testutil.DEFAULT_ORGANISM
+import org.loculus.backend.testutil.DEFAULT_USER_NAME
+import org.loculus.backend.testutil.EndpointTest
+import org.loculus.backend.testutil.OTHER_ORGANISM
+import org.loculus.backend.testutil.SUPER_USER_NAME
+import org.loculus.backend.testutil.assertGroupIdIs
+import org.loculus.backend.testutil.assertHasError
+import org.loculus.backend.testutil.assertIsRevocationIs
+import org.loculus.backend.testutil.assertStatusIs
+import org.loculus.backend.testutil.assertSubmitterIs
+import org.loculus.backend.testutil.expectUnauthorizedResponse
+import org.loculus.backend.testutil.generateJwtFor
+import org.loculus.backend.testutil.jwtForSuperUser
+import org.loculus.backend.types.Status
+import org.loculus.backend.types.Status.PROCESSED
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.http.MediaType
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+
+@EndpointTest
+class RevokeEndpointTest(
+    @Autowired val client: SubmissionControllerClient,
+    @Autowired val convenienceClient: SubmissionConvenienceClient,
+) {
+
+    @Test
+    fun `GIVEN invalid authorization token THEN returns 401 Unauthorized`() {
+        expectUnauthorizedResponse(isModifyingRequest = true) {
+            client.revokeSequenceEntries(
+                emptyList(),
+                jwt = it,
+            )
+        }
+    }
+
+    @Test
+    fun `GIVEN entries with 'APPROVED_FOR_RELEASE' THEN returns revocation version in status PROCESSED`() {
+        val accessions = convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease().map { it.accession }
+
+        client.revokeSequenceEntries(accessions)
+            .andExpect(status().isOk)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(jsonPath("\$.length()").value(DefaultFiles.NUMBER_OF_SEQUENCES))
+            .andExpect(jsonPath("\$[0].accession").value(accessions.first()))
+            .andExpect(jsonPath("\$[0].version").value(2))
+
+        val originalEntry = convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1)
+
+        convenienceClient.getSequenceEntry(accession = accessions.first(), version = 2)
+            .assertStatusIs(PROCESSED)
+            .assertHasError(false)
+            .assertGroupIdIs(originalEntry.groupId)
+            .assertIsRevocationIs(true)
+            .assertSubmitterIs(DEFAULT_USER_NAME)
+    }
+
+    @Test
+    fun `WHEN revoking non-existing accessions THEN throws an unprocessableEntity error`() {
+        convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
+
+        val nonExistingAccession = "123"
+        client.revokeSequenceEntries(listOf(nonExistingAccession))
+            .andExpect(status().isUnprocessableContent)
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+            .andExpect(
+                jsonPath("\$.detail").value(
+                    "Accessions $nonExistingAccession do not exist",
+                ),
+            )
+    }
+
+    @Test
+    fun `WHEN revoking sequence entry of other organism THEN throws an unprocessableEntity error`() {
+        val accessions = convenienceClient
+            .prepareDefaultSequenceEntriesToApprovedForRelease(organism = DEFAULT_ORGANISM).map { it.accession }
+
+        client.revokeSequenceEntries(listOf(accessions.first()), organism = OTHER_ORGANISM)
+            .andExpect(status().isUnprocessableContent)
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+            .andExpect(
+                jsonPath("\$.detail").value(
+                    containsString("accession versions are not of organism $OTHER_ORGANISM:"),
+                ),
+            )
+    }
+
+    @Test
+    fun `WHEN revoking sequence entries not from the submitter THEN throws forbidden error`() {
+        val accessions = convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease().map { it.accession }
+
+        val notSubmitter = "nonExistingUser"
+        client.revokeSequenceEntries(accessions, jwt = generateJwtFor(notSubmitter))
+            .andExpect(status().isForbidden)
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+            .andExpect(
+                jsonPath("\$.detail", containsString("is not a member of group")),
+            )
+    }
+
+    @Test
+    fun `WHEN superuser revokes entries of other group THEN superuser is submitter of revocation entry`() {
+        val accessions = convenienceClient
+            .prepareDefaultSequenceEntriesToApprovedForRelease(username = DEFAULT_USER_NAME)
+            .map { it.accession }
+
+        client.revokeSequenceEntries(accessions, jwt = jwtForSuperUser)
+            .andExpect(status().isOk)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(jsonPath("\$.length()").value(DefaultFiles.NUMBER_OF_SEQUENCES))
+            .andExpect(jsonPath("\$[0].accession").value(accessions.first()))
+            .andExpect(jsonPath("\$[0].version").value(2))
+
+        val originalEntry = convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1)
+
+        convenienceClient.getSequenceEntry(accession = accessions.first(), version = 2)
+            .assertStatusIs(PROCESSED)
+            .assertHasError(false)
+            .assertGroupIdIs(originalEntry.groupId)
+            .assertIsRevocationIs(true)
+            .assertSubmitterIs(SUPER_USER_NAME)
+    }
+
+    @Test
+    fun `WHEN revoking with latest version not 'APPROVED_FOR_RELEASE' THEN throws an unprocessableEntity error`() {
+        val accessions = convenienceClient.prepareDefaultSequenceEntriesToHasErrors().map { it.accession }
+
+        client.revokeSequenceEntries(accessions)
+            .andExpect(status().isUnprocessableContent)
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+            .andExpect(
+                jsonPath(
+                    "\$.detail",
+                    containsString(
+                        "Accession versions are not in one of the states [${Status.APPROVED_FOR_RELEASE}]: " +
+                            "${accessions.first()}.1 - ${Status.PROCESSED},",
+                    ),
+                ),
+            )
+    }
+
+    @Test
+    fun `WHEN revoking an already revoked entry THEN throws an unprocessableEntity error`() {
+        val accession = convenienceClient.prepareRevokedSequenceEntries().first().accession
+
+        client.revokeSequenceEntries(listOf(accession))
+            .andExpect(status().isUnprocessableEntity)
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+            .andExpect(
+                jsonPath(
+                    "\$.detail",
+                    containsString(
+                        "Accession versions are revocations and cannot be revoked again: $accession.2",
+                    ),
+                ),
+            )
+
+        convenienceClient.getSequenceEntry(accession = accession, version = 2)
+            .assertStatusIs(Status.APPROVED_FOR_RELEASE)
+            .assertIsRevocationIs(true)
+    }
+}

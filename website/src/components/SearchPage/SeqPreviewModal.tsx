@@ -189,7 +189,8 @@ const DownloadButton: React.FC<DownloadButtonProps> = ({ seqId, allowFastaDownlo
     return (
         <DropdownMenu
             className='inline-block'
-            panelClassName='top-full w-52 -left-32'
+            align='end'
+            panelClassName='w-52 -mr-4'
             trigger={
                 <Button className={BUTTONCLASS}>
                     <IcBaselineDownload className='w-6 h-6' />

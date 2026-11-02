@@ -3,10 +3,10 @@ package org.loculus.backend.service.crossref
 import mu.KotlinLogging
 import org.jsoup.Jsoup
 import org.jsoup.parser.Parser
-import org.loculus.backend.api.CitationContributor
-import org.loculus.backend.api.CitationSource
-import org.loculus.backend.api.SeqSetCitationSource
 import org.loculus.backend.config.BackendConfig
+import org.loculus.backend.types.CitationContributor
+import org.loculus.backend.types.CitationSource
+import org.loculus.backend.types.SeqSetCitationSource
 import org.loculus.backend.utils.DateProvider
 import org.redundent.kotlin.xml.PrintOptions
 import org.redundent.kotlin.xml.xml

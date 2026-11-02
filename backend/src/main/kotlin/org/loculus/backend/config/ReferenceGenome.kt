@@ -1,6 +1,6 @@
 package org.loculus.backend.config
 
-import org.loculus.backend.api.GeneticSequence
+import org.loculus.backend.types.GeneticSequence
 
 data class ReferenceGenome(val nucleotideSequences: List<ReferenceSequence>, val genes: List<ReferenceSequence>) {
     init {

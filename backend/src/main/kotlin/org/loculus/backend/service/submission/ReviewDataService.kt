@@ -11,16 +11,16 @@ import org.jetbrains.exposed.v1.core.max
 import org.jetbrains.exposed.v1.core.wrapAsExpression
 import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.json.extract
-import org.loculus.backend.api.AccessionVersion
-import org.loculus.backend.api.FileCategoryFilesMap
-import org.loculus.backend.api.MetadataMap
-import org.loculus.backend.api.NucleotideSequenceReview
-import org.loculus.backend.api.Organism
-import org.loculus.backend.api.RevisionReviewData
-import org.loculus.backend.api.SequenceEntryStatus
-import org.loculus.backend.api.SequenceReviewData
-import org.loculus.backend.api.Status
 import org.loculus.backend.config.BackendConfig
+import org.loculus.backend.types.AccessionVersion
+import org.loculus.backend.types.FileCategoryFilesMap
+import org.loculus.backend.types.MetadataMap
+import org.loculus.backend.types.NucleotideSequenceReview
+import org.loculus.backend.types.Organism
+import org.loculus.backend.types.RevisionReviewData
+import org.loculus.backend.types.SequenceEntryStatus
+import org.loculus.backend.types.SequenceReviewData
+import org.loculus.backend.types.Status
 import org.springframework.stereotype.Service
 
 /** Load compact data for the authorized page. */

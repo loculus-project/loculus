@@ -1,0 +1,2 @@
+# Overlay on top of values.yaml and values_preview_server.yaml
+developmentDatabasePersistence: true
