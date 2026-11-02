@@ -1,7 +1,7 @@
 package org.loculus.backend.service.submission
 
-import org.loculus.backend.api.Organism
-import org.loculus.backend.api.ProcessedData
+import org.loculus.backend.types.Organism
+import org.loculus.backend.types.ProcessedData
 import org.springframework.stereotype.Service
 
 @Service

@@ -1,10 +1,10 @@
 package org.loculus.backend.service.submission
 
 import com.fasterxml.jackson.databind.node.NullNode
-import org.loculus.backend.api.GeneticSequence
-import org.loculus.backend.api.Organism
-import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.config.BackendConfig
+import org.loculus.backend.types.GeneticSequence
+import org.loculus.backend.types.Organism
+import org.loculus.backend.types.ProcessedData
 import org.springframework.stereotype.Component
 
 @Component

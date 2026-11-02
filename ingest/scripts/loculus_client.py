@@ -26,7 +26,7 @@ class ApproveConfig:
     keycloak_token_url: str
     keycloak_client_id: str
     username: str
-    password: str
+    password: str = dataclasses.field(repr=False)
     backend_request_timeout_seconds: int = 600
 
 
@@ -36,7 +36,7 @@ class Config(ApproveConfig):
     nucleotide_sequences: list[str]
     segmented: bool
     batch_chunk_size: int
-    slack_hook: str = ""
+    slack_hook: str = dataclasses.field(default="", repr=False)
 
 
 def backend_url(config: ApproveConfig) -> str:

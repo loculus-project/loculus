@@ -2,9 +2,9 @@ package org.loculus.backend.service.seqsetcitations
 
 import org.jetbrains.exposed.v1.core.Table
 import org.jetbrains.exposed.v1.datetime.datetime
-import org.loculus.backend.api.CitationContributor
-import org.loculus.backend.api.CitationOrigin
 import org.loculus.backend.service.jacksonSerializableJsonb
+import org.loculus.backend.types.CitationContributor
+import org.loculus.backend.types.CitationOrigin
 
 object SeqSetsTable : Table("seqsets") {
     val seqSetId = varchar("seqset_id", 255)

@@ -30,7 +30,7 @@ def get_jwt(config: Config) -> str:
 
     external_metadata_updater_password = os.getenv("EXTERNAL_METADATA_UPDATER_PASSWORD")
     if not external_metadata_updater_password:
-        external_metadata_updater_password = config.password
+        external_metadata_updater_password = config.password.get_secret_value()
 
     data = {
         "username": config.username,

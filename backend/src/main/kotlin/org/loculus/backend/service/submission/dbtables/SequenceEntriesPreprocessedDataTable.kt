@@ -4,11 +4,11 @@ import org.jetbrains.exposed.v1.core.Table
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.datetime.datetime
-import org.loculus.backend.api.AccessionVersionInterface
-import org.loculus.backend.api.PreprocessingAnnotation
-import org.loculus.backend.api.PreprocessingStatus
-import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.service.jacksonSerializableJsonb
+import org.loculus.backend.types.AccessionVersionInterface
+import org.loculus.backend.types.PreprocessingAnnotation
+import org.loculus.backend.types.PreprocessingStatus
+import org.loculus.backend.types.ProcessedData
 
 const val SEQUENCE_ENTRIES_PREPROCESSED_DATA_TABLE_NAME = "sequence_entries_preprocessed_data"
 

@@ -6,8 +6,8 @@ import org.jetbrains.exposed.v1.core.inList
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.keycloak.representations.idm.UserRepresentation
 import org.loculus.backend.auth.AuthenticatedUser
-import org.loculus.backend.controller.ForbiddenException
-import org.loculus.backend.controller.NotFoundException
+import org.loculus.backend.errors.ForbiddenException
+import org.loculus.backend.errors.NotFoundException
 import org.loculus.backend.service.KeycloakAdapter
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional

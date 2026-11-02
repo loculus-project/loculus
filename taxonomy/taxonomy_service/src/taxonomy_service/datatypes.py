@@ -1,5 +1,6 @@
 import sqlite3
 from typing import Self
+
 from pydantic import BaseModel
 
 

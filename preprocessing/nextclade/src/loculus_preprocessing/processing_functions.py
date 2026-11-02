@@ -3,9 +3,7 @@ Each function takes input data and returns output data, warnings and errors
 This makes it easy to test and reason about the code
 """
 
-import ast
 import calendar
-import json
 import logging
 import math
 import re
@@ -1355,8 +1353,8 @@ def single_metadata_annotation(
     ]
 
 
-def process_frameshifts(input: str | None) -> InputData:
-    """Converts frameshift string to InputData for processing"""
+def process_frameshifts(input: list[dict[str, Any]] | None) -> InputData:
+    """Converts nextclade frameshifts to InputData for processing"""
     try:
         return InputData(datum=format_frameshift(input))
     except Exception as e:
@@ -1369,7 +1367,7 @@ def process_frameshifts(input: str | None) -> InputData:
         )
 
 
-def format_frameshift(input: str | None) -> str | None:
+def format_frameshift(input: list[dict[str, Any]] | None) -> str | None:
     """
     In nextclade frameshifts have the json format:
     [{
@@ -1410,8 +1408,6 @@ def format_frameshift(input: str | None) -> str | None:
     """
     if input is None:
         return None
-    if input == "[]":
-        return ""
 
     def range_string(_start: str | int, _end: str | int) -> str:
         """Converts 0-indexed exclusive range to 1-indexed inclusive range string"""
@@ -1421,11 +1417,8 @@ def format_frameshift(input: str | None) -> str | None:
             return f"{start}-{end}"
         return str(start)
 
-    frame_shifts = json.loads(
-        input.replace("'", '"')
-    )  # Required for json.loads to recognize input as json string and convert to dict
     frame_shift_strings = []
-    for frame_shift in frame_shifts:
+    for frame_shift in input:
         nuc_range_list = [range_string(nuc["begin"], nuc["end"]) for nuc in frame_shift["nucAbs"]]
         codon_range = range_string(frame_shift["codon"]["begin"], frame_shift["codon"]["end"])
         frame_shift_strings.append(
@@ -1434,8 +1427,8 @@ def format_frameshift(input: str | None) -> str | None:
     return ",".join(frame_shift_strings)
 
 
-def process_stop_codons(input: str | None) -> InputData:
-    """Converts stop codon string to InputData for processing"""
+def process_stop_codons(input: list[dict[str, Any]] | None) -> InputData:
+    """Converts nextclade stop codons to InputData for processing"""
     try:
         return InputData(datum=format_stop_codon(input))
     except Exception as e:
@@ -1448,7 +1441,7 @@ def process_stop_codons(input: str | None) -> InputData:
         )
 
 
-def format_stop_codon(result: str | None) -> str | None:
+def format_stop_codon(result: list[dict[str, Any]] | None) -> str | None:
     """
     In nextclade stop codons have the json format:
     [   {
@@ -1463,12 +1456,8 @@ def format_stop_codon(result: str | None) -> str | None:
     """
     if result is None:
         return None
-    if result == "[]":
-        return ""
-    result = result.replace("'", '"')
-    stop_codons = json.loads(result)
     stop_codon_strings = []
-    for stop_codon in stop_codons:
+    for stop_codon in result:
         stop_codon_string = f"{stop_codon['cdsName']}:{stop_codon['codon'] + 1}"
         stop_codon_strings.append(stop_codon_string)
     return ",".join(stop_codon_strings)
@@ -1478,14 +1467,15 @@ def _format_aa_substitution(mutation: dict) -> str:
     return f"{mutation['cdsName']}:{mutation['refAa']}{int(mutation['pos']) + 1}{mutation['qryAa']}"
 
 
-def process_mutations_from_clade_founder(input: str | None, args: FunctionArgs | None) -> InputData:
+def process_mutations_from_clade_founder(
+    input: dict[str, Any] | None, args: FunctionArgs | None
+) -> InputData:
     """Processes substitutions from clade founder InputData for processing"""
     if input is None:
         return InputData(datum=None)
     try:
-        data = ast.literal_eval(input)
         mutations = []
-        for value in data.values():
+        for value in input.values():
             if not value.get("privateSubstitutions"):
                 continue
             for mutation in value["privateSubstitutions"]:
@@ -1504,14 +1494,13 @@ def process_mutations_from_clade_founder(input: str | None, args: FunctionArgs |
     return InputData(datum=None)
 
 
-def process_labeled_mutations(input: str | None, args: FunctionArgs | None) -> InputData:
+def process_labeled_mutations(input: dict[str, Any] | None, args: FunctionArgs | None) -> InputData:
     """Processes labeledMutations from privateMutations list for processing"""
     if input is None:
         return InputData(datum=None)
     try:
-        data = ast.literal_eval(input)
         mutations = []
-        for value in data.values():
+        for value in input.values():
             if not value.get("labeledSubstitutions"):
                 continue
             for labeled_mutation in value["labeledSubstitutions"]:
@@ -1534,14 +1523,15 @@ def process_labeled_mutations(input: str | None, args: FunctionArgs | None) -> I
     return InputData(datum=None)
 
 
-def process_phenotype_values(input: str | None, args: FunctionArgs | None) -> InputData:
-    """Processes phenotype values string to InputData for processing"""
+def process_phenotype_values(
+    input: list[dict[str, Any]] | None, args: FunctionArgs | None
+) -> InputData:
+    """Processes nextclade phenotype values to InputData for processing"""
     if input is None:
         return InputData(datum=None)
     name = args.get("name", "") if args else ""
     try:
-        data = ast.literal_eval(input)
-        for entry in data:
+        for entry in input:
             if entry.get("name") == name:
                 value = entry.get("value")
                 return InputData(datum=str(value) if value is not None else None)
