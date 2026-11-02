@@ -91,15 +91,16 @@ It runs in the same transaction that inserts the sequence entries.
 
 The first `extract-unprocessed-data` call for an unregistered pipeline version creates its queue, in two transactions:
 
-1. **Register** (`registerPreprocessingQueueVersion`). Read the current pipeline version for this organism `FOR SHARE`. Reject older versions, then insert the requested version with `initialized_at = NULL`.
-   - The row lock coordinates registration with version retirement for this organism.
-   - Submissions take the same shared lock. They can continue while a version is registered.
+1. **Register** (`registerPreprocessingQueueVersion`). Read the current pipeline version for this organism `FOR UPDATE`. Reject older versions, then insert the requested version with `initialized_at = NULL`.
+   - Registration waits for submissions that hold `FOR SHARE` on the same organism's version row.
+   - After registration commits, later submissions see the new version when creating their jobs.
    - Registration does not lock `sequence_entries`.
 2. **Backfill** (`backfillPreprocessingQueue`). Insert an `UNPROCESSED` row for every non-revoked entry of the organism that has none for this version, then set `initialized_at`.
    - The version row is read `FOR UPDATE SKIP LOCKED`, so only one caller runs the backfill.
    - Concurrent callers skip it and poll again later if no jobs are available.
 
-A submission already in progress can miss both registration and backfill. The repair task queues its missing jobs after the submission commits.
+The enqueue query runs after the submission acquires its shared row lock. At `READ COMMITTED`, a submission either commits before registration and is included in the backfill, or sees the new version and creates its own jobs.
+Registration can still wait for a long submission of the same organism. The version-row lock is released before backfill starts.
 
 Before the queue, these rows were created a batch at a time as pipelines claimed them.
 Now they are all created in one `INSERT ... SELECT` when the first pod of a new version starts polling.
@@ -110,7 +111,7 @@ Splitting the backfill into chunks would avoid this if it becomes a problem.
 ### Retiring a pipeline version
 
 When `UseNewerProcessingPipelineVersionTask` switches an organism to a newer pipeline version, it locks that organism's row in `current_processing_pipeline` `FOR UPDATE`.
-It waits for submissions and registrations that hold the shared row lock, then updates the current version and deletes older versions from `preprocessing_queue_versions`.
+This coordinates with registration's exclusive lock and submissions' shared locks. It then updates the current version and deletes older versions from `preprocessing_queue_versions`.
 Other organisms can continue writing to `sequence_entries`.
 After retirement, submissions no longer queue entries for older versions. Their processed data is deleted by `cleanUpOutdatedPreprocessingData` as before.
 A pipeline of a retired version is rejected by the version check during registration.
@@ -121,4 +122,4 @@ A pipeline of a retired version is rejected by the version check during registra
 For every version whose backfill has completed, it inserts the missing `UNPROCESSED` rows and logs a warning with the count.
 It reads the version rows `FOR KEY SHARE`, so retiring a version waits for it and nothing is queued for a retired version.
 
-This task is required during normal operation. Submissions can commit after a new version's initial backfill and need a later repair run. Some jobs therefore wait for the next successful run. The recurring search for missing jobs also adds database work.
+This is a temporary compatibility task for older backends that do not use the enqueue and row-lock protocol. It can be removed once all old replicas and their in-flight transactions have finished.

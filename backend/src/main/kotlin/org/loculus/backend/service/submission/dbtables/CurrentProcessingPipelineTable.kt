@@ -19,11 +19,16 @@ object CurrentProcessingPipelineTable : Table(CURRENT_PROCESSING_PIPELINE_TABLE_
     val versionColumn = long("version")
     val startedUsingAtColumn = datetime("started_using_at")
 
-    // Registration and submissions share this organism's version row.
-    // Retiring versions takes an exclusive row lock and waits for them.
+    // Submissions share this organism's version row until their enqueue commits.
     fun getVersionForShare(organism: String): Long = select(versionColumn)
         .where { organismColumn eq organism }
         .forUpdate(ForShare())
+        .single()[versionColumn]
+
+    // Registration waits for those submissions before adding a pipeline version.
+    fun getVersionForUpdate(organism: String): Long = select(versionColumn)
+        .where { organismColumn eq organism }
+        .forUpdate()
         .single()[versionColumn]
 
     /**

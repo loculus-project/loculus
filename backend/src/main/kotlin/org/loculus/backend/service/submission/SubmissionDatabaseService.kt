@@ -208,9 +208,9 @@ class SubmissionDatabaseService(
             }
         }
 
-        // Serialize with version retirement for this organism, while allowing submissions.
-        // A submission that misses both registration and backfill is picked up by the repair task.
-        val currentPipelineVersion = CurrentProcessingPipelineTable.getVersionForShare(organism.name)
+        // Wait for this organism's submissions before registering a version.
+        // Later submissions see the registration and enqueue their own jobs for it.
+        val currentPipelineVersion = CurrentProcessingPipelineTable.getVersionForUpdate(organism.name)
         if (pipelineVersion < currentPipelineVersion) {
             throw UnprocessableEntityException(
                 "The processing pipeline version $pipelineVersion is not accepted anymore. " +
@@ -253,7 +253,7 @@ class SubmissionDatabaseService(
         }
     }
 
-    // Repairs submissions that missed a newly registered version and its initial backfill.
+    // Temporary repair for entries handled by older backends during rollout.
     // Versions whose backfill has not finished are left to the backfill.
     fun enqueueMissingPreprocessingEntries() {
         val queueVersions = PreprocessingQueueVersionsTable

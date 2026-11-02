@@ -280,8 +280,8 @@ class UploadDatabaseService(
     }
 
     // Queues the new entries for each registered pipeline version of their organism.
-    // Keep the enqueue in the submission transaction and prevent retirement until it commits.
-    // Concurrent registration is allowed. The repair task covers versions this submission misses.
+    // Keep the enqueue in the submission transaction. Registration and retirement wait for its
+    // shared version-row lock, so the enqueue sees every version registered before it acquired the lock.
     private fun enqueueForPreprocessing(uploadId: String, organism: Organism) {
         CurrentProcessingPipelineTable.getVersionForShare(organism.name)
         val upload = MetadataUploadAuxTable

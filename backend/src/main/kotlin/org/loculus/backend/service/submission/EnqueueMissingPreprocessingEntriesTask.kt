@@ -10,7 +10,7 @@ private val log = mu.KotlinLogging.logger {}
 
 const val ENQUEUE_MISSING_PREPROCESSING_ENTRIES_TASK_NAME = "enqueue-missing-preprocessing-entries"
 
-// Runs on startup and periodically to recover submissions that missed a new queue's backfill.
+// Temporary rollout repair for entries handled by older backend replicas.
 @Component
 class EnqueueMissingPreprocessingEntriesTask(private val submissionDatabaseService: SubmissionDatabaseService) {
     @Scheduled(
