@@ -134,6 +134,7 @@ class SubmissionDatabaseService(
     private val emptyProcessedDataProvider: EmptyProcessedDataProvider,
     private val compressionService: CompressionService,
     private val processedDataPostprocessor: ProcessedDataPostprocessor,
+    private val reviewDataService: ReviewDataService,
     private val auditLogger: AuditLogger,
     private val dateProvider: DateProvider,
     private val submissionMetrics: SubmissionMetrics,
@@ -959,7 +960,11 @@ class SubmissionDatabaseService(
         processingResultFilter: List<ProcessingResult>? = null,
         page: Int? = null,
         size: Int? = null,
+        includeReviewData: Boolean = false,
     ): GetSequenceResponse {
+        if (includeReviewData && (page == null || page < 0 || size == null || size !in 1..100)) {
+            throw BadRequestException("includeReviewData requires page >= 0 and size between 1 and 100")
+        }
         log.info {
             "getting sequences for user ${authenticatedUser.username} " +
                 "(organism: $organism, groupFilter: $groupIdsFilter, statusFilter: $statusesFilter, " +
@@ -1005,7 +1010,7 @@ class SubmissionDatabaseService(
             .orderBy(SequenceEntriesView.accessionColumn)
             .apply {
                 if (page != null && size != null) {
-                    limit(size).offset((page * size).toLong())
+                    limit(size).offset(page.toLong() * size)
                 }
             }
             .map { row ->
@@ -1033,7 +1038,7 @@ class SubmissionDatabaseService(
         val statusCounts = getStatusCounts(organism, groupCondition)
 
         return GetSequenceResponse(
-            sequenceEntries = entries,
+            sequenceEntries = if (includeReviewData) reviewDataService.enrich(entries, organism) else entries,
             statusCounts = statusCounts,
             processingResultCounts = processingResultCounts,
         )
