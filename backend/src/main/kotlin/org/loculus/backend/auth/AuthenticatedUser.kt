@@ -23,6 +23,9 @@ object Roles {
 open class User
 
 class AuthenticatedUser(private val source: JwtAuthenticationToken) : User() {
+    /** The token already validated by Spring; used to resolve the creator without a username lookup. */
+    val validatedToken get() = source.token
+
     val username: String
         get() = source.token.claims[StandardClaimNames.PREFERRED_USERNAME] as String
 

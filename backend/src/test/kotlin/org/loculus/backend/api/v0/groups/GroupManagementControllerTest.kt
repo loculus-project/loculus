@@ -42,7 +42,12 @@ class GroupManagementControllerTest(@Autowired private val client: GroupManageme
     @BeforeEach
     fun setup() {
         every { keycloakAdapter.getUsersWithName(any()) } answers {
-            listOf(UserRepresentation().apply { username = firstArg<String>().lowercase() })
+            listOf(
+                UserRepresentation().apply {
+                    username = firstArg<String>().lowercase()
+                    id = UUID.nameUUIDFromBytes(username.toByteArray(Charsets.UTF_8)).toString()
+                },
+            )
         }
     }
 

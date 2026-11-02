@@ -2,9 +2,11 @@ package org.loculus.backend.service.groupmanagement
 
 import org.jetbrains.exposed.v1.core.dao.id.EntityID
 import org.jetbrains.exposed.v1.core.dao.id.IntIdTable
+import org.jetbrains.exposed.v1.core.java.javaUUID
 import org.jetbrains.exposed.v1.dao.IntEntity
 import org.jetbrains.exposed.v1.dao.IntEntityClass
 import org.jetbrains.exposed.v1.datetime.datetime
+import org.loculus.backend.service.identity.LoculusUsersTable
 
 const val GROUPS_TABLE_NAME = "groups_table"
 const val USER_GROUPS_TABLE_NAME = "user_groups_table"
@@ -40,6 +42,7 @@ class GroupEntity(id: EntityID<Int>) : IntEntity(id) {
 }
 
 object UserGroupsTable : IntIdTable(USER_GROUPS_TABLE_NAME, "id") {
+    val userIdColumn = javaUUID("user_id").references(LoculusUsersTable.id).nullable()
     val userNameColumn = text("user_name")
     val groupIdColumn = integer("group_id").references(GroupsTable.id)
 }
@@ -48,5 +51,6 @@ class UserGroupEntity(id: EntityID<Int>) : IntEntity(id) {
     companion object : IntEntityClass<UserGroupEntity>(UserGroupsTable)
 
     var userName by UserGroupsTable.userNameColumn
+    var userId by UserGroupsTable.userIdColumn
     var groupId by UserGroupsTable.groupIdColumn
 }
