@@ -1627,7 +1627,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         perSegment: true
         displayName: "Nextclade dataset"
         definition: "Nextclade dataset used to process the sequence."
-        orderOnDetailsPage: 2710
+        hideOnSequenceDetailsPage: true
         preprocessing:
           inputs: {input: NEXTCLADE_DATASET_NAME}
       - name: nextcladeDatasetTag
@@ -1637,7 +1637,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         perSegment: true
         displayName: "Nextclade dataset tag"
         definition: "Version tag of the Nextclade dataset used to process the sequence."
-        orderOnDetailsPage: 2711
+        hideOnSequenceDetailsPage: true
         preprocessing:
           inputs: {input: NEXTCLADE_DATASET_TAG}
       - name: nextcladeDatasetServer
@@ -1647,7 +1647,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         perSegment: true
         displayName: "Nextclade dataset server"
         definition: "Server that hosts the Nextclade dataset used to process the sequence."
-        orderOnDetailsPage: 2712
+        hideOnSequenceDetailsPage: true
         preprocessing:
           inputs: {input: NEXTCLADE_DATASET_SERVER}
       - name: totalSnps
