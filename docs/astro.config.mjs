@@ -81,7 +81,6 @@ export default defineConfig({
                     label: 'Reference',
                     items: [
                         'reference/browser-authentication-flow',
-                        'reference/implementing-authentication-and-authorization',
                         'reference/fasta-format',
                         'reference/glossary',
                         'reference/helm-chart-config',

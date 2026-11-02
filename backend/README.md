@@ -171,5 +171,5 @@ The initial endpoint is `/v1/me`, which returns the caller's Loculus user ID and
 Controllers and public schemas live in `org.loculus.backend.api.v1`; shared logic stays
 in `auth` and `service`. Existing group endpoints and membership storage are unchanged.
 
-See the [implementation guide](../docs/src/content/docs/reference/implementing-authentication-and-authorization.md)
+See the [implementation guide](src/main/kotlin/org/loculus/backend/api/README.md#implementing-auth-for-v1-endpoints)
 for an example using the v1 identity endpoint. Resource-authorization examples are deferred.
