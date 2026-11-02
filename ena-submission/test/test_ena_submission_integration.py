@@ -758,6 +758,7 @@ def multi_segment_submission(
     single_segment: bool = False,
     with_raw_reads: bool = False,
     raw_reads_file_names: list[str] | None = None,
+    raw_reads_insert_size: int | None = None,
 ) -> Any:
     """Test the full ENA submission pipeline with CCHF data
     If single_segment is True, there's only one segment in the assembly
@@ -771,6 +772,10 @@ def multi_segment_submission(
     sequences_to_upload = get_sequences(
         config, with_raw_reads=with_raw_reads, raw_reads_file_names=raw_reads_file_names
     )
+    if raw_reads_insert_size is not None:
+        sequences_to_upload[TEST_ACCESSION_VERSION]["metadata"]["pairedEndInsertSize"] = (
+            raw_reads_insert_size
+        )
 
     if single_segment:
         # Set segment M to None so we have only one segment in the assembly
@@ -1632,17 +1637,25 @@ class TestSimpleSubmissionWithBamRawReads(TestSubmission):
         mock_get_group_info: Mock,
         mock_submit_external_metadata: Mock,
     ) -> None:
-        """Submit a single BAM through the full ENA pipeline."""
-        multi_segment_submission(
-            self.db_engine,
-            self.config,
-            self.slack_config,
-            mock_get_group_info,
-            mock_submit_external_metadata,
-            with_raw_reads=True,
-            mock_download_file=mock_download_file,
-            raw_reads_file_names=["rawReads.bam"],
-        )
+        """Webin-CLI must accept INSERT_SIZE for our single-end BAM fixture."""
+        insert_size = 350
+        with patch(
+            "ena_deposition.create_raw_reads.create_manifest", wraps=create_manifest
+        ) as writer:
+            multi_segment_submission(
+                self.db_engine,
+                self.config,
+                self.slack_config,
+                mock_get_group_info,
+                mock_submit_external_metadata,
+                with_raw_reads=True,
+                mock_download_file=mock_download_file,
+                raw_reads_file_names=["rawReads.bam"],
+                raw_reads_insert_size=insert_size,
+            )
+        writer.assert_called_once()
+        assert writer.call_args.args[0].insert_size == insert_size
+        assert writer.call_args.args[0].bam is not None
 
 
 class TestRevisionRawReadsOnlyModificationTests(TestSubmission):
