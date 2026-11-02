@@ -15,18 +15,28 @@ data class KeycloakProperties(
 )
 
 @Component
-class KeycloakAdapter(private val keycloakProperties: KeycloakProperties) {
+class KeycloakAdapter(private val keycloakProperties: KeycloakProperties) : AutoCloseable {
 
-    private val keycloakRealm = KeycloakBuilder.builder()
+    private val client = KeycloakBuilder.builder()
         .serverUrl(keycloakProperties.url)
         .realm(keycloakProperties.realm)
         .clientId(keycloakProperties.client)
         .username(keycloakProperties.user)
         .password(keycloakProperties.password)
         .build()
-        .realm(keycloakProperties.realm)
+
+    private val keycloakRealm get() = client.realm(keycloakProperties.realm)
 
     fun getUsersWithName(username: String): List<UserRepresentation> = keycloakRealm
         .users()
         .search(username, true)!!
+
+    fun getUsersPage(first: Int, max: Int): List<UserRepresentation> {
+        require(first >= 0 && max in 1..1000)
+        // A plain list/search excludes client service accounts in Keycloak. An explicit exact filter
+        // uses its attribute-search path, which includes them. No enabled filter: import disabled users too.
+        return keycloakRealm.users().search(null, null, null, null, first, max, null, true, false)
+    }
+
+    override fun close() = client.close()
 }

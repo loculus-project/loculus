@@ -6,13 +6,14 @@ import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.lowerCase
 import org.jetbrains.exposed.v1.exceptions.ExposedSQLException
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
-import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.loculus.backend.auth.AuthenticatedUser
+import org.loculus.backend.auth.LoculusIdentityResolver
 import org.loculus.backend.errors.ConflictException
 import org.loculus.backend.errors.NotFoundException
 import org.loculus.backend.log.AuditLogger
 import org.loculus.backend.model.UNIQUE_CONSTRAINT_VIOLATION_SQL_STATE
+import org.loculus.backend.service.identity.LegacyMemberIdentityResolver
 import org.loculus.backend.types.Address
 import org.loculus.backend.types.Group
 import org.loculus.backend.types.GroupDetails
@@ -28,6 +29,9 @@ class GroupManagementDatabaseService(
     private val groupManagementPreconditionValidator: GroupManagementPreconditionValidator,
     private val auditLogger: AuditLogger,
     private val dateProvider: DateProvider,
+    private val identityResolver: LoculusIdentityResolver,
+    private val legacyMemberIdentityResolver: LegacyMemberIdentityResolver,
+    private val membershipDatabase: MembershipDatabaseService,
 ) {
 
     fun getDetailsOfGroup(groupId: Int, user: org.loculus.backend.auth.User): GroupDetails {
@@ -51,6 +55,7 @@ class GroupManagementDatabaseService(
     }
 
     fun createNewGroup(group: NewGroup, authenticatedUser: AuthenticatedUser): Group {
+        val creator = identityResolver.resolve(authenticatedUser.validatedToken)
         val groupEntity = GroupEntity.new {
             createdBy = authenticatedUser.username
             createdAt = dateProvider.getCurrentDateTime()
@@ -59,10 +64,7 @@ class GroupManagementDatabaseService(
 
         val groupId = groupEntity.id.value
 
-        UserGroupEntity.new {
-            userName = authenticatedUser.username
-            this.groupId = groupId
-        }
+        membershipDatabase.insert(groupId, creator.userId, authenticatedUser.username)
 
         auditLogger.log(authenticatedUser.username, "Created group: $groupId with groupName ${group.groupName}")
 
@@ -125,11 +127,9 @@ class GroupManagementDatabaseService(
 
         groupManagementPreconditionValidator.validateUserIsAllowedToModifyGroup(groupId, authenticatedUser)
 
+        val member = legacyMemberIdentityResolver.resolve(user)
         try {
-            UserGroupsTable.insert {
-                it[userNameColumn] = user.username
-                it[groupIdColumn] = groupId
-            }
+            membershipDatabase.insert(groupId, member.userId, user.username)
             auditLogger.log(authenticatedUser.username, "Added ${user.username} to group $groupId")
         } catch (e: ExposedSQLException) {
             if (e.sqlState == UNIQUE_CONSTRAINT_VIOLATION_SQL_STATE) {

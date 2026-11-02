@@ -53,7 +53,12 @@ class GetSequencesEndpointTest(
     @BeforeEach
     fun setup() {
         every { keycloakAdapter.getUsersWithName(any()) } answers {
-            listOf(UserRepresentation().apply { username = firstArg<String>().lowercase() })
+            listOf(
+                UserRepresentation().apply {
+                    username = firstArg<String>().lowercase()
+                    id = java.util.UUID.nameUUIDFromBytes(username.toByteArray(Charsets.UTF_8)).toString()
+                },
+            )
         }
     }
 

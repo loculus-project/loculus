@@ -138,6 +138,9 @@ class UploadDatabaseServiceTest(
     private fun testUser(): AuthenticatedUser = mockk<AuthenticatedUser>().also {
         every { it.username } returns TEST_USERNAME
         every { it.isSuperUser } returns false
+        every { it.validatedToken } returns org.springframework.security.oauth2.jwt.Jwt.withTokenValue("test")
+            .header("alg", "RS256").issuer(org.loculus.backend.testutil.TEST_TOKEN_ISSUER)
+            .subject(TEST_USERNAME).claim("preferred_username", TEST_USERNAME).build()
     }
 
     private fun originalSubmissionParams(

@@ -24,6 +24,7 @@ import java.util.concurrent.TimeUnit
 class IdentityDatabaseServiceTest(
     @Autowired private val database: IdentityDatabaseService,
     @Autowired private val resolver: LoculusIdentityResolver,
+    @Autowired private val provisioning: IdentityProvisioningService,
 ) {
     @Test
     fun `identity lookup uses issuer and subject and does not require unique usernames`() {
@@ -64,20 +65,24 @@ class IdentityDatabaseServiceTest(
     }
 
     @Test
-    fun `concurrent first requests resolve one user without orphans`() {
+    fun `concurrent JIT and administrative provisioning resolve one user without orphans`() {
         val ready = CountDownLatch(8)
         val start = CountDownLatch(1)
         val executor = Executors.newFixedThreadPool(8)
         try {
-            val requests = (1..8).map {
+            val requests = (1..8).map { index ->
                 executor.submit<UUID> {
                     ready.countDown()
                     check(start.await(10, TimeUnit.SECONDS))
-                    resolver.resolve(
-                        Jwt.withTokenValue("test").header("alg", "RS256")
-                            .issuer(TEST_TOKEN_ISSUER).subject("concurrent")
-                            .claim("preferred_username", "testuser").build(),
-                    ).userId
+                    if (index % 2 == 0) {
+                        provisioning.ensure(ExternalIdentity(TEST_TOKEN_ISSUER, "concurrent"), "testuser").userId
+                    } else {
+                        resolver.resolve(
+                            Jwt.withTokenValue("test").header("alg", "RS256")
+                                .issuer(TEST_TOKEN_ISSUER).subject("concurrent")
+                                .claim("preferred_username", "testuser").build(),
+                        ).userId
+                    }
                 }
             }
             assertTrue(ready.await(10, TimeUnit.SECONDS))

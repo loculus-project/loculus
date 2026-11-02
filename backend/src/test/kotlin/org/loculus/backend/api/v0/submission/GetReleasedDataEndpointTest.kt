@@ -540,11 +540,12 @@ class GetReleasedDataEndpointTest(
         val versions = listOf<Version>(1L, 2L, 3L)
         val accessionVersions = accessions.flatMap { versions.map(it::to) }
 
-        transaction {
-            val submittingGroupId = groupClient.createNewGroup()
-                .andExpect(status().isOk)
-                .andGetGroupId()
+        // Exercise HTTP outside a manually managed Exposed transaction, as real requests do.
+        val submittingGroupId = groupClient.createNewGroup()
+            .andExpect(status().isOk)
+            .andGetGroupId()
 
+        transaction {
             SequenceEntriesTable.batchInsert(accessionVersions.shuffled()) { (accession, version) ->
                 this[SequenceEntriesTable.isRevocationColumn] = true
                 this[SequenceEntriesTable.accessionColumn] = accession

@@ -13,6 +13,7 @@ import org.loculus.backend.errors.ServiceUnavailableException
 import org.loculus.backend.errors.UnauthorizedException
 import org.loculus.backend.service.identity.IDENTITY_UNIQUE_CONSTRAINT
 import org.loculus.backend.service.identity.IdentityDatabaseService
+import org.loculus.backend.service.identity.IdentityProvisioningService
 import org.postgresql.util.PSQLException
 import org.postgresql.util.ServerErrorMessage
 import org.springframework.dao.DataAccessResourceFailureException
@@ -21,8 +22,8 @@ import java.util.UUID
 
 class LoculusIdentityResolverTest {
     private val database = mockk<IdentityDatabaseService>()
-    private val config = mockk<BackendConfig>()
-    private val resolver = LoculusIdentityResolver(database, config)
+    private val config = mockk<BackendConfig> { every { readOnlyMode } returns false }
+    private val resolver = LoculusIdentityResolver(IdentityProvisioningService(database), config)
     private val identity = ExternalIdentity("https://identity.example/realms/loculus", "subject-1")
     private val principal = LoculusPrincipal(UUID.randomUUID(), LocalDateTime(2026, 10, 27, 0, 0), identity)
 
