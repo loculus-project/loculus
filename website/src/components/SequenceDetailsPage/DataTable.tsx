@@ -55,7 +55,7 @@ const NextcladeDatasetDisplay = ({
         const url = getNextcladeDatasetUrl(dataset);
         return (
             <React.Fragment key={dataset.segment}>
-                {showSegment && `${dataset.segment}: `}
+                {showSegment && `Segment ${dataset.segment}: `}
                 {url !== undefined ? (
                     <a className='underline hover:text-primary-500' target='_blank' href={url}>
                         {displayText}
@@ -161,12 +161,12 @@ const DataTableComponent: React.FC<Props> = ({
                     {nextcladeDatasets !== undefined && nextcladeDatasets.length > 0 && (
                         <p className='text-xs text-gray-500'>
                             <AkarInfo className='inline-block h-4 w-4 mr-1 -mt-0.5' />
-                            Aligned and QC&apos;d using the{' '}
+                            Metrics obtained using the following Nextclade dataset
+                            {nextcladeDatasets.length > 1 ? 's' : ''}:{' '}
                             <NextcladeDatasetDisplay
                                 datasets={nextcladeDatasets}
                                 showSegment={Object.keys(referenceGenomesInfo.segmentReferenceGenomes).length > 1}
-                            />{' '}
-                            Nextclade dataset{nextcladeDatasets.length > 1 ? 's' : ''}
+                            />
                         </p>
                     )}
                 </div>
