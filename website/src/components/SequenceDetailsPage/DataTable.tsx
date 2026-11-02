@@ -55,7 +55,7 @@ const NextcladeDatasetDisplay = ({
         const url = getNextcladeDatasetUrl(dataset);
         return (
             <React.Fragment key={dataset.segment}>
-                {showSegment && `Segment ${dataset.segment}: `}
+                {showSegment && `Segment ${dataset.segment} – `}
                 {url !== undefined ? (
                     <a className='underline hover:text-primary-500' target='_blank' href={url}>
                         {displayText}
