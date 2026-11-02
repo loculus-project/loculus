@@ -262,9 +262,9 @@ class GroupManagementControllerTest(@Autowired private val client: GroupManageme
     }
 
     @Test
-    fun `WHEN creating a group with a field longer than 255 characters THEN expect bad request`() {
+    fun `WHEN creating a group with a field longer than 255 characters THEN expect unprocessable content`() {
         client.createNewGroup(group = DEFAULT_GROUP.copy(groupName = "a".repeat(256)))
-            .andExpect(status().isBadRequest)
+            .andExpect(status().isUnprocessableContent)
             .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(jsonPath("\$.detail", containsString("groupName")))
     }

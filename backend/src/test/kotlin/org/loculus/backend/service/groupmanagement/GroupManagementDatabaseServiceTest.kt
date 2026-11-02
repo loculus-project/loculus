@@ -2,7 +2,6 @@ package org.loculus.backend.service.groupmanagement
 
 import io.mockk.every
 import io.mockk.mockk
-import jakarta.validation.ConstraintViolationException
 import org.hamcrest.CoreMatchers.containsString
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -12,6 +11,7 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 import org.loculus.backend.auth.AuthenticatedUser
+import org.loculus.backend.errors.UnprocessableEntityException
 import org.loculus.backend.testutil.DEFAULT_GROUP
 import org.loculus.backend.testutil.DEFAULT_USER_NAME
 import org.loculus.backend.testutil.EndpointTest
@@ -37,7 +37,7 @@ class GroupManagementDatabaseServiceTest(@Autowired private val service: GroupMa
         fieldPath: String,
         group: NewGroup,
     ) {
-        val exception = assertThrows<ConstraintViolationException> { service.createNewGroup(group, user) }
+        val exception = assertThrows<UnprocessableEntityException> { service.createNewGroup(group, user) }
         assertThat(exception.message, containsString(fieldPath))
     }
 
@@ -48,7 +48,7 @@ class GroupManagementDatabaseServiceTest(@Autowired private val service: GroupMa
         group: NewGroup,
     ) {
         val groupId = service.createNewGroup(DEFAULT_GROUP, user).groupId
-        val exception = assertThrows<ConstraintViolationException> { service.updateGroup(groupId, group, user) }
+        val exception = assertThrows<UnprocessableEntityException> { service.updateGroup(groupId, group, user) }
         assertThat(exception.message, containsString(fieldPath))
     }
 
