@@ -181,6 +181,8 @@ tasks.named("jar") {
     enabled = false // prevent to generate plain jar
 }
 tasks.named("bootJar") {
+    // The maintenance command has its own main; the normal jar must still start the web backend.
+    mainClass = 'org.loculus.backend.BackendApplicationKt'
     enabled = true
     archiveVersion.set("")
 }
