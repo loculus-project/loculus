@@ -109,7 +109,7 @@ object IdentityBackfillCommand {
                 }
             }
             println(
-                "${report.mode}: ${report.result}; accounts=${report.accountsScanned}, " +
+                "${report.mode}: ${report.result}; issuer=${report.issuer}, accounts=${report.accountsScanned}, " +
                     "identities needing provisioning=${report.identitiesNeedingProvisioning}, " +
                     "memberships to link=${report.membershipsToLink}, linked=${report.membershipsLinked}, " +
                     "issues=${report.issues.size}. Report: ${options.report}",

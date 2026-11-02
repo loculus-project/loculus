@@ -20,6 +20,10 @@ deletes rows, rewrites usernames, or replaces established identity/membership li
    and `SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI`.
    Use the backend technical account's existing `view-users` access. The issuer is the trusted
    public realm issuer, **not** the internal Keycloak URL. No secret values belong in arguments.
+   Copy the issuer exactly from the deployed backend's configuration (including any trailing slash).
+   Both modes fail before writing if identities exist but none use that issuer. This guard cannot
+   validate an empty identity database or detect a wrong issuer that is already present; verify the
+   deployment configuration before the first import. The summary and JSON report show the selected issuer.
 4. Run dry-run, inspect the report, then apply. Use a new report path for each run.
 5. Rerun dry-run to verify; resolve reported exceptions and repeat as needed.
 
@@ -45,6 +49,9 @@ consumers or automatic schema migrations. It does not read the normal backend JS
 - Membership matching uses exact usernames after lowercasing, without trimming or email fallback.
 - Missing/ambiguous matches, duplicate identity memberships and conflicting established links are
   reported and left unchanged. A reused username cannot prove historical ownership: review the dry-run.
+  For case-variant memberships such as `Alice` and `alice` in one group, confirm which row should
+  remain, remove the redundant membership through the existing administration workflow, then rerun.
+  Do not remove identity records or overwrite established links merely to clear a report.
 - Each identity and each membership update is atomic. Partial progress is retained; no resume token
   is required. Conditional updates and constraints protect against concurrent writes. A failed group
   operation can leave a valid, provisioned identity behind, but not a partially created group.
@@ -58,7 +65,8 @@ consumers or automatic schema migrations. It does not read the normal backend JS
 
 The JSON report includes mode, trusted issuer, counts and per-record reasons. No passwords, tokens,
 email addresses or full provider profiles are included. `identitiesNeedingProvisioning` counts missing
-identities observed; `identitiesEnsured` includes concurrent JIT winners. Dry-run's `membershipsToLink`
+identities observed; `identitiesEnsured` counts those resolved through provisioning in apply mode,
+including concurrent JIT winners, not identities already found. Dry-run's `membershipsToLink`
 is a proposal, not a promise about a later run. Apply rechecks before writing.
 
 Exit codes: `0` complete (dry-run may still propose work); `2` scan finished with unresolved records;

@@ -3,6 +3,7 @@ package org.loculus.backend.service.identity
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.insert
+import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.loculus.backend.auth.ExternalIdentity
 import org.loculus.backend.auth.LoculusPrincipal
@@ -14,6 +15,10 @@ import java.util.UUID
 
 @Service
 class IdentityDatabaseService(private val dateProvider: DateProvider) {
+    @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true)
+    fun issuers(): Set<String> = ExternalIdentitiesTable.select(ExternalIdentitiesTable.issuer)
+        .withDistinct().map { it[ExternalIdentitiesTable.issuer] }.toSet()
+
     // Separate transactions ensure a uniqueness conflict rolls back before the resolver reads the winner.
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true)
     fun find(identity: ExternalIdentity): LoculusPrincipal? {

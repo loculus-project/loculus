@@ -17,9 +17,16 @@ class IdentityBackfillService(
 ) {
     fun run(apply: Boolean, report: IdentityBackfillReport) {
         require(report.issuer.isNotBlank())
+        val existingIssuers = identities.issuers()
+        if (existingIssuers.isNotEmpty() && report.issuer !in existingIssuers) {
+            report.issues.add(BackfillIssue("issuer_mismatch"))
+            report.result = "FAILED"
+            return
+        }
         // Check schema/access and finish provider enumeration before the first write. Offset pagination
         // is not a realm snapshot; operators must rerun after concurrent account creation/deletion.
         val rows = memberships.read()
+        val existingLinks = rows.mapNotNull { row -> row.userId?.let { row.groupId to it } }.toSet()
         val accounts = linkedMapOf<String, org.keycloak.representations.idm.UserRepresentation>()
         var offset = 0
         while (true) {
@@ -42,10 +49,10 @@ class IdentityBackfillService(
             val identity = ExternalIdentity(report.issuer, id)
             val existing = identities.find(identity)
             if (existing == null) report.identitiesNeedingProvisioning++ else report.identitiesAlreadyPresent++
-            principals[id] = if (apply) {
+            principals[id] = existing ?: if (apply) {
                 provisioning.ensure(identity, user.username).also { report.identitiesEnsured++ }
             } else {
-                existing
+                null
             }
         }
         val targets = rows.associate { row -> row.id to byName[row.username.lowercase()]?.singleOrNull()?.id }
@@ -77,10 +84,7 @@ class IdentityBackfillService(
                 else -> {
                     val targetId = principals[subject]?.userId
                     // Also catch a pre-existing link whose legacy username no longer resolves.
-                    if (targetId != null && rows.any {
-                            it.id != row.id && it.groupId == row.groupId && it.userId == targetId
-                        }
-                    ) {
+                    if (targetId != null && (row.groupId to targetId) in existingLinks) {
                         issue("duplicate_identity_in_group")
                         continue
                     }

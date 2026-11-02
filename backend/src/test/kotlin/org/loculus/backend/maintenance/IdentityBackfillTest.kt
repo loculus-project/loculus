@@ -146,11 +146,54 @@ class IdentityBackfillTest(
         assertEquals(1, applied.membershipsLinked)
         val linked = memberships.read().single().userId
         val repeated = run(true)
+        assertEquals(2, repeated.identitiesAlreadyPresent)
+        assertEquals(0, repeated.identitiesEnsured)
         assertEquals(0, repeated.identitiesNeedingProvisioning)
         assertEquals(0, repeated.membershipsLinked)
         assertEquals(1, repeated.membershipsAlreadyLinked)
         assertEquals(linked, memberships.read().single().userId)
         transaction { assertEquals(2, LoculusUsersTable.selectAll().count().toInt()) }
+    }
+
+    @Test
+    fun `wrong issuer stops dry run and apply before enumeration or writes`() {
+        legacyGroup()
+        val original = provisioning.ensure(ExternalIdentity(TEST_TOKEN_ISSUER, "existing"), "existing")
+        val before = memberships.read()
+        for (apply in listOf(false, true)) {
+            val report = IdentityBackfillReport(if (apply) "APPLY" else "DRY_RUN", "$TEST_TOKEN_ISSUER/")
+            IdentityBackfillService(keycloak, database, provisioning, memberships).run(apply, report)
+            assertEquals(1, report.exitCode())
+            assertEquals("issuer_mismatch", report.issues.single().reason)
+            assertEquals(0, report.accountsScanned)
+            assertEquals(before, memberships.read())
+            transaction { assertEquals(1L, LoculusUsersTable.selectAll().count()) }
+        }
+        assertEquals(original, database.find(original.externalIdentity))
+        verify(exactly = 0) { keycloak.getUsersPage(any(), any()) }
+    }
+
+    @Test
+    fun `existing link blocks a duplicate even when its old username no longer matches`() {
+        val groupId = legacyGroup()
+        val principal = provisioning.ensure(ExternalIdentity(TEST_TOKEN_ISSUER, "subject"), DEFAULT_USER_NAME)
+        transaction {
+            UserGroupsTable.insert {
+                it[userNameColumn] = "old-name"
+                it[groupIdColumn] = groupId
+                it[userIdColumn] = principal.userId
+            }
+        }
+        provider(account(DEFAULT_USER_NAME, "subject"))
+        for (apply in listOf(false, true)) {
+            val report = run(apply)
+            assertEquals(
+                setOf("no_provider_match", "duplicate_identity_in_group"),
+                report.issues.map { it.reason }.toSet(),
+            )
+            assertEquals(0, report.membershipsLinked)
+            assertNull(memberships.read().single { it.username == DEFAULT_USER_NAME }.userId)
+        }
     }
 
     @Test

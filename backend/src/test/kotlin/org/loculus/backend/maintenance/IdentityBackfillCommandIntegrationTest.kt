@@ -119,6 +119,8 @@ class IdentityBackfillCommandIntegrationTest {
                 assertEquals(0, run("--apply", "again.json"))
                 val json = jacksonObjectMapper().readTree(Files.readString(reports.resolve("again.json")))
                 assertEquals(0, json["identitiesNeedingProvisioning"].asInt())
+                assertEquals(0, json["identitiesEnsured"].asInt())
+                assertEquals(2, json["identitiesAlreadyPresent"].asInt())
                 assertEquals(1, json["membershipsAlreadyLinked"].asInt())
                 assertFalse(Files.readString(reports.resolve("apply.json")).contains("test-token-not-for-logging"))
                 assertEquals(
@@ -127,6 +129,21 @@ class IdentityBackfillCommandIntegrationTest {
                 )
                 // Existing reports are never overwritten and no provider requests are made on this failure.
                 val requestCount = requests.size
+                assertEquals(
+                    1,
+                    run(
+                        "--apply",
+                        "wrong-issuer.json",
+                        env + mapOf(
+                            "SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI" to "http://internal/realms/loculus",
+                        ),
+                    ),
+                )
+                val mismatch = jacksonObjectMapper().readTree(Files.readString(reports.resolve("wrong-issuer.json")))
+                assertEquals("FAILED", mismatch["result"].asText())
+                assertEquals("issuer_mismatch", mismatch["issues"][0]["reason"].asText())
+                assertEquals(2, count("loculus_users"))
+                assertEquals(requestCount, requests.size)
                 assertEquals(1, run("--apply", "apply.json"))
                 assertEquals(requestCount, requests.size)
                 failProvider = true
