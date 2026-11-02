@@ -33,9 +33,16 @@ export function getNextcladeDatasets(
     });
 }
 
+const NEXTCLADE_WEB_URL = 'https://clades.nextstrain.org/';
+
 export function getNextcladeDatasetUrl({ name, tag, server }: NextcladeDatasetInfo): string | undefined {
     if (tag === undefined || server === undefined) {
         return undefined;
     }
-    return `${server.replace(/\/$/, '')}/${name}/${tag}/pathogen.json`;
+    const params = new URLSearchParams([
+        ['dataset-server', server],
+        ['dataset-name', name],
+        ['dataset-tag', tag],
+    ]);
+    return `${NEXTCLADE_WEB_URL}?${params.toString()}`;
 }

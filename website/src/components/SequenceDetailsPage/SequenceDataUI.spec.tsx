@@ -192,7 +192,7 @@ describe('SequenceDataUI', () => {
         );
         expect(screen.getByRole('link', { name: 'nextstrain/mpox (2025-01-01)' })).toHaveAttribute(
             'href',
-            'https://example.com/nextstrain/mpox/2025-01-01/pathogen.json',
+            'https://clades.nextstrain.org/?dataset-server=https%3A%2F%2Fexample.com&dataset-name=nextstrain%2Fmpox&dataset-tag=2025-01-01',
         );
     });
 });

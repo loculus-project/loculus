@@ -44,10 +44,15 @@ describe('getNextcladeDatasets', () => {
 });
 
 describe('getNextcladeDatasetUrl', () => {
-    test('builds the pathogen.json url', () => {
-        expect(getNextcladeDatasetUrl({ segment: 'main', name: 'a/b', tag: 't', server: 'https://example.com/' })).toBe(
-            'https://example.com/a/b/t/pathogen.json',
+    test('builds a Nextclade Web url with the dataset preselected', () => {
+        const url = new URL(
+            getNextcladeDatasetUrl({ segment: 'main', name: 'a/b', tag: 't', server: 'https://example.com/v3' })!,
         );
+
+        expect(url.origin + url.pathname).toBe('https://clades.nextstrain.org/');
+        expect(url.searchParams.get('dataset-server')).toBe('https://example.com/v3');
+        expect(url.searchParams.get('dataset-name')).toBe('a/b');
+        expect(url.searchParams.get('dataset-tag')).toBe('t');
     });
 
     test('returns undefined when tag or server are missing', () => {
