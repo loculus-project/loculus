@@ -773,11 +773,19 @@ ALTER TABLE public.task_lock OWNER TO postgres;
 CREATE TABLE public.user_groups_table (
     id integer NOT NULL,
     user_name text NOT NULL,
-    group_id integer NOT NULL
+    group_id integer NOT NULL,
+    user_id uuid
 );
 
 
 ALTER TABLE public.user_groups_table OWNER TO postgres;
+
+--
+-- Name: COLUMN user_groups_table.user_id; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.user_groups_table.user_id IS 'Loculus identity link. Nullable during the additive backfill; legacy v0 reads still use user_name.';
+
 
 --
 -- Name: user_groups_table_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
@@ -1041,6 +1049,14 @@ ALTER TABLE ONLY public.user_groups_table
 
 ALTER TABLE ONLY public.user_groups_table
     ADD CONSTRAINT user_groups_table_user_name_group_id_key UNIQUE (user_name, group_id);
+
+
+--
+-- Name: user_groups_table user_groups_user_id_group_id_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.user_groups_table
+    ADD CONSTRAINT user_groups_user_id_group_id_key UNIQUE (user_id, group_id);
 
 
 --
@@ -1316,6 +1332,14 @@ ALTER TABLE ONLY public.sequence_entries_preprocessed_data
 
 ALTER TABLE ONLY public.user_groups_table
     ADD CONSTRAINT user_groups_table_group_id_fkey FOREIGN KEY (group_id) REFERENCES public.groups_table(group_id);
+
+
+--
+-- Name: user_groups_table user_groups_table_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.user_groups_table
+    ADD CONSTRAINT user_groups_table_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.loculus_users(id);
 
 
 --
