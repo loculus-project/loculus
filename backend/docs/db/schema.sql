@@ -129,6 +129,7 @@ BEGIN
     SELECT TG_TABLE_NAME, cr.organism, cr.pipeline_version, timezone('UTC', CURRENT_TIMESTAMP)
     FROM changed_rows cr
     GROUP BY cr.organism, cr.pipeline_version
+    ORDER BY cr.organism, cr.pipeline_version
     ON CONFLICT (table_name, organism, pipeline_version)
     DO UPDATE SET last_time_updated = timezone('UTC', CURRENT_TIMESTAMP);
     RETURN NULL;
