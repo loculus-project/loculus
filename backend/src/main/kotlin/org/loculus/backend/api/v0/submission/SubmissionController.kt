@@ -436,10 +436,6 @@ open class SubmissionController(
             "Part of pagination parameters. Number of sequences per page. " +
                 "If page or size are not provided, all sequences are returned.",
         ) @RequestParam(required = false) size: Int?,
-        @Parameter(
-            description = "Include compact review data and revision comparisons, without sequence strings. " +
-                "Requires page >= 0 and size between 1 and 100.",
-        ) @RequestParam(defaultValue = "false") includeReviewData: Boolean,
     ): GetSequenceResponse = submissionDatabaseService.getSequences(
         authenticatedUser,
         organism,
@@ -448,7 +444,30 @@ open class SubmissionController(
         processingResultFilter,
         page,
         size,
-        includeReviewData,
+    )
+
+    @Operation(description = GET_REVIEW_DATA_DESCRIPTION)
+    @GetMapping("/review-data", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun getReviewData(
+        @PathVariable @Valid organism: Organism,
+        @Parameter(description = "Filter by group ids. If not provided, all groups are considered.")
+        @RequestParam(required = false) groupIdsFilter: List<Int>?,
+        @Parameter(description = "Filter by status. If not provided, all statuses are considered.")
+        @RequestParam(required = false) statusesFilter: List<Status>?,
+        @Parameter(description = "Filter by processing result of entries in the PROCESSED status.")
+        @RequestParam(required = false) processingResultFilter: List<ProcessingResult>?,
+        @HiddenParam authenticatedUser: AuthenticatedUser,
+        @Parameter(description = "Page number, starting from 0.") @RequestParam page: Int,
+        @Parameter(description = "Number of entries per page, between 1 and 100.") @RequestParam size: Int,
+    ): GetSequenceResponse = submissionDatabaseService.getSequences(
+        authenticatedUser,
+        organism,
+        groupIdsFilter,
+        statusesFilter,
+        processingResultFilter,
+        page,
+        size,
+        includeReviewData = true,
     )
 
     @Operation(description = "Retrieve unprocessed metadata of submitted accession versions.")

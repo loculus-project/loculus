@@ -90,9 +90,13 @@ statuses and processing results. Counts are totals for the authorized groups and
 of status/result filters and pagination.
 When no constraints are applied, the endpoint returns all sequences from all groups the user is a member of.
 If a filter is applied for a group the user is not a member of, the endpoint will return an error.
-Set includeReviewData=true to include processed metadata, annotations, file descriptors and revision
-comparisons for processed, non-revocation entries. Sequence strings are never included. This mode requires
-page >= 0 and size between 1 and 100. By default the lightweight response is unchanged.
+"""
+
+const val GET_REVIEW_DATA_DESCRIPTION = """
+Retrieve one page of submitted accession versions for the review page. Entries, filters and counts
+are the same as for get-sequences; processed, non-revocation entries additionally carry processed
+metadata, annotations, file descriptors and revision comparisons. Sequence strings are never included.
+Requires page >= 0 and size between 1 and 100.
 """
 
 const val APPROVE_PROCESSED_DATA_DESCRIPTION = """
