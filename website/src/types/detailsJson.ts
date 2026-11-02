@@ -5,7 +5,7 @@ import { schema } from './config.ts';
 import { parsedSequenceEntryHistoryEntrySchema } from './lapis.ts';
 import { serviceUrls } from './runtimeConfig.ts';
 import { sequenceCitations } from './seqSetCitation.ts';
-import { tableDataEntrySchema } from '../components/SequenceDetailsPage/types.ts';
+import { nextcladeDatasetInfoSchema, tableDataEntrySchema } from '../components/SequenceDetailsPage/types.ts';
 
 export const detailsJsonSchema = z.object({
     tableData: z.array(tableDataEntrySchema),
@@ -16,6 +16,7 @@ export const detailsJsonSchema = z.object({
     clientConfig: serviceUrls,
     // Segment-first mode: map of segment names to reference names
     segmentReferences: z.record(z.string(), z.string().nullable()).optional(),
+    nextcladeDatasets: z.array(nextcladeDatasetInfoSchema).optional(),
     isRevocation: z.boolean(),
     sequenceEntryHistory: z.array(parsedSequenceEntryHistoryEntrySchema),
     sequenceCitations: sequenceCitations.optional(),

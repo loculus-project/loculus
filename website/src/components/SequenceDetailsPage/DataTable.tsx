@@ -3,7 +3,8 @@ import React from 'react';
 import { AuthorList } from './AuthorList';
 import DataTableEntry from './DataTableEntry';
 import { type DataTableData } from './getDataTableData';
-import { type TableDataEntry } from './types';
+import { getNextcladeDatasetUrl } from './getNextcladeDatasets';
+import { type NextcladeDatasetInfo, type TableDataEntry } from './types';
 import { type DataUseTermsHistoryEntry } from '../../types/backend';
 import { DEFAULT_AA_MUTATION_DETAILS_HEADER, DEFAULT_NUC_MUTATION_DETAILS_HEADER } from '../../types/config';
 import { type ReferenceAccession, type ReferenceGenomesInfo } from '../../types/referencesGenomes';
@@ -21,6 +22,7 @@ interface Props {
     dataUseTermsHistory: DataUseTermsHistoryEntry[];
     referenceGenomesInfo: ReferenceGenomesInfo;
     segmentReferences?: SegmentReferenceSelections;
+    nextcladeDatasets?: NextcladeDatasetInfo[];
     sequenceCitations?: SequenceCitation[];
 }
 
@@ -40,11 +42,39 @@ const ReferenceDisplay = ({ reference }: { reference: ReferenceAccession[] }) =>
     ));
 };
 
+const NextcladeDatasetDisplay = ({
+    datasets,
+    showSegment,
+}: {
+    datasets: NextcladeDatasetInfo[];
+    showSegment: boolean;
+}) => {
+    const datasetsLength = datasets.length;
+    return datasets.map((dataset, index) => {
+        const displayText = dataset.tag !== undefined ? `${dataset.name} (${dataset.tag})` : dataset.name;
+        const url = getNextcladeDatasetUrl(dataset);
+        return (
+            <React.Fragment key={dataset.segment}>
+                {showSegment && `${dataset.segment}: `}
+                {url !== undefined ? (
+                    <a className='underline hover:text-primary-500' target='_blank' href={url}>
+                        {displayText}
+                    </a>
+                ) : (
+                    displayText
+                )}
+                {index < datasetsLength - 2 ? ', ' : index === datasetsLength - 2 ? ' & ' : ''}
+            </React.Fragment>
+        );
+    });
+};
+
 const DataTableComponent: React.FC<Props> = ({
     dataTableData,
     dataUseTermsHistory,
     referenceGenomesInfo,
     segmentReferences,
+    nextcladeDatasets,
     sequenceCitations,
 }) => {
     const references = getInsdcAccessionsFromSegmentReferences(referenceGenomesInfo, segmentReferences);
@@ -128,6 +158,17 @@ const DataTableComponent: React.FC<Props> = ({
             {alignmentSections.length > 0 && (
                 <div>
                     <h2 className='text-xl font-bold mb-2'>Alignment and QC</h2>
+                    {nextcladeDatasets !== undefined && nextcladeDatasets.length > 0 && (
+                        <p className='text-xs text-gray-500'>
+                            <AkarInfo className='inline-block h-4 w-4 mr-1 -mt-0.5' />
+                            Aligned and QC&apos;d using the{' '}
+                            <NextcladeDatasetDisplay
+                                datasets={nextcladeDatasets}
+                                showSegment={Object.keys(referenceGenomesInfo.segmentReferenceGenomes).length > 1}
+                            />{' '}
+                            Nextclade dataset{nextcladeDatasets.length > 1 ? 's' : ''}
+                        </p>
+                    )}
                 </div>
             )}
 
