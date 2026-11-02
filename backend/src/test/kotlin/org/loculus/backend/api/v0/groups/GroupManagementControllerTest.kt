@@ -262,6 +262,14 @@ class GroupManagementControllerTest(@Autowired private val client: GroupManageme
     }
 
     @Test
+    fun `WHEN creating a group with a field longer than 255 characters THEN expect bad request`() {
+        client.createNewGroup(group = DEFAULT_GROUP.copy(groupName = "a".repeat(256)))
+            .andExpect(status().isBadRequest)
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+            .andExpect(jsonPath("\$.detail", containsString("groupName")))
+    }
+
+    @Test
     fun `GIVEN a group WHEN I add a user that does not exists to the group THEN expect user is not found`() {
         every { keycloakAdapter.getUsersWithName(any()) } returns listOf()
 

@@ -52,6 +52,7 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-webmvc"
     implementation "org.springframework.boot:spring-boot-starter-aspectj"
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation "org.springframework.boot:spring-boot-starter-validation"
     runtimeOnly    "io.micrometer:micrometer-registry-prometheus"
     implementation "com.fasterxml.jackson.module:jackson-module-kotlin"
     implementation "org.springframework.boot:spring-boot-jackson2" // Jackson 2 compatibility bridge
@@ -68,7 +69,6 @@ dependencies {
     implementation "org.jetbrains.exposed:exposed-json"
     implementation "org.jetbrains.exposed:exposed-kotlin-datetime"
     implementation "org.jetbrains.kotlinx:kotlinx-datetime:0.8.0-0.6.x-compat"
-    implementation "org.hibernate.validator:hibernate-validator"
     implementation "org.keycloak:keycloak-admin-client:26.0.12"
     implementation("io.minio:minio:9.0.3")
     implementation("software.amazon.awssdk:s3:2.56.0")

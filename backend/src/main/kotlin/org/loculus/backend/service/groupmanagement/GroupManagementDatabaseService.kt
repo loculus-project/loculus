@@ -1,5 +1,6 @@
 package org.loculus.backend.service.groupmanagement
 
+import jakarta.validation.Valid
 import org.jetbrains.exposed.v1.core.JoinType
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
@@ -21,8 +22,10 @@ import org.loculus.backend.types.User
 import org.loculus.backend.utils.DateProvider
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import org.springframework.validation.annotation.Validated
 
 @Service
+@Validated
 @Transactional
 class GroupManagementDatabaseService(
     private val groupManagementPreconditionValidator: GroupManagementPreconditionValidator,
@@ -50,7 +53,7 @@ class GroupManagementDatabaseService(
         }
     }
 
-    fun createNewGroup(group: NewGroup, authenticatedUser: AuthenticatedUser): Group {
+    fun createNewGroup(@Valid group: NewGroup, authenticatedUser: AuthenticatedUser): Group {
         val groupEntity = GroupEntity.new {
             createdBy = authenticatedUser.username
             createdAt = dateProvider.getCurrentDateTime()
@@ -69,7 +72,7 @@ class GroupManagementDatabaseService(
         return groupEntity.toGroup()
     }
 
-    fun updateGroup(groupId: Int, group: NewGroup, authenticatedUser: AuthenticatedUser): Group {
+    fun updateGroup(groupId: Int, @Valid group: NewGroup, authenticatedUser: AuthenticatedUser): Group {
         groupManagementPreconditionValidator.validateThatUserExists(authenticatedUser.username)
 
         groupManagementPreconditionValidator.validateUserIsAllowedToModifyGroup(groupId, authenticatedUser)
