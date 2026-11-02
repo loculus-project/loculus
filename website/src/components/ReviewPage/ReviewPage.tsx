@@ -133,7 +133,6 @@ const InnerReviewPage: FC<ReviewPageProps> = ({
     }
     if (sequencesData === undefined) {
         return <div>Loading..</div>;
-        // this is not expected to happen, but it's here to satisfy the type checker
     }
 
     const receivedCount = sequencesData.statusCounts[receivedStatus];
