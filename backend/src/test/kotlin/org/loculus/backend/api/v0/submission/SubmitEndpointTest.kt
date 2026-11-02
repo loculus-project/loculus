@@ -83,7 +83,7 @@ class SubmitEndpointTest(
         )
             .andExpect(status().isNotFound)
             .andExpect(content().contentType(APPLICATION_PROBLEM_JSON))
-            .andExpect(jsonPath("\$.detail", containsString("Group(s) $groupId do(es) not exist")))
+            .andExpect(jsonPath("\$.detail", containsString("Group $groupId does not exist")))
     }
 
     @Test

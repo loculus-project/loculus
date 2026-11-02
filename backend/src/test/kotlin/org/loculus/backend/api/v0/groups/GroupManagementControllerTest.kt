@@ -282,6 +282,18 @@ class GroupManagementControllerTest(@Autowired private val client: GroupManageme
     }
 
     @Test
+    fun `GIVEN a non-member WHEN they add a user that does not exist THEN the action is forbidden`() {
+        val groupId = client.createNewGroup(jwt = jwtForDefaultUser)
+            .andExpect(status().isOk)
+            .andGetGroupId()
+
+        every { keycloakAdapter.getUsersWithName(any()) } returns listOf()
+
+        client.addUserToGroup(groupId = groupId, usernameToAdd = "userthatdoesnotexist", jwt = jwtForAlternativeUser)
+            .andExpect(status().isForbidden)
+    }
+
+    @Test
     fun `GIVEN a group is created WHEN another user is added THEN expect user is in group`() {
         val otherUser = "otheruser"
 
@@ -423,7 +435,7 @@ class GroupManagementControllerTest(@Autowired private val client: GroupManageme
             .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath("\$.detail").value(
-                    "Group(s) $groupId do(es) not exist.",
+                    "Group $groupId does not exist.",
                 ),
             )
     }
@@ -473,7 +485,7 @@ class GroupManagementControllerTest(@Autowired private val client: GroupManageme
             .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath("\$.detail").value(
-                    "Group(s) $groupId do(es) not exist.",
+                    "Group $groupId does not exist.",
                 ),
             )
             .andReturn()

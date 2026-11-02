@@ -30,7 +30,13 @@ class GroupManagementPreconditionValidator(private val keycloakAdapter: Keycloak
         val nonExistingGroups = groupIds.toSet() - existingGroups
 
         if (nonExistingGroups.isNotEmpty()) {
-            throw NotFoundException("Group(s) ${nonExistingGroups.joinToString()} do(es) not exist.")
+            val groupIdList = nonExistingGroups.joinToString()
+            throw NotFoundException(
+                when (nonExistingGroups.size) {
+                    1 -> "Group $groupIdList does not exist."
+                    else -> "Groups $groupIdList do not exist."
+                },
+            )
         }
     }
 
