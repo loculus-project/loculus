@@ -246,8 +246,7 @@ def get_nextclade_dataset_info(
     if not isinstance(segment, str):
         msg = f"get_nextclade_dataset_info: segment must be str, got {type(segment)}"
         raise TypeError(msg)
-    name = get_dataset_name(segment, unprocessed.nextcladeMetadata, config)
-    if not name:
+    if not (name := get_dataset_name(segment, unprocessed.nextcladeMetadata, config)):
         return None
     return unprocessed.nextcladeDatasets.get(name)
 
