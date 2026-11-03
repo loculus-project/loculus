@@ -48,7 +48,7 @@ def ena_dev_only(monkeypatch: pytest.MonkeyPatch):
         if (
             not is_webin_cli
             or "-test" not in args
-            or any(arg.startswith("-test=") for arg in args)
+            or any(str(arg).startswith("-test=") for arg in args)
             or overrides_execution
         ):
             msg = "ENA integration tests require ena-webin-cli with explicit -test and no shell."
