@@ -227,6 +227,14 @@ class GroupManagementControllerTest(@Autowired private val client: GroupManageme
     }
 
     @Test
+    fun `WHEN a user edits a non-existing group THEN group does not exist`() {
+        client.updateGroup(groupId = 123456789, group = DEFAULT_GROUP_CHANGED, jwt = jwtForDefaultUser)
+            .andExpect(status().isNotFound)
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+            .andExpect(jsonPath("\$.detail").value("Group 123456789 does not exist."))
+    }
+
+    @Test
     fun `GIVEN a group is created WHEN all groups are queried THEN expect that the group is returned`() {
         client.createNewGroup()
             .andExpect(status().isOk)

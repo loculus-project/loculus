@@ -111,6 +111,17 @@ class GetSequencesEndpointTest(
     }
 
     @Test
+    fun `WHEN querying for several non-existing groups THEN expect an error that the groups are not found`() {
+        client.getSequenceEntries(
+            groupIdsFilter = listOf(123456789, 987654321),
+        )
+            .andExpect(status().isNotFound)
+            .andExpect(
+                jsonPath("$.detail", containsString("Groups 123456789, 987654321 do not exist.")),
+            )
+    }
+
+    @Test
     fun `GIVEN some sequence entries in the database THEN only shows entries of the requested organism`() {
         val defaultOrganismData = convenienceClient.submitDefaultFiles(organism = DEFAULT_ORGANISM)
             .submissionIdMappings
