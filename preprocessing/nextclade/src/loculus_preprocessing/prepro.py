@@ -252,25 +252,22 @@ def get_nextclade_dataset_info(
     return unprocessed.nextcladeDatasets.get(name)
 
 
-def add_nextclade_dataset_name(
-    spec: ProcessingSpec, unprocessed: UnprocessedAfterNextclade, config: Config
+def add_nextclade_dataset_field(
+    spec: ProcessingSpec,
+    unprocessed: UnprocessedAfterNextclade,
+    input_path: str,
+    config: Config,
 ) -> InputData:
-    dataset = get_nextclade_dataset_info(spec, unprocessed, config)
-    return InputData(datum=dataset.name if dataset else None)
-
-
-def add_nextclade_dataset_tag(
-    spec: ProcessingSpec, unprocessed: UnprocessedAfterNextclade, config: Config
-) -> InputData:
-    dataset = get_nextclade_dataset_info(spec, unprocessed, config)
-    return InputData(datum=dataset.tag if dataset else None)
-
-
-def add_nextclade_dataset_server(
-    spec: ProcessingSpec, unprocessed: UnprocessedAfterNextclade, config: Config
-) -> InputData:
-    dataset = get_nextclade_dataset_info(spec, unprocessed, config)
-    return InputData(datum=dataset.server if dataset else None)
+    if not (dataset := get_nextclade_dataset_info(spec, unprocessed, config)):
+        return InputData(datum=None)
+    if input_path == NEXTCLADE_DATASET_SERVER_PREFIX:
+        return InputData(datum=dataset.server)
+    if input_path == NEXTCLADE_DATASET_NAME_PREFIX:
+        return InputData(datum=dataset.name)
+    if input_path == NEXTCLADE_DATASET_TAG_PREFIX:
+        return InputData(datum=dataset.tag)
+    msg = f"add_nextclade_dataset_field: unknown input_path {input_path}"
+    raise ValueError(msg)
 
 
 def add_input_metadata(
@@ -282,12 +279,12 @@ def add_input_metadata(
     """Returns value of input_path in unprocessed metadata"""
     if input_path.startswith(ASSIGNED_REFERENCE_PREFIX):
         return add_assigned_reference(spec, unprocessed, config=config)
-    if input_path.startswith(NEXTCLADE_DATASET_NAME_PREFIX):
-        return add_nextclade_dataset_name(spec, unprocessed, config=config)
-    if input_path.startswith(NEXTCLADE_DATASET_TAG_PREFIX):
-        return add_nextclade_dataset_tag(spec, unprocessed, config=config)
-    if input_path.startswith(NEXTCLADE_DATASET_SERVER_PREFIX):
-        return add_nextclade_dataset_server(spec, unprocessed, config=config)
+    if input_path in {
+        NEXTCLADE_DATASET_SERVER_PREFIX,
+        NEXTCLADE_DATASET_NAME_PREFIX,
+        NEXTCLADE_DATASET_TAG_PREFIX,
+    }:
+        return add_nextclade_dataset_field(spec, unprocessed, input_path, config=config)
     # If field starts with "nextclade.", take from nextclade metadata
     if input_path.startswith(NEXTCLADE_PREFIX):
         nextclade_path = input_path[len(NEXTCLADE_PREFIX) :]
