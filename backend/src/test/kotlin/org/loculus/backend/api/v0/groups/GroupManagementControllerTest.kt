@@ -270,6 +270,14 @@ class GroupManagementControllerTest(@Autowired private val client: GroupManageme
     }
 
     @Test
+    fun `WHEN creating a group with a field longer than 255 characters THEN expect unprocessable content`() {
+        client.createNewGroup(group = DEFAULT_GROUP.copy(groupName = "a".repeat(256)))
+            .andExpect(status().isUnprocessableContent)
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+            .andExpect(jsonPath("\$.detail", containsString("groupName")))
+    }
+
+    @Test
     fun `GIVEN a group WHEN adding a user that does not exist to the group THEN user is not found`() {
         every { keycloakAdapter.getUsersWithName(any()) } returns listOf()
 

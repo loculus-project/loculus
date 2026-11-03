@@ -51,6 +51,8 @@ class GroupManagementDatabaseService(
     }
 
     fun createNewGroup(group: NewGroup, authenticatedUser: AuthenticatedUser): Group {
+        groupManagementPreconditionValidator.validateGroupFields(group)
+
         val groupEntity = GroupEntity.new {
             createdBy = authenticatedUser.username
             createdAt = dateProvider.getCurrentDateTime()
@@ -69,6 +71,7 @@ class GroupManagementDatabaseService(
 
     fun updateGroup(groupId: Int, group: NewGroup, authenticatedUser: AuthenticatedUser): Group {
         groupManagementPreconditionValidator.validateUserIsAllowedToModifyGroup(groupId, authenticatedUser)
+        groupManagementPreconditionValidator.validateGroupFields(group)
         val groupEntity = GroupEntity[groupId]
         groupEntity.updateWith(group)
 

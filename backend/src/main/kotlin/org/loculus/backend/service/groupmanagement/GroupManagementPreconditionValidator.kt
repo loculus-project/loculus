@@ -1,5 +1,6 @@
 package org.loculus.backend.service.groupmanagement
 
+import jakarta.validation.Validator
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.inList
@@ -8,12 +9,26 @@ import org.keycloak.representations.idm.UserRepresentation
 import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.errors.ForbiddenException
 import org.loculus.backend.errors.NotFoundException
+import org.loculus.backend.errors.UnprocessableEntityException
 import org.loculus.backend.service.KeycloakAdapter
+import org.loculus.backend.types.NewGroup
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 
 @Component
-class GroupManagementPreconditionValidator(private val keycloakAdapter: KeycloakAdapter) {
+class GroupManagementPreconditionValidator(
+    private val keycloakAdapter: KeycloakAdapter,
+    private val validator: Validator,
+) {
+    fun validateGroupFields(group: NewGroup) {
+        val violations = validator.validate(group)
+        if (violations.isNotEmpty()) {
+            throw UnprocessableEntityException(
+                violations.map { "${it.propertyPath}: ${it.message}" }.sorted().joinToString("; "),
+            )
+        }
+    }
+
     @Transactional(readOnly = true)
     fun validateGroupExists(groupId: Int) {
         validateGroupsExist(listOf(groupId))
