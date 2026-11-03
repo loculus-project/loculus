@@ -36,6 +36,8 @@ class SecurityConfig {
         httpSecurity: HttpSecurity,
         keycloakAuthoritiesConverter: KeycloakAuthenticationConverter,
     ): SecurityFilterChain = httpSecurity
+        // The backend only accepts bearer tokens, which browsers never attach automatically, so CSRF protection isn't needed
+        .csrf { it.disable() }
         .authorizeHttpRequests { auth ->
             auth.requestMatchers(
                 "/",

@@ -246,9 +246,9 @@ class CitationEndpointsTest(
     }
 
     @Test
-    fun `WHEN adding a seqSet citation without auth THEN returns forbidden`() {
+    fun `WHEN adding a seqSet citation without auth THEN returns unauthorized`() {
         client.addSeqSetCitation(seqSetAccessionVersions = listOf("$MOCK_SEQSET_ID.$MOCK_SEQSET_VERSION"), jwt = null)
-            .andExpect(status().isForbidden)
+            .andExpect(status().isUnauthorized)
     }
 
     @Test
@@ -358,9 +358,9 @@ class CitationEndpointsTest(
     }
 
     @Test
-    fun `WHEN deleting a seqSet citation without auth THEN returns forbidden`() {
+    fun `WHEN deleting a seqSet citation without auth THEN returns unauthorized`() {
         client.deleteSeqSetCitation(jwt = null)
-            .andExpect(status().isForbidden)
+            .andExpect(status().isUnauthorized)
     }
 
     @Test
