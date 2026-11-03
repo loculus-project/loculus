@@ -261,6 +261,10 @@ class SubmissionDatabaseService(
         val versions = queueVersions
             .select(queueVersions.organismColumn, queueVersions.pipelineVersionColumn)
             .where { queueVersions.initializedAtColumn.isNotNull() }
+            .orderBy(
+                queueVersions.organismColumn to SortOrder.ASC,
+                queueVersions.pipelineVersionColumn to SortOrder.ASC,
+            )
             .forUpdate(ForKeyShare())
             .map { it[queueVersions.organismColumn] to it[queueVersions.pipelineVersionColumn] }
 
