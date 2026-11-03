@@ -34,7 +34,7 @@ class GroupManagementController(private val groupManagementDatabaseService: Grou
         @Parameter(description = "Information about the newly created group.")
         @RequestBody
         group: NewGroup,
-    ): Group = groupManagementDatabaseService.createNewGroup(group, authenticatedUser)
+    ): Group = groupManagementDatabaseService.createGroup(group, authenticatedUser)
 
     @Operation(description = "Edit a group. Only users part of the group can edit it. The updated group is returned.")
     @ResponseStatus(HttpStatus.OK)
@@ -57,7 +57,14 @@ class GroupManagementController(private val groupManagementDatabaseService: Grou
         @Parameter(
             description = "The id of the group to get details of.",
         ) @PathVariable groupId: Int,
-    ): GroupDetails = groupManagementDatabaseService.getDetailsOfGroup(groupId, user)
+    ): GroupDetails {
+        val group = groupManagementDatabaseService.getGroupDetails(groupId, user)
+        val users = when (user) {
+            is AuthenticatedUser -> groupManagementDatabaseService.getGroupUsers(groupId, user)
+            else -> null
+        }
+        return GroupDetails(group = group, users = users)
+    }
 
     @Operation(description = "Get all groups the user is a member of.")
     @ResponseStatus(HttpStatus.OK)

@@ -41,7 +41,7 @@ class GroupManagementDatabaseServiceTest(@Autowired private val service: GroupMa
 
     @Test
     fun `WHEN creating a group with a name of 255 characters THEN the group is created`() {
-        val group = service.createNewGroup(DEFAULT_GROUP.copy(groupName = "a".repeat(255)), user)
+        val group = service.createGroup(DEFAULT_GROUP.copy(groupName = "a".repeat(255)), user)
         assertEquals("a".repeat(255), group.groupName)
     }
 
@@ -51,7 +51,7 @@ class GroupManagementDatabaseServiceTest(@Autowired private val service: GroupMa
         fieldPath: String,
         group: NewGroup,
     ) {
-        val exception = assertThrows<UnprocessableEntityException> { service.createNewGroup(group, user) }
+        val exception = assertThrows<UnprocessableEntityException> { service.createGroup(group, user) }
         assertThat(exception.message, containsString(fieldPath))
     }
 
@@ -61,7 +61,7 @@ class GroupManagementDatabaseServiceTest(@Autowired private val service: GroupMa
         fieldPath: String,
         group: NewGroup,
     ) {
-        val groupId = service.createNewGroup(DEFAULT_GROUP, user).groupId
+        val groupId = service.createGroup(DEFAULT_GROUP, user).groupId
         val exception = assertThrows<UnprocessableEntityException> { service.updateGroup(groupId, group, user) }
         assertThat(exception.message, containsString(fieldPath))
     }
