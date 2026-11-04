@@ -94,15 +94,23 @@ READTOOLS_JAR=readtools.jar java -jar readtools.jar read1.fastq.gz [read2.fastq.
 ### BAM limitations
 
 readtools uses `--format BAM`, requires qualities, may reject missing sequences,
-and checks the first 100,000 records. samtools then counts the primary reads and
-extracts them into gzip-compressed temporary FASTA for Deacon. The original BAM is
-preserved for deposition.
+and checks the first 100,000 records. samtools reads the full BAM to count primary
+reads, then reads it again to extract gzip-compressed temporary FASTA for Deacon.
+The original BAM is preserved for deposition.
 
 Primary reads must have complete sequences and unique read-name/mate identifiers.
 Hard-clipped primaries are rejected.
 
+Confirmed compression damage is reported as invalid input. Other samtools failures
+are reported as processing errors, including malformed BAM records beyond the
+readtools sample when compression is intact. These files cannot pass QC. samtools
+uses the same exit status for some input and system failures, so we cannot reliably
+distinguish them without interpreting its error text.
+
 The original BAM is published and sent to ENA unchanged, including its header.
 Remove paths and identifiers from `@PG`, `@CO` and `@RG` records before uploading.
+Deacon screens sequences, not the header. Secondary and supplementary alignments
+are excluded from QC counts but remain in the original file.
 
 ## Validate sequences have been dehosted (deacon)
 

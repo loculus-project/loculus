@@ -1,11 +1,13 @@
 import gzip
 import shutil
+import struct
 import subprocess
 import sys
 import time
 from pathlib import Path
 
 import pytest
+from Bio import bgzf
 from Bio.SeqIO.FastaIO import SimpleFastaParser
 from conftest import missing_dependency
 from xopen import xopen
@@ -13,6 +15,10 @@ from xopen import xopen
 from raw_reads_processing import bam_preparation
 from raw_reads_processing.bam_preparation import prepare_bam_for_deacon
 from raw_reads_processing.errors import InvalidSubmission, ProcessingFailure
+from raw_reads_processing.file_format_validation import (
+    FileFormat,
+    validate_with_readtools,
+)
 
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
 
@@ -25,13 +31,11 @@ def samtools(request):
     return executable
 
 
-def _record(name, flag, sequence="AACCGGTT", cigar="8M", position=1):
+def _record(name, flag, sequence="AACCGGTT", cigar="8M", position=1, quality="*"):
     reference = "*" if flag & 4 else "ref"
     position = 0 if flag & 4 else position
     cigar = "*" if flag & 4 else cigar
-    return (
-        f"{name}\t{flag}\t{reference}\t{position}\t0\t{cigar}\t*\t0\t0\t{sequence}\t*"
-    )
+    return f"{name}\t{flag}\t{reference}\t{position}\t0\t{cigar}\t*\t0\t0\t{sequence}\t{quality}"
 
 
 def _bam(tmp_path: Path, samtools: str, records: list[str]) -> Path:
@@ -128,25 +132,37 @@ def test_incomplete_primary_sequences_are_rejected(
     assert error.value.error.fileNames == ["reads.bam"]
 
 
-def test_corruption_after_the_initial_records_is_rejected(tmp_path, samtools):
+@pytest.mark.usefixtures("readtools_jar")
+@pytest.mark.parametrize("corruption", ["compression", "record"])
+def test_corruption_after_readtools_sample_cannot_pass(tmp_path, samtools, corruption):
     bam = _bam(
         tmp_path,
         samtools,
-        [_record(f"read{i}", 4, "A" * 150) for i in range(110_000)],
+        [_record(f"read{i}", 4, "A" * 150, quality="I" * 150) for i in range(110_000)],
     )
-    contents = bytearray(bam.read_bytes())
-    # Corrupt beyond readtools' sample without changing the EOF checked by quickcheck.
-    offset = 0
-    blocks = []
-    while offset < len(contents):
-        blocks.append(offset)
-        offset += int.from_bytes(contents[offset + 16 : offset + 18], "little") + 1
-    contents[blocks[-3] + 20] ^= 0xFF
-    bam.write_bytes(contents)
+    if corruption == "compression":
+        contents = bytearray(bam.read_bytes())
+        offset = 0
+        blocks = []
+        while offset < len(contents):
+            blocks.append(offset)
+            offset += int.from_bytes(contents[offset + 16 : offset + 18], "little") + 1
+        contents[blocks[-3] + 20] ^= 0xFF
+        bam.write_bytes(contents)
+        expected = InvalidSubmission
+    else:
+        contents = bytearray(gzip.decompress(bam.read_bytes()))
+        # l_seq lies 16 bytes before QNAME in the BAM record core.
+        struct.pack_into("<i", contents, contents.rindex(b"read109999\0") - 16, -1)
+        with bgzf.BgzfWriter(str(bam), "wb") as handle:
+            handle.write(contents)
+        assert gzip.decompress(bam.read_bytes()) == contents
+        expected = ProcessingFailure
     subprocess.run(
         [samtools, "quickcheck", "-u", str(bam)], check=True, capture_output=True
     )
-    with pytest.raises(InvalidSubmission):
+    validate_with_readtools({"corrupt.bam": bam}, FileFormat.BAM)
+    with pytest.raises(expected):
         prepare_bam_for_deacon("corrupt.bam", bam, tmp_path, 30)
 
 
