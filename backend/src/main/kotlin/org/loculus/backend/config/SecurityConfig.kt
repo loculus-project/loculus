@@ -1,6 +1,7 @@
 package org.loculus.backend.config
 
 import org.loculus.backend.api.v0.v0AccessRules
+import org.loculus.backend.api.v1.v1AccessRules
 import org.loculus.backend.auth.KeycloakAuthenticationConverter
 import org.loculus.backend.auth.LoggingAccessDeniedHandler
 import org.loculus.backend.auth.LoggingAuthenticationEntryPoint
@@ -49,6 +50,7 @@ class SecurityConfig {
                 "/swagger-ui/**",
             ).permitAll()
             auth.requestMatchers(HttpMethod.OPTIONS).permitAll()
+            v1AccessRules(auth)
             v0AccessRules(auth)
             auth.requestMatchers(*debugEndpoints).hasAuthority(SUPER_USER)
             auth.anyRequest().authenticated()
