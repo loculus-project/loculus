@@ -62,6 +62,12 @@ class MeController(private val identities: LoculusIdentityResolver) {
 }
 ```
 
+On first use, the resolver seeds a required, unique Loculus username and optional profile data through
+`service/identity/provider/IdentityProviderProfileReader.kt`. The Keycloak implementation reads the
+account by subject; services do not query Keycloak themselves. Existing identities keep their username
+and profile unchanged. Profile synchronization and viewing/editing are deferred, and `/v1/me` still
+exposes only identity metadata. Do not use names or email addresses as authorization keys.
+
 ### Proposed example: editing a group
 
 When you add a resource operation, your service must check permission before making the change: resolving an identity doesn't grant access. You can put group policies in `service/group/GroupAuthorizationService.kt` and call them from `GroupService.kt`, so every endpoint using that operation gets the same protection. **The following is a proposed example, not implemented by this PR**: `GroupUpdate` and `memberships.canEditGroup` would need implementing, including membership lookup by Loculus user ID.
