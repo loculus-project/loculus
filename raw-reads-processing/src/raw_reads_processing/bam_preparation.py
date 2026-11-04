@@ -244,7 +244,7 @@ def prepare_bam_for_deacon(
     file_name: FileName,
     bam_path: Path,
     data_dir: Path,
-    timeout_seconds: int,
+    timeout_seconds: float,
 ) -> PreparedBamReads:
     """Extract and count primary reads. The caller cleans up data_dir."""
     deadline = time.monotonic() + timeout_seconds
@@ -306,7 +306,7 @@ def prepare_bam_for_deacon(
         return PreparedBamReads(file_name, tuple(batches), primary_count)
     except subprocess.TimeoutExpired as error:
         raise ProcessingFailure(
-            f"Preparation of BAM file '{file_name}' timed out after {timeout_seconds} seconds."
+            f"Preparation of BAM file '{file_name}' timed out after {timeout_seconds:g} seconds."
         ) from error
     except (OSError, ValueError) as error:
         raise ProcessingFailure(

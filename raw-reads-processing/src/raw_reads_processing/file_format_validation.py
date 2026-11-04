@@ -294,7 +294,7 @@ def validate_compression(
 def validate_with_readtools(
     file_name_to_path: dict[FileName, Path],
     format_type: FileFormat,
-    timeout_seconds: int = 300,
+    timeout_seconds: float = 300,
 ) -> None:
     file_names = list(file_name_to_path.keys())
     args = (
@@ -319,7 +319,7 @@ def validate_with_readtools(
     except subprocess.TimeoutExpired:
         message = (
             f"Validation of files '{','.join(file_names)}' "
-            f"timed out after {timeout_seconds} seconds."
+            f"timed out after {timeout_seconds:g} seconds."
         )
         logger.error(message)
         raise ProcessingFailure(message) from None

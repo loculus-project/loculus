@@ -6,6 +6,7 @@ from pydantic import BaseModel
 
 class Config(BaseModel):
     log_level: str
+    processing_timeout_seconds: int
     s3_request_timeout_seconds: int
     read_validation_timeout_seconds: int
     deacon_filter_timeout_seconds: int

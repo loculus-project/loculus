@@ -42,6 +42,19 @@ rawReadsProcessingService:
 
 Preprocessing receives original-data from the backend, the backend creates read-only presigned file URLs and the preprocessing service sends these on to the raw-reads-processing service.
 
+Raw-read processing shares a 480-second budget across downloads, validation, BAM
+preparation and screening. Each tool receives the smaller of its own timeout and
+the remaining budget. Downloads check the budget between chunks, with up to the
+30-second S3 socket timeout needed to stop a stalled read.
+
+The default caller timeout is 600 seconds and the backend reclaim timeout is
+900 seconds, leaving time for cleanup and returning the result. Deploy these
+settings together. Custom settings must preserve this ordering and allow for the
+S3 socket timeout. The backend timeout applies to all preprocessing pipelines.
+
+Pipelines with raw-read processing enabled claim one entry at a time, so later
+entries do not wait in a batch while their 30-minute file URLs expire.
+
 ## What this service does
 
 The raw reads processing service is a small FastAPI app (`raw_reads_processing.api`) with one endpoint:

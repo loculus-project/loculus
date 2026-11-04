@@ -44,7 +44,7 @@ def test_bam_api_with_real_readtools_samtools_and_deacon(
     original = bam.read_bytes()
     downloads = []
 
-    def download(config, file, save_path):
+    def download(config, file, save_path, deadline):
         save_path.write_bytes(original)
         downloads.append(save_path)
 

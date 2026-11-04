@@ -1,5 +1,6 @@
 log_level: DEBUG
-s3_request_timeout_seconds: 300
+processing_timeout_seconds: 480
+s3_request_timeout_seconds: 30
 deacon_filter_timeout_seconds: 600
 read_validation_timeout_seconds: 300
 bam_preparation_timeout_seconds: 600

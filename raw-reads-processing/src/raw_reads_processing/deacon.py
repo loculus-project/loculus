@@ -14,6 +14,7 @@ from xopen import xopen
 from raw_reads_processing.bam_preparation import PreparedBamReads
 from raw_reads_processing.config import Config
 from raw_reads_processing.datatypes import Annotation, DeaconSummary, FileName
+from raw_reads_processing.deadline import ProcessingDeadline
 from raw_reads_processing.errors import (
     DECOMPRESSION_ERRORS,
     FALSE_POSITIVE_HINT,
@@ -152,15 +153,23 @@ def _deacon_a_for_length(observed_length: float, config: Config) -> int:
 
 
 def run_deacon_filter(
-    file_name_to_path: dict[FileName, Path], data_dir: str, config: Config
+    file_name_to_path: dict[FileName, Path],
+    data_dir: str,
+    config: Config,
+    processing_deadline: ProcessingDeadline | None = None,
 ) -> DeaconSummary:
+    deacon_a = _deacon_a_for_reads(file_name_to_path, config)
     return _run_deacon_filter(
         tuple(file_name_to_path.values()),
         list(file_name_to_path),
         Path(data_dir) / "summary.json",
-        _deacon_a_for_reads(file_name_to_path, config),
+        deacon_a,
         config,
-        timeout_seconds=config.deacon_filter_timeout_seconds,
+        timeout_seconds=(
+            processing_deadline.remaining(config.deacon_filter_timeout_seconds)
+            if processing_deadline is not None
+            else config.deacon_filter_timeout_seconds
+        ),
     )
 
 
@@ -270,20 +279,31 @@ def log_deacon_summary(deacon_summary: DeaconSummary, config: Config) -> None:
     )
 
 
-def validate_with_deacon(files: dict[FileName, Path], data_dir: str, config: Config):
+def validate_with_deacon(
+    files: dict[FileName, Path],
+    data_dir: str,
+    config: Config,
+    processing_deadline: ProcessingDeadline | None = None,
+):
     deacon_summary = run_deacon_filter(
         files,
         data_dir=data_dir,
         config=config,
+        processing_deadline=processing_deadline,
     )
     _validate_deacon_summary(deacon_summary, list(files), config)
 
 
 def validate_bam_with_deacon(
-    prepared: PreparedBamReads, data_dir: str, config: Config
+    prepared: PreparedBamReads,
+    data_dir: str,
+    config: Config,
+    processing_deadline: ProcessingDeadline | None = None,
 ) -> None:
     """Screen all batches and apply QC thresholds to their combined counts."""
     deadline = time.monotonic() + config.deacon_filter_timeout_seconds
+    if processing_deadline is not None:
+        deadline = min(deadline, processing_deadline.expires_at)
     file_names = [prepared.original_file_name]
     if (
         not prepared.batches

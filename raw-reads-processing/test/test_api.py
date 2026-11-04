@@ -27,6 +27,7 @@ def client():
     api.init_app(
         Config(
             log_level="INFO",
+            processing_timeout_seconds=30,
             s3_request_timeout_seconds=10,
             read_validation_timeout_seconds=10,
             deacon_filter_timeout_seconds=10,
@@ -138,7 +139,9 @@ def test_null_byte_in_a_submitted_file_survives_the_whole_service(
     monkeypatch.setattr(
         process_files,
         "download_file",
-        lambda config, file, save_path: save_path.write_bytes(gz_path.read_bytes()),
+        lambda config, file, save_path, deadline: save_path.write_bytes(
+            gz_path.read_bytes()
+        ),
     )
 
     response = client.post("/process-files", json=VALID_PAYLOAD)
