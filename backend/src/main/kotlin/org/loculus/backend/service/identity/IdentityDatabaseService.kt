@@ -6,6 +6,7 @@ import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.loculus.backend.auth.ExternalIdentity
 import org.loculus.backend.auth.LoculusPrincipal
+import org.loculus.backend.service.identity.provider.ProviderProfileSeed
 import org.loculus.backend.utils.DateProvider
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Propagation
@@ -25,18 +26,24 @@ class IdentityDatabaseService(private val dateProvider: DateProvider) {
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW, rollbackFor = [Exception::class])
-    fun create(identity: ExternalIdentity, username: String?): LoculusPrincipal {
+    fun create(identity: ExternalIdentity, seed: ProviderProfileSeed): LoculusPrincipal {
+        val username = seed.username?.lowercase()?.takeIf { it.isNotBlank() && it == it.trim() }
+        requireNotNull(username) { "A usable username is required for provisioning." }
         val userId = UUID.randomUUID()
         val now = dateProvider.getCurrentDateTime()
         LoculusUsersTable.insert {
             it[id] = userId
             it[provisionedAt] = now
+            it[LoculusUsersTable.username] = username
+            it[givenName] = seed.givenName
+            it[familyName] = seed.familyName
+            it[affiliation] = seed.affiliation
+            it[orcidId] = seed.orcidId
         }
         ExternalIdentitiesTable.insert {
             it[issuer] = identity.issuer
             it[subject] = identity.subject
             it[ExternalIdentitiesTable.userId] = userId
-            it[preferredUsername] = username
             it[linkedAt] = now
         }
         // Read back PostgreSQL's timestamp precision so first and subsequent responses agree.

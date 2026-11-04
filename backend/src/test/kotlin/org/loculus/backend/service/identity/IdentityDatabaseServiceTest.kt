@@ -1,5 +1,7 @@
 package org.loculus.backend.service.identity
 
+import com.ninjasquad.springmockk.MockkBean
+import io.mockk.every
 import org.jetbrains.exposed.v1.exceptions.ExposedSQLException
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
@@ -7,10 +9,13 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.loculus.backend.auth.ExternalIdentity
 import org.loculus.backend.auth.LoculusIdentityResolver
+import org.loculus.backend.service.identity.provider.IdentityProviderProfileReader
+import org.loculus.backend.service.identity.provider.ProviderProfileSeed
 import org.loculus.backend.testutil.EndpointTest
 import org.loculus.backend.testutil.TEST_TOKEN_ISSUER
 import org.springframework.beans.factory.annotation.Autowired
@@ -25,13 +30,21 @@ class IdentityDatabaseServiceTest(
     @Autowired private val database: IdentityDatabaseService,
     @Autowired private val resolver: LoculusIdentityResolver,
 ) {
+    @MockkBean
+    lateinit var profiles: IdentityProviderProfileReader
+
+    @BeforeEach
+    fun profileSeed() {
+        every { profiles.readProfile(any()) } returns ProviderProfileSeed("testuser")
+    }
+
     @Test
-    fun `identity lookup uses issuer and subject and does not require unique usernames`() {
+    fun `identity lookup uses issuer and subject independently of username`() {
         val identity = ExternalIdentity(TEST_TOKEN_ISSUER, "one")
-        val first = database.create(identity, "same-name")
+        val first = database.create(identity, ProviderProfileSeed("first"))
         assertEquals(first, database.find(identity))
-        val second = database.create(identity.copy(subject = "two"), "same-name")
-        val third = database.create(identity.copy(issuer = "https://other.example"), "same-name")
+        val second = database.create(identity.copy(subject = "two"), ProviderProfileSeed("second"))
+        val third = database.create(identity.copy(issuer = "https://other.example"), ProviderProfileSeed("third"))
         assertEquals(3, setOf(first.userId, second.userId, third.userId).size)
         assertNotEquals(first.userId.toString(), identity.subject)
         assertNull(database.find(identity.copy(subject = "unknown")))
@@ -40,13 +53,13 @@ class IdentityDatabaseServiceTest(
     @Test
     fun `duplicate mapping rolls back the provisional user and preserves original snapshot`() {
         val identity = ExternalIdentity(TEST_TOKEN_ISSUER, "one")
-        val first = database.create(identity, "original")
-        assertThrows<ExposedSQLException> { database.create(identity, "changed") }
+        val first = database.create(identity, ProviderProfileSeed("original"))
+        assertThrows<ExposedSQLException> { database.create(identity, ProviderProfileSeed("changed")) }
         assertEquals(first, database.find(identity))
         transaction {
             assertEquals(
                 "original",
-                ExternalIdentitiesTable.selectAll().single()[ExternalIdentitiesTable.preferredUsername],
+                LoculusUsersTable.selectAll().single()[LoculusUsersTable.username],
             )
             assertEquals(1L, LoculusUsersTable.selectAll().count())
             assertEquals(1L, ExternalIdentitiesTable.selectAll().count())
@@ -56,10 +69,16 @@ class IdentityDatabaseServiceTest(
     }
 
     @Test
-    fun `nullable username is supported without inventing a fallback`() {
-        database.create(ExternalIdentity(TEST_TOKEN_ISSUER, "no-name"), null)
+    fun `username is required and unique after lowercasing`() {
+        val identity = ExternalIdentity(TEST_TOKEN_ISSUER, "one")
+        database.create(identity, ProviderProfileSeed("Alice"))
+        assertThrows<ExposedSQLException> {
+            database.create(identity.copy(subject = "two"), ProviderProfileSeed("ALICE"))
+        }
+        assertThrows<IllegalArgumentException> { database.create(identity, ProviderProfileSeed(null)) }
         transaction {
-            assertNull(ExternalIdentitiesTable.selectAll().single()[ExternalIdentitiesTable.preferredUsername])
+            assertEquals("alice", LoculusUsersTable.selectAll().single()[LoculusUsersTable.username])
+            assertEquals(1L, ExternalIdentitiesTable.selectAll().count())
         }
     }
 

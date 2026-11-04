@@ -43,8 +43,19 @@ class MeController(private val identities: LoculusIdentityResolver) {
                 content = [Content()],
             ),
             ApiResponse(
+                responseCode = "409",
+                description = "The username is already assigned to another Loculus account.",
+                content = [
+                    Content(
+                        mediaType = "application/problem+json",
+                        schema = Schema(implementation = ProblemDetail::class),
+                    ),
+                ],
+            ),
+            ApiResponse(
                 responseCode = "503",
-                description = "Identity storage is unavailable, or read-only mode prevents first-use provisioning.",
+                description = "Identity storage or a required username is unavailable, " +
+                    "or read-only mode prevents provisioning.",
                 content = [
                     Content(
                         mediaType = "application/problem+json",

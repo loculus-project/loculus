@@ -1,15 +1,20 @@
 package org.loculus.backend.api.v1.me
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.ninjasquad.springmockk.MockkBean
 import com.ninjasquad.springmockk.MockkSpyBean
 import io.mockk.every
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.loculus.backend.auth.ExternalIdentity
 import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.service.identity.LoculusUsersTable
+import org.loculus.backend.service.identity.provider.IdentityProviderProfileReader
+import org.loculus.backend.service.identity.provider.ProviderProfileSeed
 import org.loculus.backend.testutil.EndpointTest
 import org.loculus.backend.testutil.generateJwtFor
 import org.loculus.backend.testutil.jwtForProcessingPipeline
@@ -25,15 +30,29 @@ class MeControllerTest(@Autowired private val mockMvc: MockMvc, @Autowired priva
     @MockkSpyBean
     lateinit var config: BackendConfig
 
+    @MockkBean
+    lateinit var profiles: IdentityProviderProfileReader
+
+    @BeforeEach
+    fun profileSeed() {
+        every { profiles.readProfile(any()) } answers { ProviderProfileSeed(firstArg<ExternalIdentity>().subject) }
+    }
+
     @Test
     fun `me provisions once and exposes only public fields`() {
+        every { profiles.readProfile(any()) } returns ProviderProfileSeed("Alice", givenName = "Initial")
         val first = mockMvc.perform(get("/v1/me").withAuth()).andExpect(status().isOk)
             .andExpect(header().string("Cache-Control", "no-store")).andReturn().response.contentAsString
+        every { profiles.readProfile(any()) } throws IllegalStateException("Existing profiles must not be fetched")
         val again = mockMvc.perform(get("/v1/me").withAuth()).andExpect(status().isOk)
             .andReturn().response.contentAsString
         assertEquals(mapper.readTree(first), mapper.readTree(again))
         assertEquals(setOf("userId", "provisionedAt"), mapper.readTree(first).fieldNames().asSequence().toSet())
-        transaction { assertEquals(1L, LoculusUsersTable.selectAll().count()) }
+        transaction {
+            val user = LoculusUsersTable.selectAll().single()
+            assertEquals("alice", user[LoculusUsersTable.username])
+            assertEquals("Initial", user[LoculusUsersTable.givenName])
+        }
     }
 
     @Test
@@ -57,6 +76,14 @@ class MeControllerTest(@Autowired private val mockMvc: MockMvc, @Autowired priva
         val token = generateJwtFor("no-name", includeUsername = false)
         mockMvc.perform(get("/v1/me").withAuth(token)).andExpect(status().isOk)
         mockMvc.perform(get("/user/groups").withAuth(token)).andExpect(status().isUnauthorized)
+        transaction { assertEquals(1L, LoculusUsersTable.selectAll().count()) }
+    }
+
+    @Test
+    fun `username collisions return conflict without creating an extra user`() {
+        every { profiles.readProfile(any()) } returns ProviderProfileSeed("same-user")
+        mockMvc.perform(get("/v1/me").withAuth()).andExpect(status().isOk)
+        mockMvc.perform(get("/v1/me").withAuth(generateJwtFor("other-user"))).andExpect(status().isConflict)
         transaction { assertEquals(1L, LoculusUsersTable.selectAll().count()) }
     }
 

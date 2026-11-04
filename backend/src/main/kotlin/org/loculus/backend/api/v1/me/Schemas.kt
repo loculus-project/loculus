@@ -6,6 +6,7 @@ package org.loculus.backend.api.v1.me
 import io.swagger.v3.oas.annotations.media.Schema
 import java.util.UUID
 
+// Deliberately identity metadata only: stored profiles remain internal until a profile API is designed.
 data class MeResponse(
     @Schema(description = "Immutable internal Loculus user ID (UUID v4).", format = "uuid")
     val userId: UUID,
