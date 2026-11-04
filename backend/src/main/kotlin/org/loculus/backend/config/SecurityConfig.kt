@@ -47,6 +47,7 @@ class SecurityConfig {
                 "/actuator/**",
                 "/api-docs**",
                 "/api-docs/**",
+                "/api-docs.yaml/**",
                 "/swagger-ui/**",
             ).permitAll()
             auth.requestMatchers(HttpMethod.OPTIONS).permitAll()
