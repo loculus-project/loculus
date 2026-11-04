@@ -46,6 +46,16 @@ class IdentityDatabaseService(private val dateProvider: DateProvider) {
             it[ExternalIdentitiesTable.userId] = userId
             it[linkedAt] = now
         }
+        seed.email?.takeUnless { it.isBlank() }?.let { email ->
+            UserEmailTable.insert {
+                it[UserEmailTable.userId] = userId
+                it[address] = email
+                it[verified] = seed.emailVerified
+                it[sourceIssuer] = identity.issuer
+                it[sourceSubject] = identity.subject
+                it[importedAt] = now
+            }
+        }
         // Read back PostgreSQL's timestamp precision so first and subsequent responses agree.
         val provisionedAt = LoculusUsersTable.selectAll().where { LoculusUsersTable.id eq userId }
             .single()[LoculusUsersTable.provisionedAt]

@@ -2,6 +2,7 @@ package org.loculus.backend.service.identity
 
 import com.ninjasquad.springmockk.MockkBean
 import io.mockk.every
+import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.exceptions.ExposedSQLException
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
@@ -53,8 +54,10 @@ class IdentityDatabaseServiceTest(
     @Test
     fun `duplicate mapping rolls back the provisional user and preserves original snapshot`() {
         val identity = ExternalIdentity(TEST_TOKEN_ISSUER, "one")
-        val first = database.create(identity, ProviderProfileSeed("original"))
-        assertThrows<ExposedSQLException> { database.create(identity, ProviderProfileSeed("changed")) }
+        val first = database.create(identity, ProviderProfileSeed("original", email = "original@example.org"))
+        assertThrows<ExposedSQLException> {
+            database.create(identity, ProviderProfileSeed("changed", email = "changed@example.org"))
+        }
         assertEquals(first, database.find(identity))
         transaction {
             assertEquals(
@@ -63,6 +66,7 @@ class IdentityDatabaseServiceTest(
             )
             assertEquals(1L, LoculusUsersTable.selectAll().count())
             assertEquals(1L, ExternalIdentitiesTable.selectAll().count())
+            assertEquals("original@example.org", UserEmailTable.selectAll().single()[UserEmailTable.address])
             val linked = ExternalIdentitiesTable.selectAll().single()[ExternalIdentitiesTable.linkedAt]
             assertEquals(first.provisionedAt, linked)
         }
@@ -79,6 +83,69 @@ class IdentityDatabaseServiceTest(
         transaction {
             assertEquals("alice", LoculusUsersTable.selectAll().single()[LoculusUsersTable.username])
             assertEquals(1L, ExternalIdentitiesTable.selectAll().count())
+        }
+    }
+
+    @Test
+    fun `profile and email are seeded with provenance and nullable verification`() {
+        for ((index, verified) in listOf(true, false, null).withIndex()) {
+            val identity = ExternalIdentity(TEST_TOKEN_ISSUER, "subject-$index")
+            val principal = database.create(
+                identity,
+                ProviderProfileSeed(
+                    "user-$index",
+                    "First",
+                    "Last",
+                    "Institute",
+                    "0000-0000-0000-0001",
+                    "user-$index@example.org",
+                    verified,
+                ),
+            )
+            transaction {
+                val user = LoculusUsersTable.selectAll().where { LoculusUsersTable.id eq principal.userId }.single()
+                assertEquals("First", user[LoculusUsersTable.givenName])
+                assertEquals("Last", user[LoculusUsersTable.familyName])
+                assertEquals("Institute", user[LoculusUsersTable.affiliation])
+                assertEquals("0000-0000-0000-0001", user[LoculusUsersTable.orcidId])
+                val email = UserEmailTable.selectAll().where { UserEmailTable.userId eq principal.userId }.single()
+                assertEquals(verified, email[UserEmailTable.verified])
+                assertEquals(identity.issuer, email[UserEmailTable.sourceIssuer])
+                assertEquals(identity.subject, email[UserEmailTable.sourceSubject])
+                assertEquals(principal.provisionedAt, email[UserEmailTable.importedAt])
+            }
+        }
+    }
+
+    @Test
+    fun `failed email insertion rolls back user and external identity`() {
+        transaction {
+            exec(
+                """create function fail_test_email() returns trigger language plpgsql as
+                'begin raise exception ''test email failure''; end;'""",
+            )
+            exec(
+                "create trigger fail_test_email before insert on user_emails " +
+                    "for each row execute function fail_test_email()",
+            )
+        }
+        try {
+            assertThrows<ExposedSQLException> {
+                database.create(
+                    ExternalIdentity(TEST_TOKEN_ISSUER, "email-failure"),
+                    ProviderProfileSeed("email-failure", email = "test@example.org"),
+                )
+            }
+            transaction {
+                assertEquals(0L, LoculusUsersTable.selectAll().count())
+                assertEquals(0L, ExternalIdentitiesTable.selectAll().count())
+                assertEquals(0L, UserEmailTable.selectAll().count())
+            }
+        } finally {
+            transaction {
+                exec("drop trigger fail_test_email on user_emails")
+                exec("drop function fail_test_email()")
+            }
         }
     }
 

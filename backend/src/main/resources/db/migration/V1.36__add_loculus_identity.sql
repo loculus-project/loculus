@@ -24,5 +24,18 @@ create table external_identities (
 );
 create index external_identities_user_id_idx on external_identities(user_id);
 
+create table user_emails (
+    user_id uuid primary key references loculus_users(id),
+    address text not null check (btrim(address) <> ''),
+    verified boolean,
+    source_issuer text not null,
+    source_subject text not null,
+    imported_at timestamp not null,
+    foreign key (source_issuer, source_subject) references external_identities(issuer, subject)
+);
+comment on table user_emails is
+    'One provider-sourced contact address per user for now. Email is not an account-linking key.';
+comment on column user_emails.verified is
+    'Provider assertion about this address: true verified, false unverified, null unknown. Import time is not verification time.';
 comment on column loculus_users.orcid_id is
     'Imported profile identifier, not proof of ORCID ownership. Initial source is the provisioning external identity.';
