@@ -7,9 +7,6 @@ import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.auth.HiddenParam
 import org.loculus.backend.auth.User
 import org.loculus.backend.service.groupmanagement.GroupManagementDatabaseService
-import org.loculus.backend.types.Group
-import org.loculus.backend.types.GroupDetails
-import org.loculus.backend.types.NewGroup
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.web.bind.annotation.DeleteMapping
@@ -33,8 +30,8 @@ class GroupManagementController(private val groupManagementDatabaseService: Grou
         @HiddenParam authenticatedUser: AuthenticatedUser,
         @Parameter(description = "Information about the newly created group.")
         @RequestBody
-        group: NewGroup,
-    ): Group = groupManagementDatabaseService.createGroup(group, authenticatedUser)
+        group: V0NewGroup,
+    ): V0Group = V0Group.from(groupManagementDatabaseService.createGroup(group.toServiceNewGroup(), authenticatedUser))
 
     @Operation(description = "Edit a group. Only users part of the group can edit it. The updated group is returned.")
     @ResponseStatus(HttpStatus.OK)
@@ -46,8 +43,10 @@ class GroupManagementController(private val groupManagementDatabaseService: Grou
         ) @PathVariable groupId: Int,
         @Parameter(description = "Updated group properties.")
         @RequestBody
-        group: NewGroup,
-    ): Group = groupManagementDatabaseService.updateGroup(groupId, group, authenticatedUser)
+        group: V0NewGroup,
+    ): V0Group = V0Group.from(
+        groupManagementDatabaseService.updateGroup(groupId, group.toServiceNewGroup(), authenticatedUser),
+    )
 
     @Operation(description = "Get details of a group. Contact information is redacted when not authenticated.")
     @ResponseStatus(HttpStatus.OK)
@@ -57,26 +56,26 @@ class GroupManagementController(private val groupManagementDatabaseService: Grou
         @Parameter(
             description = "The id of the group to get details of.",
         ) @PathVariable groupId: Int,
-    ): GroupDetails {
+    ): V0GroupDetails {
         val group = groupManagementDatabaseService.getGroupDetails(groupId, user)
         val users = when (user) {
             is AuthenticatedUser -> groupManagementDatabaseService.getGroupUsers(groupId, user)
             else -> null
         }
-        return GroupDetails(group = group, users = users)
+        return V0GroupDetails.from(group = group, users = users)
     }
 
     @Operation(description = "Get all groups the user is a member of.")
     @ResponseStatus(HttpStatus.OK)
     @GetMapping("/user/groups", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun getGroupsOfUser(@HiddenParam authenticatedUser: AuthenticatedUser): List<Group> =
-        groupManagementDatabaseService.getGroupsOfUser(authenticatedUser)
+    fun getGroupsOfUser(@HiddenParam authenticatedUser: AuthenticatedUser): List<V0Group> =
+        groupManagementDatabaseService.getGroupsOfUser(authenticatedUser).map(V0Group::from)
 
     @Operation(description = "Get a list of groups. Supports filtering by name request parameter")
     @ResponseStatus(HttpStatus.OK)
     @GetMapping("/groups", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun getGroups(@RequestParam(required = false) name: String?): List<Group> =
-        groupManagementDatabaseService.getGroups(name)
+    fun getGroups(@RequestParam(required = false) name: String?): List<V0Group> =
+        groupManagementDatabaseService.getGroups(name).map(V0Group::from)
 
     @Operation(description = "Add user to a group.")
     @ResponseStatus(HttpStatus.NO_CONTENT)
