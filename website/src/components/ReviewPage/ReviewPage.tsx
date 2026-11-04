@@ -1,5 +1,4 @@
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
-import Pagination from '@mui/material/Pagination';
 import { type ChangeEvent, type FC, useState } from 'react';
 import { toast } from 'react-toastify';
 
@@ -27,6 +26,7 @@ import { getAccessionVersionString } from '../../utils/extractAccessionVersion.t
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { getLastApprovalTimeKey } from '../SearchPage/RecentSequencesBanner.tsx';
 import { Button } from '../common/Button';
+import { Pagination } from '../common/Pagination';
 import { Spinner } from '../common/Spinner';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 import BiTrash from '~icons/bi/trash';
@@ -224,12 +224,9 @@ const InnerReviewPage: FC<ReviewPageProps> = ({
             <Pagination
                 count={Math.ceil(selectedCount / pageQuery.size)}
                 page={pageQuery.pageOneIndexed}
-                onChange={(_, newPage) => {
+                onChange={(newPage) => {
                     setPageQuery({ ...pageQuery, pageOneIndexed: newPage });
                 }}
-                color='primary'
-                variant='outlined'
-                shape='rounded'
             />
             <div>
                 <label htmlFor='pageSize'>Page size: </label>
