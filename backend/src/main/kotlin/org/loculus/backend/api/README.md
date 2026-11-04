@@ -18,8 +18,7 @@ api/
     ├── VXAccessRules.kt
     └── groups/
         ├── GroupController.kt
-        ├── Schemas.kt        # optional
-        └── Mappings.kt       # optional
+        └── Schemas.kt        # optional
     └── submission/
         └── ...
 ```
@@ -27,15 +26,15 @@ api/
 Where:
 
 - `VXAccessRules.kt`: defines endpoint access rules for the API version. This file should define a `vXAccessRules` function, which adds access rules for the API version, and this should be called in `config/SecurityConfig.kt` (which remains the 'source of truth' for access rules).
-- **Controllers:** defines the endpoints (paths, status codes) and makes calls to services.
-- **Schemas (optional):** request/response classes that define this version's API.
-- **Mappings (optional):** bridge(s) between the schemas and the services: converting types, plus anything only this version does differently, such as ordering or reshaping results.
-
-Schemas and mappings together let a version define its own API on top of the shared services, so services can change without changing what clients of an existing version see.
+- **Controllers:** defines the endpoints (paths, endpoint descriptions, HTTP methods, status codes) and makes calls to services. Logic specific to that particular API version may live here - for instance, different API versions for the same endpoint may make use of different services.
+- **Schemas (optional):** request/response classes for this API version. Each class converts itself to or from the service types:
+    - Classes used as request types should have a `toServiceX()` function, to convert from the request to the service type.
+    - Classes used as response types should have a `from(...)` function on their companion object to convert from the service type to the response.
+    - Together, these allow service types to be shared amongst different API versions, with each version being able to define its own fixed representation for the data types.
 
 ## Notes
 
-`v0/` currently does not have its own schemas/mappings - it still pulls its input/output DTOs directly from the internal `types`. This should be refactored soon to separate the `v0` API from internal services.
+`v0/` currently has its own schemas for `groups` only. Other features still pull their input/output DTOs directly from the internal `types`. Ideally we should aim to separate the `v0` API from internal service types.
 
-Logic shared between API versions belongs in the service layer, not in controllers or mappings.
+Logic shared between API versions belongs in the service layer, not in controllers or schemas.
 Services, tables and shared types live outside `api/` and are not versioned.
