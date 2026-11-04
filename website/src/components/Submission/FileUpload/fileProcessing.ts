@@ -191,12 +191,15 @@ export class VirtualFile extends RawFile {
 }
 
 export class VirtualPlainSegmentFile extends VirtualFile implements ProcessedPlainSegmentFile {
-    constructor(content: string, fileName: string = 'virtual.txt') {
+    private fastaHeaderValue: string | null;
+
+    constructor(content: string, fileName: string = 'virtual.txt', fastaHeader: string | null = null) {
         super(content, fileName);
+        this.fastaHeaderValue = fastaHeader;
     }
 
     fastaHeader(): string | null {
-        return null;
+        return this.fastaHeaderValue;
     }
 }
 
