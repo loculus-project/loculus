@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.web.method.support.HandlerMethodArgumentResolver
 import org.springframework.web.servlet.config.annotation.CorsRegistry
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry
+import org.springframework.web.servlet.config.annotation.ViewControllerRegistry
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 
 @Configuration
@@ -25,5 +26,11 @@ class WebConfig(private val backendConfig: BackendConfig) : WebMvcConfigurer {
 
     override fun addArgumentResolvers(resolvers: MutableList<HandlerMethodArgumentResolver>) {
         resolvers.add(UserConverter())
+    }
+
+    // The default API docs combine all versions, so serve the v0 docs there instead
+    override fun addViewControllers(registry: ViewControllerRegistry) {
+        registry.addViewController("/api-docs").setViewName("forward:/api-docs/v0")
+        registry.addViewController("/api-docs.yaml").setViewName("forward:/api-docs.yaml/v0")
     }
 }
