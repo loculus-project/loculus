@@ -43,10 +43,3 @@ object UserGroupsTable : IntIdTable(USER_GROUPS_TABLE_NAME, "id") {
     val userNameColumn = text("user_name")
     val groupIdColumn = integer("group_id").references(GroupsTable.id)
 }
-
-class UserGroupEntity(id: EntityID<Int>) : IntEntity(id) {
-    companion object : IntEntityClass<UserGroupEntity>(UserGroupsTable)
-
-    var userName by UserGroupsTable.userNameColumn
-    var groupId by UserGroupsTable.groupIdColumn
-}
