@@ -201,7 +201,7 @@ class GroupManagementControllerTest(@Autowired private val client: GroupManageme
     @ParameterizedTest
     @MethodSource("authorizationTestCases")
     fun `GIVEN invalid authorization token WHEN performing action THEN returns 401 Unauthorized`(scenario: Scenario) {
-        expectUnauthorizedResponse(isModifyingRequest = scenario.isModifying) {
+        expectUnauthorizedResponse {
             scenario.testFunction(it, client)
         }
     }
@@ -526,30 +526,19 @@ class GroupManagementControllerTest(@Autowired private val client: GroupManageme
     }
 
     companion object {
-        data class Scenario(
-            val testFunction: (String?, GroupManagementControllerClient) -> ResultActions,
-            val isModifying: Boolean,
-        )
+        data class Scenario(val testFunction: (String?, GroupManagementControllerClient) -> ResultActions)
 
         @JvmStatic
         fun authorizationTestCases(): List<Scenario> = listOf(
-            Scenario({ jwt, client -> client.createNewGroup(jwt = jwt) }, isModifying = true),
-            Scenario({ jwt, client -> client.getGroupsOfUser(jwt = jwt) }, isModifying = false),
-            Scenario({ jwt, client -> client.getAllGroups(jwt = jwt) }, isModifying = false),
-            Scenario(
-                { jwt, client -> client.addUserToGroup(groupId = 123, usernameToAdd = DEFAULT_USER_NAME, jwt = jwt) },
-                isModifying = true,
-            ),
-            Scenario(
-                { jwt, client ->
-                    client.removeUserFromGroup(
-                        groupId = 123,
-                        userToRemove = DEFAULT_USER_NAME,
-                        jwt = jwt,
-                    )
-                },
-                isModifying = true,
-            ),
+            Scenario { jwt, client -> client.createNewGroup(jwt = jwt) },
+            Scenario { jwt, client -> client.getGroupsOfUser(jwt = jwt) },
+            Scenario { jwt, client -> client.getAllGroups(jwt = jwt) },
+            Scenario { jwt, client ->
+                client.addUserToGroup(groupId = 123, usernameToAdd = DEFAULT_USER_NAME, jwt = jwt)
+            },
+            Scenario { jwt, client ->
+                client.removeUserFromGroup(groupId = 123, userToRemove = DEFAULT_USER_NAME, jwt = jwt)
+            },
         )
     }
 }
