@@ -106,7 +106,18 @@ class GetSequencesEndpointTest(
         )
             .andExpect(status().isNotFound)
             .andExpect(
-                jsonPath("$.detail", containsString("Group(s) $nonExistingGroup do(es) not exist.")),
+                jsonPath("$.detail", containsString("Group $nonExistingGroup does not exist.")),
+            )
+    }
+
+    @Test
+    fun `WHEN querying for several non-existing groups THEN expect an error that the groups are not found`() {
+        client.getSequenceEntries(
+            groupIdsFilter = listOf(123456789, 987654321),
+        )
+            .andExpect(status().isNotFound)
+            .andExpect(
+                jsonPath("$.detail", containsString("Groups 123456789, 987654321 do not exist.")),
             )
     }
 

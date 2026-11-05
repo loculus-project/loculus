@@ -10,7 +10,6 @@ import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.errors.ConflictException
-import org.loculus.backend.errors.NotFoundException
 import org.loculus.backend.log.AuditLogger
 import org.loculus.backend.model.UNIQUE_CONSTRAINT_VIOLATION_SQL_STATE
 import org.loculus.backend.types.Address
@@ -31,7 +30,8 @@ class GroupManagementDatabaseService(
 ) {
 
     fun getDetailsOfGroup(groupId: Int, user: org.loculus.backend.auth.User): GroupDetails {
-        val groupEntity = GroupEntity.findById(groupId) ?: throw NotFoundException("Group $groupId does not exist.")
+        groupManagementPreconditionValidator.validateGroupExists(groupId)
+        val groupEntity = GroupEntity[groupId]
 
         return when (user is AuthenticatedUser) {
             true -> {
@@ -51,12 +51,13 @@ class GroupManagementDatabaseService(
     }
 
     fun createNewGroup(group: NewGroup, authenticatedUser: AuthenticatedUser): Group {
+        groupManagementPreconditionValidator.validateGroupFields(group)
+
         val groupEntity = GroupEntity.new {
             createdBy = authenticatedUser.username
             createdAt = dateProvider.getCurrentDateTime()
             this.updateWith(group)
         }
-
         val groupId = groupEntity.id.value
 
         UserGroupEntity.new {
@@ -65,21 +66,16 @@ class GroupManagementDatabaseService(
         }
 
         auditLogger.log(authenticatedUser.username, "Created group: $groupId with groupName ${group.groupName}")
-
         return groupEntity.toGroup()
     }
 
     fun updateGroup(groupId: Int, group: NewGroup, authenticatedUser: AuthenticatedUser): Group {
-        groupManagementPreconditionValidator.validateThatUserExists(authenticatedUser.username)
-
         groupManagementPreconditionValidator.validateUserIsAllowedToModifyGroup(groupId, authenticatedUser)
-
-        val groupEntity = GroupEntity.findById(groupId) ?: throw NotFoundException("Group $groupId does not exist.")
-
+        groupManagementPreconditionValidator.validateGroupFields(group)
+        val groupEntity = GroupEntity[groupId]
         groupEntity.updateWith(group)
 
         auditLogger.log(authenticatedUser.username, "Updated group: $groupId")
-
         return groupEntity.toGroup()
     }
 
@@ -121,9 +117,8 @@ class GroupManagementDatabaseService(
     fun getGroupIdsOfUser(authenticatedUser: AuthenticatedUser) = getGroupsOfUser(authenticatedUser).map { it.groupId }
 
     fun addUserToGroup(authenticatedUser: AuthenticatedUser, groupId: Int, usernameToAdd: String) {
-        val user = groupManagementPreconditionValidator.validateThatUserExists(usernameToAdd)
-
         groupManagementPreconditionValidator.validateUserIsAllowedToModifyGroup(groupId, authenticatedUser)
+        val user = groupManagementPreconditionValidator.validateThatUserExists(usernameToAdd)
 
         try {
             UserGroupsTable.insert {

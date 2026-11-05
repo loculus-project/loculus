@@ -227,6 +227,14 @@ class GroupManagementControllerTest(@Autowired private val client: GroupManageme
     }
 
     @Test
+    fun `WHEN a user edits a non-existing group THEN group does not exist`() {
+        client.updateGroup(groupId = 123456789, group = DEFAULT_GROUP_CHANGED, jwt = jwtForDefaultUser)
+            .andExpect(status().isNotFound)
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+            .andExpect(jsonPath("\$.detail").value("Group 123456789 does not exist."))
+    }
+
+    @Test
     fun `GIVEN a group is created WHEN all groups are queried THEN expect that the group is returned`() {
         client.createNewGroup()
             .andExpect(status().isOk)
@@ -259,6 +267,14 @@ class GroupManagementControllerTest(@Autowired private val client: GroupManageme
         client.createNewGroupWithBody("{}")
             .andExpect(status().isBadRequest)
             .andExpect { jsonPath("\$.detail", containsString("value failed for JSON property groupName")) }
+    }
+
+    @Test
+    fun `WHEN creating a group with a field longer than 255 characters THEN expect unprocessable content`() {
+        client.createNewGroup(group = DEFAULT_GROUP.copy(groupName = "a".repeat(256)))
+            .andExpect(status().isUnprocessableContent)
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+            .andExpect(jsonPath("\$.detail", containsString("groupName")))
     }
 
     @Test
@@ -389,6 +405,18 @@ class GroupManagementControllerTest(@Autowired private val client: GroupManageme
     }
 
     @Test
+    fun `WHEN a non-member tries to add a user that does not exist THEN the action is forbidden`() {
+        val groupId = client.createNewGroup(jwt = jwtForDefaultUser)
+            .andExpect(status().isOk)
+            .andGetGroupId()
+
+        every { keycloakAdapter.getUsersWithName(any()) } returns listOf()
+
+        client.addUserToGroup(groupId = groupId, usernameToAdd = "userthatdoesnotexist", jwt = jwtForAlternativeUser)
+            .andExpect(status().isForbidden)
+    }
+
+    @Test
     fun `WHEN a superusers removes a user from a group THEN user is removed`() {
         val groupId = client.createNewGroup()
             .andExpect(status().isOk)
@@ -423,7 +451,7 @@ class GroupManagementControllerTest(@Autowired private val client: GroupManageme
             .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath("\$.detail").value(
-                    "Group(s) $groupId do(es) not exist.",
+                    "Group $groupId does not exist.",
                 ),
             )
     }
@@ -473,7 +501,7 @@ class GroupManagementControllerTest(@Autowired private val client: GroupManageme
             .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath("\$.detail").value(
-                    "Group(s) $groupId do(es) not exist.",
+                    "Group $groupId does not exist.",
                 ),
             )
             .andReturn()
