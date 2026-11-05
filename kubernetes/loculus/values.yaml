@@ -51,7 +51,7 @@ siloImport:
   pollIntervalSeconds: 30
 ingestLimitSeconds: 1800
 getSubmissionListLimitSeconds: 600
-preprocessingTimeout: 600
+preprocessingTimeout: 900
 accessionPrefix: "LOC_"
 dateFieldForGroupGraph: null
 zstdCompressionLevel: 10
@@ -2997,6 +2997,7 @@ enaDeposition:
   rawReadsMetadataField: rawReads
   configFile: {}
 rawReadsProcessingService:
+  raw_reads_processing_service_timeout_seconds: 600
   raw_reads_processing_service_url: http://loculus-raw-reads-processing:5000
 subdomainSeparator: "-"
 enableServiceMonitor: false

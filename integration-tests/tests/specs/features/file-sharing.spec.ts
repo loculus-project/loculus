@@ -32,11 +32,14 @@ const COUNTRY_2 = 'Uganda';
 const SEQUENCING_INSTRUMENT = 'Illumina MiSeq';
 const ID_1 = 'sub1';
 const ID_2 = 'sub2';
+const ID_3 = 'sub3';
 const FILES_SINGLE = { 'testfile.fastq.gz': EBOLA_SUDAN_SMALL_FASTQ(1) };
 const FILES_DOUBLE: Record<string, string> = {
     'file1.fastq.gz': EBOLA_SUDAN_SMALL_FASTQ(1),
     'file2.fastq.gz': EBOLA_SUDAN_SMALL_FASTQ(2),
 };
+const BAM_BYTES = readFileSync(join(__dirname, '../../test-data/valid.bam'));
+const FILES_BAM = { 'reads.bam': BAM_BYTES };
 
 // File cells can be formatted either as a list of file names,
 // Or file names with file paths under a subfolder
@@ -145,8 +148,15 @@ const RAW_READS_FAILURES: { id: string; files: Record<string, string | Buffer>; 
         },
         {
             id: 'bam-renamed-as-fastq',
-            files: { 'reads.fastq.gz': readFileSync(join(__dirname, '../../test-data/valid.bam')) },
+            files: { 'reads.fastq.gz': BAM_BYTES },
             error: /Sequence header must start with @: BAM/i,
+        },
+        {
+            id: 'host-contaminated-bam',
+            files: {
+                'reads.bam': readFileSync(join(__dirname, '../../test-data/contaminated.bam')),
+            },
+            error: /high proportion of human reads/i,
         },
         {
             id: 'null-byte',
@@ -191,7 +201,7 @@ test('reject invalid raw_reads submissions with helpful errors', async ({
     await reviewPage.expectNoValidSequencesToApprove();
 });
 
-test('bulk submit 2 seqs with 1 & 2 FASTQ files respectively', async ({
+test('bulk submit sequences with one FASTQ, paired FASTQ and BAM', async ({
     page,
     groupId,
     tmpDir,
@@ -217,21 +227,30 @@ test('bulk submit 2 seqs with 1 & 2 FASTQ files respectively', async ({
                 SEQUENCING_INSTRUMENT,
                 filesColumnCell(Object.keys(FILES_DOUBLE), ID_2),
             ],
+            [
+                ID_3,
+                'Germany',
+                '2022-12-13',
+                SEQUENCING_INSTRUMENT,
+                filesColumnCell(Object.keys(FILES_BAM), ID_3),
+            ],
         ],
     );
     await submissionPage.uploadSequencesFile({
         [ID_1]: EBOLA_SUDAN_SHORT_SEQUENCE,
         [ID_2]: EBOLA_SUDAN_SHORT_SEQUENCE,
+        [ID_3]: EBOLA_SUDAN_SHORT_SEQUENCE,
     });
     await submissionPage.uploadExternalFiles(
         RAW_READS,
-        { [ID_1]: FILES_SINGLE, [ID_2]: FILES_DOUBLE },
+        { [ID_1]: FILES_SINGLE, [ID_2]: FILES_DOUBLE, [ID_3]: FILES_BAM },
         tmpDir,
     );
     const reviewPage = await submissionPage.submitAndWaitForProcessingDone(180_000);
     const searchPage = await reviewPage.releaseAndGoToReleasedSequences();
     await searchPage.checkFileContentInModal('cell', COUNTRY_1, FILES_SINGLE);
     await searchPage.checkFileContentInModal('cell', COUNTRY_2, FILES_DOUBLE);
+    await searchPage.checkFileContentInModal('cell', 'Germany', FILES_BAM);
 });
 
 test('bulk submit 1 seq: discarding and reading a FASTQ file', async ({

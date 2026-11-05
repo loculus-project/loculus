@@ -4,6 +4,7 @@ import sys
 from pathlib import Path
 
 import pytest
+from Bio import bgzf
 
 from raw_reads_processing import file_format_validation
 from raw_reads_processing.errors import InvalidSubmission, ProcessingFailure
@@ -298,12 +299,26 @@ def test_empty_file_named_gz_is_rejected(tmp_path):
     assert "named as gzip-compressed" in exc_info.value.error.message
 
 
-def test_compression_check_skipped_for_non_fastq(tmp_path):
-    """BAM is BGZF, so a .bam would otherwise trip the 'gzipped but not named .gz' branch."""
+def test_valid_bam_container_passes():
+    assert (
+        validate_compression({"reads.bam": FIXTURES_DIR / "valid.bam"}, FileFormat.BAM)
+        is None
+    )
+
+
+@pytest.mark.parametrize("content", [b"@HD\tVN:1.6\n", b"CRAM\x03\x00"])
+def test_non_bam_content_with_bam_extension_is_rejected(tmp_path, content):
     path = tmp_path / "stored"
-    with gzip.open(path, "wb") as f:
-        f.write(b"anything")
-    assert validate_compression({"reads.bam": path}, FileFormat.BAM) is None
+    with bgzf.BgzfWriter(str(path), "wb") as handle:
+        handle.write(content)
+    with pytest.raises(InvalidSubmission) as error:
+        validate_compression({"reads.bam": path}, FileFormat.BAM)
+    assert error.value.error.fileNames == ["reads.bam"]
+
+
+def test_missing_bam_is_a_processing_failure(tmp_path):
+    with pytest.raises(ProcessingFailure, match="Could not read BAM file"):
+        validate_compression({"reads.bam": tmp_path / "missing"}, FileFormat.BAM)
 
 
 def test_invalid_gzip_body_is_reported_as_invalid_submission(tmp_path):
@@ -446,6 +461,25 @@ def test_validation_timeout_is_reported_as_error(tmp_path, monkeypatch):
 @pytest.mark.parametrize("file_name", ["reads.fastq.gz", "reads.fq.gz"])
 def test_accepted_fastq_extensions(file_name):
     assert validate_file_extensions([file_name]) == FileFormat.FASTQ
+
+
+@pytest.mark.parametrize("file_name", ["reads.bam", "READS.BAM"])
+def test_bam_extension_is_recognized_when_enabled(file_name):
+    assert (
+        validate_file_extensions([file_name], accepted_formats=[FileFormat.BAM])
+        == FileFormat.BAM
+    )
+
+
+@pytest.mark.parametrize("file_name", ["reads.bam", "READS.BAM"])
+def test_bam_support_is_enabled(file_name):
+    assert validate_file_extensions([file_name]) == FileFormat.BAM
+
+
+@pytest.mark.parametrize("file_name", ["reads.sam", "reads.sam.gz", "reads.cram"])
+def test_sam_and_cram_extensions_are_not_accepted_as_bam(file_name):
+    with pytest.raises(InvalidSubmission):
+        validate_file_extensions([file_name], accepted_formats=[FileFormat.BAM])
 
 
 @pytest.mark.parametrize(

@@ -4,6 +4,8 @@ from dataclasses import dataclass
 from enum import StrEnum
 from typing import Self
 
+from .raw_reads_files import RawReadsFormat, raw_reads_format
+
 
 class XmlNone(UserString):
     pass
@@ -444,7 +446,8 @@ class RawReadsManifest:
     study: str
     sample: str
     name: str
-    fastq: list[str]
+    fastq: list[str] | None = None
+    bam: str | None = None
     platform: Platform | None = None
     instrument: Instrument = Instrument.unspecified
     insert_size: int | None = None
@@ -453,6 +456,22 @@ class RawReadsManifest:
     library_selection: LibrarySelection = LibrarySelection.UNSPECIFIED
     library_strategy: LibraryStrategy = LibraryStrategy.OTHER
     description: str | None = None
+
+    def __post_init__(self) -> None:
+        self.validate_files()
+
+    def validate_files(self) -> None:
+        if self.fastq is not None and self.bam is None:
+            if raw_reads_format(self.fastq) == RawReadsFormat.FASTQ:
+                return
+        elif (
+            self.bam is not None
+            and self.fastq is None
+            and raw_reads_format([self.bam]) == RawReadsFormat.BAM
+        ):
+            return
+        msg = "Provide either FASTQ files or a single BAM file in its matching manifest field"
+        raise ValueError(msg)
 
 
 @dataclass
