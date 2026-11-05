@@ -23,6 +23,8 @@ object GroupsTable : IntIdTable(GROUPS_TABLE_NAME, "group_id") {
     val createdBy = text("created_by").nullable()
 }
 
+// TODO: Refactor SubmissionDatabaseService.streamReleasedSubmissions to replace GroupEntity usage
+// with a join to the GroupsTable - then this class can be removed
 class GroupEntity(id: EntityID<Int>) : IntEntity(id) {
     companion object : IntEntityClass<GroupEntity>(GroupsTable)
 
@@ -42,11 +44,4 @@ class GroupEntity(id: EntityID<Int>) : IntEntity(id) {
 object UserGroupsTable : IntIdTable(USER_GROUPS_TABLE_NAME, "id") {
     val userNameColumn = text("user_name")
     val groupIdColumn = integer("group_id").references(GroupsTable.id)
-}
-
-class UserGroupEntity(id: EntityID<Int>) : IntEntity(id) {
-    companion object : IntEntityClass<UserGroupEntity>(UserGroupsTable)
-
-    var userName by UserGroupsTable.userNameColumn
-    var groupId by UserGroupsTable.groupIdColumn
 }
