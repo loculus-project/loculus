@@ -106,7 +106,10 @@ data class V1Group(
 }
 
 @Schema(name = "GroupUser")
-data class V1GroupUser(val username: String) {
+data class V1GroupUser(
+    @Schema(description = "The username of the group member.", example = "testuser")
+    val username: String,
+) {
     companion object {
         fun from(user: User): V1GroupUser = V1GroupUser(username = user.name)
     }

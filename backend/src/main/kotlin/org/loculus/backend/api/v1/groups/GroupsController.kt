@@ -172,7 +172,7 @@ class GroupsController(private val groupManagementDatabaseService: GroupManageme
     @ApiResponse(responseCode = "409", description = "The user is already a member of the group.")
     @ApiResponse(responseCode = "503", description = StatusDescriptions.READ_ONLY)
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PutMapping("/groups/{groupId}/users/{username}", produces = [MediaType.APPLICATION_JSON_VALUE])
+    @PutMapping("/groups/{groupId}/users/{username}")
     fun addUserToGroup(
         @HiddenParam authenticatedUser: AuthenticatedUser,
         @Parameter(
@@ -191,7 +191,7 @@ class GroupsController(private val groupManagementDatabaseService: GroupManageme
     @ApiResponse(responseCode = "404", description = StatusDescriptions.GROUP_NOT_FOUND)
     @ApiResponse(responseCode = "503", description = StatusDescriptions.READ_ONLY)
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @DeleteMapping("/groups/{groupId}/users/{username}", produces = [MediaType.APPLICATION_JSON_VALUE])
+    @DeleteMapping("/groups/{groupId}/users/{username}")
     fun removeUserFromGroup(
         @HiddenParam authenticatedUser: AuthenticatedUser,
         @Parameter(

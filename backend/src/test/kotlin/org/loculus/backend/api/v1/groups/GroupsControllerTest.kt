@@ -1,6 +1,6 @@
 package org.loculus.backend.api.v1.groups
 
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.jayway.jsonpath.JsonPath
 import com.ninjasquad.springmockk.MockkBean
 import io.mockk.every
@@ -34,7 +34,10 @@ private const val NON_EXISTENT_USER_NAME = "nonExistentUser"
 
 @EndpointTest
 @Import(GroupsControllerClient::class)
-class GroupsControllerTest(@Autowired private val client: GroupsControllerClient) {
+class GroupsControllerTest(
+    @Autowired private val client: GroupsControllerClient,
+    @Autowired private val objectMapper: ObjectMapper,
+) {
     @MockkBean
     lateinit var keycloakAdapter: KeycloakAdapter
 
@@ -108,7 +111,7 @@ class GroupsControllerTest(@Autowired private val client: GroupsControllerClient
         scenario.call(
             client,
             groupId,
-            jacksonObjectMapper().writeValueAsString(tooLongGroup),
+            objectMapper.writeValueAsString(tooLongGroup),
             MediaType.APPLICATION_JSON_VALUE,
         )
             .andExpect(status().isUnprocessableContent)
