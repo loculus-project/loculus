@@ -47,7 +47,7 @@ class GroupManagementControllerTest(@Autowired private val client: GroupManageme
     }
 
     @Test
-    fun `GIVEN database preparation WHEN getting groups details THEN the default group and user are returned`() {
+    fun `GIVEN database preparation WHEN getting groups details THEN I get the default group with the default user`() {
         val defaultGroupId = client.createNewGroup(group = DEFAULT_GROUP, jwt = jwtForDefaultUser)
             .andExpect(status().isOk)
             .andGetGroupId()
@@ -88,7 +88,7 @@ class GroupManagementControllerTest(@Autowired private val client: GroupManageme
     }
 
     @Test
-    fun `GIVEN a user is not authenticated WHEN they query a group THEN returns public details only`() {
+    fun `GIVEN I am not authenticated WHEN I query a group THEN returns public details only`() {
         val defaultGroupId = client.createNewGroup(group = DEFAULT_GROUP, jwt = jwtForDefaultUser)
             .andExpect(status().isOk)
             .andGetGroupId()
@@ -109,7 +109,7 @@ class GroupManagementControllerTest(@Autowired private val client: GroupManageme
     }
 
     @Test
-    fun `GIVEN a user created a group WHEN they query their groups THEN returns created group`() {
+    fun `GIVEN I created a group WHEN I query my groups THEN returns created group`() {
         val jwtForAnotherUser = generateJwtFor(UUID.randomUUID().toString() + "testuser")
 
         client.createNewGroup(group = NEW_GROUP, jwt = jwtForAnotherUser)
@@ -131,7 +131,7 @@ class GroupManagementControllerTest(@Autowired private val client: GroupManageme
     }
 
     @Test
-    fun `GIVEN a group member WHEN they edit the group THEN the group information is updated`() {
+    fun `GIVEN I'm a member of a group WHEN I edit the group THEN the group information is updated`() {
         val groupId = client.createNewGroup(group = DEFAULT_GROUP, jwt = jwtForDefaultUser)
             .andExpect(status().isOk)
             .andGetGroupId()
@@ -147,7 +147,7 @@ class GroupManagementControllerTest(@Autowired private val client: GroupManageme
     }
 
     @Test
-    fun `GIVEN a superuser WHEN they edit the group THEN the group information is updated`() {
+    fun `GIVEN I'm a superuser WHEN I edit the group THEN the group information is updated`() {
         val groupId = client.createNewGroup(group = DEFAULT_GROUP, jwt = jwtForDefaultUser)
             .andExpect(status().isOk)
             .andGetGroupId()
@@ -164,7 +164,7 @@ class GroupManagementControllerTest(@Autowired private val client: GroupManageme
     }
 
     @Test
-    fun `WHEN a non-member edits the group THEN they are not authorized`() {
+    fun `GIVEN I'm not a member of a group WHEN I edit the group THEN I am not authorized`() {
         val groupId = client.createNewGroup(group = DEFAULT_GROUP, jwt = jwtForDefaultUser)
             .andExpect(status().isOk)
             .andGetGroupId()
@@ -219,7 +219,7 @@ class GroupManagementControllerTest(@Autowired private val client: GroupManageme
     }
 
     @Test
-    fun `WHEN a user queries details of a non-existing group THEN group does not exist`() {
+    fun `WHEN I query details of a non-existing group THEN expect error that group does not exist`() {
         client.getDetailsOfGroup(groupId = 123456789)
             .andExpect(status().isNotFound)
             .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
@@ -278,7 +278,7 @@ class GroupManagementControllerTest(@Autowired private val client: GroupManageme
     }
 
     @Test
-    fun `GIVEN a group WHEN adding a user that does not exist to the group THEN user is not found`() {
+    fun `GIVEN a group WHEN I add a user that does not exists to the group THEN expect user is not found`() {
         every { keycloakAdapter.getUsersWithName(any()) } returns listOf()
 
         val otherUser = "otheruserthatdoesnotexist"
