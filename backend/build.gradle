@@ -70,8 +70,8 @@ dependencies {
     implementation "org.jetbrains.kotlinx:kotlinx-datetime:0.8.0-0.6.x-compat"
     implementation "org.hibernate.validator:hibernate-validator"
     implementation "org.keycloak:keycloak-admin-client:26.0.12"
-    implementation("io.minio:minio:9.0.3")
-    implementation("software.amazon.awssdk:s3:2.57.7")
+    implementation("io.minio:minio:9.0.4")
+    implementation("software.amazon.awssdk:s3:2.57.8")
 
     implementation "org.springframework.boot:spring-boot-starter-security-oauth2-resource-server"
     implementation "org.springframework.boot:spring-boot-starter-security"
