@@ -170,13 +170,13 @@ const backendRequestMocks = {
             }),
         );
     },
-    getSequences: (
+    getReviewData: (
         statusCode: number = 200,
         response: GetSequencesResponse = { sequenceEntries: [], statusCounts: {}, processingResultCounts: {} },
         callback?: (request: Request) => void,
     ) => {
         testServer.use(
-            http.get(`${testConfig.serverSide.backendUrl}/${testOrganism}/get-sequences`, ({ request }) => {
+            http.get(`${testConfig.serverSide.backendUrl}/${testOrganism}/review-data`, ({ request }) => {
                 if (callback !== undefined) {
                     callback(request);
                 }

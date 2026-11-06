@@ -149,7 +149,7 @@ const generateGetSequencesResponse = (sequenceEntries: SequenceEntryStatus[]): G
 
 describe('ReviewPage', () => {
     test('should render the review page and indicate there is no data', async () => {
-        mockRequest.backend.getSequences(200, generateGetSequencesResponse([]));
+        mockRequest.backend.getReviewData(200, generateGetSequencesResponse([]));
 
         const { getByText } = renderReviewPage();
 
@@ -159,7 +159,7 @@ describe('ReviewPage', () => {
     });
 
     test('should render the review page and show data', async () => {
-        mockRequest.backend.getSequences(200, generateGetSequencesResponse([receivedTestData]));
+        mockRequest.backend.getReviewData(200, generateGetSequencesResponse([receivedTestData]));
 
         const { getByText } = renderReviewPage();
 
@@ -174,7 +174,7 @@ describe('ReviewPage', () => {
         const requests = vi.fn();
         let entries = [receivedTestData];
         testServer.use(
-            http.get(`${testConfig.public.backendUrl}/${testOrganism}/get-sequences`, () => {
+            http.get(`${testConfig.public.backendUrl}/${testOrganism}/review-data`, () => {
                 requests();
                 return HttpResponse.json(generateGetSequencesResponse(entries));
             }),
@@ -201,10 +201,9 @@ describe('ReviewPage', () => {
 
     test('should request data from the right group', async () => {
         let requestedGroupFilter: string | null = null;
-        mockRequest.backend.getSequences(200, generateGetSequencesResponse([]), (request) => {
+        mockRequest.backend.getReviewData(200, generateGetSequencesResponse([]), (request) => {
             const params = new URL(request.url).searchParams;
             requestedGroupFilter = params.get('groupIdsFilter');
-            expect(params.get('includeReviewData')).toBe('true');
         });
 
         const { getByText } = renderReviewPage();
@@ -217,7 +216,7 @@ describe('ReviewPage', () => {
     });
 
     test('should render the review page and show button to bulk delete/approve all erroneous sequences', async () => {
-        mockRequest.backend.getSequences(
+        mockRequest.backend.getReviewData(
             200,
             generateGetSequencesResponse([erroneousTestData, awaitingApprovalTestData]),
         );
@@ -240,7 +239,7 @@ describe('ReviewPage', () => {
             expect(getByText((text) => text.includes('Approve 1 valid sequence'))).toBeDefined();
         });
 
-        mockRequest.backend.getSequences(200, generateGetSequencesResponse([]));
+        mockRequest.backend.getReviewData(200, generateGetSequencesResponse([]));
 
         await userEvent.click(getByText((text) => text.includes('Approve 1 valid sequence')));
 
@@ -256,7 +255,7 @@ describe('ReviewPage', () => {
     });
 
     test('loads card data from the list and sequences only when DNA is opened, with retry on error', async () => {
-        mockRequest.backend.getSequences(200, generateGetSequencesResponse([awaitingApprovalTestData]));
+        mockRequest.backend.getReviewData(200, generateGetSequencesResponse([awaitingApprovalTestData]));
         const requestedVersions = vi.fn();
         let fail = true;
         testServer.use(
@@ -293,7 +292,7 @@ describe('ReviewPage', () => {
     test('returns to page one when a filter leaves no matching entries', async () => {
         const requestedPages: number[] = [];
         testServer.use(
-            http.get(`${testConfig.public.backendUrl}/${testOrganism}/get-sequences`, ({ request }) => {
+            http.get(`${testConfig.public.backendUrl}/${testOrganism}/review-data`, ({ request }) => {
                 const params = new URL(request.url).searchParams;
                 requestedPages.push(Number(params.get('page')));
                 const response = generateGetSequencesResponse([awaitingApprovalTestData]);
@@ -315,7 +314,7 @@ describe('ReviewPage', () => {
     });
 
     test('should render the review page and show how many sequences are processed', async () => {
-        mockRequest.backend.getSequences(
+        mockRequest.backend.getReviewData(
             200,
             generateGetSequencesResponse([
                 receivedTestData,

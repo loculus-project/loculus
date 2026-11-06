@@ -149,7 +149,6 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
         jwt: String? = jwtForDefaultUser,
         page: Int? = null,
         size: Int? = null,
-        includeReviewData: Boolean? = null,
     ): ResultActions = mockMvc.perform(
         get(addOrganismToPath("/get-sequences", organism = organism))
             .withAuth(jwt)
@@ -157,8 +156,23 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
             .paramIfPresent("statusesFilter", statusesFilter?.joinToString(",") { it.name })
             .paramIfPresent("processingResultFilter", processingResultFilter?.joinToString(",") { it.name })
             .paramIfPresent("page", page?.toString())
-            .paramIfPresent("size", size?.toString())
-            .paramIfPresent("includeReviewData", includeReviewData?.toString()),
+            .paramIfPresent("size", size?.toString()),
+    )
+
+    fun getReviewData(
+        organism: String = DEFAULT_ORGANISM,
+        groupIdsFilter: List<Int>? = null,
+        statusesFilter: List<Status>? = null,
+        jwt: String? = jwtForDefaultUser,
+        page: Int? = null,
+        size: Int? = null,
+    ): ResultActions = mockMvc.perform(
+        get(addOrganismToPath("/review-data", organism = organism))
+            .withAuth(jwt)
+            .paramIfPresent("groupIdsFilter", groupIdsFilter?.joinToString(",") { it.toString() })
+            .paramIfPresent("statusesFilter", statusesFilter?.joinToString(",") { it.name })
+            .paramIfPresent("page", page?.toString())
+            .paramIfPresent("size", size?.toString()),
     )
 
     fun getSequenceEntryToEdit(

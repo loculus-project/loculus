@@ -32,7 +32,7 @@ export function useSubmissionOperations(
     const allProcessingResults = [noIssuesProcessingResult, warningsProcessingResult, errorsProcessingResult];
     const [includedStatuses, setIncludedStatuses] = useState(allRelevantStatuses);
     const [includedProcessingResults, setIncludedProcessingResults] = useState(allProcessingResults);
-    const useGetSequences = hooks.useGetSequences(
+    const useGetReviewData = hooks.useGetReviewData(
         {
             headers: createAuthorizationHeader(accessToken),
             params: {
@@ -40,7 +40,6 @@ export function useSubmissionOperations(
             },
             queries: {
                 groupIdsFilter: group.groupId.toString(),
-                includeReviewData: true,
                 statusesFilter: includedStatuses.join(','),
                 processingResultFilter: includedProcessingResults.join(','),
                 page: pageQuery.pageOneIndexed - 1,
@@ -48,7 +47,7 @@ export function useSubmissionOperations(
             },
         },
         {
-            onError: (error) => openErrorFeedback(getSequencesErrorMessage(error)),
+            onError: (error) => openErrorFeedback(getReviewDataErrorMessage(error)),
             refetchInterval: (data) =>
                 data === undefined || data.statusCounts[receivedStatus] > 0 || data.statusCounts[inProcessingStatus] > 0
                     ? 2000
@@ -57,14 +56,14 @@ export function useSubmissionOperations(
         },
     );
 
-    if (useGetSequences.error) {
+    if (useGetReviewData.error) {
         openErrorFeedback(`Failed to query Group`);
     }
 
     const useDeleteSequenceEntries = hooks.useDeleteSequences(
         { headers: createAuthorizationHeader(accessToken), params: { organism } },
         {
-            onSuccess: () => useGetSequences.refetch(),
+            onSuccess: () => useGetReviewData.refetch(),
             onError: (error) => openErrorFeedback(deleteSequenceEntriesErrorMessage(error)),
         },
     );
@@ -76,7 +75,7 @@ export function useSubmissionOperations(
                 return { toastId };
             },
             onSuccess: (data, _variables, context) => {
-                void useGetSequences.refetch();
+                void useGetReviewData.refetch();
                 const ctx = context as { toastId: string | number } | undefined;
                 if (ctx?.toastId) {
                     const isBatchRelease = data.length > 1;
@@ -108,7 +107,7 @@ export function useSubmissionOperations(
     return {
         deleteSequenceEntries: useDeleteSequenceEntries.mutate,
         approveProcessedData: useApproveProcessedData.mutate,
-        getSequences: useGetSequences,
+        getReviewData: useGetReviewData,
         includedStatuses,
         setIncludedStatuses,
         includedProcessingResults,
@@ -130,8 +129,8 @@ function approveProcessedDataErrorMessage(error: unknown | AxiosError) {
     return 'Failed to approve processed sequence entries: ' + stringifyMaybeAxiosError(error);
 }
 
-function getSequencesErrorMessage(error: unknown | AxiosError) {
-    if (isErrorFromAlias(backendApi, 'getSequences', error)) {
+function getReviewDataErrorMessage(error: unknown | AxiosError) {
+    if (isErrorFromAlias(backendApi, 'getReviewData', error)) {
         return 'Failed to query sequences: ' + error.response.data.detail;
     }
     return 'Failed to query sequences: ' + stringifyMaybeAxiosError(error);
