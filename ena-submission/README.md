@@ -301,10 +301,10 @@ It's good practice to put your ENA credentials into a `.env` file in this folder
 
 #### Unit tests
 
-Tests live in `test/`. `test/test_ena_submission.py` and `test/test_get_ena_submission_list.py` can be run without a database:
+Tests live in `test/`. The following tests run without a database or ENA credentials:
 
 ```sh
-micromamba run -n loculus-ena-submission pytest test/test_ena_submission.py test/test_get_ena_submission_list.py
+micromamba run -n loculus-ena-submission pytest test/test_ena_submission.py test/test_get_ena_submission_list.py test/test_ena_test_mode.py
 ```
 
 The other tests (`test/test_ena_submission_integration.py`, `test/test_api.py` and `test/test_schema_matches_models.py`) need the database running locally with the `ena_deposition_schema` migrated (see the steps above).
@@ -334,6 +334,8 @@ python scripts/deposition_dry_run.py --log-level=DEBUG --data-to-submit=results/
 #### Integration tests
 
 You can also run the integration tests locally, these will submit sequences to ENA dev. Be careful when modifying these tests to always set `test=true`.
+
+Before live submissions, CI runs `test/test_ena_test_mode.py` with mocked transports to verify the development configuration, actual Webin-CLI arguments for reads and assemblies, and XML request URLs. The integration suite also installs the `ena_dev_only` fixture: it rejects subprocess calls without an explicit `-test` and blocks HTTP writes or submission/report requests outside HTTPS `wwwdev.ebi.ac.uk`, including redirects. Public, read-only API lookups remain available. These checks do not require ENA credentials and do not submit anything.
 
 You also need to set the environment variables `ENA_USERNAME` and `ENA_PASSWORD` to your ENA test account credentials. You can use the `.env` file in the root of this repository to set these variables.
 
