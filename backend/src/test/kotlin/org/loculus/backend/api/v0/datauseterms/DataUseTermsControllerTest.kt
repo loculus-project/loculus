@@ -86,7 +86,7 @@ class DataUseTermsControllerTest(
     fun `GIVEN invalid authorization token WHEN performing action THEN returns 401 Unauthorized`(
         authScenario: AuthScenario,
     ) {
-        expectUnauthorizedResponse(isModifyingRequest = authScenario.isModifying) {
+        expectUnauthorizedResponse {
             authScenario.testFunction(it, client)
         }
     }
@@ -168,22 +168,13 @@ class DataUseTermsControllerTest(
     }
 
     companion object {
-        data class AuthScenario(
-            val testFunction: (String?, DataUseTermsControllerClient) -> ResultActions,
-            val isModifying: Boolean,
-        )
+        data class AuthScenario(val testFunction: (String?, DataUseTermsControllerClient) -> ResultActions)
 
         @JvmStatic
         fun authorizationTestCases(): List<AuthScenario> = listOf(
-            AuthScenario(
-                { jwt, client ->
-                    client.changeDataUseTerms(
-                        newDataUseTerms = DEFAULT_DATA_USE_CHANGE_REQUEST,
-                        jwt = jwt,
-                    )
-                },
-                true,
-            ),
+            AuthScenario { jwt, client ->
+                client.changeDataUseTerms(newDataUseTerms = DEFAULT_DATA_USE_CHANGE_REQUEST, jwt = jwt)
+            },
         )
 
         data class DataUseTermsTestCase(
