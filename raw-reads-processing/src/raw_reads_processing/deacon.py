@@ -88,7 +88,6 @@ def median_read_length(
             f"(byte 0x{error.object[error.start]:02x}: {error.reason}). "
             f"{FALSE_POSITIVE_HINT}"
         )
-        logger.error(message)
         raise InvalidSubmission(
             Annotation(fileNames=[file_name], message=message)
         ) from error
@@ -97,14 +96,12 @@ def median_read_length(
     except tuple(DECOMPRESSION_ERRORS) as error:
         reason = DECOMPRESSION_ERRORS.get(type(error), "could not be decompressed.")
         message = f"File '{file_name}' {reason} {FALSE_POSITIVE_HINT}"
-        logger.error(message)
         raise InvalidSubmission(
             Annotation(fileNames=[file_name], message=message)
         ) from error
     except ValueError as error:
         # Otherwise the submitter gets an "Internal error" that blames us for their file.
         message = f"Failed to parse file '{file_name}': {error} {FALSE_POSITIVE_HINT}"
-        logger.error(message)
         raise InvalidSubmission(
             Annotation(fileNames=[file_name], message=message)
         ) from error
@@ -113,7 +110,6 @@ def median_read_length(
             f"Failed to determine median read length for file '{file_name}'. "
             f"File may be empty or corrupted. {FALSE_POSITIVE_HINT}"
         )
-        logger.error(message)
         raise InvalidSubmission(Annotation(fileNames=[file_name], message=message))
     return statistics.median(lengths)
 
@@ -175,7 +171,6 @@ def run_deacon_filter(
             f"Validation of files '{','.join(str(f) for f in file_name_to_path.values())}' "
             f"timed out after {config.deacon_filter_timeout_seconds} seconds."
         )
-        logger.error(message)
         raise ProcessingFailure(message) from None
     except subprocess.CalledProcessError as error:
         # TODO: send a slack notification to alert the team that deacon is failing
