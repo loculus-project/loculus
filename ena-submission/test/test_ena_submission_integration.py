@@ -721,11 +721,9 @@ class ExternalMetadataUploads:
             f"expected exactly one new external-metadata upload (#{self._consumed + 1}), "
             f"but {len(calls) - self._consumed} happened since the last check"
         )
-        payload = calls[self._consumed].args[0]
+        payloads = calls[self._consumed].args[0]
         self._consumed += 1
-        assert payload["accession"] == TEST_ACCESSION
-        assert payload["version"] == TEST_VERSION
-        return payload["externalMetadata"]
+        return accessions_of_upload(payloads)
 
     def assert_no_further_uploads(self) -> None:
         calls = self._mock.call_args_list
@@ -734,10 +732,51 @@ class ExternalMetadataUploads:
         )
 
 
-def last_external_metadata_accessions(mock: Mock) -> dict[str, Any]:
+def last_external_metadata_accessions(mock: Mock, version: int = TEST_VERSION) -> dict[str, Any]:
     """ENA accessions of the most recent `submit_external_metadata` call."""
     mock.assert_called()
-    return mock.call_args.args[0]["externalMetadata"]
+    return accessions_of_upload(mock.call_args.args[0], version)
+
+
+# ENA accessions that describe the sample/project apply to all versions of an accession,
+# whereas assembly accessions only apply to the deposited accession version.
+ACCESSION_SCOPED_FIELDS = ("bioproject", "biosample", "insdc_accession_prefix")
+
+
+def accessions_of_upload(
+    payloads: list[dict[str, Any]], version: int = TEST_VERSION
+) -> dict[str, Any]:
+    """Check the scoping of one upload's payloads and return all of its ENA accessions."""
+    fields = get_config(CONFIG_FILE).loculus_accession_fields
+    accession_scoped_names = {getattr(fields, name) for name in ACCESSION_SCOPED_FIELDS}
+
+    def is_accession_scoped(field: str) -> bool:
+        # Multi-segment organisms suffix INSDC accessions with the segment, e.g. `_L`
+        return field in accession_scoped_names or field.startswith(
+            f"{fields.insdc_accession_prefix}_"
+        )
+
+    # Payloads without external metadata are omitted, so either scope may be missing
+    accession_scoped = [p for p in payloads if "version" not in p]
+    version_scoped = [p for p in payloads if "version" in p]
+    assert len(accession_scoped) <= 1
+    assert len(version_scoped) <= 1
+    assert payloads
+
+    accessions: dict[str, Any] = {}
+    for payload in accession_scoped:
+        assert payload["accession"] == TEST_ACCESSION
+        assert payload["externalMetadata"]
+        assert all(is_accession_scoped(field) for field in payload["externalMetadata"])
+        accessions.update(payload["externalMetadata"])
+    for payload in version_scoped:
+        assert payload["accession"] == TEST_ACCESSION
+        assert payload["version"] == version
+        assert payload["externalMetadata"]
+        assert not any(is_accession_scoped(field) for field in payload["externalMetadata"])
+        accessions.update(payload["externalMetadata"])
+
+    return accessions
 
 
 def multi_segment_submission(
@@ -1745,7 +1784,9 @@ class TestRevisionRawReadsModificationTests(TestSubmission):
         get_external_metadata_and_send_to_loculus(self.db_engine, self.config)
 
         run_field = self.config.loculus_accession_fields.run
-        revised_run = last_external_metadata_accessions(mock_submit_external_metadata)[run_field]
+        revised_run = last_external_metadata_accessions(
+            mock_submit_external_metadata, version=TEST_VERSION + 1
+        )[run_field]
         assert original_accessions[run_field] != revised_run, (
             "When raw reads are modified, insdcRawReadsAccession should change"
         )
@@ -1802,7 +1843,9 @@ class TestRevisionNoRawReadsNoAssemblyModificationTests(TestSubmission):
         get_external_metadata_and_send_to_loculus(self.db_engine, self.config)
 
         run_field = self.config.loculus_accession_fields.run
-        revised_run = last_external_metadata_accessions(mock_submit_external_metadata)[run_field]
+        revised_run = last_external_metadata_accessions(
+            mock_submit_external_metadata, version=TEST_VERSION + 1
+        )[run_field]
         assert original_accessions[run_field] == revised_run, (
             "When raw reads are not modified, insdcRawReadsAccession should stay the same"
         )
