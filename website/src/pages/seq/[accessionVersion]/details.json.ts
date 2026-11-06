@@ -54,6 +54,7 @@ export const GET: APIRoute = async (req) => {
         schema,
         clientConfig,
         segmentReferences: result.segmentReferences,
+        nextcladeDatasets: result.nextcladeDatasets,
         isRevocation: result.isRevocation,
         sequenceEntryHistory: result.sequenceEntryHistory,
         sequenceCitations,

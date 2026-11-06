@@ -169,4 +169,30 @@ describe('SequenceDataUI', () => {
         renderSequenceDataUI(revocationSequenceData, `${ACCESSION}.2`);
         expect(screen.queryByRole('link', { name: 'Create GitHub issue' })).not.toBeInTheDocument();
     });
+
+    test('shows the Nextclade dataset used for alignment', () => {
+        renderSequenceDataUI(
+            {
+                ...sequenceData,
+                tableData: [
+                    ...tableData,
+                    {
+                        label: 'Total SNPs',
+                        name: 'totalSnps',
+                        value: 3,
+                        header: 'Alignment and QC metrics',
+                        type: { kind: 'metadata', metadataType: 'int' },
+                    },
+                ],
+                nextcladeDatasets: [
+                    { segment: 'main', name: 'nextstrain/mpox', tag: '2025-01-01', server: 'https://example.com' },
+                ],
+            },
+            `${ACCESSION}.1`,
+        );
+        expect(screen.getByRole('link', { name: 'nextstrain/mpox (2025-01-01)' })).toHaveAttribute(
+            'href',
+            'https://clades.nextstrain.org/?dataset-server=https%3A%2F%2Fexample.com&dataset-name=nextstrain%2Fmpox&dataset-tag=2025-01-01',
+        );
+    });
 });
