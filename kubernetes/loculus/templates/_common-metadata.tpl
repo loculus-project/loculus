@@ -271,6 +271,37 @@ organisms:
         {{- end }}
       {{- end }}
       loadSequencesAutomatically: {{ .loadSequencesAutomatically | default false }}
+      {{- /* Nextclade dataset per pipeline version, segment and reference, so that each entry can show the dataset it was processed with */}}
+      {{- $nextcladeDatasets := dict }}
+      {{- range (include "loculus.flattenPreprocessingVersions" ($instance.preprocessing | default list) | fromJson).items }}
+      {{- $configFile := .configFile | default dict }}
+      {{- $segmentDatasets := dict }}
+      {{- range $configFile.segments | default list }}
+      {{- $referenceDatasets := dict }}
+      {{- range .references | default list }}
+      {{- if .nextclade_dataset_name }}
+      {{- $dataset := dict "name" .nextclade_dataset_name }}
+      {{- if .nextclade_dataset_tag }}
+      {{- $_ := set $dataset "tag" (toString .nextclade_dataset_tag) }}
+      {{- end }}
+      {{- $server := .nextclade_dataset_server | default $configFile.nextclade_dataset_server }}
+      {{- if $server }}
+      {{- $_ := set $dataset "server" $server }}
+      {{- end }}
+      {{- $_ := set $referenceDatasets (.name | default "singleReference") $dataset }}
+      {{- end }}
+      {{- end }}
+      {{- if $referenceDatasets }}
+      {{- $_ := set $segmentDatasets (.name | default "main") $referenceDatasets }}
+      {{- end }}
+      {{- end }}
+      {{- if $segmentDatasets }}
+      {{- $_ := set $nextcladeDatasets (toString .version) $segmentDatasets }}
+      {{- end }}
+      {{- end }}
+      {{- if $nextcladeDatasets }}
+      nextcladeDatasets: {{ $nextcladeDatasets | toJson }}
+      {{- end }}
       {{ if .richFastaHeaderFields}}
       richFastaHeaderFields: {{ toJson .richFastaHeaderFields }}
       {{ end }}

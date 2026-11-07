@@ -5,7 +5,7 @@ import { SequenceDataUI } from './SequenceDataUI';
 import type { SequenceData, TableDataEntry } from './types';
 import { testAccessToken, testConfig, testGroups, testOrganism } from '../../../vitest.setup.ts';
 import type { DataUseTermsHistoryEntry } from '../../types/backend';
-import type { Schema, SequenceFlaggingConfig } from '../../types/config';
+import { DEFAULT_NUC_MUTATION_DETAILS_HEADER, type Schema, type SequenceFlaggingConfig } from '../../types/config';
 import type { SequenceEntryHistory, SequenceEntryHistoryEntry } from '../../types/lapis';
 import type { ReferenceGenomesInfo } from '../../types/referencesGenomes';
 import type { SequenceCitation } from '../../types/seqSetCitation';
@@ -110,13 +110,17 @@ const sequenceCitations: SequenceCitation[] = [
     },
 ];
 
-function renderSequenceDataUI(sequenceDataToRender: SequenceData, accessionVersion: string) {
+function renderSequenceDataUI(
+    sequenceDataToRender: SequenceData,
+    accessionVersion: string,
+    schemaToRender: Schema = schema,
+) {
     return render(
         <SequenceDataUI
             sequenceData={sequenceDataToRender}
             organism={testOrganism}
             accessionVersion={accessionVersion}
-            schema={schema}
+            schema={schemaToRender}
             clientConfig={testConfig.public}
             myGroups={testGroups}
             accessToken={testAccessToken}
@@ -168,5 +172,55 @@ describe('SequenceDataUI', () => {
     test('shows no issue reporting link on revocation versions', () => {
         renderSequenceDataUI(revocationSequenceData, `${ACCESSION}.2`);
         expect(screen.queryByRole('link', { name: 'Create GitHub issue' })).not.toBeInTheDocument();
+    });
+
+    describe('Nextclade dataset', () => {
+        const schemaWithDatasets: Schema = {
+            ...schema,
+            nextcladeDatasets: {
+                '1': { main: { refA: { name: 'nextstrain/foo', tag: '2024-01-01--00-00-00Z' } } },
+                '2': {
+                    main: {
+                        refA: {
+                            name: 'nextstrain/foo',
+                            tag: '2025-01-01--00-00-00Z',
+                            server: 'https://example.com/datasets',
+                        },
+                    },
+                },
+            },
+        };
+        const tableDataWithMutations: TableDataEntry[] = [
+            ...tableData,
+            {
+                label: 'Substitutions',
+                name: 'nucleotideSubstitutions',
+                value: '',
+                header: DEFAULT_NUC_MUTATION_DETAILS_HEADER,
+                type: { kind: 'mutation' },
+            },
+        ];
+
+        test('shows the dataset of the pipeline version that processed the entry', () => {
+            renderSequenceDataUI(
+                { ...sequenceData, tableData: tableDataWithMutations, pipelineVersion: 2 },
+                `${ACCESSION}.1`,
+                schemaWithDatasets,
+            );
+            expect(screen.getByText(/Processed with the Nextclade dataset/)).toBeVisible();
+            expect(screen.getByText('nextstrain/foo')).toBeVisible();
+            expect(screen.getByText(/2025-01-01--00-00-00Z/)).toBeVisible();
+            expect(screen.getByTitle('Dataset server: https://example.com/datasets')).toBeVisible();
+            expect(screen.queryByText(/2024-01-01--00-00-00Z/)).not.toBeInTheDocument();
+        });
+
+        test('shows no dataset when the pipeline version has none configured', () => {
+            renderSequenceDataUI(
+                { ...sequenceData, tableData: tableDataWithMutations, pipelineVersion: 3 },
+                `${ACCESSION}.1`,
+                schemaWithDatasets,
+            );
+            expect(screen.queryByText(/Processed with the Nextclade dataset/)).not.toBeInTheDocument();
+        });
     });
 });
