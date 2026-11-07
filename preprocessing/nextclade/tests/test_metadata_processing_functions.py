@@ -105,6 +105,21 @@ test_case_definitions = [
         group_id=1,
     ),
     Case(
+        name="insdc_ingest group can submit names starting or ending with a hyphen",
+        input_metadata={
+            "name_required": "name",
+            "authors": "Smith-, Anna; Perez, -Tom",
+        },
+        accession_id="24",
+        expected_metadata={
+            "name_required": "name",
+            "concatenated_string": "LOC_24.1",
+            "required_collection_date": None,
+            "authors": "Smith-, Anna; Perez, -Tom",
+        },
+        group_id=1,
+    ),
+    Case(
         name="invalid_option",
         input_metadata={
             "continent": "Afrika",
@@ -491,6 +506,61 @@ test_case_definitions = [
         ),
     ),
     Case(
+        name="warn_spaced_hyphen_in_authors",
+        input_metadata={
+            "name_required": "name",
+            "ncbi_required_collection_date": "2022-11-01",
+            "authors": "Smith- Jones, Anna; Perez, Tom -Juan; Xu - Li, X.; Lee, Tom - J",
+        },
+        accession_id="12",
+        expected_metadata={
+            "name_required": "name",
+            "required_collection_date": "2022-11-01",
+            "concatenated_string": "LOC_12.1/2022-11-01",
+            "authors": "Smith-Jones, Anna; Perez, Tom-Juan; Xu-Li, X.; Lee, Tom-J.",
+        },
+        expected_errors=[],
+        expected_warnings=build_processing_annotations(
+            [
+                ProcessingAnnotationHelper(
+                    ["authors"],
+                    ["authors"],
+                    (
+                        "Authors list contains spaces around hyphens: "
+                        "'Smith- Jones', 'Tom -Juan', 'Xu - Li', 'Tom - J'. Hyphenated names "
+                        "should not "
+                        "contain spaces around the hyphen, e.g. `Smith-Jones, Anna-Maria`. "
+                        "Spaces around these hyphens have been removed automatically."
+                    ),
+                ),
+            ]
+        ),
+    ),
+    Case(
+        name="error_name_starting_or_ending_with_hyphen_in_authors",
+        input_metadata={
+            "name_required": "name",
+            "ncbi_required_collection_date": "2022-11-01",
+            "authors": "Smith-, Anna; Perez, - Tom; Xu, X.",
+        },
+        accession_id="12",
+        expected_metadata={
+            "name_required": "name",
+            "required_collection_date": "2022-11-01",
+            "concatenated_string": "LOC_12.1/2022-11-01",
+        },
+        expected_errors=build_processing_annotations(
+            [
+                ProcessingAnnotationHelper(
+                    ["authors"],
+                    ["authors"],
+                    "Invalid name(s): 'Smith-', '-Tom'. Names must not start or end with a hyphen.",
+                ),
+            ]
+        ),
+        expected_warnings=[],
+    ),
+    Case(
         name="non_latin_characters_authors",
         input_metadata={
             "name_required": "name",
@@ -690,6 +760,10 @@ accepted_authors = {
     "McGregor, Ewan": "McGregor, Ewan",
     "'t Hooft, Gerard": "'t Hooft, Gerard",
     "Tandoc, A. 3rd": "Tandoc, A. 3rd",
+    "Perez, J-P": "Perez, J.-P.",
+    "Perez, J.-P.": "Perez, J.-P.",
+    "Perez, Anna-Maria": "Perez, Anna-Maria",
+    "Perez, Tom-J": "Perez, Tom-J.",
 }
 # Only accepted for the INSDC ingest group
 accepted_authors_all_ascii = [
