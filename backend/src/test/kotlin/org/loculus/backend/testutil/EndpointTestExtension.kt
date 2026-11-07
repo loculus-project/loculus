@@ -228,7 +228,9 @@ private fun clearDatabaseStatement(): String = """
             seqset_to_citation_source,
             audit_log,
             table_update_tracker,
-            task_lock
+            task_lock,
+            external_identities,
+            loculus_users
             cascade;
         alter sequence $ACCESSION_SEQUENCE_NAME restart with 1;
         alter sequence groups_table_group_id_seq restart with 1;
