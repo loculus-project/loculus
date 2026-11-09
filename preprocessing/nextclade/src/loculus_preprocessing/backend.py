@@ -118,6 +118,8 @@ def parse_ndjson(ndjson_data: str, config: Config) -> Sequence[UnprocessedEntry]
                 submitted_at=str(json_object["submittedAt"]),
                 submission_id=json_object["submissionId"],
                 insdc_ingest_group_id=config.insdc_ingest_group_id,
+                processing_attempt_id=json_object["processingAttemptId"],
+                lease_until=json_object["leaseUntil"],
             ),
             metadata=json_object["data"]["metadata"],
             unalignedNucleotideSequences=trimmed_unaligned_nucleotide_sequences
