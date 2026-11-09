@@ -13,6 +13,7 @@ import org.loculus.backend.testutil.S3_CONFIG
 import org.loculus.backend.testutil.generateJwtFor
 import org.loculus.backend.types.EditedSequenceEntryData
 import org.loculus.backend.types.FileIdAndName
+import org.loculus.backend.types.ProcessingResult
 import org.loculus.backend.types.Status
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.jdbc.core.JdbcTemplate
@@ -27,12 +28,17 @@ class GetReviewDataEndpointTest(
     @Autowired private val jdbcTemplate: JdbcTemplate,
 ) {
     @Test
-    fun `review data matches the editor metadata and annotations without sequences`() {
+    fun `review data is opt in and matches the editor metadata and annotations without sequences`() {
         val accession = convenienceClient.prepareDataTo(Status.PROCESSED, errors = true).first().accession
         val edited = convenienceClient.getSequenceEntryToEdit(accession, 1)
-        client.getSequenceEntries()
+        for (include in listOf(null, false)) {
+            client.getSequenceEntries(includeReviewData = include)
+                .andExpect(status().isOk)
+                .andExpect(jsonPath("$.sequenceEntries[0].reviewData").doesNotExist())
+        }
+        client.getSequenceEntries(page = 0, size = 100, includeReviewData = true)
             .andExpect(status().isOk)
-            .andExpect(jsonPath("$.sequenceEntries[0].reviewData").doesNotExist())
+            .andExpect(jsonPath("$.sequenceEntries[0].reviewData").exists())
         val response = getReviewPage()
         val data = response["sequenceEntries"].first { it["accession"].asText() == accession }["reviewData"]
         assertThat(data["metadata"], `is`(objectMapper.valueToTree<JsonNode>(edited.processedData.metadata)))
@@ -101,9 +107,27 @@ class GetReviewDataEndpointTest(
     }
 
     @Test
+    fun `review data applies the processing result filter`() {
+        convenienceClient.prepareDataTo(Status.PROCESSED)
+        convenienceClient.prepareDataTo(Status.PROCESSED, errors = true)
+        val entries = objectMapper.readTree(
+            client.getReviewData(
+                processingResultFilter = listOf(ProcessingResult.HAS_ERRORS),
+                page = 0,
+                size = 100,
+            ).andExpect(status().isOk).andReturn().response.contentAsString,
+        )["sequenceEntries"]
+        assertThat(entries.size(), `is`(10))
+        assertThat(entries.all { it["processingResult"].asText() == ProcessingResult.HAS_ERRORS.name }, `is`(true))
+        assertThat(entries.all { !it["reviewData"]["errors"].isEmpty }, `is`(true))
+    }
+
+    @Test
     fun `review data requires bounded pagination`() {
         for ((page, size) in listOf(null to null, 0 to null, null to 10, -1 to 10, 0 to 0, 0 to 101)) {
             client.getReviewData(page = page, size = size)
+                .andExpect(status().isBadRequest)
+            client.getSequenceEntries(page = page, size = size, includeReviewData = true)
                 .andExpect(status().isBadRequest)
         }
     }

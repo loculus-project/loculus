@@ -111,6 +111,11 @@ const getSequencesEndpoint = makeEndpoint({
     parameters: [
         authorizationHeader,
         {
+            name: 'includeReviewData',
+            type: 'Query',
+            schema: z.boolean().optional(),
+        },
+        {
             name: 'groupIdsFilter',
             type: 'Query',
             schema: z.string().optional(), // comma separated list of group ids (numbers)
@@ -138,12 +143,6 @@ const getSequencesEndpoint = makeEndpoint({
     ],
     response: getSequencesResponse,
     errors: [notAuthorizedError, { status: 404, schema: problemDetail }],
-});
-
-const getReviewDataEndpoint = makeEndpoint({
-    ...getSequencesEndpoint,
-    path: withOrganismPathSegment('/review-data'),
-    alias: 'getReviewData',
 });
 
 const approveProcessedDataEndpoint = makeEndpoint({
@@ -260,7 +259,6 @@ export const backendApi = makeApi([
     revokeSequencesEndpoint,
     submitReviewedSequenceEndpoint,
     getSequencesEndpoint,
-    getReviewDataEndpoint,
     approveProcessedDataEndpoint,
     deleteSequencesEndpoint,
     extractUnprocessedDataEndpoint,

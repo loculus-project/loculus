@@ -126,10 +126,10 @@ const InnerReviewPage: FC<ReviewPageProps> = ({
         setPageQuery({ pageOneIndexed: 1, size: newSize });
     };
 
-    const sequencesData = hooks.getReviewData.data;
+    const sequencesData = hooks.getSequences.data;
 
-    if (hooks.getReviewData.isError) {
-        return <div>Error: {hooks.getReviewData.error.message}</div>;
+    if (hooks.getSequences.isError) {
+        return <div>Error: {hooks.getSequences.error.message}</div>;
     }
     if (sequencesData === undefined) {
         return <div>Loading..</div>;
@@ -154,7 +154,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({
 
     // If we narrowed the selection and the selected page doesn't exist anymore, go to the last existing page instead
     const lastPage = Math.max(1, Math.ceil(selectedCount / pageQuery.size));
-    if (!hooks.getReviewData.isPreviousData && pageQuery.pageOneIndexed > lastPage) {
+    if (!hooks.getSequences.isPreviousData && pageQuery.pageOneIndexed > lastPage) {
         setPageQuery({ ...pageQuery, pageOneIndexed: lastPage });
     }
 
@@ -379,7 +379,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({
     );
 
     return (
-        <div className={hooks.getReviewData.isPreviousData ? 'opacity-50 pointer-events-none' : ''}>
+        <div className={hooks.getSequences.isPreviousData ? 'opacity-50 pointer-events-none' : ''}>
             <div className='sticky top-0 z-10'>
                 <div className='flex sm:justify-between items-bottom flex-col md:flex-row gap-5 bg-white pb-1'>
                     {controlPanel}

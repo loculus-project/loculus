@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.validation.Valid
 import jakarta.validation.constraints.Max
+import jakarta.validation.constraints.Min
 import mu.KotlinLogging
 import org.apache.commons.compress.compressors.zstandard.ZstdCompressorOutputStream
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
@@ -436,6 +437,11 @@ open class SubmissionController(
             "Part of pagination parameters. Number of sequences per page. " +
                 "If page or size are not provided, all sequences are returned.",
         ) @RequestParam(required = false) size: Int?,
+        @Parameter(
+            deprecated = true,
+            description = "Include compact review data and revision comparisons, without sequence strings. " +
+                "Requires page >= 0 and size between 1 and 100.",
+        ) @RequestParam(defaultValue = "false") includeReviewData: Boolean,
     ): GetSequenceResponse = submissionDatabaseService.getSequences(
         authenticatedUser,
         organism,
@@ -444,6 +450,7 @@ open class SubmissionController(
         processingResultFilter,
         page,
         size,
+        includeReviewData,
     )
 
     @Operation(description = GET_REVIEW_DATA_DESCRIPTION)
@@ -457,8 +464,13 @@ open class SubmissionController(
         @Parameter(description = "Filter by processing result of entries in the PROCESSED status.")
         @RequestParam(required = false) processingResultFilter: List<ProcessingResult>?,
         @HiddenParam authenticatedUser: AuthenticatedUser,
-        @Parameter(description = "Page number, starting from 0.") @RequestParam page: Int,
-        @Parameter(description = "Number of entries per page, between 1 and 100.") @RequestParam size: Int,
+        @Parameter(description = "Page number, starting from 0.")
+        @RequestParam
+        @Min(0) page: Int,
+        @Parameter(description = "Number of entries per page, between 1 and 100.")
+        @RequestParam
+        @Min(1)
+        @Max(100) size: Int,
     ): GetSequenceResponse = submissionDatabaseService.getSequences(
         authenticatedUser,
         organism,
