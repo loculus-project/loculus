@@ -23,10 +23,17 @@ jobs:
           python -m pip install .[test]
       - uses: dtolnay/rust-toolchain@1.92
       - name: build rust binary
+        env:
+          CARGO_NET_GIT_FETCH_WITH_CLI: "true"
         run: |
           REPO=https://github.com/GenSpectrum/LAPIS-SILO.git
           COMMIT=8d38b2739524cca52857d9d09ff05e9373cea4df
-          cargo install --git "$REPO" --rev "$COMMIT"
+          # Retry because cargo does not retry git clone errors such as "SSL error: unknown error"
+          for attempt in 1 2 3; do
+            cargo install --git "$REPO" --rev "$COMMIT" && break
+            [ "$attempt" = 3 ] && exit 1
+            sleep 10
+          done
           echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
       - name: Run tests
         run: |
