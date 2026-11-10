@@ -48,3 +48,5 @@ plantuml -tsvg ./plantuml/*.puml
 The generated svg files will be in the same directory as the puml files and are referenced in the markdown files.
 
 For the compiled documentation, see the [runtime_view](./runtime_view.md).
+
+For how the backend hands out preprocessing work (queue, leases, rollout), see [preprocessing_queue](./preprocessing_queue.md).

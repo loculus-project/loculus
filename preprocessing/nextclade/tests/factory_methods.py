@@ -4,6 +4,7 @@
 from dataclasses import dataclass, field, replace
 from datetime import datetime
 from typing import Literal
+from uuid import NAMESPACE_URL, uuid5
 
 import pytz
 
@@ -32,12 +33,18 @@ from loculus_preprocessing.nextclade_annotation import GffAttributes, NextcladeA
 # Default ProcessingContext for tests that don't care about its contents (no INSDC
 # ingest group, no submittedAt). Tests that do care about specific field(s) should use
 # `dataclasses.replace(DEFAULT_TEST_CONTEXT, ...)`.
+# Arbitrary values, the backend is mocked in tests
+TEST_PROCESSING_ATTEMPT_ID = "00000000-0000-0000-0000-000000000001"
+TEST_LEASE_UNTIL = 4_102_444_800
+
 DEFAULT_TEST_CONTEXT = ProcessingContext(
     accession_version="accession.1",
     group_id=2,
     insdc_ingest_group_id=1,
     submitted_at="",
     submission_id="test_submission_id",
+    processing_attempt_id=TEST_PROCESSING_ATTEMPT_ID,
+    lease_until=TEST_LEASE_UNTIL,
 )
 
 # Default ExternalServices for tests that don't care about its contents (no taxonomy
@@ -110,6 +117,8 @@ class UnprocessedEntryFactory:
             context=replace(
                 DEFAULT_TEST_CONTEXT,
                 accession_version=f"LOC_{accession_id}.1",
+                # Distinct per entry, so a mix-up between entries in a batch is caught
+                processing_attempt_id=str(uuid5(NAMESPACE_URL, accession_id)),
                 group_id=group_id,
                 insdc_ingest_group_id=insdc_ingest_group_id,
                 submitted_at=ts_from_ymd(2021, 12, 15),
@@ -154,6 +163,7 @@ class ProcessedEntryFactory:
         self,
         metadata_dict: dict[str, ProcessedMetadataValue],
         accession: str,
+        processing_attempt_id: str,
         errors: list[ProcessingAnnotation] | None = None,
         warnings: list[ProcessingAnnotation] | None = None,
         processed_alignment: ProcessedAlignment | None = None,
@@ -173,6 +183,7 @@ class ProcessedEntryFactory:
         return ProcessedEntry(
             accession=accession,
             version=1,
+            processingAttemptId=processing_attempt_id,
             data=ProcessedData(
                 metadata=base_metadata_dict,
                 files=files,
@@ -215,6 +226,7 @@ class Case:
         expected_output = factory_custom.create_processed_entry(
             metadata_dict=self.expected_metadata,
             accession=unprocessed_entry.context.accession_version.split(".")[0],
+            processing_attempt_id=unprocessed_entry.context.processing_attempt_id,
             errors=self.expected_errors or [],
             warnings=self.expected_warnings or [],
             processed_alignment=self.expected_processed_alignment,
@@ -247,6 +259,10 @@ def verify_processed_entry(
         f"{test_name}: processed entry accessionVersion "
         f"{processed_entry.accession}.{processed_entry.version} "
         f"does not match expected output {expected_output.accession}.{expected_output.version}."
+    )
+    assert processed_entry.processingAttemptId == expected_output.processingAttemptId, (
+        f"{test_name}: processing attempt id {processed_entry.processingAttemptId} "
+        f"does not match expected output {expected_output.processingAttemptId}."
     )
 
     # Check errors

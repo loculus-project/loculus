@@ -4,9 +4,11 @@ import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.v1.core.Table
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.less
+import org.jetbrains.exposed.v1.core.vendors.ForUpdateOption.PostgreSQL.ForShare
 import org.jetbrains.exposed.v1.datetime.datetime
 import org.jetbrains.exposed.v1.jdbc.andWhere
 import org.jetbrains.exposed.v1.jdbc.batchInsert
+import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
 
@@ -16,6 +18,18 @@ object CurrentProcessingPipelineTable : Table(CURRENT_PROCESSING_PIPELINE_TABLE_
     val organismColumn = varchar("organism", 255)
     val versionColumn = long("version")
     val startedUsingAtColumn = datetime("started_using_at")
+
+    // Submissions share this organism's version row until their enqueue commits.
+    fun getVersionForShare(organism: String): Long = select(versionColumn)
+        .where { organismColumn eq organism }
+        .forUpdate(ForShare())
+        .single()[versionColumn]
+
+    // Registration waits for those submissions before adding a pipeline version.
+    fun getVersionForUpdate(organism: String): Long = select(versionColumn)
+        .where { organismColumn eq organism }
+        .forUpdate()
+        .single()[versionColumn]
 
     /**
      * Every organism needs to have a current pipeline version in the CurrentProcessingPipelineTable.
@@ -32,11 +46,13 @@ object CurrentProcessingPipelineTable : Table(CURRENT_PROCESSING_PIPELINE_TABLE_
      * Given a version that was found that is potentially newer than the current one, check if the currently stored
      * 'current' pipeline version for this organism is less than the one that was found?
      * If so, the pipeline needs to 'update' i.e. reprocess older entries.
+     * Lock the matching row FOR UPDATE to coordinate retirement with submissions and registration.
      */
     fun pipelineNeedsUpdate(maybeNewerVersion: Long, organism: String) = CurrentProcessingPipelineTable
         .selectAll()
         .where { versionColumn less maybeNewerVersion }
         .andWhere { organismColumn eq organism }
+        .forUpdate()
         .empty()
         .not()
 

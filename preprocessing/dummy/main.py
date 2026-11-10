@@ -87,6 +87,8 @@ class ProcessingAnnotation:
 class Sequence:
     accession: int
     version: int
+    # Returned unchanged with the result
+    processingAttemptId: str  # noqa: N815
     data: dict
     errors: list[ProcessingAnnotation] = field(default_factory=list)
     warnings: list[ProcessingAnnotation] = field(default_factory=list)
@@ -123,7 +125,12 @@ def parse_ndjson(ndjson_data: str) -> list[Sequence]:
         if json_str:
             json_object = json.loads(json_str)
             entries.append(
-                Sequence(json_object["accession"], json_object["version"], json_object["data"])
+                Sequence(
+                    accession=json_object["accession"],
+                    version=json_object["version"],
+                    processingAttemptId=json_object["processingAttemptId"],
+                    data=json_object["data"],
+                )
             )
     return entries
 
@@ -166,9 +173,10 @@ def process(unprocessed: list[Sequence]) -> list[Sequence]:
             data["sequenceNameToFastaId"] = {"main": submissionId}
 
         updated_sequence = Sequence(
-            sequence.accession,
-            sequence.version,
-            data,
+            accession=sequence.accession,
+            version=sequence.version,
+            processingAttemptId=sequence.processingAttemptId,
+            data=data,
         )
 
         disable_randomly = randomWarnError and random.choice([True, True, False])
