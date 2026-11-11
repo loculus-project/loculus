@@ -13,11 +13,16 @@ class SiloRunner:
         self._silo_binary = silo_binary
         self._preprocessing_config = preprocessing_config
 
-    def run_preprocessing(self, timeout_seconds: int) -> None:
+    def run_preprocessing(
+        self, timeout_seconds: int, changes: Path | None = None, total_records: int | None = None
+    ) -> None:
         logger.info("Starting SILO preprocessing")
+        command = [sys.executable, "-m", "silo_import.preprocess", str(self._preprocessing_config)]
+        if changes:
+            command += [str(changes), str(total_records)]
         try:  # ruff:ignore[too-many-statements-in-try-clause]
             result = subprocess.run(  # ruff:ignore[subprocess-without-shell-equals-true]
-                [sys.executable, "-m", "silo_import.preprocess", str(self._preprocessing_config)],
+                command,
                 capture_output=True,
                 text=True,
                 timeout=timeout_seconds,

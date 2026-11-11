@@ -2131,13 +2131,19 @@
           "description": "Interval in seconds between checking for new data",
           "default": 30,
           "minimum": 1
+        },
+        "incremental": {
+          "type": "boolean",
+          "description": "Apply only new and changed records to the SILO database instead of rebuilding it on every change",
+          "default": false
         }
       },
       "additionalProperties": false,
       "default": {
         "siloTimeoutSeconds": 3600,
         "hardRefreshIntervalSeconds": 3600,
-        "pollIntervalSeconds": 30
+        "pollIntervalSeconds": 30,
+        "incremental": false
       }
     },
     "gitHubEditLink": {
