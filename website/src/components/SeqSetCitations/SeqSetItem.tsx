@@ -1,4 +1,5 @@
 import MUIPagination from '@mui/material/Pagination';
+import { useQuery } from '@tanstack/react-query';
 import { AxiosError } from 'axios';
 import { type FC, useState } from 'react';
 import { toast } from 'react-toastify';
@@ -6,17 +7,18 @@ import { toast } from 'react-toastify';
 import CitationList from './CitationList.tsx';
 import { DatePlot, CategoryPlot } from './SeqSetPlots.tsx';
 import { SeqSetRecordsTableWithMetadata } from './SeqSetRecordsTableWithMetadata';
-import type { AggregateRow } from './getSeqSetStatistics.ts';
+import { getSeqSetStatistics } from './getSeqSetStatistics.ts';
 import { getClientLogger } from '../../clientLogger';
 import { seqSetCitationClientHooks } from '../../services/serviceHooks';
 import type { ProblemDetail } from '../../types/backend.ts';
-import type { SeqSetGraph } from '../../types/config.ts';
+import type { SeqSetGraphWithOrganismFields } from '../../types/config.ts';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import { type SeqSet, type SeqSetCitation, type SeqSetRecord } from '../../types/seqSetCitation';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
 import { getThemeColor } from '../../utils/getThemeColor';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { Button } from '../common/Button.tsx';
+import { Spinner } from '../common/Spinner.tsx';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 import MdiDotsGrid from '~icons/mdi/dots-grid';
 import MdiViewGrid from '~icons/mdi/view-grid';
@@ -40,6 +42,48 @@ const SeqSetSection: FC<{ title: string; children: React.ReactNode; headerConten
 
 const SeqSetSectionSeparator: FC = () => <hr className='my-8 border-t-2 border-gray-200' />;
 
+const SeqSetGraphCard: FC<{
+    clientConfig: ClientConfig;
+    graph: SeqSetGraphWithOrganismFields;
+    seqSetAccessionVersion: string;
+    seqSetRecords: SeqSetRecord[];
+}> = ({ clientConfig, graph, seqSetAccessionVersion, seqSetRecords }) => {
+    const barColor = getThemeColor('--color-primary-500', '#6b84c6');
+
+    const { data, isLoading, isError } = useQuery({
+        queryKey: ['seqset-graph', seqSetAccessionVersion, graph.name, graph.organismFields, clientConfig],
+        queryFn: () =>
+            getSeqSetStatistics(
+                seqSetRecords.map((record) => record.accession),
+                graph.organismFields,
+                clientConfig,
+            ),
+    });
+
+    if (isLoading) {
+        return (
+            <div className='flex items-center justify-center h-48'>
+                <Spinner />
+            </div>
+        );
+    }
+
+    if (isError) {
+        return (
+            <div className='flex items-center justify-center h-48 text-gray-500'>
+                Error while fetching {graph.displayName.toLowerCase()} statistics
+            </div>
+        );
+    }
+
+    const description = `${graph.displayName} for ${seqSetAccessionVersion} sequences`;
+    return graph.type === 'date' ? (
+        <DatePlot data={data} description={description} barColor={barColor} />
+    ) : (
+        <CategoryPlot data={data} description={description} barColor={barColor} />
+    );
+};
+
 const SeqSetSectionEntry: FC<{ label: string; value: React.ReactNode }> = ({ label, value }) => (
     <div className='flex flex-row py-1.5'>
         <div className='mr-8 w-[120px] text-gray-500'>{label}</div>
@@ -54,8 +98,7 @@ type SeqSetItemProps = {
     seqSet: SeqSet;
     seqSetRecords: SeqSetRecord[];
     seqSetCitations: SeqSetCitation[];
-    seqSetGraphs: SeqSetGraph[];
-    seqSetGraphsData: Record<string, AggregateRow[]>;
+    seqSetGraphs: SeqSetGraphWithOrganismFields[];
     isAdminView?: boolean;
     fieldsToDisplay?: { field: string; displayName: string }[];
     organismDisplayNames?: Record<string, string>;
@@ -69,7 +112,6 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
     seqSetRecords,
     seqSetCitations,
     seqSetGraphs,
-    seqSetGraphsData,
     isAdminView = false,
     fieldsToDisplay,
     organismDisplayNames,
@@ -139,8 +181,6 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
         return seqSetRecords.slice((page - 1) * sequencesPerPage, page * sequencesPerPage);
     };
 
-    const barPlotColor = getThemeColor('--color-primary-500', '#6b84c6');
-
     return (
         <div className='flex flex-col'>
             <div className='grid grid-cols-1 lg:grid-cols-2'>
@@ -186,23 +226,15 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
                 }
             >
                 <div className={`grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6 ${!wideGraphs ? 'lg:grid-cols-3' : ''}`}>
-                    {seqSetGraphs.map((graph) =>
-                        graph.type === 'date' ? (
-                            <DatePlot
-                                key={graph.name}
-                                data={seqSetGraphsData[graph.name] ?? []}
-                                description={`${graph.displayName} for ${seqSetAccessionVersion} sequences`}
-                                barColor={barPlotColor}
-                            />
-                        ) : (
-                            <CategoryPlot
-                                key={graph.name}
-                                data={seqSetGraphsData[graph.name] ?? []}
-                                description={`${graph.displayName} for ${seqSetAccessionVersion} sequences`}
-                                barColor={barPlotColor}
-                            />
-                        ),
-                    )}
+                    {seqSetGraphs.map((graph) => (
+                        <SeqSetGraphCard
+                            key={graph.name}
+                            clientConfig={clientConfig}
+                            graph={graph}
+                            seqSetAccessionVersion={seqSetAccessionVersion}
+                            seqSetRecords={seqSetRecords}
+                        />
+                    ))}
                 </div>
             </SeqSetSection>
             <SeqSetSectionSeparator />

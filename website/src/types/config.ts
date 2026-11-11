@@ -256,6 +256,7 @@ export const seqSetGraph = z.object({
     fields: z.array(z.string()),
 });
 export type SeqSetGraph = z.infer<typeof seqSetGraph>;
+export type SeqSetGraphWithOrganismFields = SeqSetGraph & { organismFields: Record<string, string> };
 
 export const websiteConfig = z.object({
     accessionPrefix: z.string(),

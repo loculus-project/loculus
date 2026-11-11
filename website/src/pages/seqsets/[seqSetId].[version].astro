@@ -4,12 +4,12 @@ import { err, type Result } from 'neverthrow';
 import { ErrorFeedback } from '../../components/ErrorFeedback';
 import { SeqSetItem } from '../../components/SeqSetCitations/SeqSetItem';
 import { SeqSetItemActions } from '../../components/SeqSetCitations/SeqSetItemActions';
-import { getSeqSetStatistics } from '../../components/SeqSetCitations/getSeqSetStatistics.ts';
-import { getRuntimeConfig, seqSetsAreEnabled, getWebsiteConfig } from '../../config';
+import { getConfiguredOrganisms, getRuntimeConfig, getSchema, seqSetsAreEnabled, getWebsiteConfig } from '../../config';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { routes } from '../../routes/routes';
 import { SeqSetCitationClient } from '../../services/seqSetCitationClient.ts';
 import type { ProblemDetail } from '../../types/backend';
+import type { SeqSetGraphWithOrganismFields } from '../../types/config';
 import type { SeqSet } from '../../types/seqSetCitation';
 import { getAccessToken } from '../../utils/getAccessToken';
 
@@ -54,23 +54,25 @@ const seqSetAuthorResponse = seqSetResponse.isOk()
     ? await seqSetClient.getAuthor(seqSetResponse.value.createdBy)
     : err();
 
-const accessions = seqSetRecordsResponse.unwrapOr([]).map((record) => record.accession);
-const seqSetGraphs = websiteConfig.seqSetsGraphs ?? [];
-const seqSetGraphResponses = await Promise.all(
-    seqSetGraphs.map((graph) => getSeqSetStatistics(accessions, graph.fields)),
-);
+// For each graph, map each organism to the first field option that exists in its schema, skipping organisms with none
+const seqSetGraphs: SeqSetGraphWithOrganismFields[] = (websiteConfig.seqSetsGraphs ?? []).map((graph) => ({
+    ...graph,
+    organismFields: Object.fromEntries(
+        getConfiguredOrganisms().flatMap((organism) => {
+            const schema = getSchema(organism.key);
+            const field = graph.fields.find((option) => schema.metadata.some((f) => f.name === option));
+            return field === undefined ? [] : [[organism.key, field]];
+        }),
+    ),
+}));
 
 const seqSetCitations = seqSetCitationsResponse.unwrapOr([]);
 const seqSetAuthor = seqSetAuthorResponse.unwrapOr(undefined);
-const seqSetGraphsData = Object.fromEntries(
-    seqSetGraphs.map((graph, i) => [graph.name, seqSetGraphResponses[i].unwrapOr([])]),
-);
 
 const secondaryErrors = (
     [
         [seqSetAuthorResponse, 'Error while fetching author profile'],
         [seqSetCitationsResponse, 'Error while fetching seqSet citations'],
-        ...seqSetGraphResponses.map((response) => [response, 'Error while fetching seqSet statistics']),
     ] as [Result<unknown, ProblemDetail>, string][]
 ).flatMap(([response, message]) => (response.isErr() ? [`${message}: ${JSON.stringify(response.error)}`] : []));
 ---
@@ -119,7 +121,6 @@ const secondaryErrors = (
                 seqSetRecords={seqSetRecordsResponse.value}
                 seqSetCitations={seqSetCitations}
                 seqSetGraphs={seqSetGraphs}
-                seqSetGraphsData={seqSetGraphsData}
                 isAdminView={seqSetResponse.value.createdBy === username}
                 fieldsToDisplay={websiteConfig.seqSetsFieldsToDisplay}
                 organismDisplayNames={organismDisplayNames}
