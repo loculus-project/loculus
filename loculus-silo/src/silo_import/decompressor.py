@@ -20,6 +20,7 @@ class NdjsonAnalysis:
     record_count: int
     pipeline_version: int | None
     hierarchical_filter_values: dict[MetadataField, set[str]] = field(default_factory=dict)
+    hashes: dict[str, str] = field(default_factory=dict)
 
 
 def analyze_ndjson(
@@ -46,6 +47,7 @@ def analyze_ndjson(
     filter_values: dict[MetadataField, set[str]] = (
         {name: set() for name in hierarchical_filters} if hierarchical_filters else {}
     )
+    hashes: dict[str, str] = {}
 
     try:  # ruff:ignore[too-many-statements-in-try-clause]
         for record in orjsonl.stream(path):
@@ -53,6 +55,9 @@ def analyze_ndjson(
             metadata = record.get("metadata", {})  # type: ignore
             if pipeline_version is None:
                 pipeline_version = metadata.get("pipelineVersion")
+            record_hash = record.get("hash")  # type: ignore
+            if record_hash is not None:
+                hashes[metadata["accessionVersion"]] = record_hash
             if hierarchical_filters:
                 for name in hierarchical_filters:
                     raw_value = metadata.get(name)
@@ -68,4 +73,5 @@ def analyze_ndjson(
         record_count=record_count,
         pipeline_version=pipeline_version,
         hierarchical_filter_values=filter_values,
+        hashes=hashes,
     )

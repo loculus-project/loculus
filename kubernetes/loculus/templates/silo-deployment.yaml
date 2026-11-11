@@ -106,6 +106,8 @@ spec:
               value: {{ $.Values.siloImport.hardRefreshIntervalSeconds | quote }}
             - name: SILO_IMPORT_POLL_INTERVAL_SECONDS
               value: {{ $.Values.siloImport.pollIntervalSeconds | quote }}
+            - name: SILO_IMPORT_INCREMENTAL
+              value: {{ $.Values.siloImport.incremental | quote }}
             - name: PATH_TO_SILO_BINARY
               value: "/usr/local/bin/silo"
             - name: PREPROCESSING_CONFIG

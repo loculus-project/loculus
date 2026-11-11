@@ -20,6 +20,7 @@ class ImporterConfig:
     silo_binary: Path
     preprocessing_config: Path
     hierarchical_filters: dict[MetadataField, HierarchicalServiceUrl] | None = None
+    incremental: bool = False
 
     @classmethod
     def from_env(cls) -> ImporterConfig:
@@ -73,11 +74,16 @@ class ImporterConfig:
             silo_binary=silo_binary,
             preprocessing_config=preprocessing_config,
             hierarchical_filters=hierarchical_filters,
+            incremental=env.get("SILO_IMPORT_INCREMENTAL", "").lower() == "true",
         )
 
     @property
     def released_data_endpoint(self) -> str:
         return f"{self.backend_base_url}/get-released-data?compression=zstd"
+
+    @property
+    def released_data_changes_endpoint(self) -> str:
+        return f"{self.backend_base_url}/get-released-data-changes?compression=zstd"
 
 
 def _parse_hierarchical_filters(
