@@ -29,6 +29,7 @@ import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.ResultActions
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.head
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import java.util.UUID
@@ -269,6 +270,23 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
             .also {
                 if (ifNoneMatch != null) it.header("If-None-Match", ifNoneMatch)
             },
+    )
+
+    fun headReleasedDataChanges(organism: String = DEFAULT_ORGANISM, ifNoneMatch: String? = null): ResultActions =
+        mockMvc.perform(
+            head(addOrganismToPath("/get-released-data-changes", organism = organism))
+                .also {
+                    if (ifNoneMatch != null) it.header("If-None-Match", ifNoneMatch)
+                },
+        )
+
+    fun getReleasedDataChanges(
+        knownHashes: Map<String, String> = emptyMap(),
+        organism: String = DEFAULT_ORGANISM,
+    ): ResultActions = mockMvc.perform(
+        post(addOrganismToPath("/get-released-data-changes", organism = organism))
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(knownHashes)),
     )
 
     fun deleteSequenceEntries(

@@ -7,6 +7,7 @@ const val REVISE_ENDPOINT = "revise"
 const val SUBMIT_PROCESSED_DATA_ENDPOINT = "submit-processed-data"
 const val EXTRACT_UNPROCESSED_DATA_ENDPOINT = "extract-unprocessed-data"
 const val GET_RELEASED_DATA_ENDPOINT = "get-released-data"
+const val GET_RELEASED_DATA_CHANGES_ENDPOINT = "get-released-data-changes"
 const val GET_SUBMITTED_METADATA_ENDPOINT = "get-submitted-metadata"
 const val GET_SUBMITTED_DATA_ENDPOINT = "get-submitted-data"
 
@@ -25,7 +26,11 @@ const val STREAM_SUBMITTED_DATA_PHASE = "stream-submitted-data"
 const val STREAM_RESPONSE_PHASE = "stream-response"
 
 // Endpoints that pipelines poll in a loop, where request rate and duration are worth tracking separately.
-val POLLING_ENDPOINTS = setOf(EXTRACT_UNPROCESSED_DATA_ENDPOINT, GET_RELEASED_DATA_ENDPOINT)
+val POLLING_ENDPOINTS = setOf(
+    EXTRACT_UNPROCESSED_DATA_ENDPOINT,
+    GET_RELEASED_DATA_ENDPOINT,
+    GET_RELEASED_DATA_CHANGES_ENDPOINT,
+)
 
 fun readPhaseForEndpoint(endpoint: String) = when (endpoint) {
     EXTRACT_UNPROCESSED_DATA_ENDPOINT -> STREAM_UNPROCESSED_DATA_PHASE

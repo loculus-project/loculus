@@ -174,6 +174,13 @@ Releasable accession versions.
 The schema is to be understood per line of the NDJSON stream.    
 """
 
+const val GET_RELEASED_DATA_CHANGES_DESCRIPTION = """
+Get the released data that changed as a stream of NDJSON.
+The request body maps accession versions to the hash that was returned for them in a previous response.
+This returns all accession versions that have the status 'APPROVED_FOR_RELEASE'
+and whose hash is missing from the request body or differs from it.
+"""
+
 const val GET_UNPROCESSED_METADATA_RESPONSE_DESCRIPTION = """
 The unprocessed metadata of submission sequence versions as NDJSON where each line is a flat JSON object where the values
 are all strings (or null).
