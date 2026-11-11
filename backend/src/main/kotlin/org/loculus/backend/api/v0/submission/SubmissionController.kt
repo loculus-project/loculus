@@ -38,6 +38,7 @@ import org.loculus.backend.model.SubmissionParams
 import org.loculus.backend.model.SubmitModel
 import org.loculus.backend.service.datauseterms.DataUseTermsPreconditionValidator
 import org.loculus.backend.service.groupmanagement.GroupManagementPreconditionValidator
+import org.loculus.backend.service.submission.PreprocessingQueueState
 import org.loculus.backend.service.submission.SubmissionDatabaseService
 import org.loculus.backend.types.AccessionVersion
 import org.loculus.backend.types.AccessionVersionsFilterWithApprovalScope
@@ -230,9 +231,20 @@ open class SubmissionController(
             return ResponseEntity.status(HttpStatus.NOT_MODIFIED).eTag(lastDatabaseWriteETag).build()
         }
 
+        // Register the version and fill its queue in separate transactions.
+        val queueState = submissionDatabaseService.registerPreprocessingQueueVersion(organism, pipelineVersion)
+        if (queueState == PreprocessingQueueState.NEEDS_BACKFILL) {
+            submissionDatabaseService.backfillPreprocessingQueue(organism, pipelineVersion)
+        }
+
         val headers = HttpHeaders()
         headers.contentType = MediaType.parseMediaType(MediaType.APPLICATION_NDJSON_VALUE)
-        headers.eTag = lastDatabaseWriteETag
+        // A backfill changes the etag, so the response carries the value from after it.
+        headers.eTag = if (queueState == PreprocessingQueueState.NEEDS_BACKFILL) {
+            releasedDataModel.getLastDatabaseWriteETag(organism = organism, pipelineVersion = pipelineVersion)
+        } else {
+            lastDatabaseWriteETag
+        }
         val streamBody = streamTransactioned(
             endpoint = EXTRACT_UNPROCESSED_DATA_ENDPOINT,
             organism = organism,
@@ -436,6 +448,10 @@ open class SubmissionController(
             "Part of pagination parameters. Number of sequences per page. " +
                 "If page or size are not provided, all sequences are returned.",
         ) @RequestParam(required = false) size: Int?,
+        @Parameter(
+            description = "Include compact review data and revision comparisons, without sequence strings. " +
+                "Requires page >= 0 and size between 1 and 100.",
+        ) @RequestParam(defaultValue = "false") includeReviewData: Boolean,
     ): GetSequenceResponse = submissionDatabaseService.getSequences(
         authenticatedUser,
         organism,
@@ -444,6 +460,7 @@ open class SubmissionController(
         processingResultFilter,
         page,
         size,
+        includeReviewData,
     )
 
     @Operation(description = "Retrieve unprocessed metadata of submitted accession versions.")

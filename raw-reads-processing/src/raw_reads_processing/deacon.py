@@ -2,7 +2,7 @@ import itertools
 import logging
 import os
 import statistics
-import subprocess  # noqa: S404
+import subprocess
 from pathlib import Path
 from typing import cast
 
@@ -38,14 +38,14 @@ def start_deacon_server() -> subprocess.Popen:
     ]
     logger.debug("Starting Deacon server")
 
-    return subprocess.Popen(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)  # noqa: S603
+    return subprocess.Popen(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 
 def stop_deacon_server(proc: subprocess.Popen) -> None:
     args = ["deacon", "--use-server", "server", "stop"]
     logger.debug("Stopping Deacon server")
 
-    subprocess.run(  # noqa: S603
+    subprocess.run(
         args,
         check=False,
         stdout=subprocess.DEVNULL,
@@ -157,11 +157,11 @@ def run_deacon_filter(
         *file_name_to_path.values(),
     ]
     logger.debug(
-        f"Running Deacon filter on '{', '.join(str(f) for f in file_name_to_path.keys())}': {args}"
+        f"Running Deacon filter on '{', '.join(str(f) for f in file_name_to_path)}': {args}"
     )
 
     try:
-        subprocess.run(  # noqa: S603
+        subprocess.run(
             args,
             check=True,
             capture_output=True,
