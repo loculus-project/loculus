@@ -1,5 +1,8 @@
 package org.loculus.backend.api.v0.submission
 
+import com.fasterxml.jackson.core.JacksonException
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.headers.Header
@@ -17,11 +20,13 @@ import org.loculus.backend.api.LoculusCustomHeaders.X_TOTAL_RECORDS
 import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.auth.HiddenParam
 import org.loculus.backend.config.BackendConfig
+import org.loculus.backend.errors.BadRequestException
 import org.loculus.backend.errors.UnprocessableEntityException
 import org.loculus.backend.log.ORGANISM_MDC_KEY
 import org.loculus.backend.log.REQUEST_ID_MDC_KEY
 import org.loculus.backend.log.RequestIdContext
 import org.loculus.backend.metrics.EXTRACT_UNPROCESSED_DATA_ENDPOINT
+import org.loculus.backend.metrics.GET_RELEASED_DATA_CHANGES_ENDPOINT
 import org.loculus.backend.metrics.GET_RELEASED_DATA_ENDPOINT
 import org.loculus.backend.metrics.GET_SUBMITTED_DATA_ENDPOINT
 import org.loculus.backend.metrics.GET_SUBMITTED_METADATA_ENDPOINT
@@ -79,6 +84,7 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestMethod
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RequestPart
 import org.springframework.web.bind.annotation.ResponseStatus
@@ -95,6 +101,7 @@ private val log = KotlinLogging.logger { }
 private val SUBMITTED_DATA_DOWNLOAD_TIMESTAMP_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss'Z'")
 
 const val MAX_SUBMITTED_DATA_DOWNLOAD_ENTRIES = 500
+const val MAX_KNOWN_HASHES_BYTES = 32 * 1024 * 1024
 
 @RestController
 @RequestMapping("/{organism}")
@@ -110,6 +117,7 @@ open class SubmissionController(
     private val groupManagementPreconditionValidator: GroupManagementPreconditionValidator,
     private val dataUseTermsPreconditionValidator: DataUseTermsPreconditionValidator,
     private val submissionMetrics: SubmissionMetrics,
+    private val objectMapper: ObjectMapper,
 ) {
     @Operation(description = SUBMIT_DESCRIPTION)
     @ApiResponse(responseCode = "200", description = SUBMIT_RESPONSE_DESCRIPTION)
@@ -396,6 +404,70 @@ open class SubmissionController(
             requestStartNanos = requestStartNanos,
         ) {
             releasedDataModel.getReleasedData(organism)
+        }
+        return ResponseEntity.ok().headers(headers).body(streamBody)
+    }
+
+    @Operation(description = "Check with If-None-Match whether the released data has changed.")
+    @RequestMapping("/get-released-data-changes", method = [RequestMethod.HEAD])
+    fun headReleasedDataChanges(
+        @PathVariable @Valid organism: Organism,
+        @RequestHeader(value = HttpHeaders.IF_NONE_MATCH, required = false) ifNoneMatch: String?,
+    ): ResponseEntity<Void> {
+        val lastDatabaseWriteETagWithDate = releasedDataModel.getLastDatabaseWriteETagWithDate(
+            tableNames = RELEASED_DATA_RELATED_TABLES,
+            organism = organism,
+        )
+        val status = if (ifNoneMatch == lastDatabaseWriteETagWithDate) HttpStatus.NOT_MODIFIED else HttpStatus.OK
+        return ResponseEntity.status(status).eTag(lastDatabaseWriteETagWithDate).build()
+    }
+
+    @Operation(
+        description = GET_RELEASED_DATA_CHANGES_DESCRIPTION,
+        requestBody = SwaggerRequestBody(
+            content = [
+                Content(
+                    mediaType = MediaType.APPLICATION_JSON_VALUE,
+                    schema = Schema(type = "object", additionalPropertiesSchema = String::class),
+                ),
+            ],
+        ),
+    )
+    @PostMapping(
+        "/get-released-data-changes",
+        consumes = [MediaType.APPLICATION_JSON_VALUE],
+        produces = [MediaType.APPLICATION_NDJSON_VALUE],
+    )
+    fun getReleasedDataChanges(
+        @PathVariable @Valid organism: Organism,
+        @RequestParam compression: CompressionFormat?,
+        request: HttpServletRequest,
+    ): ResponseEntity<StreamingResponseBody> {
+        val body = request.inputStream.readNBytes(MAX_KNOWN_HASHES_BYTES + 1)
+        if (body.size > MAX_KNOWN_HASHES_BYTES) {
+            return ResponseEntity.status(HttpStatus.CONTENT_TOO_LARGE).build()
+        }
+        val knownHashes = try {
+            objectMapper.readValue<Map<String, String>?>(body)
+        } catch (e: JacksonException) {
+            throw BadRequestException("Failed to deserialize request body: ${e.message}", e)
+        } ?: throw BadRequestException("Failed to deserialize request body: must not be null")
+
+        val headers = HttpHeaders()
+        headers.eTag = releasedDataModel.getLastDatabaseWriteETagWithDate(
+            tableNames = RELEASED_DATA_RELATED_TABLES,
+            organism = organism,
+        )
+        headers.contentType = MediaType.APPLICATION_NDJSON
+        compression?.let { headers.add(HttpHeaders.CONTENT_ENCODING, it.compressionName) }
+        headers.add(X_TOTAL_RECORDS, submissionDatabaseService.countReleasedSubmissions(organism).toString())
+
+        val streamBody = streamTransactioned(
+            compressionFormat = compression,
+            endpoint = GET_RELEASED_DATA_CHANGES_ENDPOINT,
+            organism = organism,
+        ) {
+            releasedDataModel.getReleasedDataChanges(organism, knownHashes)
         }
         return ResponseEntity.ok().headers(headers).body(streamBody)
     }

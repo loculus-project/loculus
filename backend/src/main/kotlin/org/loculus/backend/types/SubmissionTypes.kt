@@ -2,6 +2,7 @@ package org.loculus.backend.types
 
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.annotation.JsonUnwrapped
 import com.fasterxml.jackson.annotation.JsonValue
 import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.databind.DeserializationContext
@@ -241,6 +242,8 @@ data class ReleasedData(
     )
     val aminoAcidInsertions: Map<GeneName, List<Insertion>>,
 )
+
+data class ReleasedDataWithHash(val hash: String, @JsonUnwrapped val releasedData: ReleasedData)
 
 data class ExternalSubmittedData(
     override val accession: Accession,
