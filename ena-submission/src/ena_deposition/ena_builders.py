@@ -355,9 +355,8 @@ def create_manifest(
     if isinstance(manifest, AssemblyManifest) and not manifest.fasta and not manifest.flatfile:
         msg = "Either fasta or flatfile must be provided"
         raise ValueError(msg)
-    if isinstance(manifest, RawReadsManifest) and not manifest.fastq:
-        msg = "Fastq files must be provided"
-        raise ValueError(msg)
+    if isinstance(manifest, RawReadsManifest):
+        manifest.validate_files()
 
     if dir:
         os.makedirs(dir, exist_ok=True)

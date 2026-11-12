@@ -2,10 +2,13 @@ import gzip
 import logging
 import os
 import re
+import struct
 import subprocess
 import zlib
 from enum import StrEnum
 from pathlib import Path
+
+from Bio import bgzf
 
 from raw_reads_processing.datatypes import Annotation, FileName
 from raw_reads_processing.errors import (
@@ -27,9 +30,9 @@ class FileFormat(StrEnum):
 
 
 # Keep in sync with ACCEPTED_FASTQ_EXTENSIONS in
-# ena-submission/src/ena_deposition/call_loculus.py
+# ena-submission/src/ena_deposition/raw_reads_files.py
 ACCEPTED_FASTQ_EXTENSIONS = (".fastq.gz", ".fq.gz")
-ACCEPTED_BAM_EXTENSIONS = (".bam", ".sam")
+ACCEPTED_BAM_EXTENSIONS = (".bam",)
 ACCEPTED_CRAM_EXTENSIONS = (".cram",)
 
 EXTENSIONS_BY_FORMAT = {
@@ -40,7 +43,7 @@ EXTENSIONS_BY_FORMAT = {
 
 UNCOMPRESSED_FASTQ_EXTENSIONS = (".fastq", ".fq")
 
-ACCEPTED_FORMATS = [FileFormat.FASTQ]
+ACCEPTED_FORMATS = [FileFormat.FASTQ, FileFormat.BAM]
 
 PAIRED_END_SUBMISSION_HINT = (
     "Paired-end FASTQ files must be submitted as separate, de-interleaved files."
@@ -207,6 +210,7 @@ def validate_file_numbers(file_format: FileFormat, file_names: list[FileName]) -
 
 
 GZIP_MAGIC = b"\x1f\x8b"
+_BAM_MAGIC = b"BAM\x01"
 
 
 def _is_gzip(path: Path) -> bool:
@@ -214,11 +218,39 @@ def _is_gzip(path: Path) -> bool:
         return f.read(2) == GZIP_MAGIC
 
 
+def _validate_bam_content(file_name: FileName, path: Path) -> None:
+    """Require BGZF/BAM magic because readtools also accepts SAM."""
+    try:
+        with (
+            path.open("rb") as raw,
+            bgzf.BgzfReader(fileobj=raw, mode="rb") as bam,
+        ):
+            if bam.read(len(_BAM_MAGIC)) != _BAM_MAGIC:
+                raise ValueError("Missing BAM magic")
+    except (ValueError, RuntimeError, struct.error, EOFError, zlib.error) as error:
+        raise InvalidSubmission(
+            error=Annotation(
+                fileNames=[file_name],
+                message=(
+                    f"File '{file_name}' is not a valid BGZF-compressed binary BAM file. "
+                    f"SAM and CRAM files are not supported. {FALSE_POSITIVE_HINT}"
+                ),
+            )
+        ) from error
+    except OSError as error:
+        raise ProcessingFailure(
+            f"Could not read BAM file '{file_name}': {error}"
+        ) from error
+
+
 def validate_compression(
     file_name_to_path: dict[FileName, Path], file_format: FileFormat
 ) -> None:
-    """Check each file really is gzip-compressed, exactly once."""
-    # FASTQ only: BAM is BGZF, i.e. a valid gzip stream.
+    """Check FASTQ gzip compression or the BGZF-compressed BAM container."""
+    if file_format == FileFormat.BAM:
+        for file_name, path in file_name_to_path.items():
+            _validate_bam_content(file_name, path)
+        return
     if file_format != FileFormat.FASTQ:
         return
 
@@ -262,7 +294,7 @@ def validate_compression(
 def validate_with_readtools(
     file_name_to_path: dict[FileName, Path],
     format_type: FileFormat,
-    timeout_seconds: int = 300,
+    timeout_seconds: float = 300,
 ) -> None:
     file_names = list(file_name_to_path.keys())
     args = (
@@ -287,7 +319,7 @@ def validate_with_readtools(
     except subprocess.TimeoutExpired:
         message = (
             f"Validation of files '{','.join(file_names)}' "
-            f"timed out after {timeout_seconds} seconds."
+            f"timed out after {timeout_seconds:g} seconds."
         )
         logger.error(message)
         raise ProcessingFailure(message) from None

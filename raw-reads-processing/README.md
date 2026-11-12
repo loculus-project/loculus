@@ -23,7 +23,7 @@ curl -L -o readtools.jar \
 pytest
 ```
 
-You can skip tests requiring `readtools` and `deacon` with:
+You can skip tests requiring external tools (`readtools`, `samtools`, and `deacon`) with:
 
 ```sh
 pytest --skip-missing-deps
@@ -42,10 +42,23 @@ rawReadsProcessingService:
 
 Preprocessing receives original-data from the backend, the backend creates read-only presigned file URLs and the preprocessing service sends these on to the raw-reads-processing service.
 
+Raw-read processing shares a 480-second budget across downloads, validation, BAM
+preparation and screening. Each tool receives the smaller of its own timeout and
+the remaining budget. Downloads check the budget between chunks, with up to the
+30-second S3 socket timeout needed to stop a stalled read.
+
+The default caller timeout is 600 seconds and the backend reclaim timeout is
+900 seconds, leaving time for cleanup and returning the result. Deploy these
+settings together. Custom settings must preserve this ordering and allow for the
+S3 socket timeout. The backend timeout applies to all preprocessing pipelines.
+
+Pipelines with raw-read processing enabled claim one entry at a time, so later
+entries do not wait in a batch while their 30-minute file URLs expire.
+
 ## What this service does
 
 The raw reads processing service is a small FastAPI app (`raw_reads_processing.api`) with one endpoint:
-`POST /process-files` (`raw_reads_processing.functions.validate_raw_reads_submission`).
+`POST /process-files` (`raw_reads_processing.process_files.validate_raw_reads_submission`).
 
 It receives a `RequestWithFiles` payload:
 
@@ -66,17 +79,21 @@ The service downloads the files and validates their structure. The service respo
 
 Raw reads submissions go through `validate_raw_reads_submission`, which checks:
 
-1. **Format validation** (`raw_reads_processing.file_format_validation`) — is the submission well-formed, gzip-compressed FASTQ?
-2. **Human Host Contamination** (`raw_reads_processing.deacon`) - run deacon to confirm that the submission does not contain human reads (thresholds and parameters used by deacon are defined below).
+1. Validate format, compression, and contents with readtools.
+2. For BAM, extract and account for primary reads with samtools.
+3. Screen for human contamination with Deacon.
+
+readtools and Deacon are existing dependencies used for FASTQ validation and human-read
+screening. BAM support reuses both and adds samtools to fully read the BAM and extract
+temporary FASTA inputs for Deacon.
 
 ## Raw reads format validation
 
-Only gzip-compressed FASTQ is accepted (`ACCEPTED_FASTQ_EXTENSIONS`: `.fastq.gz` and
-`.fq.gz`, matched case-insensitively). If the file extension is not supported the function
-errors early.
+Accepts one or two gzip-compressed FASTQ files (`.fastq.gz`, `.fq.gz`) or one binary
+BAM (`.bam`), case-insensitively. SAM, CRAM, and mixed formats are unsupported.
+BAM needs neither an index nor coordinate sorting.
 
-Once files are downloaded, `validate_compression` checks that the contents really are gzip,
-compressed exactly once.
+`validate_compression` checks single gzip compression for FASTQ and BGZF/BAM magic for BAM.
 
 They are then validated using ENA's own validator,
 [readtools](https://github.com/loculus-project/readtools), which checks structural/content
@@ -86,6 +103,28 @@ truly duplicate read names within a single file:
 ```sh
 READTOOLS_JAR=readtools.jar java -jar readtools.jar read1.fastq.gz [read2.fastq.gz] --format FASTQ
 ```
+
+### BAM limitations
+
+readtools uses `--format BAM`, requires qualities, may reject missing sequences,
+and checks the first 100,000 records. samtools reads the full BAM to count primary
+reads, then reads it again to extract gzip-compressed temporary FASTA for Deacon.
+The original BAM is preserved for deposition.
+
+Primary reads must have complete sequences and unique read-name/mate identifiers.
+Hard-clipped primaries are rejected.
+
+Confirmed compression damage is reported as invalid input. Other samtools failures
+are reported as processing errors, including malformed BAM records beyond the
+readtools sample when compression is intact. These files cannot pass QC. samtools
+uses the same exit status for some input and system failures, so we cannot reliably
+distinguish them without interpreting its error text.
+
+The original BAM is published and sent to ENA unchanged, including its header.
+Remove paths and identifiers from `@PG`, `@CO` and `@RG` records before uploading.
+Deacon screens sequences, not the header. Secondary and supplementary alignments
+are excluded from QC counts but remain in the original file.
+
 ## Validate sequences have been dehosted (deacon)
 
 Files that pass format validation are screened for human host reads with
@@ -97,7 +136,7 @@ We compare the results against two configured thresholds:
 
 Exceeding either threshold is a hard error (`DEACON_ERROR_PROMPT`).
 
-The index is expected at `/data/deacon.idx` by default; set `DEACON_INDEX_PATH` to point at a
+The index is expected at `/data/deacon.idx` by default. Set `DEACON_INDEX_PATH` to point at a
 different location, e.g. for local development:
 
 ```sh
