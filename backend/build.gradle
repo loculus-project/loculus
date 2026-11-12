@@ -63,7 +63,7 @@ dependencies {
     implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:3.2.0"
     implementation "org.springframework.boot:spring-boot-starter-flyway"
     implementation "org.flywaydb:flyway-database-postgresql" // Version managed by Spring Boot to ensure compatibility
-    implementation platform("org.jetbrains.exposed:exposed-bom:1.6.0")
+    implementation platform("org.jetbrains.exposed:exposed-bom:1.6.1")
     implementation "org.jetbrains.exposed:exposed-spring-boot4-starter"
     implementation "org.jetbrains.exposed:exposed-jdbc"
     implementation "org.jetbrains.exposed:exposed-json"
@@ -71,7 +71,7 @@ dependencies {
     implementation "org.jetbrains.kotlinx:kotlinx-datetime:0.8.0-0.6.x-compat"
     implementation "org.keycloak:keycloak-admin-client:26.0.12"
     implementation("io.minio:minio:9.0.4")
-    implementation("software.amazon.awssdk:s3:2.57.8")
+    implementation("software.amazon.awssdk:s3:2.57.11")
 
     implementation "org.springframework.boot:spring-boot-starter-security-oauth2-resource-server"
     implementation "org.springframework.boot:spring-boot-starter-security"
