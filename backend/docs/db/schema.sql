@@ -305,6 +305,20 @@ CREATE TABLE public.data_use_terms_table (
 ALTER TABLE public.data_use_terms_table OWNER TO postgres;
 
 --
+-- Name: external_identities; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.external_identities (
+    issuer text NOT NULL,
+    subject text NOT NULL,
+    user_id uuid NOT NULL,
+    linked_at timestamp without time zone NOT NULL
+);
+
+
+ALTER TABLE public.external_identities OWNER TO postgres;
+
+--
 -- Name: external_metadata; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -413,6 +427,52 @@ ALTER SEQUENCE public.groups_table_group_id_seq OWNER TO postgres;
 --
 
 ALTER SEQUENCE public.groups_table_group_id_seq OWNED BY public.groups_table.group_id;
+
+
+--
+-- Name: loculus_users; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.loculus_users (
+    id uuid NOT NULL,
+    username text NOT NULL,
+    given_name text,
+    family_name text,
+    affiliation text,
+    orcid_id text,
+    provisioned_at timestamp without time zone NOT NULL,
+    CONSTRAINT loculus_users_username_check CHECK (((username <> ''::text) AND (username = lower(username)) AND (username = btrim(username))))
+);
+
+
+ALTER TABLE public.loculus_users OWNER TO postgres;
+
+--
+-- Name: TABLE loculus_users; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON TABLE public.loculus_users IS 'Profiles are seeded once. Provider refresh and Loculus profile editing are deferred; login does not overwrite values.';
+
+
+--
+-- Name: COLUMN loculus_users.username; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.loculus_users.username IS 'Immutable Loculus-owned username, seeded from the provider. Ownership and authorization use the UUID.';
+
+
+--
+-- Name: COLUMN loculus_users.orcid_id; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.loculus_users.orcid_id IS 'Imported profile identifier, not proof of ORCID ownership. Initial source is the provisioning external identity.';
+
+
+--
+-- Name: COLUMN loculus_users.provisioned_at; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.loculus_users.provisioned_at IS 'UTC time this account was provisioned into Loculus, not its creation time at the identity provider.';
 
 
 --
@@ -743,6 +803,37 @@ CREATE TABLE public.task_lock (
 ALTER TABLE public.task_lock OWNER TO postgres;
 
 --
+-- Name: user_emails; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.user_emails (
+    user_id uuid NOT NULL,
+    address text NOT NULL,
+    verified boolean,
+    source_issuer text NOT NULL,
+    source_subject text NOT NULL,
+    imported_at timestamp without time zone NOT NULL,
+    CONSTRAINT user_emails_address_check CHECK ((btrim(address) <> ''::text))
+);
+
+
+ALTER TABLE public.user_emails OWNER TO postgres;
+
+--
+-- Name: TABLE user_emails; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON TABLE public.user_emails IS 'One provider-sourced contact address per user for now. Email is not an account-linking key.';
+
+
+--
+-- Name: COLUMN user_emails.verified; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.user_emails.verified IS 'Provider assertion about this address: true verified, false unverified, null unknown. Import time is not verification time.';
+
+
+--
 -- Name: user_groups_table; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -852,6 +943,14 @@ ALTER TABLE ONLY public.current_processing_pipeline
 
 
 --
+-- Name: external_identities external_identities_issuer_subject_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.external_identities
+    ADD CONSTRAINT external_identities_issuer_subject_key PRIMARY KEY (issuer, subject);
+
+
+--
 -- Name: external_metadata external_metadata_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -881,6 +980,14 @@ ALTER TABLE ONLY public.flyway_schema_history
 
 ALTER TABLE ONLY public.groups_table
     ADD CONSTRAINT groups_table_pkey PRIMARY KEY (group_id);
+
+
+--
+-- Name: loculus_users loculus_users_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.loculus_users
+    ADD CONSTRAINT loculus_users_pkey PRIMARY KEY (id);
 
 
 --
@@ -996,6 +1103,14 @@ ALTER TABLE ONLY public.task_lock
 
 
 --
+-- Name: user_emails user_emails_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.user_emails
+    ADD CONSTRAINT user_emails_pkey PRIMARY KEY (user_id);
+
+
+--
 -- Name: user_groups_table user_groups_table_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1019,6 +1134,13 @@ CREATE INDEX data_use_terms_table_accession_idx ON public.data_use_terms_table U
 
 
 --
+-- Name: external_identities_user_id_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX external_identities_user_id_idx ON public.external_identities USING btree (user_id);
+
+
+--
 -- Name: files_upload_requested_at_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -1030,6 +1152,13 @@ CREATE INDEX files_upload_requested_at_idx ON public.files USING btree (upload_r
 --
 
 CREATE INDEX flyway_schema_history_s_idx ON public.flyway_schema_history USING btree (success);
+
+
+--
+-- Name: loculus_users_username_lower_key; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE UNIQUE INDEX loculus_users_username_lower_key ON public.loculus_users USING btree (lower(username));
 
 
 --
@@ -1229,6 +1358,14 @@ CREATE TRIGGER update_tracker_trigger_upd AFTER UPDATE ON public.sequence_entrie
 
 
 --
+-- Name: external_identities external_identities_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.external_identities
+    ADD CONSTRAINT external_identities_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.loculus_users(id);
+
+
+--
 -- Name: files files_group_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1282,6 +1419,22 @@ ALTER TABLE ONLY public.sequence_entries
 
 ALTER TABLE ONLY public.sequence_entries_preprocessed_data
     ADD CONSTRAINT sequence_entries_preprocessed_data_accession_version_fkey FOREIGN KEY (accession, version) REFERENCES public.sequence_entries(accession, version) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- Name: user_emails user_emails_source_issuer_source_subject_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.user_emails
+    ADD CONSTRAINT user_emails_source_issuer_source_subject_fkey FOREIGN KEY (source_issuer, source_subject) REFERENCES public.external_identities(issuer, subject);
+
+
+--
+-- Name: user_emails user_emails_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.user_emails
+    ADD CONSTRAINT user_emails_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.loculus_users(id);
 
 
 --
