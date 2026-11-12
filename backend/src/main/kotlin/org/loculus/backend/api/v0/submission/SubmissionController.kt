@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.validation.Valid
 import jakarta.validation.constraints.Max
+import jakarta.validation.constraints.Min
 import mu.KotlinLogging
 import org.apache.commons.compress.compressors.zstandard.ZstdCompressorOutputStream
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
@@ -449,6 +450,7 @@ open class SubmissionController(
                 "If page or size are not provided, all sequences are returned.",
         ) @RequestParam(required = false) size: Int?,
         @Parameter(
+            deprecated = true,
             description = "Include compact review data and revision comparisons, without sequence strings. " +
                 "Requires page >= 0 and size between 1 and 100.",
         ) @RequestParam(defaultValue = "false") includeReviewData: Boolean,
@@ -461,6 +463,35 @@ open class SubmissionController(
         page,
         size,
         includeReviewData,
+    )
+
+    @Operation(description = GET_REVIEW_DATA_DESCRIPTION)
+    @GetMapping("/review-data", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun getReviewData(
+        @PathVariable @Valid organism: Organism,
+        @Parameter(description = "Filter by group ids. If not provided, all groups are considered.")
+        @RequestParam(required = false) groupIdsFilter: List<Int>?,
+        @Parameter(description = "Filter by status. If not provided, all statuses are considered.")
+        @RequestParam(required = false) statusesFilter: List<Status>?,
+        @Parameter(description = "Filter by processing result of entries in the PROCESSED status.")
+        @RequestParam(required = false) processingResultFilter: List<ProcessingResult>?,
+        @HiddenParam authenticatedUser: AuthenticatedUser,
+        @Parameter(description = "Page number, starting from 0.")
+        @RequestParam
+        @Min(0) page: Int,
+        @Parameter(description = "Number of entries per page, between 1 and 100.")
+        @RequestParam
+        @Min(1)
+        @Max(100) size: Int,
+    ): GetSequenceResponse = submissionDatabaseService.getSequences(
+        authenticatedUser,
+        organism,
+        groupIdsFilter,
+        statusesFilter,
+        processingResultFilter,
+        page,
+        size,
+        includeReviewData = true,
     )
 
     @Operation(description = "Retrieve unprocessed metadata of submitted accession versions.")

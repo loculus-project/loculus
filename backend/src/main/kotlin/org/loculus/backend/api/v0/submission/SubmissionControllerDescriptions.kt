@@ -99,6 +99,13 @@ comparisons for processed, non-revocation entries. Sequence strings are never in
 page >= 0 and size between 1 and 100. By default the lightweight response is unchanged.
 """
 
+const val GET_REVIEW_DATA_DESCRIPTION = """
+Retrieve one page of submitted accession versions for the review page. Entries, filters and counts
+are the same as for get-sequences; processed, non-revocation entries additionally carry processed
+metadata, annotations, file descriptors and revision comparisons. Sequence strings are never included.
+Requires page >= 0 and size between 1 and 100.
+"""
+
 const val APPROVE_PROCESSED_DATA_DESCRIPTION = """
 Approve processed accession versions and set the status to 'APPROVED_FOR_RELEASE'.
 This can only be done for accession versions in status 'PROCESSED' that the user is allowed to edit and

@@ -193,6 +193,24 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
             .paramIfPresent("includeReviewData", includeReviewData?.toString()),
     )
 
+    fun getReviewData(
+        organism: String = DEFAULT_ORGANISM,
+        groupIdsFilter: List<Int>? = null,
+        statusesFilter: List<Status>? = null,
+        processingResultFilter: List<ProcessingResult>? = null,
+        jwt: String? = jwtForDefaultUser,
+        page: Int? = null,
+        size: Int? = null,
+    ): ResultActions = mockMvc.perform(
+        get(addOrganismToPath("/review-data", organism = organism))
+            .withAuth(jwt)
+            .paramIfPresent("groupIdsFilter", groupIdsFilter?.joinToString(",") { it.toString() })
+            .paramIfPresent("statusesFilter", statusesFilter?.joinToString(",") { it.name })
+            .paramIfPresent("processingResultFilter", processingResultFilter?.joinToString(",") { it.name })
+            .paramIfPresent("page", page?.toString())
+            .paramIfPresent("size", size?.toString()),
+    )
+
     fun getSequenceEntryToEdit(
         accession: Accession,
         version: Long,

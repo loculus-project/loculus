@@ -13,6 +13,7 @@ import org.loculus.backend.testutil.S3_CONFIG
 import org.loculus.backend.testutil.generateJwtFor
 import org.loculus.backend.types.EditedSequenceEntryData
 import org.loculus.backend.types.FileIdAndName
+import org.loculus.backend.types.ProcessingResult
 import org.loculus.backend.types.Status
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.jdbc.core.JdbcTemplate
@@ -35,6 +36,9 @@ class GetReviewDataEndpointTest(
                 .andExpect(status().isOk)
                 .andExpect(jsonPath("$.sequenceEntries[0].reviewData").doesNotExist())
         }
+        client.getSequenceEntries(page = 0, size = 100, includeReviewData = true)
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.sequenceEntries[0].reviewData").exists())
         val response = getReviewPage()
         val data = response["sequenceEntries"].first { it["accession"].asText() == accession }["reviewData"]
         assertThat(data["metadata"], `is`(objectMapper.valueToTree<JsonNode>(edited.processedData.metadata)))
@@ -76,11 +80,10 @@ class GetReviewDataEndpointTest(
                 .andExpect(status().isOk).andReturn().response.contentAsString,
         )
         val enriched = objectMapper.readTree(
-            client.getSequenceEntries(
+            client.getReviewData(
                 statusesFilter = listOf(Status.PROCESSED),
                 page = 1,
                 size = 3,
-                includeReviewData = true,
             ).andExpect(status().isOk).andReturn().response.contentAsString,
         )
         assertThat(enriched["sequenceEntries"].size(), `is`(3))
@@ -104,8 +107,26 @@ class GetReviewDataEndpointTest(
     }
 
     @Test
+    fun `review data applies the processing result filter`() {
+        convenienceClient.prepareDataTo(Status.PROCESSED)
+        convenienceClient.prepareDataTo(Status.PROCESSED, errors = true)
+        val entries = objectMapper.readTree(
+            client.getReviewData(
+                processingResultFilter = listOf(ProcessingResult.HAS_ERRORS),
+                page = 0,
+                size = 100,
+            ).andExpect(status().isOk).andReturn().response.contentAsString,
+        )["sequenceEntries"]
+        assertThat(entries.size(), `is`(10))
+        assertThat(entries.all { it["processingResult"].asText() == ProcessingResult.HAS_ERRORS.name }, `is`(true))
+        assertThat(entries.all { !it["reviewData"]["errors"].isEmpty }, `is`(true))
+    }
+
+    @Test
     fun `review data requires bounded pagination`() {
         for ((page, size) in listOf(null to null, 0 to null, null to 10, -1 to 10, 0 to 0, 0 to 101)) {
+            client.getReviewData(page = page, size = size)
+                .andExpect(status().isBadRequest)
             client.getSequenceEntries(page = page, size = size, includeReviewData = true)
                 .andExpect(status().isBadRequest)
         }
@@ -115,17 +136,15 @@ class GetReviewDataEndpointTest(
     fun `review payloads are restricted to authorized groups`() {
         val accession = convenienceClient.prepareDataTo(Status.PROCESSED).first().accession
         val entry = convenienceClient.getSequenceEntryToEdit(accession, 1)
-        client.getSequenceEntries(
+        client.getReviewData(
             groupIdsFilter = listOf(entry.groupId),
             page = 0,
             size = 10,
-            includeReviewData = true,
             jwt = generateJwtFor("not-a-group-member"),
         ).andExpect(status().isForbidden)
-        client.getSequenceEntries(
+        client.getReviewData(
             page = 0,
             size = 10,
-            includeReviewData = true,
             jwt = generateJwtFor("not-a-group-member"),
         ).andExpect(status().isOk).andExpect(jsonPath("$.sequenceEntries").isEmpty)
     }
@@ -237,11 +256,10 @@ class GetReviewDataEndpointTest(
     }
 
     private fun getReviewPage(): JsonNode = objectMapper.readTree(
-        client.getSequenceEntries(
+        client.getReviewData(
             statusesFilter = listOf(Status.RECEIVED, Status.IN_PROCESSING, Status.PROCESSED),
             page = 0,
             size = 100,
-            includeReviewData = true,
         ).andExpect(status().isOk).andReturn().response.contentAsString,
     )
 }
