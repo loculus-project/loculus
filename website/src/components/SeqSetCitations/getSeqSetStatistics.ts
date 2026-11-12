@@ -1,21 +1,19 @@
-import axios from 'axios';
+import { Zodios } from '@zodios/core';
 
+import { lapisApi } from '../../services/lapisApi.ts';
 import { ACCESSION_FIELD, ACCESSION_VERSION_FIELD, VERSION_STATUS_FIELD } from '../../settings.ts';
-import { versionStatuses } from '../../types/lapis.ts';
+import { type LapisBaseRequest, versionStatuses } from '../../types/lapis.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 
 type AggregateValue = string | number | boolean | null | undefined;
 export type AggregateRow = { value: AggregateValue; count: number };
 
-const getAggregate = async (
-    lapisUrl: string,
-    field: string,
-    params: Record<string, string[] | string>,
-): Promise<AggregateRow[]> => {
-    const response = await axios.post<{ data: Record<string, unknown>[] }>(`${lapisUrl}/sample/aggregated`, params);
-    return response.data.data.map((item) => ({
-        value: item[field] as AggregateValue,
-        count: item.count as number,
+const getAggregate = async (lapisUrl: string, field: string, params: LapisBaseRequest): Promise<AggregateRow[]> => {
+    const client = new Zodios(lapisUrl, lapisApi, { transform: false });
+    const response = await client.aggregated(params);
+    return response.data.map((item) => ({
+        value: item[field],
+        count: item.count,
     }));
 };
 
