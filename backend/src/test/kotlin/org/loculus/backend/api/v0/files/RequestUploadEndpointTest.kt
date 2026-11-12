@@ -143,7 +143,7 @@ class RequestUploadEndpointTest(
             jwt = generateJwtFor("superuser", listOf("super_user")),
         )
             .andExpect(status().isNotFound)
-            .andExpect(jsonPath("\$.detail", containsString("do(es) not exist")))
+            .andExpect(jsonPath("\$.detail", containsString("does not exist")))
     }
 
     @Test
@@ -166,7 +166,7 @@ class RequestUploadEndpointTest(
         client.requestUploads(groupId = nonExistentGroupId, numberFiles = 1, jwt = jwtForProcessingPipeline)
             .andExpect(status().isNotFound)
             .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
-            .andExpect(jsonPath("\$.detail", containsString("do(es) not exist")))
+            .andExpect(jsonPath("\$.detail", containsString("does not exist")))
     }
 
     @Test

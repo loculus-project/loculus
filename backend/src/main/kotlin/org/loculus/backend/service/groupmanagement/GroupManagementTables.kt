@@ -10,15 +10,15 @@ const val GROUPS_TABLE_NAME = "groups_table"
 const val USER_GROUPS_TABLE_NAME = "user_groups_table"
 
 object GroupsTable : IntIdTable(GROUPS_TABLE_NAME, "group_id") {
-    val groupNameColumn = text("group_name")
-    val institutionColumn = text("institution")
-    val addressLine1 = text("address_line_1")
-    val addressLine2 = text("address_line_2")
-    val addressPostalCode = text("address_postal_code")
-    val addressCity = text("address_city")
-    val addressState = text("address_state")
-    val addressCountry = text("address_country")
-    val contactEmailColumn = text("contact_email")
+    val groupNameColumn = varchar("group_name", 255)
+    val institutionColumn = varchar("institution", 255)
+    val addressLine1 = varchar("address_line_1", 255)
+    val addressLine2 = varchar("address_line_2", 255)
+    val addressPostalCode = varchar("address_postal_code", 255)
+    val addressCity = varchar("address_city", 255)
+    val addressState = varchar("address_state", 255)
+    val addressCountry = varchar("address_country", 255)
+    val contactEmailColumn = varchar("contact_email", 255)
     val createdAt = datetime("created_at")
     val createdBy = text("created_by").nullable()
 }
