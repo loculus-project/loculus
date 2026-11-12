@@ -12,10 +12,10 @@ RUN cargo install --git $REPO --rev $COMMIT
 # --- SILO binary download stage ---
 FROM curlimages/curl:8.12.1 AS silo-downloader
 
-ARG SILO_VERSION=0.11.0
+ARG SILO_VERSION=0.17.4
 ARG TARGETARCH
 
-RUN curl -sL "https://github.com/GenSpectrum/LAPIS-SILO/releases/download/v${SILO_VERSION}/silo-linux-${TARGETARCH}.tar.gz" \
+RUN curl -fsSL "https://github.com/GenSpectrum/LAPIS-SILO/releases/download/v${SILO_VERSION}/silo-linux-${TARGETARCH}.tar.gz" \
     | tar -xz -C /tmp && mv /tmp/silo-linux-${TARGETARCH} /tmp/silo && chmod +x /tmp/silo
 
 # --- Python runtime stage ---
