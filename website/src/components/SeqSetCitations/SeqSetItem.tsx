@@ -11,7 +11,7 @@ import { getSeqSetStatistics } from './getSeqSetStatistics.ts';
 import { getClientLogger } from '../../clientLogger';
 import { seqSetCitationClientHooks } from '../../services/serviceHooks';
 import type { ProblemDetail } from '../../types/backend.ts';
-import type { SeqSetGraphWithOrganismFields } from '../../types/config.ts';
+import type { SeqSetGraph } from '../../types/config.ts';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import { type SeqSet, type SeqSetCitation, type SeqSetRecord } from '../../types/seqSetCitation';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
@@ -44,7 +44,7 @@ const SeqSetSectionSeparator: FC = () => <hr className='my-8 border-t-2 border-g
 
 const SeqSetGraphCard: FC<{
     clientConfig: ClientConfig;
-    graph: SeqSetGraphWithOrganismFields;
+    graph: SeqSetGraph;
     seqSetAccessionVersion: string;
     seqSetRecords: SeqSetRecord[];
 }> = ({ clientConfig, graph, seqSetAccessionVersion, seqSetRecords }) => {
@@ -55,7 +55,7 @@ const SeqSetGraphCard: FC<{
         queryFn: () =>
             getSeqSetStatistics(
                 seqSetRecords.map((record) => record.accession),
-                graph.organismFields,
+                graph.organismFields ?? {},
                 clientConfig,
             ),
     });
@@ -98,7 +98,7 @@ type SeqSetItemProps = {
     seqSet: SeqSet;
     seqSetRecords: SeqSetRecord[];
     seqSetCitations: SeqSetCitation[];
-    seqSetGraphs: SeqSetGraphWithOrganismFields[];
+    seqSetGraphs: SeqSetGraph[];
     isAdminView?: boolean;
     fieldsToDisplay?: { field: string; displayName: string }[];
     organismDisplayNames?: Record<string, string>;
