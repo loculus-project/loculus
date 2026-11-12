@@ -5,6 +5,7 @@ import { BulkSubmissionPage, SingleSequenceSubmissionPage } from '../../pages/su
 import { NavigationPage } from '../../pages/navigation.page';
 import { ReviewPage } from '../../pages/review.page';
 import { reloadUntilVisible } from '../../utils/reload-helpers';
+import { confirmationWizard } from '../../utils/confirmation-wizard-helpers';
 
 test.describe('Submission flow', () => {
     test('submission page shows group creation button when not in a group', async ({
@@ -36,8 +37,22 @@ test.describe('Submission flow', () => {
         await page.getByLabel('I confirm that I have the legal right').check();
         await page.getByLabel('I confirm I have not and will').check();
 
-        await page.getByRole('button', { name: 'Upload and proceed to Approval' }).click();
+        await page.getByRole('button', { name: 'Upload', exact: true }).click();
+
+        await expect(page.getByText('Step 1 of 3')).toBeVisible();
         await page.getByRole('button', { name: 'Continue under Open terms' }).click();
+
+        await expect(page.getByText('Step 2 of 3')).toBeVisible();
+        await expect(
+            page.getByRole('heading', { name: 'Are first and last names assigned correctly?' }),
+        ).toBeVisible();
+        const firstAuthor = page.getByRole('row').filter({ hasText: 'Ammar' });
+        await expect(firstAuthor.getByRole('cell')).toHaveText(['M.', 'Ammar']);
+        await page.getByRole('button', { name: 'Names are correct' }).click();
+
+        await expect(page.getByText('Step 3 of 3')).toBeVisible();
+        await expect(page.getByRole('heading', { name: 'What happens next' })).toBeVisible();
+        await confirmationWizard(page).getByRole('button', { name: 'Upload', exact: true }).click();
 
         await expect(
             page.getByRole('heading', { name: 'Review pending submissions' }),

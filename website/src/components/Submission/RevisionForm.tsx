@@ -18,6 +18,7 @@ type RevisionFormProps = {
     group: Group;
     inputMode: InputMode;
     metadataTemplateFields: Map<string, InputField[]>;
+    authorsFields: string[];
     submissionDataTypes: SubmissionDataTypes;
     dataUseTermsEnabled: boolean;
     fileSharingConfig: FileSharingConfig;
@@ -33,6 +34,7 @@ export const RevisionForm: FC<RevisionFormProps> = ({
     group,
     inputMode,
     metadataTemplateFields,
+    authorsFields,
     submissionDataTypes,
     dataUseTermsEnabled,
     fileSharingConfig,
@@ -59,6 +61,7 @@ export const RevisionForm: FC<RevisionFormProps> = ({
                     instanceName={instanceName}
                     organism={organism}
                     metadataTemplateFields={metadataTemplateFields}
+                    authorsFields={authorsFields}
                     clientConfig={clientConfig}
                     action='revise'
                     inputMode={inputMode}
