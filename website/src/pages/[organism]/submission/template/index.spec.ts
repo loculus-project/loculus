@@ -253,6 +253,31 @@ describe('submission template API route', () => {
         );
     });
 
+    test('raw XML: _lists is hidden and locked, Guidance is read-only, Data stays editable', async () => {
+        const response = await callGet('test-organism', { fileType: 'xlsx' });
+        const zip = await JSZip.loadAsync(await response.arrayBuffer());
+
+        const sheets = await readSheetEntries(zip);
+        expect(sheets.map(({ name, state }) => [name, state])).toEqual([
+            [DATA_SHEET_NAME, 'visible'],
+            [LISTS_SHEET_NAME, 'hidden'],
+            [GUIDANCE_SHEET_NAME, 'visible'],
+        ]);
+        const sheetXml = (name: string) => zip.file(sheets.find((sheet) => sheet.name === name)!.path)!.async('string');
+
+        const dataXml = await sheetXml(DATA_SHEET_NAME);
+        expect(dataXml).not.toContain('<sheetProtection');
+        expect(tagAttributes(dataXml, 'pane')).toMatchObject({ ySplit: '1', state: 'frozen' });
+
+        // In OOXML a select* attribute of "1" means selecting those cells is NOT allowed.
+        expect(tagAttributes(await sheetXml(LISTS_SHEET_NAME), 'sheetProtection')).toEqual({
+            sheet: '1',
+            selectLockedCells: '1',
+            selectUnlockedCells: '1',
+        });
+        expect(tagAttributes(await sheetXml(GUIDANCE_SHEET_NAME), 'sheetProtection')).toEqual({ sheet: '1' });
+    });
+
     test('XLSX template XML matches the committed snapshot', async () => {
         const response = await callGet('test-organism', { fileType: 'xlsx' });
         const zip = await JSZip.loadAsync(await response.arrayBuffer());
@@ -278,4 +303,34 @@ function normaliseXlsxPart(partName: string, xml: string): string {
             ? xml.replace(/(<dcterms:(created|modified)[^>]*>)[^<]*/g, '$1TIMESTAMP')
             : xml;
     return stable.replaceAll('><', '>\n<') + '\n';
+}
+
+async function readSheetEntries(zip: JSZip): Promise<{ name: string; state: string; path: string }[]> {
+    const workbookXml = await zip.file('xl/workbook.xml')!.async('string');
+    const relsXml = await zip.file('xl/_rels/workbook.xml.rels')!.async('string');
+    const targets = new Map(
+        [...relsXml.matchAll(/<Relationship\b[^>]*>/g)].map(([tag]) => {
+            const attributes = parseAttributes(tag);
+            return [attributes.Id, `xl/${attributes.Target.replace(/^\/?xl\//, '')}`];
+        }),
+    );
+    return [...workbookXml.matchAll(/<sheet\b[^>]*>/g)].map(([tag]) => {
+        const attributes = parseAttributes(tag);
+        return {
+            name: attributes.name,
+            state: 'state' in attributes ? attributes.state : 'visible',
+            path: targets.get(attributes['r:id'])!,
+        };
+    });
+}
+
+/** Attributes of the single `<tagName …>` element in `xml`; fails if there is not exactly one. */
+function tagAttributes(xml: string, tagName: string): Record<string, string> {
+    const tags = [...xml.matchAll(new RegExp(`<${tagName}\\b[^>]*>`, 'g'))];
+    expect(tags, `expected exactly one <${tagName}>`).toHaveLength(1);
+    return parseAttributes(tags[0][0]);
+}
+
+function parseAttributes(tag: string): Record<string, string> {
+    return Object.fromEntries([...tag.matchAll(/([\w:]+)="([^"]*)"/g)].map(([, key, value]) => [key, value]));
 }
