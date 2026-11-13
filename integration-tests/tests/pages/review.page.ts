@@ -244,6 +244,15 @@ export class ReviewPage {
         ).toBeVisible();
     }
 
+    /** The entry's card shows each of the given metadata values and no processing error. */
+    async expectProcessedWithoutErrors(submissionId: string, values: (string | RegExp)[]) {
+        const card = this.page.getByTestId(`review-card-${submissionId}`);
+        for (const value of values) {
+            await expect(card.getByText(value, { exact: true }).first()).toBeVisible();
+        }
+        await expect(card.getByTestId('processing-error')).toHaveCount(0);
+    }
+
     async expectNoValidSequencesToApprove() {
         await expect(
             this.page.getByRole('button', { name: /Approve \d+ valid sequence/ }),

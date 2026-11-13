@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="60" uniqueCount="31">
+<si>
+<t>submissionId</t>
+</si>
+<si>
+<t>date</t>
+</si>
+<si>
+<t>country</t>
+</si>
+<si>
+<t>host</t>
+</si>
+<si>
+<t>notes</t>
+</si>
+<si>
+<t>Germany</t>
+</si>
+<si>
+<t>Homo sapiens</t>
+</si>
+<si>
+<t>France</t>
+</si>
+<si>
+<t>Sus scrofa</t>
+</si>
+<si>
+<t>Field name</t>
+</si>
+<si>
+<t>Display name</t>
+</si>
+<si>
+<t>Required</t>
+</si>
+<si>
+<t>Definition</t>
+</si>
+<si>
+<t>Guidance</t>
+</si>
+<si>
+<t>Example</t>
+</si>
+<si>
+<t>Allowed values</t>
+</si>
+<si>
+<t>
+</t>
+</si>
+<si>
+<t>Yes</t>
+</si>
+<si>
+<t>free text</t>
+</si>
+<si>
+<t>Collection date</t>
+</si>
+<si>
+<t>Country</t>
+</si>
+<si>
+<t>No</t>
+</si>
+<si>
+<t>Country where the sample was collected</t>
+</si>
+<si>
+<t>Germany, France</t>
+</si>
+<si>
+<t>Host</t>
+</si>
+<si>
+<t>Homo sapiens, Sus scrofa</t>
+</si>
+<si>
+<t>Notes</t>
+</si>
+<si>
+<t>Colour key</t>
+</si>
+<si>
+<t>Required field</t>
+</si>
+<si>
+<t>Priority fields</t>
+</si>
+<si>
+<t>Optional — opt in by filling the column</t>
+</si>
+</sst>

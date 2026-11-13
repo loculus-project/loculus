@@ -1,6 +1,7 @@
 *
 !src/
 src/**/*.spec.ts*
+src/**/__snapshots__
 !public/
 !package.json
 !package-lock.json
