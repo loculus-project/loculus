@@ -362,6 +362,26 @@ describe('upload of a filled-in template', () => {
         expect(await uploadFilledTemplate(edit)).toEqual({ text: enteredValues, warnings: [] });
     });
 
+    const keepOnly =
+        (...sheets: string[]): FilledTemplateEdit =>
+        (workbook, fill) => {
+            fill([filledRow]);
+            workbook.SheetNames = workbook.SheetNames.filter((name) => sheets.includes(name));
+        };
+
+    test.each([
+        { sheets: [DATA_SHEET_NAME, GUIDANCE_SHEET_NAME] },
+        { sheets: [DATA_SHEET_NAME, LISTS_SHEET_NAME] },
+        { sheets: [DATA_SHEET_NAME] },
+    ])('is parsed to the entered values with only these sheets left: $sheets', async ({ sheets }) => {
+        expect(await uploadFilledTemplate(keepOnly(...sheets))).toEqual({ text: enteredValues, warnings: [] });
+    });
+
+    // Known bug: without Data the parser reads the first remaining template sheet instead of rejecting.
+    test.fails('with only Guidance left, the upload is rejected instead of parsing Guidance', async () => {
+        expect((await uploadFilledTemplate(keepOnly(GUIDANCE_SHEET_NAME))).error).toMatch(/Data/);
+    });
+
     // Known bugs: each test asserts the intended behaviour and is expected to fail until the bug is fixed.
     test.fails.each<{ mistake: string; edit: FilledTemplateEdit; intended: (outcome: UploadOutcome) => void }>([
         {
