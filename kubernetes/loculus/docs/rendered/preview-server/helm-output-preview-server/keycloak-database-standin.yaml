@@ -1,0 +1,47 @@
+# Source: loculus/templates/keycloak-database-standin.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loculus-keycloak-database
+  annotations:
+    argocd.argoproj.io/sync-options: Replace=true
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: loculus
+      component: keycloak-database
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        timestamp: ""
+      labels:
+        app: loculus
+        component: keycloak-database
+    spec:
+      containers:
+        - name: loculus-keycloak-database
+          image: postgres:latest
+          resources:
+            requests:
+              memory: "30Mi"
+              cpu: 10m
+            limits:
+              memory: "100Mi"
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_USER
+              value: "postgres"
+            - name: POSTGRES_PASSWORD
+              value: "unsecure"
+            - name: POSTGRES_DB
+              value: "keycloak"
+            - name: POSTGRES_HOST_AUTH_METHOD
+              value: "trust"
+            
+            - name: LOCULUS_VERSION
+              value: latest
+---
