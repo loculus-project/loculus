@@ -3,8 +3,10 @@ import { test } from '../../fixtures/group.fixture';
 import { join } from 'path';
 import { BulkSubmissionPage, SingleSequenceSubmissionPage } from '../../pages/submission.page';
 import { NavigationPage } from '../../pages/navigation.page';
-import { ReviewPage } from '../../pages/review.page';
 import { reloadUntilVisible } from '../../utils/reload-helpers';
+import { allowConsoleError } from '../../fixtures/console-warnings.fixture';
+
+const TEST_FILES_DIR = join(__dirname, '../../test-data');
 
 test.describe('Submission flow', () => {
     test('submission page shows group creation button when not in a group', async ({
@@ -19,33 +21,54 @@ test.describe('Submission flow', () => {
         await page.getByRole('link', { name: 'create a submitting group' }).click();
     });
 
-    test('basic file upload submission flow works', async ({ page, groupId }) => {
+    test('file upload submission flow works with the downloaded TSV and XLSX templates', async ({
+        page,
+        groupId,
+    }) => {
         test.setTimeout(120_000);
         void groupId;
-
-        const testFilesDir = join(__dirname, '../../test-data');
-        const sequencesFile = join(testFilesDir, 'cchfv_test_sequences.fasta');
-        const metadataFile = join(testFilesDir, 'cchfv_test_metadata.tsv');
 
         const submissionPage = new BulkSubmissionPage(page);
         await submissionPage.navigateToSubmissionPage('Crimean-Congo Hemorrhagic Fever Virus');
 
-        await page.getByTestId('sequence_file').setInputFiles(sequencesFile);
-        await page.getByTestId('metadata_file').setInputFiles(metadataFile);
+        const template = await submissionPage.downloadXlsxTemplate();
+        const countries = template.dropdownOptions('geoLocCountry');
+        expect(countries).toContain('Pakistan');
+        expect(countries).not.toContain('Atlantis');
 
-        await page.getByLabel('I confirm that I have the legal right').check();
-        await page.getByLabel('I confirm I have not and will').check();
+        const rows = [
+            {
+                id: 'test_NIHPAK-19',
+                fastaIds: 'test_NIHPAK-19_L test_NIHPAK-19_M test_NIHPAK-19_S',
+                geoLocCountry: 'Pakistan',
+                sampleCollectionDate: new Date(2023, 7, 26),
+                authorAffiliations: 'National Institute of Health, Department of Virology',
+            },
+        ];
+        await page
+            .getByTestId('sequence_file')
+            .setInputFiles(join(TEST_FILES_DIR, 'cchfv_test_sequences.fasta'));
+        await submissionPage.acceptTerms();
 
-        await page.getByRole('button', { name: 'Upload and proceed to Approval' }).click();
-        await page.getByRole('button', { name: 'Continue under Open terms' }).click();
+        // Broken templates are rejected before any processing: at submit, or already on file selection.
+        allowConsoleError(test, 'responded with a status of 422');
+        const tsvTemplate = await submissionPage.downloadTsvTemplate();
+        await submissionPage.uploadFilledTemplate(tsvTemplate, rows, {
+            renameHeaders: { id: 'ID' },
+        });
+        await submissionPage.submitExpectingRejection(
+            /Missing id column|does not contain either header 'id' or 'submissionId'/,
+        );
+        await submissionPage.discardMetadataFile();
 
-        await expect(
-            page.getByRole('heading', { name: 'Review pending submissions' }),
-        ).toBeVisible();
-
-        const reviewPage = new ReviewPage(page);
+        await submissionPage.uploadFilledTemplate(template, rows, { deleteHeaderRow: true });
+        await expect(page.getByText('Sheet Data is empty.')).toBeVisible();
+        await expect(page.getByTestId('discard_metadata_file')).toHaveCount(0);
+        await submissionPage.uploadFilledTemplate(template, rows);
+        const reviewPage = await submissionPage.submitSequence();
+        await reviewPage.waitForAllProcessed();
+        await reviewPage.expectProcessedWithoutErrors('test_NIHPAK-19', ['Pakistan', '2023-08-26']);
         await reviewPage.releaseAndGoToReleasedSequences();
-
         await reloadUntilVisible(page, page.getByRole('cell', { name: 'Pakistan' }));
 
         await page.getByRole('cell', { name: 'Pakistan' }).click();

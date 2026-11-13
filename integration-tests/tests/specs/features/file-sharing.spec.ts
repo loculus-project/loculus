@@ -200,25 +200,22 @@ test('bulk submit 2 seqs with 1 & 2 FASTQ files respectively', async ({
     void groupId;
     const submissionPage = new BulkSubmissionPage(page);
     await submissionPage.navigateToSubmissionPage(ORGANISM_NAME);
-    await submissionPage.uploadMetadataFile(
-        [...METADATA_HEADERS, RAW_READS_FILES_HEADER],
-        [
-            [
-                ID_1,
-                COUNTRY_1,
-                '2022-12-02',
-                SEQUENCING_INSTRUMENT,
-                filesColumnCell(Object.keys(FILES_SINGLE), ID_1),
-            ],
-            [
-                ID_2,
-                COUNTRY_2,
-                '2022-12-13',
-                SEQUENCING_INSTRUMENT,
-                filesColumnCell(Object.keys(FILES_DOUBLE), ID_2),
-            ],
-        ],
-    );
+    const row = (
+        id: string,
+        geoLocCountry: string,
+        day: number,
+        files: Record<string, string>,
+    ) => ({
+        id,
+        geoLocCountry,
+        sampleCollectionDate: new Date(2022, 11, day),
+        sequencingInstrument: SEQUENCING_INSTRUMENT,
+        [RAW_READS_FILES_HEADER]: filesColumnCell(Object.keys(files), id),
+    });
+    await submissionPage.uploadFilledTemplate(await submissionPage.downloadXlsxTemplate(), [
+        row(ID_1, COUNTRY_1, 2, FILES_SINGLE),
+        row(ID_2, COUNTRY_2, 13, FILES_DOUBLE),
+    ]);
     await submissionPage.uploadSequencesFile({
         [ID_1]: EBOLA_SUDAN_SHORT_SEQUENCE,
         [ID_2]: EBOLA_SUDAN_SHORT_SEQUENCE,
