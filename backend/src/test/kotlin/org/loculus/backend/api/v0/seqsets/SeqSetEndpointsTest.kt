@@ -103,6 +103,32 @@ class SeqSetEndpointsTest(@Autowired private val client: SeqSetCitationsControll
     }
 
     @Test
+    fun `WHEN calling get seqSet records THEN returns focal records first, then by accession descending`() {
+        val records = """[
+            { "accession": "ACC_B.1", "type": "loculus", "isFocal": false },
+            { "accession": "ACC_C.1", "type": "loculus", "isFocal": true },
+            { "accession": "ACC_D.1", "type": "loculus", "isFocal": false },
+            { "accession": "ACC_A.1", "type": "loculus", "isFocal": true }
+        ]"""
+        val result = client.createSeqSet(seqSetRecords = records)
+            .andExpect(status().isOk)
+            .andReturn()
+        val seqSetId = JsonPath.read<String>(result.response.contentAsString, "$.seqSetId")
+
+        client.getSeqSetRecords(seqSetId, 1)
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("\$.length()").value(4))
+            .andExpect(jsonPath("\$[0].accession").value("ACC_C.1"))
+            .andExpect(jsonPath("\$[0].isFocal").value(true))
+            .andExpect(jsonPath("\$[1].accession").value("ACC_A.1"))
+            .andExpect(jsonPath("\$[1].isFocal").value(true))
+            .andExpect(jsonPath("\$[2].accession").value("ACC_D.1"))
+            .andExpect(jsonPath("\$[2].isFocal").value(false))
+            .andExpect(jsonPath("\$[3].accession").value("ACC_B.1"))
+            .andExpect(jsonPath("\$[3].isFocal").value(false))
+    }
+
+    @Test
     fun `WHEN calling create seqSet DOI THEN returns seqSet with new DOI`() {
         val seqSetResult = client.createSeqSet()
             .andExpect(status().isOk)

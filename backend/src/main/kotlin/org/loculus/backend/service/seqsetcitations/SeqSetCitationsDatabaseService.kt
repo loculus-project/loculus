@@ -262,6 +262,8 @@ class SeqSetCitationsDatabaseService(
                 (SeqSetToRecordsTable.seqSetId eq seqSetId) and
                     (SeqSetToRecordsTable.seqSetVersion eq selectedVersion)
             }
+            // Focal first, then newest accessions first. A fixed order lets LAPIS cache queries built from this list.
+            .orderBy(SeqSetRecordsTable.isFocal to SortOrder.DESC, SeqSetRecordsTable.accession to SortOrder.DESC)
             .map {
                 SeqSetRecord(
                     it[SeqSetRecordsTable.seqSetRecordId],
