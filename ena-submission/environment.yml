@@ -30,7 +30,7 @@ dependencies:
   - tenacity=9.1.4
   - types-pytz=2026.5.0.20261006
   - types-psycopg2=2.9.21.20261008
-  - types-requests=2.33.0.20261006
+  - types-requests=2.33.0.20261030
   - types-pyyaml=6.0.12.20260906
   - types-xmltodict=1.0.1.20250920
   - python-dotenv=1.2.4
