@@ -6,7 +6,7 @@ import { groupManagementApi } from '../services/groupManagementApi.ts';
 import type { Group, GroupDetails, NewGroup } from '../types/backend.ts';
 import type { ClientConfig } from '../types/runtimeConfig.ts';
 import { createAuthorizationHeader } from '../utils/createAuthorizationHeader.ts';
-import { stringifyMaybeAxiosError } from '../utils/stringifyMaybeAxiosError.ts';
+import { formatErrorMessage } from '../utils/formatErrorMessage.ts';
 
 type UseGroupOperationsProps = {
     clientConfig: ClientConfig;
@@ -33,7 +33,7 @@ export const useGroupPageHooks = ({
     );
 
     if (groupDetails.error) {
-        setErrorMessage(`Failed to query Group ${groupName}: ${stringifyMaybeAxiosError(groupDetails.error)}`);
+        setErrorMessage(`Failed to query Group ${groupName}: ${formatErrorMessage(groupDetails.error)}`);
     }
 
     const addUserToGroup = useCallback(
@@ -132,7 +132,7 @@ function callCreateGroup(accessToken: string, zodios: ZodiosInstance<typeof grou
                 group: groupResult,
             } as CreateGroupSuccess;
         } catch (error) {
-            const message = `Failed to create group: ${stringifyMaybeAxiosError(error)}`;
+            const message = `Failed to create group: ${formatErrorMessage(error)}`;
             return {
                 succeeded: false,
                 errorMessage: message,
@@ -163,7 +163,7 @@ function callGetGroups(accessToken: string, zodios: ZodiosInstance<typeof groupM
                 groups: existingGroups,
             } as GetGroupsSuccess;
         } catch (error) {
-            const message = `Failed to query existing groups: ${stringifyMaybeAxiosError(error)}`;
+            const message = `Failed to query existing groups: ${formatErrorMessage(error)}`;
             return {
                 succeeded: false,
                 errorMessage: message,
@@ -196,7 +196,7 @@ function callEditGroup(accessToken: string, zodios: ZodiosInstance<typeof groupM
                 group: groupResult,
             } as EditGroupSuccess;
         } catch (error) {
-            const message = `Failed to edit group: ${stringifyMaybeAxiosError(error)}`;
+            const message = `Failed to edit group: ${formatErrorMessage(error)}`;
             return {
                 succeeded: false,
                 errorMessage: message,
@@ -222,7 +222,7 @@ function callRemoveFromGroup(
             });
             await refetchGroups();
         } catch (error) {
-            const message = `Failed to leave group: ${stringifyMaybeAxiosError(error)}`;
+            const message = `Failed to leave group: ${formatErrorMessage(error)}`;
             openErrorFeedback(message);
         }
     };
@@ -245,7 +245,7 @@ function callAddToGroup(
             });
             await refetchGroups();
         } catch (error) {
-            const message = `Failed to add user to group: ${stringifyMaybeAxiosError(error)}`;
+            const message = `Failed to add user to group: ${formatErrorMessage(error)}`;
             openErrorFeedback(message);
         }
     };
