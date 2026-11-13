@@ -1,4 +1,5 @@
 import MUIPagination from '@mui/material/Pagination';
+import { useQuery } from '@tanstack/react-query';
 import { AxiosError } from 'axios';
 import { type FC, useState } from 'react';
 import { toast } from 'react-toastify';
@@ -8,7 +9,7 @@ import { DatePlot, CategoryPlot } from './SeqSetPlots.tsx';
 import { SeqSetRecordsTableWithMetadata } from './SeqSetRecordsTableWithMetadata';
 import type { AggregateRow } from './getSeqSetStatistics.ts';
 import { getClientLogger } from '../../clientLogger';
-import { seqSetCitationClientHooks } from '../../services/serviceHooks';
+import { seqSetCitationClientHooks, seqSetRecordsQueryOptions } from '../../services/serviceHooks';
 import type { ProblemDetail } from '../../types/backend.ts';
 import type { SeqSetGraph } from '../../types/config.ts';
 import type { ClientConfig } from '../../types/runtimeConfig';
@@ -17,12 +18,15 @@ import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader
 import { getThemeColor } from '../../utils/getThemeColor';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { Button } from '../common/Button.tsx';
+import { Spinner } from '../common/Spinner.tsx';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 import MdiDotsGrid from '~icons/mdi/dots-grid';
 import MdiViewGrid from '~icons/mdi/view-grid';
 import OouiNewWindowLtr from '~icons/ooui/new-window-ltr';
 
 const logger = getClientLogger('SeqSetItem');
+
+export const SEQSET_RECORDS_PER_PAGE = 10;
 
 const SeqSetSection: FC<{ title: string; children: React.ReactNode; headerContent?: React.ReactNode }> = ({
     title,
@@ -52,7 +56,9 @@ type SeqSetItemProps = {
     accessToken: string;
     seqSetAccessionVersion: string;
     seqSet: SeqSet;
-    seqSetRecords: SeqSetRecord[];
+    seqSetRecordCount: number;
+    /** The first SEQSET_RECORDS_PER_PAGE records; later pages are fetched in the browser. */
+    firstPageSeqSetRecords: SeqSetRecord[];
     seqSetCitations: SeqSetCitation[];
     seqSetGraphs: SeqSetGraph[];
     seqSetGraphsData: Record<string, AggregateRow[]>;
@@ -66,7 +72,8 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
     accessToken,
     seqSetAccessionVersion,
     seqSet,
-    seqSetRecords,
+    seqSetRecordCount,
+    firstPageSeqSetRecords,
     seqSetCitations,
     seqSetGraphs,
     seqSetGraphsData,
@@ -76,7 +83,11 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
 }) => {
     const [page, setPage] = useState(1);
     const [wideGraphs, setWideGraphs] = useState(false);
-    const sequencesPerPage = 10;
+
+    const allSeqSetRecords = useQuery({
+        ...seqSetRecordsQueryOptions(clientConfig, seqSet.seqSetId, seqSet.seqSetVersion),
+        enabled: page > 1,
+    });
 
     const { mutate: createSeqSetDOI } = useCreateSeqSetDOIAction(
         clientConfig,
@@ -131,13 +142,12 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
         );
     };
 
-    const getMaxPages = () => {
-        return Math.ceil(seqSetRecords.length / sequencesPerPage);
-    };
+    const maxPages = Math.ceil(seqSetRecordCount / SEQSET_RECORDS_PER_PAGE);
 
-    const getPaginatedSeqSetRecords = () => {
-        return seqSetRecords.slice((page - 1) * sequencesPerPage, page * sequencesPerPage);
-    };
+    const pageSeqSetRecords =
+        page === 1
+            ? firstPageSeqSetRecords
+            : allSeqSetRecords.data?.slice((page - 1) * SEQSET_RECORDS_PER_PAGE, page * SEQSET_RECORDS_PER_PAGE);
 
     const barPlotColor = getThemeColor('--color-primary-500', '#6b84c6');
 
@@ -150,7 +160,7 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
                     <SeqSetSectionEntry label='Version' value={seqSet.seqSetVersion} />
                     <SeqSetSectionEntry
                         label='Size'
-                        value={`${seqSetRecords.length} sequence${seqSetRecords.length === 1 ? '' : 's'}`}
+                        value={`${seqSetRecordCount} sequence${seqSetRecordCount === 1 ? '' : 's'}`}
                     />
                 </SeqSetSection>
                 <SeqSetSection title='Citations'>
@@ -207,17 +217,29 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
             </SeqSetSection>
             <SeqSetSectionSeparator />
             <SeqSetSection title='Sequences'>
-                <SeqSetRecordsTableWithMetadata
-                    seqSetRecords={getPaginatedSeqSetRecords()}
-                    clientConfig={clientConfig}
-                    fieldsToDisplay={fieldsToDisplay}
-                    organismDisplayNames={organismDisplayNames}
-                />
-                {getMaxPages() > 1 ? (
+                {pageSeqSetRecords !== undefined ? (
+                    <SeqSetRecordsTableWithMetadata
+                        seqSetRecords={pageSeqSetRecords}
+                        clientConfig={clientConfig}
+                        fieldsToDisplay={fieldsToDisplay}
+                        organismDisplayNames={organismDisplayNames}
+                    />
+                ) : (
+                    <div className='flex justify-center py-16'>
+                        {allSeqSetRecords.isError ? (
+                            <p className='text-red-500'>
+                                Failed to load SeqSet records: {String(allSeqSetRecords.error)}
+                            </p>
+                        ) : (
+                            <Spinner />
+                        )}
+                    </div>
+                )}
+                {maxPages > 1 ? (
                     <MUIPagination
                         className='my-4 w-full flex justify-center'
                         page={page}
-                        count={getMaxPages()}
+                        count={maxPages}
                         color='primary'
                         variant='outlined'
                         shape='rounded'
