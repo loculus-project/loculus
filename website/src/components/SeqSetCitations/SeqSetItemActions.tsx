@@ -1,3 +1,4 @@
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { type FC, useState } from 'react';
 import { toast } from 'react-toastify';
 
@@ -5,14 +6,15 @@ import { AuthorDetails } from './AuthorDetails.tsx';
 import { ExportSeqSet } from './ExportSeqSet';
 import { SeqSetForm } from './SeqSetForm';
 import { getClientLogger } from '../../clientLogger';
-import { seqSetCitationClientHooks } from '../../services/serviceHooks';
+import { seqSetCitationClientHooks, seqSetRecordsQueryOptions } from '../../services/serviceHooks';
 import type { ClientConfig } from '../../types/runtimeConfig';
-import type { AuthorProfile, SeqSetRecord, SeqSet } from '../../types/seqSetCitation';
+import type { AuthorProfile, SeqSet } from '../../types/seqSetCitation';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
 import { getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { BaseDialog } from '../common/BaseDialog.tsx';
 import { Button } from '../common/Button';
+import { Spinner } from '../common/Spinner';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 import MdiDelete from '~icons/mdi/delete';
 import MdiDownload from '~icons/mdi/download';
@@ -33,7 +35,6 @@ type SeqSetItemActionsProps = {
     accessToken: string;
     seqSet: SeqSet;
     seqSetAuthor?: AuthorProfile;
-    seqSetRecords: SeqSetRecord[];
     isAdminView?: boolean;
     databaseName: string;
 };
@@ -43,7 +44,6 @@ const SeqSetItemActionsInner: FC<SeqSetItemActionsProps> = ({
     accessToken,
     seqSet,
     seqSetAuthor,
-    seqSetRecords,
     isAdminView = false,
     databaseName,
 }) => {
@@ -55,6 +55,11 @@ const SeqSetItemActionsInner: FC<SeqSetItemActionsProps> = ({
     const [editModalVisible, setEditModalVisible] = useState(false);
     const [exportModalVisible, setExportModalVisible] = useState(false);
     const [creatorInfoVisible, setCreatorInfoVisible] = useState(false);
+
+    // Only edit and export need the full record list: edit fetches it when opened, export when downloading.
+    const recordsQueryOptions = seqSetRecordsQueryOptions(clientConfig, seqSet.seqSetId, seqSet.seqSetVersion);
+    const seqSetRecords = useQuery({ ...recordsQueryOptions, enabled: editModalVisible });
+    const queryClient = useQueryClient();
 
     const { mutate: deleteSeqSet } = useDeleteSeqSetAction(
         clientConfig,
@@ -139,12 +144,22 @@ const SeqSetItemActionsInner: FC<SeqSetItemActionsProps> = ({
                 className='min-h-[60vh]'
             >
                 <div className='min-w-[1000px]'></div>
-                <SeqSetForm
-                    clientConfig={clientConfig}
-                    accessToken={accessToken}
-                    editSeqSet={seqSet}
-                    editSeqSetRecords={seqSetRecords}
-                />
+                {seqSetRecords.data !== undefined ? (
+                    <SeqSetForm
+                        clientConfig={clientConfig}
+                        accessToken={accessToken}
+                        editSeqSet={seqSet}
+                        editSeqSetRecords={seqSetRecords.data}
+                    />
+                ) : (
+                    <div className='flex justify-center py-16'>
+                        {seqSetRecords.isError ? (
+                            <p className='text-red-500'>Failed to load SeqSet records: {String(seqSetRecords.error)}</p>
+                        ) : (
+                            <Spinner />
+                        )}
+                    </div>
+                )}
             </BaseDialog>
             <BaseDialog
                 isOpen={exportModalVisible}
@@ -154,7 +169,11 @@ const SeqSetItemActionsInner: FC<SeqSetItemActionsProps> = ({
                 className='min-h-[60vh]'
             >
                 <div className='min-w-[1000px]'></div>
-                <ExportSeqSet seqSet={seqSet} seqSetRecords={seqSetRecords} databaseName={databaseName} />
+                <ExportSeqSet
+                    seqSet={seqSet}
+                    getSeqSetRecords={() => queryClient.fetchQuery(recordsQueryOptions)}
+                    databaseName={databaseName}
+                />
             </BaseDialog>
             <BaseDialog
                 title='Creator details'
