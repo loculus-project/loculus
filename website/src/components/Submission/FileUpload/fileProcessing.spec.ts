@@ -1,7 +1,7 @@
 import { fail } from 'assert';
 import { promises as fs } from 'fs';
 
-import ExcelJS from 'exceljs';
+import ExcelJS from 'devextreme-exceljs-fork';
 import { describe, expect, test } from 'vitest';
 
 import { FASTA_FILE_KIND, METADATA_FILE_KIND, PLAIN_SEGMENT_KIND } from './fileProcessing';
