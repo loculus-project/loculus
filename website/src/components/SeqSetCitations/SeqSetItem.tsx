@@ -1,17 +1,16 @@
 import MUIPagination from '@mui/material/Pagination';
 import { useQuery } from '@tanstack/react-query';
 import { AxiosError } from 'axios';
-import { type FC, useState } from 'react';
+import { type FC, useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 
 import CitationList from './CitationList.tsx';
-import { DatePlot, CategoryPlot } from './SeqSetPlots.tsx';
+import { DatePlot, CategoryPlot, fetchSeqSetAggregates } from './SeqSetPlots.tsx';
 import { SeqSetRecordsTableWithMetadata } from './SeqSetRecordsTableWithMetadata';
-import { getSeqSetStatistics } from './getSeqSetStatistics.ts';
 import { getClientLogger } from '../../clientLogger';
 import { seqSetCitationClientHooks } from '../../services/serviceHooks';
 import type { ProblemDetail } from '../../types/backend.ts';
-import type { SeqSetGraphWithExtraFields } from '../../types/config.ts';
+import type { SeqSetGraph } from '../../types/config.ts';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import { type SeqSet, type SeqSetCitation, type SeqSetRecord } from '../../types/seqSetCitation';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
@@ -25,6 +24,8 @@ import MdiViewGrid from '~icons/mdi/view-grid';
 import OouiNewWindowLtr from '~icons/ooui/new-window-ltr';
 
 const logger = getClientLogger('SeqSetItem');
+
+export type SeqSetGraphWithExtraFields = SeqSetGraph & { organismFields: Record<string, string> };
 
 const SeqSetSection: FC<{ title: string; children: React.ReactNode; headerContent?: React.ReactNode }> = ({
     title,
@@ -50,15 +51,25 @@ const SeqSetGraphCard: FC<{
 }> = ({ clientConfig, graph, seqSetAccessionVersion, seqSetRecords }) => {
     const barColor = getThemeColor('--color-primary-500', '#6b84c6');
 
-    const { data, isLoading, isError } = useQuery({
+    const { data, isLoading, isError, error } = useQuery({
         queryKey: ['seqset-graph', seqSetAccessionVersion, graph.name, graph.organismFields, clientConfig],
         queryFn: () =>
-            getSeqSetStatistics(
+            fetchSeqSetAggregates(
                 seqSetRecords.map((record) => record.accession),
                 graph.organismFields,
                 clientConfig,
             ),
+        retry: false,
     });
+
+    useEffect(() => {
+        if (isError) {
+            toast.error(
+                `Error while fetching seqSet statistics: ${error instanceof Error ? error.message : String(error)}`,
+                { position: 'top-center', autoClose: false },
+            );
+        }
+    }, [isError, error]);
 
     if (isLoading) {
         return (
