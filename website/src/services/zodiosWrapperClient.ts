@@ -63,7 +63,8 @@ export class ZodiosWrapperClient<Api extends ZodiosEndpointDefinitions> {
         // Zodios validates with zod's safeParseAsync, which for large bodies (e.g. tens of thousands
         // of accessions in a SeqSet) takes hundreds of MiB and blocks the server's event loop for
         // seconds, so its validation is off and responses are validated synchronously instead.
-        // Request bodies are not validated here: they are typed, and the backend and LAPIS validate them.
+        // Request parameters are not run through their schemas here (so no zod transforms or defaults on
+        // them): they are typed, and the backend and LAPIS validate them.
         // See https://github.com/loculus-project/loculus/issues/7752
         this.zodios = new Zodios(url, api, { validate: false });
         this.zodios.use(syncResponseValidation);
