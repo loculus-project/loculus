@@ -252,4 +252,30 @@ describe('submission template API route', () => {
             'attachment; filename="Test_Organism_metadata_revision_template.xlsx"',
         );
     });
+
+    test('XLSX template XML matches the committed snapshot', async () => {
+        const response = await callGet('test-organism', { fileType: 'xlsx' });
+        const zip = await JSZip.loadAsync(await response.arrayBuffer());
+
+        const partNames = Object.keys(zip.files).filter((name) => !zip.files[name].dir);
+        for (const partName of partNames.filter((name) => !LIBRARY_BOILERPLATE_PARTS.has(name))) {
+            const xml = await zip.file(partName)!.async('string');
+            await expect(normaliseXlsxPart(partName, xml)).toMatchFileSnapshot(
+                `__snapshots__/xlsx-template/${partName}`,
+            );
+        }
+        await expect(partNames.sort().join('\n') + '\n').toMatchFileSnapshot('__snapshots__/xlsx-template/parts.txt');
+    });
 });
+
+/** Parts ExcelJS writes the same regardless of our input; still listed in parts.txt, not snapshotted. */
+const LIBRARY_BOILERPLATE_PARTS = new Set(['xl/theme/theme1.xml', 'docProps/app.xml']);
+
+/** Drops the creation timestamps and puts one tag per line so snapshot diffs are readable. */
+function normaliseXlsxPart(partName: string, xml: string): string {
+    const stable =
+        partName === 'docProps/core.xml'
+            ? xml.replace(/(<dcterms:(created|modified)[^>]*>)[^<]*/g, '$1TIMESTAMP')
+            : xml;
+    return stable.replaceAll('><', '>\n<') + '\n';
+}
