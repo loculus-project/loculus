@@ -71,6 +71,7 @@ export const routes = {
         return `/seqsets/${getAccessionVersionString(seqSetAccessionVersion)}`;
     },
     logout: () => '/logout',
+    health: () => '/health',
     authLogin: (returnTo: string) => withSearchParams('/auth/login', { returnTo }),
     authCallback: () => '/auth/callback',
     authLoginFailed: () => '/auth/login-failed',

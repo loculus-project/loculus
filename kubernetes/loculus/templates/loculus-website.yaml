@@ -35,18 +35,24 @@ spec:
           volumeMounts:
             - name: loculus-website-config-processed
               mountPath: /config
+          startupProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            periodSeconds: 2
+            failureThreshold: 30 # 1 minute to start
           livenessProbe:
             httpGet:
-              path: /
+              path: /health
               port: 3000
-            initialDelaySeconds: 30
             periodSeconds: 10
+            timeoutSeconds: 5
           readinessProbe:
             httpGet:
-              path: /
+              path: /health
               port: 3000
-            initialDelaySeconds: 5
             periodSeconds: 5
+            timeoutSeconds: 3
       imagePullSecrets:
         - name: custom-website-sealed-secret
       volumes:
