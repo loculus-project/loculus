@@ -1,8 +1,9 @@
-import { Zodios, type ZodiosEndpointDefinitions, type ZodiosInstance } from '@zodios/core';
+import { Zodios, type ZodiosEndpointDefinitions, type ZodiosInstance, type ZodiosPlugin } from '@zodios/core';
 import type { Narrow } from '@zodios/core/lib/utils.types';
 import type { Aliases, ZodiosAliases } from '@zodios/core/lib/zodios.types';
 import type { AxiosError, AxiosResponse } from 'axios';
 import { type Err, err, ok, type Result } from 'neverthrow';
+import type { ZodError } from 'zod';
 
 import { type InstanceLogger } from '../logger.ts';
 import { problemDetail, type ProblemDetail } from '../types/backend.ts';
@@ -12,6 +13,39 @@ type ZodiosMethods<Api extends ZodiosEndpointDefinitions> = Aliases<Api>;
 type ZodiosMethod<Api extends ZodiosEndpointDefinitions, Method extends ZodiosMethods<Api>> = {
     parameters: Parameters<ZodiosAliases<Api>[Method]>;
     response: ReturnType<ZodiosAliases<Api>[Method]>;
+};
+
+class ResponseValidationError extends Error {
+    constructor(
+        endpoint: string,
+        public readonly zodError: ZodError,
+    ) {
+        super(`Invalid response from endpoint '${endpoint}'`);
+    }
+}
+
+/**
+ * Validates JSON responses against the endpoint's schema like zodios' own validation, but with zod's
+ * synchronous parse: zodios uses safeParseAsync, which costs several times the time and memory on large bodies.
+ */
+const syncResponseValidation: ZodiosPlugin = {
+    name: 'sync-response-validation',
+    // eslint-disable-next-line @typescript-eslint/require-await -- zodios plugins have to return a promise
+    response: async (api, config, response) => {
+        const endpoint = api.find((it) => it.method === config.method && it.path === config.url);
+        if (endpoint === undefined) {
+            throw new Error(`No endpoint found for ${config.method} ${config.url}`);
+        }
+        const contentType: unknown = response.headers['content-type'];
+        if (typeof contentType === 'string' && contentType.includes('application/json')) {
+            const parsed = endpoint.response.safeParse(response.data);
+            if (!parsed.success) {
+                throw new ResponseValidationError(`${endpoint.method} ${endpoint.path}`, parsed.error);
+            }
+            response.data = parsed.data;
+        }
+        return response;
+    },
 };
 
 type TypeThatCanBeUsedAsArgs = [any, any]; // eslint-disable-line @typescript-eslint/no-explicit-any -- unfortunately, TS doesn't properly infer the correct types, so we have to use this workaround
@@ -28,10 +62,11 @@ export class ZodiosWrapperClient<Api extends ZodiosEndpointDefinitions> {
     ) {
         // Zodios validates with zod's safeParseAsync, which for large bodies (e.g. tens of thousands
         // of accessions in a SeqSet) takes hundreds of MiB and blocks the server's event loop for
-        // seconds. Request bodies are already typed, and the backend and LAPIS validate them too.
-        // validate: false also skips zod transforms, defaults and coercion (see the note atop each API).
+        // seconds, so its validation is off and responses are validated synchronously instead.
+        // Request bodies are not validated here: they are typed, and the backend and LAPIS validate them.
         // See https://github.com/loculus-project/loculus/issues/7752
         this.zodios = new Zodios(url, api, { validate: false });
+        this.zodios.use(syncResponseValidation);
     }
 
     /**
@@ -56,6 +91,17 @@ export class ZodiosWrapperClient<Api extends ZodiosEndpointDefinitions> {
     }
 
     protected createProblemDetail(error: AxiosError, method: string): ProblemDetail {
+        if (error instanceof ResponseValidationError) {
+            this.logger.error(`${error.message} of ${this.serviceName}: ${error.zodError.message.slice(0, 2000)}`);
+            return {
+                type: 'about:blank',
+                title: error.message,
+                status: 0,
+                detail: `Unexpected response format from ${this.serviceName}`,
+                instance: method,
+            };
+        }
+
         if (error.response?.status === 401) {
             const message = error.response.headers['www-authenticate'] ?? 'Not authorized';
             return {

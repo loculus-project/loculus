@@ -1,5 +1,5 @@
-// Used by ZodiosWrapperClient with validate: false, which skips zod transforms, defaults and coercion:
-// schemas in this API must not rely on them.
+// Used by ZodiosWrapperClient with zodios validation off: request schemas are not applied there, so they
+// must not rely on zod transforms, defaults or coercion. Response schemas are applied (synchronously).
 
 import { makeApi, makeEndpoint } from '@zodios/core';
 import z from 'zod';
