@@ -27,6 +27,11 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     steps:
+      - name: Check ENA credentials are available
+        if: env.ENA_USERNAME == '' || env.ENA_PASSWORD == ''
+        run: |
+          echo "::error::ENA_SUBMISSION_USER/ENA_SUBMISSION_PASSWORD are empty. Runs triggered by Dependabot get no Actions secrets, and re-running keeps that actor. Click 'Update branch' or push to the PR to get a run with secrets."
+          exit 1
       - uses: actions/checkout@v7
       - name: Extract Flyway version
         id: flyway_version
