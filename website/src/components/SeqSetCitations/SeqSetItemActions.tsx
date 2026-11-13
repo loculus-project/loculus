@@ -1,3 +1,4 @@
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { type FC, useState } from 'react';
 import { toast } from 'react-toastify';
 
@@ -5,7 +6,7 @@ import { AuthorDetails } from './AuthorDetails.tsx';
 import { ExportSeqSet } from './ExportSeqSet';
 import { SeqSetForm } from './SeqSetForm';
 import { getClientLogger } from '../../clientLogger';
-import { seqSetCitationClientHooks, useSeqSetRecords } from '../../services/serviceHooks';
+import { seqSetCitationClientHooks, seqSetRecordsQueryOptions } from '../../services/serviceHooks';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import type { AuthorProfile, SeqSet } from '../../types/seqSetCitation';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
@@ -55,13 +56,10 @@ const SeqSetItemActionsInner: FC<SeqSetItemActionsProps> = ({
     const [exportModalVisible, setExportModalVisible] = useState(false);
     const [creatorInfoVisible, setCreatorInfoVisible] = useState(false);
 
-    // Only edit and export need the full record list, so it is fetched when one of them is first opened.
-    const seqSetRecords = useSeqSetRecords(
-        clientConfig,
-        seqSet.seqSetId,
-        seqSet.seqSetVersion,
-        editModalVisible || exportModalVisible,
-    );
+    // Only edit and export need the full record list: edit fetches it when opened, export when downloading.
+    const recordsQueryOptions = seqSetRecordsQueryOptions(clientConfig, seqSet.seqSetId, seqSet.seqSetVersion);
+    const seqSetRecords = useQuery({ ...recordsQueryOptions, enabled: editModalVisible });
+    const queryClient = useQueryClient();
 
     const { mutate: deleteSeqSet } = useDeleteSeqSetAction(
         clientConfig,
@@ -156,7 +154,7 @@ const SeqSetItemActionsInner: FC<SeqSetItemActionsProps> = ({
                 ) : (
                     <div className='flex justify-center py-16'>
                         {seqSetRecords.isError ? (
-                            <p className='text-red-500'>Failed to load SeqSet records: {seqSetRecords.error.message}</p>
+                            <p className='text-red-500'>Failed to load SeqSet records: {String(seqSetRecords.error)}</p>
                         ) : (
                             <Spinner />
                         )}
@@ -173,8 +171,7 @@ const SeqSetItemActionsInner: FC<SeqSetItemActionsProps> = ({
                 <div className='min-w-[1000px]'></div>
                 <ExportSeqSet
                     seqSet={seqSet}
-                    seqSetRecords={seqSetRecords.data}
-                    seqSetRecordsError={seqSetRecords.error?.message}
+                    getSeqSetRecords={() => queryClient.fetchQuery(recordsQueryOptions)}
                     databaseName={databaseName}
                 />
             </BaseDialog>

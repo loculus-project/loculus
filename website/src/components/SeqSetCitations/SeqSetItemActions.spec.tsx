@@ -1,7 +1,8 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
-import { describe, expect, test } from 'vitest';
+import { toast } from 'react-toastify';
+import { describe, expect, test, vi } from 'vitest';
 
 import { SeqSetItemActions } from './SeqSetItemActions';
 import { testConfig, testServer } from '../../../vitest.setup.ts';
@@ -65,13 +66,41 @@ describe('SeqSetItemActions', () => {
         expect(getRequestCount()).toBe(1);
     });
 
-    test('enables the export download once the records are loaded', async () => {
-        mockRecords(() => HttpResponse.json(records));
+    test('export requests the records only when downloading', async () => {
+        const getRequestCount = mockRecords(() => HttpResponse.json(records));
+        const downloadedHrefs: string[] = [];
+        vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (this: HTMLAnchorElement) {
+            downloadedHrefs.push(this.href);
+        });
         renderActions();
 
         await userEvent.click(screen.getByRole('button', { name: 'Export / Cite' }));
+        const downloadButton = await screen.findByRole('button', { name: 'Download' });
+        expect(getRequestCount()).toBe(0);
 
-        await waitFor(() => expect(screen.getByRole('button', { name: 'Download' })).toBeEnabled());
+        await userEvent.click(downloadButton);
+
+        await waitFor(() => expect(downloadedHrefs).toHaveLength(1));
+        expect(decodeURIComponent(downloadedHrefs[0])).toContain('LOC_000002.1');
+        expect(getRequestCount()).toBe(1);
+    });
+
+    test('export shows an error when the records fail to load', async () => {
+        mockRecords(() => new HttpResponse(null, { status: 500 }));
+        const toastError = vi.spyOn(toast, 'error');
+        renderActions();
+
+        await userEvent.click(screen.getByRole('button', { name: 'Export / Cite' }));
+        await userEvent.click(await screen.findByRole('button', { name: 'Download' }));
+
+        await waitFor(
+            () =>
+                expect(toastError).toHaveBeenCalledWith(
+                    expect.stringContaining('Failed to load SeqSet records'),
+                    expect.anything(),
+                ),
+            { timeout: 4000 },
+        );
     });
 
     test('shows an error instead of an empty edit form when the records fail to load', async () => {

@@ -131,25 +131,19 @@ export function seqSetCitationClientHooks(clientConfig: ClientConfig) {
 }
 
 /**
- * Fetches all records of a SeqSet version in the browser. Response validation is off because zodios' async
- * validation of a large record list costs hundreds of MB (#7752).
+ * Query for all records of a SeqSet version, fetched in the browser. Response validation is off because zodios'
+ * async validation of a large record list costs hundreds of MB (#7752).
  */
-export function useSeqSetRecords(
-    clientConfig: ClientConfig,
-    seqSetId: string,
-    seqSetVersion: number,
-    enabled: boolean,
-): UseQueryResult<SeqSetRecord[], Error> {
-    return useQuery({
+export function seqSetRecordsQueryOptions(clientConfig: ClientConfig, seqSetId: string, seqSetVersion: number) {
+    return {
         queryKey: ['seqset-records', clientConfig.backendUrl, seqSetId, seqSetVersion],
-        queryFn: () =>
+        queryFn: (): Promise<SeqSetRecord[]> =>
             new Zodios(clientConfig.backendUrl, seqSetCitationApi, { validate: false }).getSeqSetRecords({
                 params: { seqSetId, version: seqSetVersion },
             }),
-        enabled,
         staleTime: Infinity,
         retry: 1,
-    });
+    };
 }
 
 export function useSequenceEntryHistory(

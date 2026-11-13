@@ -7,13 +7,11 @@ import { Button } from '../common/Button';
 
 type ExportSeqSetProps = {
     seqSet: SeqSet;
-    /** undefined while the records are still loading */
-    seqSetRecords: SeqSetRecord[] | undefined;
-    seqSetRecordsError?: string;
+    getSeqSetRecords: () => Promise<SeqSetRecord[]>;
     databaseName: string;
 };
 
-export const ExportSeqSet: FC<ExportSeqSetProps> = ({ seqSet, seqSetRecords, seqSetRecordsError, databaseName }) => {
+export const ExportSeqSet: FC<ExportSeqSetProps> = ({ seqSet, getSeqSetRecords, databaseName }) => {
     const [isDownloading, setIsDownloading] = useState(false);
     const [selectedDownload, setSelectedDownload] = useState(0);
     const [selectedCitation, setSelectedCitation] = useState(0);
@@ -29,7 +27,7 @@ export const ExportSeqSet: FC<ExportSeqSetProps> = ({ seqSet, seqSetRecords, seq
             : `https://doi.org/${seqSet.seqSetDOI}`;
     };
 
-    const downloadJSONSeqSet = () => {
+    const downloadJSONSeqSet = (seqSetRecords: SeqSetRecord[]) => {
         const exportData = {
             seqSet,
             sequences: seqSetRecords,
@@ -41,7 +39,7 @@ export const ExportSeqSet: FC<ExportSeqSetProps> = ({ seqSet, seqSetRecords, seq
         hiddenLink.click();
     };
 
-    const downloadTSVSeqSet = () => {
+    const downloadTSVSeqSet = (seqSetRecords: SeqSetRecord[]) => {
         const headers = [...Object.keys(seqSet), 'focalAccessions', 'backgroundAccessions'];
         const seqSetString = Object.values(seqSet).join('\t');
         const focalAccessionsString = serializeSeqSetRecords(seqSetRecords, true);
@@ -57,14 +55,23 @@ export const ExportSeqSet: FC<ExportSeqSetProps> = ({ seqSet, seqSetRecords, seq
         hiddenLink.click();
     };
 
-    const downloadSeqSet = () => {
+    const downloadSeqSet = async () => {
         setIsDownloading(true);
-        if (selectedDownload === 0) {
-            downloadJSONSeqSet();
-        } else if (selectedDownload === 1) {
-            downloadTSVSeqSet();
+        try {
+            const seqSetRecords = await getSeqSetRecords();
+            if (selectedDownload === 0) {
+                downloadJSONSeqSet(seqSetRecords);
+            } else if (selectedDownload === 1) {
+                downloadTSVSeqSet(seqSetRecords);
+            }
+        } catch (error) {
+            toast.error(`Failed to load SeqSet records: ${error instanceof Error ? error.message : String(error)}`, {
+                position: 'top-center',
+                autoClose: false,
+            });
+        } finally {
+            setIsDownloading(false);
         }
-        setIsDownloading(false);
     };
 
     const getBibtex = () => {
@@ -152,20 +159,9 @@ export const ExportSeqSet: FC<ExportSeqSetProps> = ({ seqSet, seqSetRecords, seq
                         </div>
                     </div>
                     <div className='pb-8 pt-4'>
-                        <Button
-                            variant='primary'
-                            onClick={downloadSeqSet}
-                            disabled={isDownloading || seqSetRecords === undefined}
-                        >
-                            {seqSetRecords === undefined && seqSetRecordsError === undefined
-                                ? 'Loading records…'
-                                : 'Download'}
+                        <Button variant='primary' onClick={() => void downloadSeqSet()} disabled={isDownloading}>
+                            {isDownloading ? 'Loading records…' : 'Download'}
                         </Button>
-                        {seqSetRecordsError !== undefined && (
-                            <p className='pt-2 text-red-500 text-sm'>
-                                Failed to load SeqSet records: {seqSetRecordsError}
-                            </p>
-                        )}
                     </div>
                 </div>
                 <hr className='mb-8' />
