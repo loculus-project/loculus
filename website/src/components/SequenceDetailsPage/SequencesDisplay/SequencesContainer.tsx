@@ -28,6 +28,7 @@ type SequenceContainerProps = {
     clientConfig: ClientConfig;
     referenceGenomesInfo: ReferenceGenomesInfo;
     loadSequencesAutomatically: boolean;
+    isRestricted?: boolean;
 };
 
 export const InnerSequencesContainer: FC<SequenceContainerProps> = ({
@@ -37,6 +38,7 @@ export const InnerSequencesContainer: FC<SequenceContainerProps> = ({
     clientConfig,
     referenceGenomesInfo,
     loadSequencesAutomatically,
+    isRestricted = false,
 }) => {
     const { nucleotideSegmentInfos, geneInfos } = getSegmentAndGeneInfo(referenceGenomesInfo, segmentReferences);
 
@@ -61,6 +63,7 @@ export const InnerSequencesContainer: FC<SequenceContainerProps> = ({
             setType={setSequenceType}
             genes={geneInfos}
             useLapisMultiSegmentedEndpoint={referenceGenomesInfo.useLapisMultiSegmentedEndpoint}
+            isRestricted={isRestricted}
         />
     );
 };
@@ -76,6 +79,7 @@ type SequenceTabsProps = {
     setType: Dispatch<SetStateAction<SequenceType>>;
     genes: GeneInfo[];
     useLapisMultiSegmentedEndpoint: boolean;
+    isRestricted: boolean;
 };
 
 const SequenceTabs: FC<SequenceTabsProps> = ({
@@ -87,6 +91,7 @@ const SequenceTabs: FC<SequenceTabsProps> = ({
     sequenceType,
     setType,
     useLapisMultiSegmentedEndpoint,
+    isRestricted,
 }) => {
     const [activeTab, setActiveTab] = useState<'unaligned' | 'aligned' | 'gene'>('unaligned');
 
@@ -143,6 +148,7 @@ const SequenceTabs: FC<SequenceTabsProps> = ({
                         clientConfig={clientConfig}
                         sequenceType={sequenceType}
                         useLapisMultiSegmentedEndpoint={useLapisMultiSegmentedEndpoint}
+                        isRestricted={isRestricted}
                     />
                 ) : (
                     <div className='h-80'></div>
