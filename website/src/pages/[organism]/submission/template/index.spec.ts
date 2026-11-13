@@ -54,6 +54,9 @@ vi.mock('../../../../components/Navigation/cleanOrganism', () => ({
         if (rawOrganism === 'test-organism') {
             return { organism: { key: 'test-organism', displayName: 'Test Organism' } };
         }
+        if (rawOrganism === 'dash-organism') {
+            return { organism: { key: 'dash-organism', displayName: 'Test – Organism' } };
+        }
         return { organism: undefined };
     },
 }));
@@ -248,6 +251,12 @@ describe('submission template API route', () => {
         expect(cellTexts).toContain('Priority fields');
     });
 
+    // Known bug: real Node rejects non-Latin-1 header values, so the download fails for such display names.
+    test.fails('a display name outside Latin-1 is made safe in the download filename', async () => {
+        const response = await callGet('dash-organism', { fileType: 'tsv' });
+        expect(response.headers.get('Content-Disposition')).toMatch(/^[\x20-\x7e]*$/);
+    });
+
     test('revision template filename includes "revision"', async () => {
         const response = await callGet('test-organism', { fileType: 'xlsx', format: 'revise' });
         expect(response.headers.get('Content-Disposition')).toBe(
@@ -316,6 +325,101 @@ describe('submission template API route', () => {
 });
 
 /** Parts ExcelJS writes the same regardless of our input; still listed in parts.txt, not snapshotted. */
+type FilledTemplateEdit = (workbook: XLSX.WorkBook, fill: (rows: unknown[][], origin?: string) => void) => void;
+type UploadOutcome = { error?: string; text?: string; warnings: string[] };
+
+const filledRow = ['sample1', new Date(2021, 0, 15), 'France', 'Homo sapiens', 'some note'];
+const enteredValues = 'submissionId\tdate\tcountry\thost\tnotes\nsample1\t2021-01-15\tFrance\tHomo sapiens\tsome note';
+const setCell = (workbook: XLSX.WorkBook, address: string, cell: XLSX.CellObject) => {
+    workbook.Sheets[DATA_SHEET_NAME][address] = cell;
+};
+
+async function uploadFilledTemplate(edit: FilledTemplateEdit): Promise<UploadOutcome> {
+    const response = await callGet('test-organism', { fileType: 'xlsx' });
+    const workbook = XLSX.read(await response.arrayBuffer(), { type: 'array' });
+    edit(workbook, (rows, origin = 'A2') =>
+        XLSX.utils.sheet_add_aoa(workbook.Sheets[DATA_SHEET_NAME], rows, { origin, dateNF: 'yyyy-mm-dd' }),
+    );
+    const filled = XLSX.write(workbook, { type: 'array', bookType: 'xlsx' }) as ArrayBuffer;
+    const result = await METADATA_FILE_KIND.processRawFile(new File([filled], 'metadata.xlsx'));
+    return result.isErr()
+        ? { error: result.error.message, warnings: [] }
+        : { text: await result.value.text(), warnings: result.value.warnings() };
+}
+
+describe('upload of a filled-in template', () => {
+    test.each([
+        { mistake: 'no mistake', edit: ((_, fill) => fill([filledRow])) satisfies FilledTemplateEdit },
+        {
+            mistake: 'Data sheet renamed, still first',
+            edit: ((workbook, fill) => {
+                fill([filledRow]);
+                workbook.Sheets.Samples = workbook.Sheets[DATA_SHEET_NAME];
+                workbook.SheetNames[0] = 'Samples';
+            }) satisfies FilledTemplateEdit,
+        },
+    ])('is parsed to the entered values: $mistake', async ({ edit }) => {
+        expect(await uploadFilledTemplate(edit)).toEqual({ text: enteredValues, warnings: [] });
+    });
+
+    // Known bugs: each test asserts the intended behaviour and is expected to fail until the bug is fixed.
+    test.fails.each<{ mistake: string; edit: FilledTemplateEdit; intended: (outcome: UploadOutcome) => void }>([
+        {
+            mistake: 'Data sheet deleted is rejected instead of reading the hidden _lists sheet',
+            edit: (workbook) => {
+                workbook.SheetNames = workbook.SheetNames.filter((name) => name !== DATA_SHEET_NAME);
+            },
+            intended: ({ error }) => expect(error).toMatch(/Data/),
+        },
+        {
+            mistake: 'deleted header row with one data row is reported as a missing header',
+            edit: (_, fill) => fill([filledRow], 'A1'),
+            intended: ({ error }) => expect(error).toMatch(/header/i),
+        },
+        {
+            mistake: 'deleted header row with several data rows is rejected',
+            edit: (_, fill) => fill([filledRow, ['sample2', new Date(2021, 0, 16), 'Germany', 'Sus scrofa', '']], 'A1'),
+            intended: ({ error }) => expect(error).toBeDefined(),
+        },
+        {
+            mistake: 'duplicate header is rejected',
+            edit: (workbook, fill) => {
+                fill([filledRow]);
+                setCell(workbook, 'B1', { t: 's', v: 'submissionId' });
+            },
+            intended: ({ error }) => expect(error).toBeDefined(),
+        },
+        {
+            mistake: 'value right of the table does not become an __EMPTY column',
+            edit: (_, fill) => fill([[...filledRow, 'call Anna']]),
+            intended: ({ text }) => expect(text).not.toContain('__EMPTY'),
+        },
+        {
+            mistake: '12-digit numeric id keeps all digits',
+            edit: (_, fill) => fill([[123456789012, ...filledRow.slice(1)]]),
+            intended: ({ text }) => expect(text).toContain('123456789012'),
+        },
+        {
+            mistake: 'year typed into the date column stays the year',
+            edit: (workbook, fill) => {
+                fill([filledRow]);
+                setCell(workbook, 'B2', { t: 'n', v: 2020, z: 'yyyy-mm-dd' });
+            },
+            intended: ({ text }) => expect(text).toContain('\t2020\t'),
+        },
+        {
+            mistake: 'formula error in a cell is flagged',
+            edit: (workbook, fill) => {
+                fill([filledRow]);
+                setCell(workbook, 'E2', { t: 'e', v: 0x2a, w: '#N/A' });
+            },
+            intended: ({ error, warnings }) => expect(error !== undefined || warnings.length > 0).toBe(true),
+        },
+    ])('$mistake', async ({ edit, intended }) => {
+        intended(await uploadFilledTemplate(edit));
+    });
+});
+
 const LIBRARY_BOILERPLATE_PARTS = new Set(['xl/theme/theme1.xml', 'docProps/app.xml']);
 
 /** Drops the creation timestamps and puts one tag per line so snapshot diffs are readable. */
