@@ -8,7 +8,9 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-options: Replace=true
 spec:
+  {{- if not $.Values.autoscaling.enabled }}
   replicas: {{$.Values.replicas.website}}
+  {{- end }}
   selector:
     matchLabels:
       app: loculus
