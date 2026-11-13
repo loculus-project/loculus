@@ -201,7 +201,7 @@ class GroupManagementControllerTest(@Autowired private val client: GroupManageme
     @ParameterizedTest
     @MethodSource("authorizationTestCases")
     fun `GIVEN invalid authorization token WHEN performing action THEN returns 401 Unauthorized`(scenario: Scenario) {
-        expectUnauthorizedResponse(isModifyingRequest = scenario.isModifying) {
+        expectUnauthorizedResponse {
             scenario.testFunction(it, client)
         }
     }
@@ -221,6 +221,14 @@ class GroupManagementControllerTest(@Autowired private val client: GroupManageme
     @Test
     fun `WHEN I query details of a non-existing group THEN expect error that group does not exist`() {
         client.getDetailsOfGroup(groupId = 123456789)
+            .andExpect(status().isNotFound)
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+            .andExpect(jsonPath("\$.detail").value("Group 123456789 does not exist."))
+    }
+
+    @Test
+    fun `WHEN a user edits a non-existing group THEN group does not exist`() {
+        client.updateGroup(groupId = 123456789, group = DEFAULT_GROUP_CHANGED, jwt = jwtForDefaultUser)
             .andExpect(status().isNotFound)
             .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(jsonPath("\$.detail").value("Group 123456789 does not exist."))
@@ -259,6 +267,14 @@ class GroupManagementControllerTest(@Autowired private val client: GroupManageme
         client.createNewGroupWithBody("{}")
             .andExpect(status().isBadRequest)
             .andExpect { jsonPath("\$.detail", containsString("value failed for JSON property groupName")) }
+    }
+
+    @Test
+    fun `WHEN creating a group with a field longer than 255 characters THEN expect unprocessable content`() {
+        client.createNewGroup(group = DEFAULT_GROUP.copy(groupName = "a".repeat(256)))
+            .andExpect(status().isUnprocessableContent)
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+            .andExpect(jsonPath("\$.detail", containsString("groupName")))
     }
 
     @Test
@@ -389,6 +405,18 @@ class GroupManagementControllerTest(@Autowired private val client: GroupManageme
     }
 
     @Test
+    fun `WHEN a non-member tries to add a user that does not exist THEN the action is forbidden`() {
+        val groupId = client.createNewGroup(jwt = jwtForDefaultUser)
+            .andExpect(status().isOk)
+            .andGetGroupId()
+
+        every { keycloakAdapter.getUsersWithName(any()) } returns listOf()
+
+        client.addUserToGroup(groupId = groupId, usernameToAdd = "userthatdoesnotexist", jwt = jwtForAlternativeUser)
+            .andExpect(status().isForbidden)
+    }
+
+    @Test
     fun `WHEN a superusers removes a user from a group THEN user is removed`() {
         val groupId = client.createNewGroup()
             .andExpect(status().isOk)
@@ -423,7 +451,7 @@ class GroupManagementControllerTest(@Autowired private val client: GroupManageme
             .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath("\$.detail").value(
-                    "Group(s) $groupId do(es) not exist.",
+                    "Group $groupId does not exist.",
                 ),
             )
     }
@@ -473,7 +501,7 @@ class GroupManagementControllerTest(@Autowired private val client: GroupManageme
             .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(
                 jsonPath("\$.detail").value(
-                    "Group(s) $groupId do(es) not exist.",
+                    "Group $groupId does not exist.",
                 ),
             )
             .andReturn()
@@ -498,30 +526,19 @@ class GroupManagementControllerTest(@Autowired private val client: GroupManageme
     }
 
     companion object {
-        data class Scenario(
-            val testFunction: (String?, GroupManagementControllerClient) -> ResultActions,
-            val isModifying: Boolean,
-        )
+        data class Scenario(val testFunction: (String?, GroupManagementControllerClient) -> ResultActions)
 
         @JvmStatic
         fun authorizationTestCases(): List<Scenario> = listOf(
-            Scenario({ jwt, client -> client.createNewGroup(jwt = jwt) }, isModifying = true),
-            Scenario({ jwt, client -> client.getGroupsOfUser(jwt = jwt) }, isModifying = false),
-            Scenario({ jwt, client -> client.getAllGroups(jwt = jwt) }, isModifying = false),
-            Scenario(
-                { jwt, client -> client.addUserToGroup(groupId = 123, usernameToAdd = DEFAULT_USER_NAME, jwt = jwt) },
-                isModifying = true,
-            ),
-            Scenario(
-                { jwt, client ->
-                    client.removeUserFromGroup(
-                        groupId = 123,
-                        userToRemove = DEFAULT_USER_NAME,
-                        jwt = jwt,
-                    )
-                },
-                isModifying = true,
-            ),
+            Scenario { jwt, client -> client.createNewGroup(jwt = jwt) },
+            Scenario { jwt, client -> client.getGroupsOfUser(jwt = jwt) },
+            Scenario { jwt, client -> client.getAllGroups(jwt = jwt) },
+            Scenario { jwt, client ->
+                client.addUserToGroup(groupId = 123, usernameToAdd = DEFAULT_USER_NAME, jwt = jwt)
+            },
+            Scenario { jwt, client ->
+                client.removeUserFromGroup(groupId = 123, userToRemove = DEFAULT_USER_NAME, jwt = jwt)
+            },
         )
     }
 }

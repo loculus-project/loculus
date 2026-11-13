@@ -143,7 +143,7 @@ class RequestUploadEndpointTest(
             jwt = generateJwtFor("superuser", listOf("super_user")),
         )
             .andExpect(status().isNotFound)
-            .andExpect(jsonPath("\$.detail", containsString("do(es) not exist")))
+            .andExpect(jsonPath("\$.detail", containsString("does not exist")))
     }
 
     @Test
@@ -166,17 +166,15 @@ class RequestUploadEndpointTest(
         client.requestUploads(groupId = nonExistentGroupId, numberFiles = 1, jwt = jwtForProcessingPipeline)
             .andExpect(status().isNotFound)
             .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
-            .andExpect(jsonPath("\$.detail", containsString("do(es) not exist")))
+            .andExpect(jsonPath("\$.detail", containsString("does not exist")))
     }
 
-    // This should actually be 401 but current behavior is buggy
-    // see https://github.com/loculus-project/loculus/issues/4601
     @Test
-    fun `GIVEN request without authentication THEN returns 403 forbidden`() {
+    fun `GIVEN request without authentication THEN returns 401 unauthorized`() {
         val groupId = groupManagementClient.createNewGroup().andGetGroupId()
 
         client.requestUploads(groupId = groupId, numberFiles = 1, jwt = "")
-            .andExpect(status().isForbidden)
+            .andExpect(status().isUnauthorized)
     }
 
     @Test
