@@ -1,9 +1,11 @@
+import type { NextcladeDataset } from '../types/config';
 import type {
     ReferenceAccession,
     ReferenceGenomesInfo,
     ReferenceGenomesSchema,
     ReferenceName,
     SegmentName,
+    SegmentNextcladeDataset,
     SegmentReferenceGenomes,
 } from '../types/referencesGenomes';
 
@@ -252,11 +254,12 @@ export function getSingleSegmentAndGeneInfo(
     };
 }
 
-export function getInsdcAccessionsFromSegmentReferences(
+// The reference of each segment: the only one, or the selected one. Segments without a selection are left out.
+function getReferenceOfEachSegment(
     referenceGenomesInfo: ReferenceGenomesInfo,
     segmentReferences?: SegmentReferenceSelections,
-): ReferenceAccession[] {
-    const references: ReferenceAccession[] = [];
+): { segmentName: SegmentName; referenceName: ReferenceName }[] {
+    const result: { segmentName: SegmentName; referenceName: ReferenceName }[] = [];
     for (const [segmentName, segmentData] of Object.entries(referenceGenomesInfo.segmentReferenceGenomes)) {
         let referenceName = segmentReferences ? segmentReferences[segmentName] : null;
         if (!segmentsWithMultipleReferences(referenceGenomesInfo).includes(segmentName)) {
@@ -265,13 +268,44 @@ export function getInsdcAccessionsFromSegmentReferences(
         if (referenceName === null) {
             continue;
         }
-        const accession = segmentData[referenceName].insdcAccessionFull;
-        references.push({
+        result.push({ segmentName, referenceName });
+    }
+    return result;
+}
+
+export function getInsdcAccessionsFromSegmentReferences(
+    referenceGenomesInfo: ReferenceGenomesInfo,
+    segmentReferences?: SegmentReferenceSelections,
+): ReferenceAccession[] {
+    return getReferenceOfEachSegment(referenceGenomesInfo, segmentReferences).map(({ segmentName, referenceName }) => {
+        const accession = referenceGenomesInfo.segmentReferenceGenomes[segmentName][referenceName].insdcAccessionFull;
+        return {
             name: segmentName,
             ...(accession !== null && { insdcAccessionFull: accession }),
-        });
+        };
+    });
+}
+
+/**
+ * The Nextclade dataset each segment was processed with, looked up from the datasets of the entry's
+ * pipeline version. Segments without a configured dataset are left out.
+ */
+export function getNextcladeDatasetsFromSegmentReferences(
+    referenceGenomesInfo: ReferenceGenomesInfo,
+    nextcladeDatasetsOfPipelineVersion: Record<SegmentName, Record<ReferenceName, NextcladeDataset>> | undefined,
+    segmentReferences?: SegmentReferenceSelections,
+): SegmentNextcladeDataset[] {
+    if (nextcladeDatasetsOfPipelineVersion === undefined) {
+        return [];
     }
-    return references;
+    return getReferenceOfEachSegment(referenceGenomesInfo, segmentReferences).flatMap(
+        ({ segmentName, referenceName }) => {
+            const segmentDatasets = nextcladeDatasetsOfPipelineVersion[segmentName] as
+                Record<ReferenceName, NextcladeDataset> | undefined;
+            const dataset = segmentDatasets?.[referenceName];
+            return dataset === undefined ? [] : [{ segmentName, ...dataset }];
+        },
+    );
 }
 
 export function getReferenceDisplayNameMap(
