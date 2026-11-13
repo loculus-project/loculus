@@ -254,9 +254,9 @@ export const seqSetGraph = z.object({
     displayName: z.string(),
     type: seqSetGraphTypes,
     fields: z.array(z.string()),
-    organismFields: z.record(z.string(), z.string()).optional(),
 });
 export type SeqSetGraph = z.infer<typeof seqSetGraph>;
+export type SeqSetGraphWithExtraFields = SeqSetGraph & { organismFields: Record<string, string> };
 
 export const websiteConfig = z.object({
     accessionPrefix: z.string(),

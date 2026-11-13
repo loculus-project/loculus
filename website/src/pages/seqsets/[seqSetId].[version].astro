@@ -9,7 +9,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import { routes } from '../../routes/routes';
 import { SeqSetCitationClient } from '../../services/seqSetCitationClient.ts';
 import type { ProblemDetail } from '../../types/backend';
-import type { SeqSetGraph } from '../../types/config';
+import type { SeqSetGraphWithExtraFields } from '../../types/config';
 import type { SeqSet } from '../../types/seqSetCitation';
 import { getAccessToken } from '../../utils/getAccessToken';
 
@@ -55,7 +55,7 @@ const seqSetAuthorResponse = seqSetResponse.isOk()
     : err();
 
 // For each graph, map each organism to the first field option that exists in its schema, skipping organisms with none
-const seqSetGraphs: SeqSetGraph[] = (websiteConfig.seqSetsGraphs ?? []).map((graph) => ({
+const seqSetGraphs: SeqSetGraphWithExtraFields[] = (websiteConfig.seqSetsGraphs ?? []).map((graph) => ({
     ...graph,
     organismFields: Object.fromEntries(
         getConfiguredOrganisms().flatMap((organism) => {
