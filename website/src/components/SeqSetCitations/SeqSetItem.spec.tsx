@@ -5,7 +5,7 @@ import { describe, expect, test } from 'vitest';
 
 import { SEQSET_RECORDS_PER_PAGE, SeqSetItem } from './SeqSetItem';
 import { testConfig, testOrganism, testServer } from '../../../vitest.setup.ts';
-import { SeqSetRecordType, type SeqSet } from '../../types/seqSetCitation';
+import type { SeqSet } from '../../types/seqSetCitation';
 
 const seqSet: SeqSet = {
     seqSetId: 'LOC_SS_1',
@@ -17,7 +17,7 @@ const seqSet: SeqSet = {
 
 const records = Array.from({ length: 25 }, (_, i) => ({
     accession: `LOC_${String(i).padStart(6, '0')}.1`,
-    type: SeqSetRecordType.loculus,
+
     isFocal: true,
 }));
 
