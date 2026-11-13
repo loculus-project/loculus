@@ -1,3 +1,6 @@
+// Used by ZodiosWrapperClient with validate: false, which skips zod transforms, defaults and coercion:
+// schemas in this API must not rely on them.
+
 import { makeApi, makeEndpoint } from '@zodios/core';
 import z from 'zod';
 
