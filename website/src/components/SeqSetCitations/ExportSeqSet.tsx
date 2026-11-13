@@ -7,11 +7,13 @@ import { Button } from '../common/Button';
 
 type ExportSeqSetProps = {
     seqSet: SeqSet;
-    seqSetRecords: SeqSetRecord[];
+    /** undefined while the records are still loading */
+    seqSetRecords: SeqSetRecord[] | undefined;
+    seqSetRecordsError?: string;
     databaseName: string;
 };
 
-export const ExportSeqSet: FC<ExportSeqSetProps> = ({ seqSet, seqSetRecords, databaseName }) => {
+export const ExportSeqSet: FC<ExportSeqSetProps> = ({ seqSet, seqSetRecords, seqSetRecordsError, databaseName }) => {
     const [isDownloading, setIsDownloading] = useState(false);
     const [selectedDownload, setSelectedDownload] = useState(0);
     const [selectedCitation, setSelectedCitation] = useState(0);
@@ -150,9 +152,20 @@ export const ExportSeqSet: FC<ExportSeqSetProps> = ({ seqSet, seqSetRecords, dat
                         </div>
                     </div>
                     <div className='pb-8 pt-4'>
-                        <Button variant='primary' onClick={downloadSeqSet} disabled={isDownloading}>
-                            Download
+                        <Button
+                            variant='primary'
+                            onClick={downloadSeqSet}
+                            disabled={isDownloading || seqSetRecords === undefined}
+                        >
+                            {seqSetRecords === undefined && seqSetRecordsError === undefined
+                                ? 'Loading records…'
+                                : 'Download'}
                         </Button>
+                        {seqSetRecordsError !== undefined && (
+                            <p className='pt-2 text-red-500 text-sm'>
+                                Failed to load SeqSet records: {seqSetRecordsError}
+                            </p>
+                        )}
                     </div>
                 </div>
                 <hr className='mb-8' />
