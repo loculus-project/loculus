@@ -1,9 +1,11 @@
+import * as XLSX from '@lokalise/xlsx';
 import type { APIContext } from 'astro';
 import ExcelJS from 'exceljs';
 import JSZip from 'jszip';
 import { describe, expect, test, vi } from 'vitest';
 
 import { GET } from './index';
+import { METADATA_FILE_KIND } from '../../../../components/Submission/FileUpload/fileProcessing';
 import type { TemplateInputField } from '../../../../config';
 import { DATA_SHEET_NAME, GUIDANCE_SHEET_NAME, LISTS_SHEET_NAME } from '../../../../utils/metadataTemplateSheets';
 
@@ -250,6 +252,26 @@ describe('submission template API route', () => {
         const response = await callGet('test-organism', { fileType: 'xlsx', format: 'revise' });
         expect(response.headers.get('Content-Disposition')).toBe(
             'attachment; filename="Test_Organism_metadata_revision_template.xlsx"',
+        );
+    });
+
+    test('a filled-in template is parsed by the upload pipeline back to the entered values', async () => {
+        const response = await callGet('test-organism', { fileType: 'xlsx' });
+        const workbook = XLSX.read(await response.arrayBuffer(), { type: 'array' });
+        // Fill the Data sheet like a submitter in Excel: a typed date is stored as a numeric date serial.
+        XLSX.utils.sheet_add_aoa(
+            workbook.Sheets[DATA_SHEET_NAME],
+            [['sample1', new Date(2021, 0, 15), 'France', 'Homo sapiens', 'some note']],
+            { origin: 'A2', dateNF: 'yyyy-mm-dd' },
+        );
+        const filled = XLSX.write(workbook, { type: 'array', bookType: 'xlsx' }) as ArrayBuffer;
+
+        const result = await METADATA_FILE_KIND.processRawFile(new File([filled], 'metadata.xlsx'));
+        const processedFile = result._unsafeUnwrap();
+
+        expect(processedFile.warnings()).toEqual([]);
+        expect(await processedFile.text()).toBe(
+            'submissionId\tdate\tcountry\thost\tnotes\nsample1\t2021-01-15\tFrance\tHomo sapiens\tsome note',
         );
     });
 
