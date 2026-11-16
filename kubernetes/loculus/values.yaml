@@ -53,7 +53,7 @@ ingestLimitSeconds: 1800
 getSubmissionListLimitSeconds: 600
 preprocessingTimeout: 600
 accessionPrefix: "LOC_"
-dateFieldForGroupGraph: null
+dateFieldForGroupGraph: earliestReleaseDate
 zstdCompressionLevel: 10
 pipelineVersionUpgradeCheckIntervalSeconds: 10
 dataUseTerms:

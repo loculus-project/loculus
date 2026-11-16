@@ -1229,7 +1229,7 @@
       "groups": ["general"],
       "group": "general",
       "type": ["string", "null"],
-      "default": null,
+      "default": "earliestReleaseDate",
       "description": "The metadata field used to plot cumulative submissions over time on the group page (typically 'earliestReleaseDate' or another date field). Set to null to disable the chart. If the specified field does not exist for an organism, the chart will show no data for that organism."
     },
     "zstdCompressionLevel": {
