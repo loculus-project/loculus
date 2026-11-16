@@ -5,7 +5,6 @@ import kotlinx.datetime.minus
 import kotlinx.datetime.toJavaLocalDateTime
 import kotlinx.datetime.toLocalDateTime
 import mu.KotlinLogging
-import org.jetbrains.exposed.v1.core.LikePattern
 import org.jetbrains.exposed.v1.core.Op
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder
@@ -14,10 +13,9 @@ import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.greaterEq
 import org.jetbrains.exposed.v1.core.inList
 import org.jetbrains.exposed.v1.core.isNotNull
-import org.jetbrains.exposed.v1.core.like
+import org.jetbrains.exposed.v1.core.isNull
 import org.jetbrains.exposed.v1.core.max
 import org.jetbrains.exposed.v1.core.neq
-import org.jetbrains.exposed.v1.core.or
 import org.jetbrains.exposed.v1.jdbc.Database
 import org.jetbrains.exposed.v1.jdbc.andWhere
 import org.jetbrains.exposed.v1.jdbc.batchInsert
@@ -49,6 +47,7 @@ import org.loculus.backend.types.SeqSetCitationSource
 import org.loculus.backend.types.SeqSetCitationsConstants
 import org.loculus.backend.types.SeqSetCitingSequence
 import org.loculus.backend.types.SeqSetRecord
+import org.loculus.backend.types.SeqSetRecordAccession
 import org.loculus.backend.types.SequenceCitation
 import org.loculus.backend.types.Status.APPROVED_FOR_RELEASE
 import org.loculus.backend.types.SubmittedSeqSetRecord
@@ -114,9 +113,11 @@ class SeqSetCitationsDatabaseService(
             }
 
         for (record in seqSetRecords) {
+            val recordAccession = SeqSetRecordAccession.parse(record.accession)
             val insertedRecord = SeqSetRecordsTable
                 .insert {
-                    it[SeqSetRecordsTable.accession] = record.accession
+                    it[SeqSetRecordsTable.accession] = recordAccession.accession
+                    it[SeqSetRecordsTable.version] = recordAccession.version
                     it[SeqSetRecordsTable.type] = record.type
                     it[SeqSetRecordsTable.isFocal] = record.isFocal
                 }
@@ -178,10 +179,15 @@ class SeqSetCitationsDatabaseService(
             }
 
         for (record in seqSetRecords) {
+            val recordAccession = SeqSetRecordAccession.parse(record.accession)
+            val versionQuery = recordAccession.version
+                ?.let { SeqSetRecordsTable.version eq it }
+                ?: SeqSetRecordsTable.version.isNull()
             val existingRecord = SeqSetRecordsTable
                 .selectAll()
                 .where {
-                    (SeqSetRecordsTable.accession eq record.accession) and
+                    (SeqSetRecordsTable.accession eq recordAccession.accession) and
+                        versionQuery and
                         (SeqSetRecordsTable.isFocal eq record.isFocal)
                 }
                 .singleOrNull()
@@ -189,7 +195,8 @@ class SeqSetCitationsDatabaseService(
             val seqSetRecordId = if (existingRecord == null) {
                 val insertedRecord = SeqSetRecordsTable
                     .insert {
-                        it[SeqSetRecordsTable.accession] = record.accession
+                        it[SeqSetRecordsTable.accession] = recordAccession.accession
+                        it[SeqSetRecordsTable.version] = recordAccession.version
                         it[SeqSetRecordsTable.type] = record.type
                         it[SeqSetRecordsTable.isFocal] = record.isFocal
                     }
@@ -263,7 +270,15 @@ class SeqSetCitationsDatabaseService(
                     (SeqSetToRecordsTable.seqSetVersion eq selectedVersion)
             }
             .map {
-                SeqSetRecord(it[SeqSetRecordsTable.accession], it[SeqSetRecordsTable.isFocal])
+                SeqSetRecord(
+                    seqSetRecordId = it[SeqSetRecordsTable.seqSetRecordId],
+                    // The API returns "accession" or "accession.version", in the same format as submitted
+                    accession = SeqSetRecordAccession(
+                        it[SeqSetRecordsTable.accession],
+                        it[SeqSetRecordsTable.version],
+                    ).display(),
+                    isFocal = it[SeqSetRecordsTable.isFocal],
+                )
             }
 
         return selectedSeqSetRecords
@@ -466,13 +481,10 @@ class SeqSetCitationsDatabaseService(
 
         // If a version is provided, return citations pinned to that exact accession and version
         // Otherwise, return all citations for the accession, regardless of version, including unversioned
-        // NOTE: In this table, the 'accession' column can contain both accessions and accessionVersions
         val accessionQuery: Op<Boolean> = if (version != null) {
-            val accessionVersion = AccessionVersion(accession, version)
-            SeqSetRecordsTable.accession eq accessionVersion.displayAccessionVersion()
+            (SeqSetRecordsTable.accession eq accession) and (SeqSetRecordsTable.version eq version)
         } else {
-            (SeqSetRecordsTable.accession eq accession) or
-                (SeqSetRecordsTable.accession like (LikePattern.ofLiteral("$accession.") + "%"))
+            SeqSetRecordsTable.accession eq accession
         }
 
         return SeqSetCitationSourceTable.innerJoin(
@@ -502,7 +514,10 @@ class SeqSetCitationsDatabaseService(
                                 it[SeqSetsTable.seqSetId],
                                 it[SeqSetsTable.seqSetVersion],
                             ).displayAccessionVersion(),
-                            sequenceAccession = it[SeqSetRecordsTable.accession],
+                            sequenceAccession = SeqSetRecordAccession(
+                                it[SeqSetRecordsTable.accession],
+                                it[SeqSetRecordsTable.version],
+                            ).display(),
                         )
                     },
                 )
@@ -649,22 +664,11 @@ class SeqSetCitationsDatabaseService(
 
         // If users don't provide version, we require that at least version 1 is released
         // If we check the latest version instead, that accessionVersion might exist (unknown to user) but not be released yet
-        val accessionsWithoutVersionsWithV1 = seqSetRecords
-            .filter { !it.accession.contains('.') }
-            .map { AccessionVersion(it.accession, 1) }
+        val accessionVersionsToCheck = seqSetRecords
+            .map { SeqSetRecordAccession.parse(it.accession) }
+            .map { AccessionVersion(it.accession, it.version ?: 1) }
 
-        for (chunk in accessionsWithoutVersionsWithV1.chunked(1000)) {
-            accessionPreconditionValidator.validate {
-                thatAccessionVersionsExist(chunk)
-                    .andThatSequenceEntriesAreInStates(listOf(APPROVED_FOR_RELEASE))
-            }
-        }
-        val accessionsWithVersions = mutableListOf<AccessionVersion>()
-        for (record in seqSetRecords.filter { it.accession.contains('.') }) {
-            accessionsWithVersions.add(AccessionVersion.fromString(record.accession))
-        }
-
-        for (chunk in accessionsWithVersions.chunked(1000)) {
+        for (chunk in accessionVersionsToCheck.chunked(1000)) {
             accessionPreconditionValidator.validate {
                 thatAccessionVersionsExist(chunk)
                     .andThatSequenceEntriesAreInStates(listOf(APPROVED_FOR_RELEASE))
