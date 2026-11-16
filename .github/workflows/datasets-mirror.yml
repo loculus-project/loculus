@@ -46,7 +46,7 @@ jobs:
           done
           unzip -o ${{ inputs.taxon_id }}.zip
           tar -I 'zstd -T0 -18' -cvf ${{ inputs.taxon_id }}.tar.zst ncbi_dataset
-          cat md5sum.txt
+          md5sum -c --quiet md5sum.txt
           ls -lh ${{ inputs.taxon_id }}.* ncbi_dataset/data/*
           seqkit stats ncbi_dataset/data/genomic.fna
       - name: Create S3cmd config
