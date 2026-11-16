@@ -34,9 +34,21 @@ export type TimeSeriesDataPoint = {
 
 export type TimeSeriesData = Record<string, TimeSeriesDataPoint[]>;
 
+// Tableau 10 categorical palette (as in d3-scale-chromatic's schemeTableau10).
 // Colors are assigned to the organisms that have data, in order, so they only
-// repeat when more than 8 organisms are shown at once.
-const ORGANISM_COLORS = ['#54858c', '#e6a756', '#7b68a6', '#5aa469', '#d4776b', '#4a90a4', '#9b8b6e', '#c97b84'];
+// repeat when more than 10 organisms are shown at once.
+const ORGANISM_COLORS = [
+    '#4e79a7',
+    '#f28e2c',
+    '#e15759',
+    '#76b7b2',
+    '#59a14f',
+    '#edc949',
+    '#af7aa1',
+    '#ff9da7',
+    '#9c755f',
+    '#bab0ab',
+];
 
 type CumulativeSubmissionsChartProps = {
     timeSeriesData: TimeSeriesData;
