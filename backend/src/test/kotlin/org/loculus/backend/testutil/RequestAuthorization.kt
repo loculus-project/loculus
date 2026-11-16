@@ -9,6 +9,7 @@ import java.security.KeyPair
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 import java.util.Date
+import java.util.UUID
 
 val keyPair: KeyPair = Jwts.SIG.RS256.keyPair().build()
 const val TEST_TOKEN_ISSUER = "https://authentication.example.test/realms/loculus"
@@ -20,12 +21,18 @@ val jwtForExternalMetadataUpdatePipeline =
     generateJwtFor("external_metadata_updater", listOf(EXTERNAL_METADATA_UPDATER))
 val jwtForSuperUser = generateJwtFor(SUPER_USER_NAME, listOf(SUPER_USER))
 
-fun generateJwtFor(username: String, roles: List<String> = emptyList()): String = Jwts.builder()
+fun generateJwtFor(
+    username: String,
+    roles: List<String> = emptyList(),
+    subject: String? = UUID.nameUUIDFromBytes(username.toByteArray(Charsets.UTF_8)).toString(),
+    includeUsername: Boolean = true,
+): String = Jwts.builder()
     .issuer(TEST_TOKEN_ISSUER)
+    .apply { if (subject != null) subject(subject) }
     .expiration(Date.from(Instant.now().plus(1, ChronoUnit.DAYS)))
     .issuedAt(Date.from(Instant.now()))
     .signWith(keyPair.private, Jwts.SIG.RS256)
-    .claim("preferred_username", username)
+    .apply { if (includeUsername) claim("preferred_username", username) }
     .claim("realm_access", mapOf("roles" to roles))
     .compact()
 

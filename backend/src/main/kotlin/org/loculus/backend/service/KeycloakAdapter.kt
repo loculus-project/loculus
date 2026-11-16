@@ -29,4 +29,6 @@ class KeycloakAdapter(private val keycloakProperties: KeycloakProperties) {
     fun getUsersWithName(username: String): List<UserRepresentation> = keycloakRealm
         .users()
         .search(username, true)!!
+
+    fun getUserById(subject: String): UserRepresentation = keycloakRealm.users().get(subject).toRepresentation()
 }

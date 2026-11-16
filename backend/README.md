@@ -162,3 +162,23 @@ Since the API has endpoints that deal with NDJSON, the documentation of those en
 "the provided schema is a valid JSON schema for each line of the NDJSON file".
 
 The Swagger UI and OpenAPI specification is generated via the [Springdoc plugin](https://springdoc.org/).
+
+## Loculus identity and new API authorization
+
+New controllers can explicitly resolve a Spring-authenticated JWT through `LoculusIdentityResolver`
+to obtain a Loculus user ID. Existing endpoints keep their current authentication and authorization.
+The initial endpoint is `/v1/me`, which returns the caller's Loculus user ID and provisioning timestamp.
+Controllers and public schemas live in `org.loculus.backend.api.v1`; shared logic stays
+in `auth` and `service`. Existing group endpoints and membership storage are unchanged.
+
+First-use provisioning seeds a required, lowercase, unique username and optional names, affiliation,
+ORCID iD and email through a provider-neutral profile reader (currently implemented for Keycloak).
+The username stays immutable. Email includes the provider's verification assertion and source identity;
+an imported ORCID value is not proof of ownership. Profiles are internal and seeded only once:
+login/page-refresh synchronization and Loculus profile viewing/editing are follow-up work.
+If the provider is temporarily unavailable, a usable username from the validated token permits
+provisioning without optional fields; otherwise provisioning returns 503. Username collisions return 409.
+
+See the [implementation guide](src/main/kotlin/org/loculus/backend/api/README.md#implementing-auth-for-v1-endpoints)
+for the existing v1 identity endpoint and a proposed resource-authorization example.
+Resource authorization is not implemented by this change.
