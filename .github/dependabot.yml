@@ -97,6 +97,9 @@ updates:
     directory: preprocessing/nextclade
     schedule:
       interval: monthly
+    ignore:
+      # Nextclade upgrades change prepro output; bump deliberately, together with prepro config changes
+      - dependency-name: nextclade
     groups:
       minorAndPatch:
         update-types:
@@ -115,6 +118,9 @@ updates:
     directory: ingest
     schedule:
       interval: monthly
+    ignore:
+      # Nextclade upgrades change prepro output; bump deliberately, together with prepro config changes
+      - dependency-name: nextclade
     groups:
       minorAndPatch:
         update-types:
