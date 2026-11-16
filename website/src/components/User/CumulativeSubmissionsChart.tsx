@@ -34,7 +34,8 @@ export type TimeSeriesDataPoint = {
 
 export type TimeSeriesData = Record<string, TimeSeriesDataPoint[]>;
 
-// Note: Colors will repeat if there are more than 8 organisms
+// Colors are assigned to the organisms that have data, in order, so they only
+// repeat when more than 8 organisms are shown at once.
 const ORGANISM_COLORS = ['#54858c', '#e6a756', '#7b68a6', '#5aa469', '#d4776b', '#4a90a4', '#9b8b6e', '#c97b84'];
 
 type CumulativeSubmissionsChartProps = {
@@ -50,7 +51,7 @@ export const CumulativeSubmissionsChart: FC<CumulativeSubmissionsChartProps> = (
 }) => {
     const { chartData, xBounds } = useMemo(() => {
         const datasets = organisms
-            .map((organism, index) => {
+            .map((organism) => {
                 const data = [...(timeSeriesData[organism.key] ?? [])].sort((a, b) => a.date.localeCompare(b.date));
 
                 let cumulative = 0;
@@ -64,25 +65,25 @@ export const CumulativeSubmissionsChart: FC<CumulativeSubmissionsChartProps> = (
                     points.push({ x: timestamp, y: cumulative });
                 }
 
-                return {
-                    label: organism.displayName,
-                    data: points,
-                    borderColor: ORGANISM_COLORS[index % ORGANISM_COLORS.length],
-                    backgroundColor: ORGANISM_COLORS[index % ORGANISM_COLORS.length],
-                    borderWidth: 1.5,
-                    // Cumulative counts only change on dates with submissions, so a
-                    // step ('before') line is more faithful than linear interpolation:
-                    // the total stays flat and jumps up exactly on each release date.
-                    stepped: 'before' as const,
-                    fill: false,
-                    // Show a marker on every data point so individual submission dates
-                    // are visible — in particular a group with a single submission
-                    // would otherwise render an invisible zero-length line.
-                    pointRadius: 3,
-                    pointHoverRadius: 5,
-                };
+                return { label: organism.displayName, data: points };
             })
-            .filter((ds) => ds.data.length > 0 && ds.data[ds.data.length - 1].y > 0);
+            .filter((ds) => ds.data.length > 0 && ds.data[ds.data.length - 1].y > 0)
+            .map((ds, index) => ({
+                ...ds,
+                borderColor: ORGANISM_COLORS[index % ORGANISM_COLORS.length],
+                backgroundColor: ORGANISM_COLORS[index % ORGANISM_COLORS.length],
+                borderWidth: 1.5,
+                // Cumulative counts only change on dates with submissions, so a
+                // step ('before') line is more faithful than linear interpolation:
+                // the total stays flat and jumps up exactly on each release date.
+                stepped: 'before' as const,
+                fill: false,
+                // Show a marker on every data point so individual submission dates
+                // are visible — in particular a group with a single submission
+                // would otherwise render an invisible zero-length line.
+                pointRadius: 3,
+                pointHoverRadius: 5,
+            }));
 
         // Determine x-axis bounds. When all submissions share a single date the
         // time axis would otherwise collapse to zero width, so pad either side.
