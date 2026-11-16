@@ -163,6 +163,18 @@ describe('SearchFullUI', () => {
         });
     });
 
+    it('moves a page number beyond the last page back to the last page', async () => {
+        const mutateDetails = vi.fn();
+        mockUseDetails.mockReturnValue({ ...mockUseDetails(), mutate: mutateDetails });
+
+        Object.defineProperty(window, 'location', { value: { href: '', search: '?page=5' } });
+        renderSearchFullUI();
+
+        await waitFor(() => {
+            expect(mutateDetails).toHaveBeenLastCalledWith(expect.objectContaining({ offset: 0 }));
+        });
+    });
+
     it('should render the form with all fields that are searchable', () => {
         renderSearchFullUI();
 

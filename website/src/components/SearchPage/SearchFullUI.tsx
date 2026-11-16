@@ -213,6 +213,12 @@ const InnerSearchFullUI = ({
     }, [lapisSearchParameters, schema.tableColumns, schema.primaryKey, pageSize, page, orderByField, orderDirection]);
 
     const totalSequences = aggregatedHook.data?.data[0].count ?? undefined;
+
+    useEffect(() => {
+        if (totalSequences === undefined) return;
+        const lastPage = Math.max(1, Math.ceil(totalSequences / pageSize));
+        if (page > lastPage) setPage(lastPage);
+    }, [totalSequences, pageSize, page, setPage]);
     const linkOutSequenceCount = downloadFilter.sequenceCount() ?? totalSequences;
 
     const fetchAccessions = useCallback(async (): Promise<string[]> => {
