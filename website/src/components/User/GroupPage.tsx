@@ -35,7 +35,6 @@ type GroupPageProps = {
     continueSubmissionIntent?: ContinueSubmissionIntent;
     loginUrl: string;
     dateFieldForGroupGraph: string | null;
-    organismsWithGroupGraphField: Organism[];
 };
 
 const InnerGroupPage: FC<GroupPageProps> = ({
@@ -49,7 +48,6 @@ const InnerGroupPage: FC<GroupPageProps> = ({
     continueSubmissionIntent,
     loginUrl,
     dateFieldForGroupGraph,
-    organismsWithGroupGraphField,
 }) => {
     const groupName = prefetchedGroupDetails.group.groupName;
     const groupId = prefetchedGroupDetails.group.groupId;
@@ -79,14 +77,14 @@ const InnerGroupPage: FC<GroupPageProps> = ({
     });
 
     const { data: timeSeriesData, isLoading: timeSeriesLoading } = useQuery({
-        queryKey: ['group-time-series', groupId, clientConfig, organismsWithGroupGraphField, dateFieldForGroupGraph],
+        queryKey: ['group-time-series', groupId, clientConfig, organisms, dateFieldForGroupGraph],
         queryFn: () => {
             if (dateFieldForGroupGraph === null) {
                 return Promise.resolve({});
             }
-            return fetchTimeSeriesData(groupId, clientConfig, organismsWithGroupGraphField, dateFieldForGroupGraph);
+            return fetchTimeSeriesData(groupId, clientConfig, organisms, dateFieldForGroupGraph);
         },
-        enabled: dateFieldForGroupGraph !== null && organismsWithGroupGraphField.length > 0,
+        enabled: dateFieldForGroupGraph !== null,
     });
 
     const continueSubmissionCta = useMemo(() => {
@@ -252,12 +250,12 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                 </table>
             </div>
 
-            {dateFieldForGroupGraph !== null && organismsWithGroupGraphField.length > 0 && (
+            {dateFieldForGroupGraph !== null && (
                 <div className=' max-w-2xl mx-auto px-10 py-4 bg-gray-100 rounded-md my-4'>
                     <h2 className='text-lg font-bold mb-2'>Cumulative submissions over time</h2>
                     <CumulativeSubmissionsChart
                         timeSeriesData={timeSeriesData ?? {}}
-                        organisms={organismsWithGroupGraphField}
+                        organisms={organisms}
                         isLoading={timeSeriesLoading}
                     />
                 </div>
