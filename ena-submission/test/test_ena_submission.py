@@ -58,6 +58,7 @@ from ena_deposition.submission_db_helper import (
     SampleTableEntry,
     SubmissionTableEntry,
 )
+from pydantic import SecretStr
 
 logger = logging.getLogger(__name__)
 
@@ -112,7 +113,7 @@ def mock_config():
     config.is_broker = True
     config.ena_submission_url = "https://test.url"
     config.ena_reports_service_url = "https://test.url"
-    config.ena_submission_password = "test_password"  # noqa: S105
+    config.ena_submission_password = SecretStr("test_password")
     config.ena_submission_username = "test_user"
     config.ena_http_timeout_seconds = 10
     return config

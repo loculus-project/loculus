@@ -5,14 +5,7 @@ import { http, HttpResponse } from 'msw';
 import { expect, test, vi } from 'vitest';
 
 import { ReviewCard } from './ReviewCard';
-import {
-    defaultReviewData,
-    mockRequest,
-    testAccessToken,
-    testConfig,
-    testOrganism,
-    testServer,
-} from '../../../vitest.setup';
+import { defaultReviewData, testAccessToken, testConfig, testOrganism, testServer } from '../../../vitest.setup';
 import { processedStatus, receivedStatus, type SequenceEntryStatus } from '../../types/backend';
 import type { Metadata } from '../../types/config';
 import {
@@ -37,56 +30,38 @@ const revision: SequenceEntryStatus = {
 };
 const diffButton = { name: /View metadata changes/ };
 
-function mockVersions(failPrevious = false) {
-    const state = {
-        authors: 'Old author; New author',
-        sequences: { 1: { main: 'ACGT' }, 2: { main: 'ACGT' } } as Record<string, Record<string, string | null>>,
-        failPrevious,
+function reviewData() {
+    return {
+        metadata: { authors: 'Old author; New author', country: 'Switzerland' },
+        errors: null,
+        warnings: null,
+        files: null,
+        revision: {
+            previousVersion: 1,
+            previousMetadata: { authors: 'Old author', country: 'Switzerland' },
+            nucleotideChanges: { main: { changed: false, previousLength: 4, currentLength: 4 } },
+        },
     };
-    mockRequest.lapis.details(200, {
-        info: { dataVersion: '1' },
-        data: [
-            {
-                accession: 'LOC_TEST',
-                version: 1,
-                accessionVersion: 'LOC_TEST.1',
-                versionStatus: 'LATEST_VERSION',
-                isRevocation: false,
-                submittedAtTimestamp: 0,
-            },
-        ],
-    });
+}
+
+function trackSequenceRequests() {
     const requestedVersions = vi.fn();
     testServer.use(
         http.get(
             `${testConfig.public.backendUrl}/${testOrganism}/get-data-to-edit/:accession/:version`,
-            ({ request, params }) => {
-                requestedVersions(params.version, request.headers.get('Authorization'));
-                if (params.version === '1' && state.failPrevious) return new HttpResponse(null, { status: 422 });
-                return HttpResponse.json({
-                    ...defaultReviewData,
-                    accession: params.accession,
-                    version: Number(params.version),
-                    groupId: 1,
-                    errors: null,
-                    warnings: null,
-                    status: params.version === '1' ? 'APPROVED_FOR_RELEASE' : processedStatus,
-                    processedData: {
-                        ...defaultReviewData.processedData,
-                        metadata: {
-                            authors: params.version === '1' ? 'Old author' : state.authors,
-                            country: 'Switzerland',
-                        },
-                        unalignedNucleotideSequences: state.sequences[String(params.version)],
-                    },
-                });
+            ({ params }) => {
+                requestedVersions(params.version);
+                return HttpResponse.json(defaultReviewData);
             },
         ),
     );
-    return { state, requestedVersions };
+    return requestedVersions;
 }
 
-function renderCard(status = revision, referenceGenomesInfo = SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES) {
+function renderCard(
+    status = { ...revision, reviewData: reviewData() } as SequenceEntryStatus,
+    referenceGenomesInfo = SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES,
+) {
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     return render(
         <QueryClientProvider client={queryClient}>
@@ -105,16 +80,15 @@ function renderCard(status = revision, referenceGenomesInfo = SINGLE_SEG_SINGLE_
     );
 }
 
-test('shows the metadata diff on request and fetches the baseline only then', async () => {
-    const { state, requestedVersions } = mockVersions();
+test('shows the metadata diff on request without fetching sequences', async () => {
+    const requestedVersions = trackSequenceRequests();
     const user = userEvent.setup();
     const card = renderCard();
-    await card.findByText(state.authors);
-    expect(requestedVersions).not.toHaveBeenCalledWith('1', expect.anything());
+    expect(card.queryByRole('table')).not.toBeInTheDocument();
     await user.click(card.getByRole('button', diffButton));
     expect(await card.findByText('Old author')).toBeVisible();
-    expect(requestedVersions).toHaveBeenCalledWith('1', `Bearer ${testAccessToken}`);
-    expect(card.queryByRole('row', { name: /Country|Nucleotide sequence/ })).not.toBeInTheDocument();
+    expect(requestedVersions).not.toHaveBeenCalled();
+    expect(card.queryByRole('row', { name: /Country/ })).not.toBeInTheDocument();
     expect(card.getByText('Hide unchanged fields (2)')).toBeVisible();
     await user.click(card.getByRole('checkbox', { name: 'Hide unchanged fields' }));
     expect(card.getByRole('row', { name: /Country Switzerland Switzerland/ })).toBeVisible();
@@ -122,66 +96,109 @@ test('shows the metadata diff on request and fetches the baseline only then', as
     expect(card.queryByRole('checkbox', { name: 'Hide shared substitutions/indels' })).not.toBeInTheDocument();
     await user.click(card.getByRole('button', diffButton));
     expect(card.queryByRole('table')).not.toBeInTheDocument();
+    await user.click(card.getByRole('button', diffButton));
+    expect(card.getByRole('table')).toBeVisible();
 });
 
-test('shows an unavailable baseline as an error and lets the user retry', async () => {
-    const { state } = mockVersions(true);
-    const user = userEvent.setup();
-    const card = renderCard();
-    await user.click(await card.findByRole('button', diffButton));
-    expect(await card.findByRole('alert')).toHaveTextContent('The previous version could not be loaded');
+test('shows a neutral message when no processed baseline is available', async () => {
+    const requestedVersions = trackSequenceRequests();
+    const data = reviewData();
+    const card = renderCard(
+        {
+            ...revision,
+            reviewData: {
+                ...data,
+                revision: { ...data.revision, previousMetadata: null, nucleotideChanges: {} },
+            },
+        },
+        SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES,
+    );
+    await userEvent.click(card.getByRole('button', diffButton));
+    expect(await card.findByText('No previous version is available for comparison.')).toBeVisible();
+    expect(card.queryByRole('alert')).not.toBeInTheDocument();
     expect(card.queryByRole('table')).not.toBeInTheDocument();
-    state.failPrevious = false;
-    await user.click(card.getByRole('button', { name: 'Retry' }));
+    expect(card.queryByRole('button', { name: 'Retry' })).not.toBeInTheDocument();
+    expect(requestedVersions).not.toHaveBeenCalled();
+});
+
+test('shows metadata differences when sequence comparison data is unavailable', async () => {
+    const data = reviewData();
+    const card = renderCard({
+        ...revision,
+        reviewData: { ...data, revision: { ...data.revision, nucleotideChanges: {} } },
+    });
+    await userEvent.click(card.getByRole('button', diffButton));
     expect(await card.findByText('Old author')).toBeVisible();
+    expect(card.queryByRole('row', { name: /Nucleotide sequence/ })).not.toBeInTheDocument();
 });
 
 test('reports sequence changes per segment for multi-segmented organisms', async () => {
-    const { state } = mockVersions();
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    state.sequences = { 1: { S: 'AAA', L: 'CCC' }, 2: { S: 'AAA', L: null } };
-    const user = userEvent.setup();
-    const card = renderCard(revision, MULTI_SEG_SINGLE_REF_REFERENCEGENOMES);
-    await user.click(await card.findByRole('button', diffButton));
+    const data = reviewData();
+    const card = renderCard(
+        {
+            ...revision,
+            reviewData: {
+                ...data,
+                revision: {
+                    ...data.revision,
+                    nucleotideChanges: Object.fromEntries([
+                        ['S', { changed: false, previousLength: 3, currentLength: 3 }],
+                        ['L', { changed: true, previousLength: 3, currentLength: null }],
+                    ]),
+                },
+            },
+        },
+        MULTI_SEG_SINGLE_REF_REFERENCEGENOMES,
+    );
+    await userEvent.click(card.getByRole('button', diffButton));
     expect(await card.findByRole('row', { name: 'Segment L 3 nt' })).toBeVisible();
     expect(card.queryByRole('row', { name: /Segment S|Nucleotide sequence/ })).not.toBeInTheDocument();
-    await user.click(card.getByRole('checkbox', { name: 'Hide unchanged fields' }));
+    await userEvent.click(card.getByRole('checkbox', { name: 'Hide unchanged fields' }));
     expect(card.getByRole('row', { name: 'Segment S 3 nt 3 nt' })).toBeVisible();
 });
 
+test('shows an explicit empty state for identical metadata', async () => {
+    const data = reviewData();
+    data.metadata.authors = 'Old author';
+    const card = renderCard({ ...revision, reviewData: data });
+    await userEvent.click(card.getByRole('button', diffButton));
+    expect(await card.findByText('No metadata changes.')).toBeVisible();
+});
+
 test('flags a same-length sequence edit as changed', async () => {
-    const { state } = mockVersions();
-    state.authors = 'Old author';
-    state.sequences[2] = { main: 'ACGA' };
-    const user = userEvent.setup();
-    const card = renderCard();
-    await user.click(await card.findByRole('button', diffButton));
+    const data = reviewData();
+    data.metadata.authors = 'Old author';
+    data.revision.nucleotideChanges.main.changed = true;
+    const card = renderCard({ ...revision, reviewData: data });
+    await userEvent.click(card.getByRole('button', diffButton));
     expect(await card.findByText('No metadata changes.')).toBeVisible();
     expect(card.getByRole('row', { name: 'Nucleotide sequence 4 nt 4 nt changed' })).toBeVisible();
 });
 
-test('shows an explicit empty state for identical metadata', async () => {
-    const { state } = mockVersions();
-    state.authors = 'Old author';
-    const user = userEvent.setup();
-    const card = renderCard();
-    await user.click(await card.findByRole('button', diffButton));
-    expect(await card.findByText('No metadata changes.')).toBeVisible();
+test('uses the baseline version supplied by the backend after a revocation', async () => {
+    const requestedVersions = trackSequenceRequests();
+    const card = renderCard({ ...revision, version: 3, reviewData: reviewData() });
+    await userEvent.click(card.getByRole('button', diffButton));
+    expect(await card.findByRole('columnheader', { name: 'Version 1' })).toBeVisible();
+    expect(card.getByRole('columnheader', { name: 'Version 3' })).toBeVisible();
+    expect(requestedVersions).not.toHaveBeenCalled();
 });
 
 test.each([
     { ...revision, version: 1 },
     { ...revision, isRevocation: true },
 ])('does not offer a diff for a first submission or revocation (%j)', async (status) => {
-    const { requestedVersions } = mockVersions();
-    const card = renderCard(status);
+    const requestedVersions = trackSequenceRequests();
+    const card = renderCard({
+        ...status,
+        reviewData: status.isRevocation ? undefined : { ...reviewData(), revision: null },
+    });
     if (!status.isRevocation) await card.findByText('Switzerland');
     expect(card.queryByRole('button', diffButton)).not.toBeInTheDocument();
-    expect(requestedVersions).not.toHaveBeenCalledWith(String(status.version - 1), expect.anything());
+    expect(requestedVersions).not.toHaveBeenCalled();
 });
 
 test('disables the diff while the revision is awaiting processing', async () => {
-    mockVersions();
     const pending = within(renderCard({ ...revision, status: receivedStatus }).container);
     const processed = within(renderCard().container);
     await waitFor(() => expect(processed.getByRole('button', diffButton)).toBeEnabled());

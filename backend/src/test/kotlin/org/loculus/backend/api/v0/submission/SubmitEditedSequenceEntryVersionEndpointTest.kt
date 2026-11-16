@@ -54,7 +54,7 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
 
     @Test
     fun `GIVEN invalid authorization token THEN returns 401 Unauthorized`() {
-        expectUnauthorizedResponse(isModifyingRequest = true) {
+        expectUnauthorizedResponse {
             client.submitEditedSequenceEntryVersion(
                 generateEditedData("1"),
                 jwt = it,
@@ -92,6 +92,16 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
 
         convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1)
             .assertStatusIs(Status.RECEIVED)
+    }
+
+    @Test
+    fun `GIVEN a sequence entry is processed WHEN I submit edited data THEN it is handed out for processing again`() {
+        val accessions = convenienceClient.prepareDataTo(Status.PROCESSED).map { it.accession }
+
+        client.submitEditedSequenceEntryVersion(generateEditedData(accessions.first()))
+            .andExpect(status().isNoContent)
+
+        assertThat(convenienceClient.extractUnprocessedData().map { it.accession }, `is`(listOf(accessions.first())))
     }
 
     @Test
