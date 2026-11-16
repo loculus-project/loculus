@@ -217,7 +217,7 @@ const InnerSearchFullUI = ({
     useEffect(() => {
         if (totalSequences === undefined) return;
         const lastPage = Math.max(1, Math.ceil(totalSequences / pageSize));
-        if (page > lastPage) setPage(1);
+        if (!(page >= 1 && page <= lastPage)) setPage(1);
     }, [totalSequences, pageSize, page, setPage]);
     const linkOutSequenceCount = downloadFilter.sequenceCount() ?? totalSequences;
 

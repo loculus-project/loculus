@@ -163,12 +163,12 @@ describe('SearchFullUI', () => {
         });
     });
 
-    it('moves a page number beyond the last page back to the first page', async () => {
+    it.each(['5', '-1', 'abc'])('moves invalid page %s to the first page', async (pageParam) => {
         const mutateDetails = vi.fn();
         mockUseDetails.mockReturnValue({ ...mockUseDetails(), mutate: mutateDetails });
         mockUseAggregated.mockReturnValue({ ...mockUseAggregated(), data: { data: [{ count: 250 }] } });
 
-        Object.defineProperty(window, 'location', { value: { href: '', search: '?page=5' } });
+        Object.defineProperty(window, 'location', { value: { href: '', search: `?page=${pageParam}` } });
         renderSearchFullUI();
 
         await waitFor(() => {
