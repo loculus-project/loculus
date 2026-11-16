@@ -78,22 +78,25 @@ export const CumulativeSubmissionsChart: FC<CumulativeSubmissionsChartProps> = (
                 return { label: organism.displayName, data: points };
             })
             .filter((ds) => ds.data.length > 0 && ds.data[ds.data.length - 1].y > 0)
-            .map((ds, index) => ({
-                ...ds,
-                borderColor: ORGANISM_COLORS[index % ORGANISM_COLORS.length],
-                backgroundColor: ORGANISM_COLORS[index % ORGANISM_COLORS.length],
-                borderWidth: 1.5,
-                // Cumulative counts only change on dates with submissions, so a
-                // step ('before') line is more faithful than linear interpolation:
-                // the total stays flat and jumps up exactly on each release date.
-                stepped: 'before' as const,
-                fill: false,
-                // Show a marker on every data point so individual submission dates
-                // are visible — in particular a group with a single submission
-                // would otherwise render an invisible zero-length line.
-                pointRadius: 3,
-                pointHoverRadius: 5,
-            }));
+            .map((ds, index) => {
+                const color = ORGANISM_COLORS[index % ORGANISM_COLORS.length];
+                return {
+                    ...ds,
+                    borderColor: color,
+                    backgroundColor: color,
+                    borderWidth: 1.5,
+                    // Cumulative counts only change on dates with submissions, so a
+                    // step ('before') line is more faithful than linear interpolation:
+                    // the total stays flat and jumps up exactly on each release date.
+                    stepped: 'before' as const,
+                    fill: false,
+                    // Show a marker on every data point so individual submission dates
+                    // are visible — in particular a group with a single submission
+                    // would otherwise render an invisible zero-length line.
+                    pointRadius: 3,
+                    pointHoverRadius: 5,
+                };
+            });
 
         // Determine x-axis bounds. When all submissions share a single date the
         // time axis would otherwise collapse to zero width, so pad either side.
