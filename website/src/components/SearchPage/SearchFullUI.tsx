@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { Button } from '../common/Button';
+import { Pagination } from '../common/Pagination';
 import { DownloadDialog } from './DownloadDialog/DownloadDialog.tsx';
 import {
     DownloadSubmittedDataButton,
@@ -12,7 +13,6 @@ import { LinkOutMenu } from './DownloadDialog/LinkOutMenu.tsx';
 import { FieldFilterSet, SequenceEntrySelection, type SequenceFilter } from './DownloadDialog/SequenceFilters.tsx';
 import { RecentSequencesBanner } from './RecentSequencesBanner.tsx';
 import { SearchForm } from './SearchForm';
-import { SearchPagination } from './SearchPagination';
 import { SeqPreviewModal } from './SeqPreviewModal';
 import { Table, type TableSequenceData } from './Table';
 import { TableColumnSelectorModal } from './TableColumnSelectorModal.tsx';
@@ -430,10 +430,13 @@ const InnerSearchFullUI = ({
 
                     <div className='mt-4 flex justify-center'>
                         {totalSequences !== undefined && totalSequences > 0 && (
-                            <SearchPagination
+                            <Pagination
                                 count={Math.ceil(totalSequences / pageSize)}
                                 page={page}
-                                setPage={setPage}
+                                onChange={(newPage) => {
+                                    setPage(newPage);
+                                    window.scrollTo({ top: 0 });
+                                }}
                             />
                         )}
                     </div>
