@@ -1,4 +1,3 @@
-dateFieldForGroupGraph: earliestReleaseDate
 enableServiceMonitor: true
 createTestAccounts: true
 # Support local Astro development against preview Keycloak.
