@@ -98,8 +98,7 @@ updates:
     schedule:
       interval: monthly
     ignore:
-      # Nextclade upgrades change prepro output; bump deliberately, together with prepro config changes
-      - dependency-name: nextclade
+      - dependency-name: "nextclade" #https://github.com/loculus-project/loculus/issues/7784
     groups:
       minorAndPatch:
         update-types:
@@ -119,8 +118,7 @@ updates:
     schedule:
       interval: monthly
     ignore:
-      # Nextclade upgrades change prepro output; bump deliberately, together with prepro config changes
-      - dependency-name: nextclade
+      - dependency-name: "nextclade" #https://github.com/loculus-project/loculus/issues/7784
     groups:
       minorAndPatch:
         update-types:
