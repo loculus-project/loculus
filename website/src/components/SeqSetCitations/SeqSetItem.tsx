@@ -5,6 +5,7 @@ import { toast } from 'react-toastify';
 
 import CitationList from './CitationList.tsx';
 import { DatePlot, CategoryPlot } from './SeqSetPlots.tsx';
+import { SeqSetRecordsLoader } from './SeqSetRecordsLoader.tsx';
 import { SeqSetRecordsTableWithMetadata } from './SeqSetRecordsTableWithMetadata';
 import type { AggregateRow } from './getSeqSetStatistics.ts';
 import { getClientLogger } from '../../clientLogger';
@@ -12,7 +13,7 @@ import { seqSetCitationClientHooks } from '../../services/serviceHooks';
 import type { ProblemDetail } from '../../types/backend.ts';
 import type { SeqSetGraph } from '../../types/config.ts';
 import type { ClientConfig } from '../../types/runtimeConfig';
-import { type SeqSet, type SeqSetCitation, type SeqSetRecord } from '../../types/seqSetCitation';
+import { type SeqSet, type SeqSetCitation } from '../../types/seqSetCitation';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
 import { getThemeColor } from '../../utils/getThemeColor';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
@@ -52,7 +53,7 @@ type SeqSetItemProps = {
     accessToken: string;
     seqSetAccessionVersion: string;
     seqSet: SeqSet;
-    seqSetRecords: SeqSetRecord[];
+    seqSetRecordCount: number;
     seqSetCitations: SeqSetCitation[];
     seqSetGraphs: SeqSetGraph[];
     seqSetGraphsData: Record<string, AggregateRow[]>;
@@ -66,7 +67,7 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
     accessToken,
     seqSetAccessionVersion,
     seqSet,
-    seqSetRecords,
+    seqSetRecordCount,
     seqSetCitations,
     seqSetGraphs,
     seqSetGraphsData,
@@ -132,11 +133,7 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
     };
 
     const getMaxPages = () => {
-        return Math.ceil(seqSetRecords.length / sequencesPerPage);
-    };
-
-    const getPaginatedSeqSetRecords = () => {
-        return seqSetRecords.slice((page - 1) * sequencesPerPage, page * sequencesPerPage);
+        return Math.ceil(seqSetRecordCount / sequencesPerPage);
     };
 
     const barPlotColor = getThemeColor('--color-primary-500', '#6b84c6');
@@ -150,7 +147,7 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
                     <SeqSetSectionEntry label='Version' value={seqSet.seqSetVersion} />
                     <SeqSetSectionEntry
                         label='Size'
-                        value={`${seqSetRecords.length} sequence${seqSetRecords.length === 1 ? '' : 's'}`}
+                        value={`${seqSetRecordCount} sequence${seqSetRecordCount === 1 ? '' : 's'}`}
                     />
                 </SeqSetSection>
                 <SeqSetSection title='Citations'>
@@ -207,12 +204,16 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
             </SeqSetSection>
             <SeqSetSectionSeparator />
             <SeqSetSection title='Sequences'>
-                <SeqSetRecordsTableWithMetadata
-                    seqSetRecords={getPaginatedSeqSetRecords()}
-                    clientConfig={clientConfig}
-                    fieldsToDisplay={fieldsToDisplay}
-                    organismDisplayNames={organismDisplayNames}
-                />
+                <SeqSetRecordsLoader clientConfig={clientConfig} seqSet={seqSet}>
+                    {(seqSetRecords) => (
+                        <SeqSetRecordsTableWithMetadata
+                            seqSetRecords={seqSetRecords.slice((page - 1) * sequencesPerPage, page * sequencesPerPage)}
+                            clientConfig={clientConfig}
+                            fieldsToDisplay={fieldsToDisplay}
+                            organismDisplayNames={organismDisplayNames}
+                        />
+                    )}
+                </SeqSetRecordsLoader>
                 {getMaxPages() > 1 ? (
                     <MUIPagination
                         className='my-4 w-full flex justify-center'

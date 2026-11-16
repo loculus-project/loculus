@@ -4,10 +4,11 @@ import { toast } from 'react-toastify';
 import { AuthorDetails } from './AuthorDetails.tsx';
 import { ExportSeqSet } from './ExportSeqSet';
 import { SeqSetForm } from './SeqSetForm';
+import { SeqSetRecordsLoader } from './SeqSetRecordsLoader.tsx';
 import { getClientLogger } from '../../clientLogger';
 import { seqSetCitationClientHooks } from '../../services/serviceHooks';
 import type { ClientConfig } from '../../types/runtimeConfig';
-import type { AuthorProfile, SeqSetRecord, SeqSet } from '../../types/seqSetCitation';
+import type { AuthorProfile, SeqSet } from '../../types/seqSetCitation';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
 import { getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
@@ -33,7 +34,6 @@ type SeqSetItemActionsProps = {
     accessToken: string;
     seqSet: SeqSet;
     seqSetAuthor?: AuthorProfile;
-    seqSetRecords: SeqSetRecord[];
     isAdminView?: boolean;
     databaseName: string;
 };
@@ -43,7 +43,6 @@ const SeqSetItemActionsInner: FC<SeqSetItemActionsProps> = ({
     accessToken,
     seqSet,
     seqSetAuthor,
-    seqSetRecords,
     isAdminView = false,
     databaseName,
 }) => {
@@ -139,12 +138,16 @@ const SeqSetItemActionsInner: FC<SeqSetItemActionsProps> = ({
                 className='min-h-[60vh]'
             >
                 <div className='min-w-[1000px]'></div>
-                <SeqSetForm
-                    clientConfig={clientConfig}
-                    accessToken={accessToken}
-                    editSeqSet={seqSet}
-                    editSeqSetRecords={seqSetRecords}
-                />
+                <SeqSetRecordsLoader clientConfig={clientConfig} seqSet={seqSet}>
+                    {(seqSetRecords) => (
+                        <SeqSetForm
+                            clientConfig={clientConfig}
+                            accessToken={accessToken}
+                            editSeqSet={seqSet}
+                            editSeqSetRecords={seqSetRecords}
+                        />
+                    )}
+                </SeqSetRecordsLoader>
             </BaseDialog>
             <BaseDialog
                 isOpen={exportModalVisible}
@@ -154,7 +157,11 @@ const SeqSetItemActionsInner: FC<SeqSetItemActionsProps> = ({
                 className='min-h-[60vh]'
             >
                 <div className='min-w-[1000px]'></div>
-                <ExportSeqSet seqSet={seqSet} seqSetRecords={seqSetRecords} databaseName={databaseName} />
+                <SeqSetRecordsLoader clientConfig={clientConfig} seqSet={seqSet}>
+                    {(seqSetRecords) => (
+                        <ExportSeqSet seqSet={seqSet} seqSetRecords={seqSetRecords} databaseName={databaseName} />
+                    )}
+                </SeqSetRecordsLoader>
             </BaseDialog>
             <BaseDialog
                 title='Creator details'

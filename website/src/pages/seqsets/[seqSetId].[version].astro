@@ -106,7 +106,6 @@ const secondaryErrors = (
                 accessToken={accessToken}
                 seqSet={seqSetResponse.value}
                 seqSetAuthor={seqSetAuthor}
-                seqSetRecords={seqSetRecordsResponse.value}
                 isAdminView={seqSetResponse.value.createdBy === username}
                 databaseName={websiteConfig.name}
                 client:load
@@ -116,7 +115,7 @@ const secondaryErrors = (
                 accessToken={accessToken}
                 seqSetAccessionVersion={seqSetAccessionVersion}
                 seqSet={seqSetResponse.value}
-                seqSetRecords={seqSetRecordsResponse.value}
+                seqSetRecordCount={seqSetRecordsResponse.value.length}
                 seqSetCitations={seqSetCitations}
                 seqSetGraphs={seqSetGraphs}
                 seqSetGraphsData={seqSetGraphsData}
