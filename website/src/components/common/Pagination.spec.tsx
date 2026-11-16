@@ -20,6 +20,11 @@ describe('Pagination', () => {
         expect(renderedItems()).toEqual(['1', '2', '3', '4', '5']);
     });
 
+    it.each([0, 1])('renders nothing when there are %i pages', (count) => {
+        const { container } = render(<Pagination count={count} page={1} onChange={vi.fn()} />);
+        expect(container).toBeEmptyDOMElement();
+    });
+
     it.each([
         [1, ['1', '2', '3', '4', '5', '…', '20']],
         [10, ['1', '…', '9', '10', '11', '…', '20']],
