@@ -163,9 +163,10 @@ describe('SearchFullUI', () => {
         });
     });
 
-    it('moves a page number beyond the last page back to the last page', async () => {
+    it('moves a page number beyond the last page back to the first page', async () => {
         const mutateDetails = vi.fn();
         mockUseDetails.mockReturnValue({ ...mockUseDetails(), mutate: mutateDetails });
+        mockUseAggregated.mockReturnValue({ ...mockUseAggregated(), data: { data: [{ count: 250 }] } });
 
         Object.defineProperty(window, 'location', { value: { href: '', search: '?page=5' } });
         renderSearchFullUI();
