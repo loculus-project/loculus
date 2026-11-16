@@ -48,6 +48,20 @@ const ORGANISM_COLORS = [
     '#bab0ab',
 ];
 
+// Shape per organism alongside color, so lines can be told apart without color
+const ORGANISM_POINT_STYLES = [
+    'circle',
+    'triangle',
+    'rect',
+    'rectRot',
+    'star',
+    'crossRot',
+    'cross',
+    'rectRounded',
+    'dash',
+    'line',
+] as const;
+
 type CumulativeSubmissionsChartProps = {
     timeSeriesData: TimeSeriesData;
     organisms: Organism[];
@@ -82,6 +96,7 @@ export const CumulativeSubmissionsChart: FC<CumulativeSubmissionsChartProps> = (
                 ...ds,
                 borderColor: ORGANISM_COLORS[index % ORGANISM_COLORS.length],
                 backgroundColor: ORGANISM_COLORS[index % ORGANISM_COLORS.length],
+                pointStyle: ORGANISM_POINT_STYLES[index % ORGANISM_POINT_STYLES.length],
                 borderWidth: 1.5,
                 // Cumulative counts only change on dates with submissions, so a
                 // step ('before') line is more faithful than linear interpolation:
@@ -91,8 +106,8 @@ export const CumulativeSubmissionsChart: FC<CumulativeSubmissionsChartProps> = (
                 // Show a marker on every data point so individual submission dates
                 // are visible — in particular a group with a single submission
                 // would otherwise render an invisible zero-length line.
-                pointRadius: 3,
-                pointHoverRadius: 5,
+                pointRadius: 4,
+                pointHoverRadius: 6,
             }));
 
         // Determine x-axis bounds. When all submissions share a single date the
@@ -132,6 +147,9 @@ export const CumulativeSubmissionsChart: FC<CumulativeSubmissionsChartProps> = (
                     plugins: {
                         legend: {
                             position: 'top',
+                            labels: {
+                                usePointStyle: true,
+                            },
                         },
                         title: {
                             display: false,
