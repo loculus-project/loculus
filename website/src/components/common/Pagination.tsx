@@ -82,7 +82,9 @@ export const Pagination: FC<PaginationProps> = ({ count, page, onChange, classNa
                 {getPageItems(page, count).map((item, index) => (
                     <li key={item === 'ellipsis' ? `ellipsis-${index}` : item}>
                         {item === 'ellipsis' ? (
-                            <span className={`${itemClassName} text-gray-800`}>…</span>
+                            <span className={`${itemClassName} text-gray-800`} aria-hidden='true'>
+                                …
+                            </span>
                         ) : (
                             <PaginationButton
                                 target={item}
