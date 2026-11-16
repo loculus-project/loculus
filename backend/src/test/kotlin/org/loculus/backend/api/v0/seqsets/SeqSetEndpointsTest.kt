@@ -103,6 +103,24 @@ class SeqSetEndpointsTest(@Autowired private val client: SeqSetCitationsControll
     }
 
     @Test
+    fun `WHEN creating seqSet with versioned and unversioned records THEN returns them as submitted`() {
+        val records = """[
+            { "accession": "$MOCK_SEQ_ACCESSION", "type": "loculus", "isFocal": true },
+            { "accession": "$MOCK_SEQ_ACCESSION-other.2", "type": "loculus", "isFocal": false }
+        ]"""
+        val result = client.createSeqSet(seqSetRecords = records)
+            .andExpect(status().isOk)
+            .andReturn()
+        val seqSetId = JsonPath.read<String>(result.response.contentAsString, "$.seqSetId")
+
+        client.getSeqSetRecords(seqSetId, 1)
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("\$.length()").value(2))
+            .andExpect(jsonPath("\$[?(@.isFocal == true)].accession").value(MOCK_SEQ_ACCESSION))
+            .andExpect(jsonPath("\$[?(@.isFocal == false)].accession").value("$MOCK_SEQ_ACCESSION-other.2"))
+    }
+
+    @Test
     fun `WHEN calling create seqSet DOI THEN returns seqSet with new DOI`() {
         val seqSetResult = client.createSeqSet()
             .andExpect(status().isOk)
