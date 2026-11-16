@@ -213,16 +213,14 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
                     fieldsToDisplay={fieldsToDisplay}
                     organismDisplayNames={organismDisplayNames}
                 />
-                {getMaxPages() > 1 ? (
-                    <Pagination
-                        className='my-4 w-full flex justify-center'
-                        page={page}
-                        count={getMaxPages()}
-                        onChange={(newPage) => {
-                            setPage(newPage);
-                        }}
-                    />
-                ) : null}
+                <Pagination
+                    className='my-4 w-full flex justify-center'
+                    page={page}
+                    count={getMaxPages()}
+                    onChange={(newPage) => {
+                        setPage(newPage);
+                    }}
+                />
             </SeqSetSection>
         </div>
     );

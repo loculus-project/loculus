@@ -429,16 +429,14 @@ const InnerSearchFullUI = ({
                     />
 
                     <div className='mt-4 flex justify-center'>
-                        {totalSequences !== undefined && totalSequences > 0 && (
-                            <Pagination
-                                count={Math.ceil(totalSequences / pageSize)}
-                                page={page}
-                                onChange={(newPage) => {
-                                    setPage(newPage);
-                                    window.scrollTo({ top: 0 });
-                                }}
-                            />
-                        )}
+                        <Pagination
+                            count={Math.ceil((totalSequences ?? 0) / pageSize)}
+                            page={page}
+                            onChange={(newPage) => {
+                                setPage(newPage);
+                                window.scrollTo({ top: 0 });
+                            }}
+                        />
                     </div>
                 </div>
             </div>
