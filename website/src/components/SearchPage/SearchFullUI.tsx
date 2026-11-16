@@ -191,25 +191,20 @@ const InnerSearchFullUI = ({
 
     const downloadFilter: SequenceFilter = sequencesSelected ? new SequenceEntrySelection(selectedSeqs) : tableFilter;
 
-    const totalSequences = aggregatedHook.data?.data[0].count ?? undefined;
-    const lastPage = totalSequences !== undefined ? Math.max(1, Math.ceil(totalSequences / pageSize)) : undefined;
-    const isValidPage = (page: number, lastPage: number) => page >= 1 && page <= lastPage;
-
     useEffect(() => {
         aggregatedHook.mutate({
             ...lapisSearchParameters,
             fields: [],
         });
-    }, [lapisSearchParameters]);
-
-    useEffect(() => {
-        if (lastPage === undefined || !isValidPage(page, lastPage)) return;
         const OrderByList: OrderBy[] = [
             {
                 field: orderByField,
                 type: orderDirection,
             },
         ];
+
+        if (!(page >= 1)) return;
+
         // @ts-expect-error because the hooks don't accept OrderBy
         detailsHook.mutate({
             ...lapisSearchParameters,
@@ -218,20 +213,14 @@ const InnerSearchFullUI = ({
             offset: (page - 1) * pageSize,
             orderBy: OrderByList,
         });
-    }, [
-        lapisSearchParameters,
-        schema.tableColumns,
-        schema.primaryKey,
-        pageSize,
-        page,
-        orderByField,
-        orderDirection,
-        lastPage,
-    ]);
+    }, [lapisSearchParameters, schema.tableColumns, schema.primaryKey, pageSize, page, orderByField, orderDirection]);
+
+    const totalSequences = aggregatedHook.data?.data[0].count ?? undefined;
 
     useEffect(() => {
-        if (totalSequences === undefined || lastPage === undefined) return;
-        if (!isValidPage(page, lastPage)) setPage(1);
+        if (totalSequences === undefined) return;
+        const lastPage = Math.max(1, Math.ceil(totalSequences / pageSize));
+        if (!(page >= 1 && page <= lastPage)) setPage(1);
     }, [totalSequences, pageSize, page, setPage]);
     const linkOutSequenceCount = downloadFilter.sequenceCount() ?? totalSequences;
 
