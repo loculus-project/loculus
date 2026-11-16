@@ -57,6 +57,7 @@ import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
+import java.util.UUID
 
 @EndpointTest(
     properties = [
@@ -80,7 +81,7 @@ class SubmitProcessedDataEndpointTest(
 
     @Test
     fun `GIVEN invalid authorization token THEN returns 401 Unauthorized`() {
-        expectUnauthorizedResponse(isModifyingRequest = true) {
+        expectUnauthorizedResponse {
             submissionControllerClient.submitProcessedData(
                 PreparedProcessedData.successfullyProcessed("DoesNotMatter"),
                 jwt = it,
@@ -276,6 +277,22 @@ class SubmitProcessedDataEndpointTest(
         convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1)
             .assertStatusIs(Status.PROCESSED)
             .assertHasError(true)
+    }
+
+    @Test
+    fun `GIVEN a mixed batch contains an outdated attempt THEN the whole batch is rolled back`() {
+        val claims = prepareExtractedSequencesInDatabase(numberOfSequenceEntries = 2)
+        val validResult = PreparedProcessedData.successfullyProcessed(claims[0].accession)
+            .copy(processingAttemptId = claims[0].processingAttemptId)
+        val outdatedResult = PreparedProcessedData.successfullyProcessed(claims[1].accession)
+            .copy(processingAttemptId = UUID.randomUUID())
+
+        submissionControllerClient.submitProcessedData(validResult, outdatedResult)
+            .andExpect(status().isUnprocessableContent)
+            .andExpect(jsonPath("\$.detail", containsString("does not own accession version")))
+
+        convenienceClient.getSequenceEntry(claims[0]).assertStatusIs(Status.IN_PROCESSING)
+        convenienceClient.getSequenceEntry(claims[1]).assertStatusIs(Status.IN_PROCESSING)
     }
 
     @Test
