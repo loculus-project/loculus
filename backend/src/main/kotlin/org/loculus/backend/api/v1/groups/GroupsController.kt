@@ -81,7 +81,7 @@ class GroupsController(private val groupManagementDatabaseService: GroupManageme
 
     @Operation(
         summary = "Update a group",
-        description = "Update the details of a group. The user updating the group must be a member of the group.",
+        description = "Update the details of a group. The requesting user must be a member of the group.",
     )
     @ApiResponse(
         responseCode = "200",
@@ -129,7 +129,10 @@ class GroupsController(private val groupManagementDatabaseService: GroupManageme
         ) @PathVariable groupId: Int,
     ): V1Group = V1Group.from(groupManagementDatabaseService.getGroupDetails(groupId, user))
 
-    @Operation(summary = "List the users of a group", description = "List the users of a group.")
+    @Operation(
+        summary = "List the users of a group",
+        description = "List the users of a group. Requires authentication.",
+    )
     @ApiResponse(responseCode = "200", description = "Returns the users of the requested group.")
     @ApiResponse(responseCode = "400", description = StatusDescriptions.INVALID_GROUP_ID)
     @ApiResponse(responseCode = "401", description = StatusDescriptions.UNAUTHORIZED)
@@ -163,7 +166,10 @@ class GroupsController(private val groupManagementDatabaseService: GroupManageme
         name: String?,
     ): List<V1Group> = groupManagementDatabaseService.getGroups(name).map(V1Group::from)
 
-    @Operation(summary = "Add a user to a group", description = "Add a user to a group.")
+    @Operation(
+        summary = "Add a user to a group",
+        description = "Add a user to a group. The requesting user must be a member of the group.",
+    )
     @ApiResponse(responseCode = "204", description = "The user was added to the group.")
     @ApiResponse(responseCode = "400", description = StatusDescriptions.INVALID_GROUP_ID)
     @ApiResponse(responseCode = "401", description = StatusDescriptions.UNAUTHORIZED)
@@ -183,7 +189,10 @@ class GroupsController(private val groupManagementDatabaseService: GroupManageme
         ) @PathVariable username: String,
     ) = groupManagementDatabaseService.addUserToGroup(authenticatedUser, groupId, username)
 
-    @Operation(summary = "Remove a user from a group", description = "Remove a user from a group.")
+    @Operation(
+        summary = "Remove a user from a group",
+        description = "Remove a user from a group. The requesting user must be a member of the group.",
+    )
     @ApiResponse(responseCode = "204", description = "The user is no longer a member of the group.")
     @ApiResponse(responseCode = "400", description = StatusDescriptions.INVALID_GROUP_ID)
     @ApiResponse(responseCode = "401", description = StatusDescriptions.UNAUTHORIZED)
