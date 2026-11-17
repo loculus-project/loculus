@@ -9,9 +9,8 @@ from silo_import.instruct_silo import SiloRunner
 
 
 def test_silo_runner_success(tmp_path: Path) -> None:
-    silo_binary = tmp_path / "silo"
     preprocessing_config = tmp_path / "config.yaml"
-    runner = SiloRunner(silo_binary, preprocessing_config)
+    runner = SiloRunner(preprocessing_config)
 
     with patch("subprocess.run") as mock_run:
         mock_run.return_value = MagicMock(returncode=0, stderr="")
@@ -20,9 +19,8 @@ def test_silo_runner_success(tmp_path: Path) -> None:
 
 
 def test_silo_runner_failure(tmp_path: Path) -> None:
-    silo_binary = tmp_path / "silo"
     preprocessing_config = tmp_path / "config.yaml"
-    runner = SiloRunner(silo_binary, preprocessing_config)
+    runner = SiloRunner(preprocessing_config)
 
     with patch("subprocess.run") as mock_run:
         mock_run.return_value = MagicMock(returncode=1, stderr="error")
@@ -31,9 +29,8 @@ def test_silo_runner_failure(tmp_path: Path) -> None:
 
 
 def test_silo_runner_timeout(tmp_path: Path) -> None:
-    silo_binary = tmp_path / "silo"
     preprocessing_config = tmp_path / "config.yaml"
-    runner = SiloRunner(silo_binary, preprocessing_config)
+    runner = SiloRunner(preprocessing_config)
 
     with patch("subprocess.run") as mock_run:
         mock_run.side_effect = subprocess.TimeoutExpired(cmd="silo", timeout=60)

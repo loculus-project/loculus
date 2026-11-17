@@ -20,7 +20,7 @@ def main() -> None:
     config = ImporterConfig.from_env()
     logger.info(f"Importer configuration: {config}")
     paths = ImporterPaths.from_root(
-        config.root_dir, config.silo_binary, config.preprocessing_config
+        config.root_dir, config.preprocessing_config
     )
     run_forever(config, paths)
 

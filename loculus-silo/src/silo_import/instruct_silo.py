@@ -9,8 +9,7 @@ logger = logging.getLogger(__name__)
 
 
 class SiloRunner:
-    def __init__(self, silo_binary: Path, preprocessing_config: Path) -> None:
-        self._silo_binary = silo_binary
+    def __init__(self, preprocessing_config: Path) -> None:
         self._preprocessing_config = preprocessing_config
 
     def run_preprocessing(self, timeout_seconds: int) -> None:
