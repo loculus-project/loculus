@@ -47,7 +47,6 @@ const ORGANISM_COLORS = [
     '#9c755f',
     '#bab0ab',
 ];
-
 // Shape per organism alongside color, so lines can be told apart without color
 const ORGANISM_POINT_STYLES = [
     'circle',

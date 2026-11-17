@@ -202,6 +202,9 @@ const InnerSearchFullUI = ({
                 type: orderDirection,
             },
         ];
+
+        if (!(page >= 1)) return;
+
         // @ts-expect-error because the hooks don't accept OrderBy
         detailsHook.mutate({
             ...lapisSearchParameters,
@@ -213,6 +216,12 @@ const InnerSearchFullUI = ({
     }, [lapisSearchParameters, schema.tableColumns, schema.primaryKey, pageSize, page, orderByField, orderDirection]);
 
     const totalSequences = aggregatedHook.data?.data[0].count ?? undefined;
+
+    useEffect(() => {
+        if (totalSequences === undefined) return;
+        const lastPage = Math.max(1, Math.ceil(totalSequences / pageSize));
+        if (!(page >= 1 && page <= lastPage)) setPage(1);
+    }, [totalSequences, pageSize, page, setPage]);
     const linkOutSequenceCount = downloadFilter.sequenceCount() ?? totalSequences;
 
     const fetchAccessions = useCallback(async (): Promise<string[]> => {
@@ -429,16 +438,14 @@ const InnerSearchFullUI = ({
                     />
 
                     <div className='mt-4 flex justify-center'>
-                        {totalSequences !== undefined && totalSequences > 0 && (
-                            <Pagination
-                                count={Math.ceil(totalSequences / pageSize)}
-                                page={page}
-                                onChange={(newPage) => {
-                                    setPage(newPage);
-                                    window.scrollTo({ top: 0 });
-                                }}
-                            />
-                        )}
+                        <Pagination
+                            count={Math.ceil((totalSequences ?? 0) / pageSize)}
+                            page={page}
+                            onChange={(newPage) => {
+                                setPage(newPage);
+                                window.scrollTo({ top: 0 });
+                            }}
+                        />
                     </div>
                 </div>
             </div>
