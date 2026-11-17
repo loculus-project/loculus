@@ -36,6 +36,7 @@ import {
 } from '../../utils/search.ts';
 import { getSegmentAndGeneInfo } from '../../utils/sequenceTypeHelpers.ts';
 import { EditDataUseTermsModal } from '../DataUseTerms/EditDataUseTermsModal.tsx';
+import { SeqSetDraftBanner } from '../SeqSetCitations/SeqSetDraftBanner.tsx';
 import { ActiveFilters } from '../common/ActiveFilters.tsx';
 import ErrorBox from '../common/ErrorBox.tsx';
 import ErrorContactMessage from '../common/ErrorContactMessage.tsx';
@@ -189,7 +190,7 @@ const InnerSearchFullUI = ({
      */
     const lapisSearchParameters = useMemo(() => tableFilter.toApiParams(), [tableFilter]);
 
-    const downloadFilter: SequenceFilter = sequencesSelected ? new SequenceEntrySelection(selectedSeqs) : tableFilter;
+    const sequenceFilter: SequenceFilter = sequencesSelected ? new SequenceEntrySelection(selectedSeqs) : tableFilter;
 
     useEffect(() => {
         aggregatedHook.mutate({
@@ -213,7 +214,7 @@ const InnerSearchFullUI = ({
     }, [lapisSearchParameters, schema.tableColumns, schema.primaryKey, pageSize, page, orderByField, orderDirection]);
 
     const totalSequences = aggregatedHook.data?.data[0].count ?? undefined;
-    const linkOutSequenceCount = downloadFilter.sequenceCount() ?? totalSequences;
+    const selectedSequenceCount = sequenceFilter.sequenceCount() ?? totalSequences;
 
     const fetchAccessions = useCallback(async (): Promise<string[]> => {
         const response = await fetchDetailsFromLapis(lapisUrl, {
@@ -290,6 +291,11 @@ const InnerSearchFullUI = ({
                 style={{ paddingBottom: Boolean(previewedSeqId) && previewHalfScreen ? '50vh' : '0' }}
             >
                 <RecentSequencesBanner organism={organism} />
+                <SeqSetDraftBanner
+                    lapisUrl={lapisUrl}
+                    sequenceFilter={sequenceFilter}
+                    sequenceCount={selectedSequenceCount}
+                />
 
                 {(detailsHook.isError || aggregatedHook.isError) &&
                     // @ts-expect-error because response is not expected on error, but does exist
@@ -357,7 +363,7 @@ const InnerSearchFullUI = ({
                                     lapisUrl={lapisUrl}
                                     clientConfig={clientConfig}
                                     accessToken={accessToken}
-                                    sequenceFilter={downloadFilter}
+                                    sequenceFilter={sequenceFilter}
                                 />
                             )}
                             <Button
@@ -377,7 +383,7 @@ const InnerSearchFullUI = ({
 
                             <DownloadDialog
                                 downloadUrlGenerator={downloadUrlGenerator}
-                                sequenceFilter={downloadFilter}
+                                sequenceFilter={sequenceFilter}
                                 referenceGenomesInfo={referenceGenomesInfo}
                                 allowSubmissionOfConsensusSequences={schema.submissionDataTypes.consensusSequences}
                                 dataUseTermsEnabled={dataUseTermsEnabled}
@@ -389,7 +395,7 @@ const InnerSearchFullUI = ({
                             />
                             {isReleasedPage && accessToken !== undefined && groupId !== undefined && (
                                 <DownloadSubmittedDataButton
-                                    sequenceFilter={downloadFilter}
+                                    sequenceFilter={sequenceFilter}
                                     backendUrl={clientConfig.backendUrl}
                                     accessToken={accessToken}
                                     organism={organism}
@@ -401,8 +407,8 @@ const InnerSearchFullUI = ({
                             {linkOuts !== undefined && linkOuts.length > 0 && (
                                 <LinkOutMenu
                                     downloadUrlGenerator={downloadUrlGenerator}
-                                    sequenceFilter={downloadFilter}
-                                    sequenceCount={linkOutSequenceCount}
+                                    sequenceFilter={sequenceFilter}
+                                    sequenceCount={selectedSequenceCount}
                                     linkOuts={linkOuts}
                                     dataUseTermsEnabled={dataUseTermsEnabled}
                                     referenceGenomesInfo={referenceGenomesInfo}
