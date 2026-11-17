@@ -65,6 +65,8 @@ const PaginationButton: FC<PaginationButtonProps> = ({ target, isDisabled, isSel
 );
 
 export const Pagination: FC<PaginationProps> = ({ count, page, onChange, className }) => {
+    if (count <= 1) return null;
+
     return (
         <nav aria-label='pagination' className={className}>
             <ul className='flex flex-wrap items-center'>
