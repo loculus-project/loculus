@@ -1,20 +1,23 @@
 package org.loculus.backend.service.groupmanagement
 
 import org.jetbrains.exposed.v1.core.JoinType
+import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.lowerCase
+import org.jetbrains.exposed.v1.core.statements.UpdateBuilder
 import org.jetbrains.exposed.v1.exceptions.ExposedSQLException
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insert
+import org.jetbrains.exposed.v1.jdbc.insertReturning
 import org.jetbrains.exposed.v1.jdbc.selectAll
+import org.jetbrains.exposed.v1.jdbc.updateReturning
 import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.errors.ConflictException
 import org.loculus.backend.log.AuditLogger
 import org.loculus.backend.model.UNIQUE_CONSTRAINT_VIOLATION_SQL_STATE
 import org.loculus.backend.types.Address
 import org.loculus.backend.types.Group
-import org.loculus.backend.types.GroupDetails
 import org.loculus.backend.types.NewGroup
 import org.loculus.backend.types.User
 import org.loculus.backend.utils.DateProvider
@@ -28,55 +31,52 @@ class GroupManagementDatabaseService(
     private val auditLogger: AuditLogger,
     private val dateProvider: DateProvider,
 ) {
-
-    fun getDetailsOfGroup(groupId: Int, user: org.loculus.backend.auth.User): GroupDetails {
+    fun getGroupDetails(groupId: Int, user: org.loculus.backend.auth.User): Group {
         groupManagementPreconditionValidator.validateGroupExists(groupId)
-        val groupEntity = GroupEntity[groupId]
 
-        return when (user is AuthenticatedUser) {
-            true -> {
-                val users = UserGroupEntity.find { UserGroupsTable.groupIdColumn eq groupId }
-                GroupDetails(
-                    group = groupEntity.toGroup(),
-                    users = users.map { User(it.userName) },
-                )
-            }
-
-            false ->
-                GroupDetails(
-                    group = groupEntity.toGroup(redactEmail = true),
-                    users = null,
-                )
-        }
+        val groupRow = GroupsTable.selectAll().where {
+            GroupsTable.id eq groupId
+        }.single()
+        return groupRow.toGroup(hideEmail = user !is AuthenticatedUser)
     }
 
-    fun createNewGroup(group: NewGroup, authenticatedUser: AuthenticatedUser): Group {
+    fun getGroupUsers(groupId: Int, authenticatedUser: AuthenticatedUser): List<User> {
+        groupManagementPreconditionValidator.validateGroupExists(groupId)
+
+        val usersQuery = UserGroupsTable.selectAll()
+            .where { UserGroupsTable.groupIdColumn eq groupId }
+        return usersQuery.map { User(it[UserGroupsTable.userNameColumn]) }
+    }
+
+    fun createGroup(group: NewGroup, authenticatedUser: AuthenticatedUser): Group {
         groupManagementPreconditionValidator.validateGroupFields(group)
 
-        val groupEntity = GroupEntity.new {
-            createdBy = authenticatedUser.username
-            createdAt = dateProvider.getCurrentDateTime()
-            this.updateWith(group)
-        }
-        val groupId = groupEntity.id.value
+        val groupRow = GroupsTable.insertReturning {
+            it.setGroupFields(group)
+            it[createdBy] = authenticatedUser.username
+            it[createdAt] = dateProvider.getCurrentDateTime()
+        }.single()
+        val groupId = groupRow[GroupsTable.id].value
 
-        UserGroupEntity.new {
-            userName = authenticatedUser.username
-            this.groupId = groupId
+        UserGroupsTable.insert {
+            it[userNameColumn] = authenticatedUser.username
+            it[groupIdColumn] = groupId
         }
 
         auditLogger.log(authenticatedUser.username, "Created group: $groupId with groupName ${group.groupName}")
-        return groupEntity.toGroup()
+        return groupRow.toGroup()
     }
 
     fun updateGroup(groupId: Int, group: NewGroup, authenticatedUser: AuthenticatedUser): Group {
         groupManagementPreconditionValidator.validateUserIsAllowedToModifyGroup(groupId, authenticatedUser)
         groupManagementPreconditionValidator.validateGroupFields(group)
-        val groupEntity = GroupEntity[groupId]
-        groupEntity.updateWith(group)
+
+        val groupRow = GroupsTable.updateReturning(where = {
+            GroupsTable.id eq groupId
+        }) { it.setGroupFields(group) }.single()
 
         auditLogger.log(authenticatedUser.username, "Updated group: $groupId")
-        return groupEntity.toGroup()
+        return groupRow.toGroup()
     }
 
     fun getGroupsOfUser(authenticatedUser: AuthenticatedUser): List<Group> {
@@ -96,22 +96,7 @@ class GroupManagementDatabaseService(
                     .where { UserGroupsTable.userNameColumn eq authenticatedUser.username }
         }
 
-        return groupsQuery.map {
-            Group(
-                groupId = it[GroupsTable.id].value,
-                groupName = it[GroupsTable.groupNameColumn],
-                institution = it[GroupsTable.institutionColumn],
-                address = Address(
-                    line1 = it[GroupsTable.addressLine1],
-                    line2 = it[GroupsTable.addressLine2],
-                    postalCode = it[GroupsTable.addressPostalCode],
-                    city = it[GroupsTable.addressCity],
-                    state = it[GroupsTable.addressState],
-                    country = it[GroupsTable.addressCountry],
-                ),
-                contactEmail = it[GroupsTable.contactEmailColumn],
-            )
-        }
+        return groupsQuery.map { it.toGroup() }
     }
 
     fun getGroupIdsOfUser(authenticatedUser: AuthenticatedUser) = getGroupsOfUser(authenticatedUser).map { it.groupId }
@@ -147,42 +132,42 @@ class GroupManagementDatabaseService(
     }
 
     fun getGroups(name: String?): List<Group> {
-        val entities = if (name == null) {
-            GroupEntity.all()
+        val groupsQuery = if (name == null) {
+            GroupsTable.selectAll()
         } else {
-            GroupEntity.find {
+            GroupsTable.selectAll().where {
                 // just case-insensitive perfect matches for now
                 GroupsTable.groupNameColumn.lowerCase() eq name.lowercase()
             }
         }
 
-        return entities.map { it.toGroup() }
+        return groupsQuery.map { it.toGroup() }
     }
 
-    private fun GroupEntity.updateWith(group: NewGroup) {
-        groupName = group.groupName
-        institution = group.institution
-        addressLine1 = group.address.line1
-        addressLine2 = group.address.line2
-        addressPostalCode = group.address.postalCode
-        addressState = group.address.state
-        addressCity = group.address.city
-        addressCountry = group.address.country
-        contactEmail = group.contactEmail
+    private fun UpdateBuilder<*>.setGroupFields(group: NewGroup) {
+        this[GroupsTable.groupNameColumn] = group.groupName
+        this[GroupsTable.institutionColumn] = group.institution
+        this[GroupsTable.addressLine1] = group.address.line1
+        this[GroupsTable.addressLine2] = group.address.line2
+        this[GroupsTable.addressPostalCode] = group.address.postalCode
+        this[GroupsTable.addressCity] = group.address.city
+        this[GroupsTable.addressState] = group.address.state
+        this[GroupsTable.addressCountry] = group.address.country
+        this[GroupsTable.contactEmailColumn] = group.contactEmail
     }
 
-    private fun GroupEntity.toGroup(redactEmail: Boolean = false): Group = Group(
-        groupId = this.id.value,
-        groupName = this.groupName,
-        institution = this.institution,
+    private fun ResultRow.toGroup(hideEmail: Boolean = false): Group = Group(
+        groupId = this[GroupsTable.id].value,
+        groupName = this[GroupsTable.groupNameColumn],
+        institution = this[GroupsTable.institutionColumn],
         address = Address(
-            line1 = this.addressLine1,
-            line2 = this.addressLine2,
-            postalCode = this.addressPostalCode,
-            city = this.addressCity,
-            state = this.addressState,
-            country = this.addressCountry,
+            line1 = this[GroupsTable.addressLine1],
+            line2 = this[GroupsTable.addressLine2],
+            postalCode = this[GroupsTable.addressPostalCode],
+            city = this[GroupsTable.addressCity],
+            state = this[GroupsTable.addressState],
+            country = this[GroupsTable.addressCountry],
         ),
-        contactEmail = if (redactEmail) null else this.contactEmail,
+        contactEmail = if (hideEmail) null else this[GroupsTable.contactEmailColumn],
     )
 }
