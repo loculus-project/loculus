@@ -202,6 +202,9 @@ const InnerSearchFullUI = ({
                 type: orderDirection,
             },
         ];
+
+        if (!(page >= 1)) return;
+
         // @ts-expect-error because the hooks don't accept OrderBy
         detailsHook.mutate({
             ...lapisSearchParameters,
