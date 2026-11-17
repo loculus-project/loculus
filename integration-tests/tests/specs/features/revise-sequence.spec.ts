@@ -11,7 +11,6 @@ import { waitForUrlReportingAlerts } from '../../utils/navigation-helpers';
 import {
     CCHF_S_SEGMENT_FULL_SEQUENCE,
     createFastaContent,
-    createRevisionMetadataTsv,
     createTestMetadata,
     createTestSequenceData,
     EBOLA_SUDAN_SHORT_SEQUENCE,
@@ -71,19 +70,6 @@ sequenceTest(
     },
 );
 
-groupTest.describe('Revision page template downloads', () => {
-    groupTest('can download revision metadata templates', async ({ page, groupId }) => {
-        const revisionPage = new RevisionPage(page);
-        await revisionPage.goto(TEST_ORGANISM, groupId);
-
-        const tsvDownload = await revisionPage.downloadTsvTemplate();
-        expect(tsvDownload.suggestedFilename()).toContain('.tsv');
-
-        const xlsxDownload = await revisionPage.downloadXlsxTemplate();
-        expect(xlsxDownload.suggestedFilename()).toContain('.xlsx');
-    });
-});
-
 groupTest.describe('Bulk sequence revision', () => {
     groupTest('can revise multiple sequences via file upload', async ({ page, groupId }) => {
         groupTest.setTimeout(200_000);
@@ -113,7 +99,6 @@ groupTest.describe('Bulk sequence revision', () => {
 
         const accessionsToRevise = accessionVersions.slice(0, SEQUENCES_TO_REVISE);
         const baseSubmissionId = `bulk-revise-updated-${Date.now()}`;
-        const revisionMetadata = createRevisionMetadataTsv(accessionsToRevise, baseSubmissionId);
 
         const revisedSequences = accessionsToRevise.map((_, i) => ({
             id: `${baseSubmissionId}-${i} description`,
@@ -122,17 +107,36 @@ groupTest.describe('Bulk sequence revision', () => {
         const fastaContent = createFastaContent(revisedSequences);
 
         const revisionPage = new RevisionPage(page);
-        await revisionPage.goto(TEST_ORGANISM, groupId);
-        await revisionPage.uploadMetadataFile('revision_metadata.tsv', revisionMetadata);
-        await revisionPage.uploadSequenceFile('revised_sequences.fasta', fastaContent);
-        await revisionPage.acceptTerms();
-        await revisionPage.clickSubmit();
+        const submitRevision = async () => {
+            await revisionPage.goto(TEST_ORGANISM, groupId);
+            await revisionPage.uploadFilledTemplate(
+                await revisionPage.downloadTsvTemplate(),
+                accessionsToRevise.map(({ accession }, i) => ({
+                    accession,
+                    id: `${baseSubmissionId}-${i}`,
+                    geoLocCountry: 'France',
+                    sampleCollectionDate: new Date(2021, 1, 15),
+                    authorAffiliations: 'Revision Institute',
+                })),
+            );
+            await revisionPage.uploadSequenceFile('revised_sequences.fasta', fastaContent);
+            await revisionPage.acceptTerms();
+            await revisionPage.clickSubmit();
+        };
+        await submitRevision();
 
         await waitForUrlReportingAlerts(page, '**/review', { timeout: 15_000 });
         await reviewPage.waitForZeroProcessing();
 
         const overview = await reviewPage.getReviewPageOverview();
         expect(overview.total).toBeGreaterThanOrEqual(SEQUENCES_TO_REVISE);
+        for (const i of accessionsToRevise.keys()) {
+            await reviewPage.expectProcessedWithoutErrors(`${baseSubmissionId}-${i}`, [
+                'France',
+                '2021-02-15',
+                'Revision Institute',
+            ]);
+        }
 
         await groupTest.step(
             'reject second revision before approval, error message displayed correctly',
@@ -140,11 +144,7 @@ groupTest.describe('Bulk sequence revision', () => {
                 // This revision must fail; the browser logs the 422 itself.
                 allowConsoleError(groupTest, 'responded with a status of 422');
 
-                await revisionPage.goto(TEST_ORGANISM, groupId);
-                await revisionPage.uploadMetadataFile('revision_metadata.tsv', revisionMetadata);
-                await revisionPage.uploadSequenceFile('revised_sequences.fasta', fastaContent);
-                await revisionPage.acceptTerms();
-                await revisionPage.clickSubmit();
+                await submitRevision();
 
                 await expect(
                     page.getByText(

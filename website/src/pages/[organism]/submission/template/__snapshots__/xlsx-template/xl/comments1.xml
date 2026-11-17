@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<comments xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+<authors>
+<author>Author</author>
+</authors>
+<commentList>
+<comment ref="A1" authorId="0">
+<text>
+<r>
+<t>Required field</t>
+</r>
+</text>
+</comment>
+<comment ref="B1" authorId="0">
+<text>
+<r>
+<t xml:space="preserve">Collection date
+Required field</t>
+</r>
+</text>
+</comment>
+<comment ref="C1" authorId="0">
+<text>
+<r>
+<t xml:space="preserve">Country
+Country where the sample was collected
+Example: Germany
+Priority fields</t>
+</r>
+</text>
+</comment>
+<comment ref="D1" authorId="0">
+<text>
+<r>
+<t xml:space="preserve">Host
+Optional — opt in by filling the column</t>
+</r>
+</text>
+</comment>
+<comment ref="E1" authorId="0">
+<text>
+<r>
+<t xml:space="preserve">Notes
+Optional — opt in by filling the column</t>
+</r>
+</text>
+</comment>
+</commentList>
+</comments>

@@ -1,4 +1,4 @@
-import { Page } from '@playwright/test';
+import { expect, Page } from '@playwright/test';
 import { ReviewPage } from './review.page';
 import Papa from 'papaparse';
 import { NavigationPage } from './navigation.page';
@@ -9,6 +9,12 @@ import {
     uploadFilesFromTmpDir,
 } from '../utils/file-upload-helpers';
 import { waitForUrlReportingAlerts } from '../utils/navigation-helpers';
+import {
+    type TemplateMistakes,
+    type TemplateRow,
+    TsvTemplate,
+    XlsxTemplate,
+} from '../utils/metadata-template';
 
 class SubmissionPage {
     protected page: Page;
@@ -55,6 +61,19 @@ class SubmissionPage {
         await this.page
             .getByRole('button', { name: 'Upload and proceed to Approval' })
             .click({ timeout: 10_000 });
+    }
+
+    /** Submits and expects the upload to be rejected with the given message. */
+    async submitExpectingRejection(message: RegExp) {
+        await this.clickSubmit();
+        const error = this.page.getByText(message);
+        const openTerms = this.page.getByRole('button', { name: 'Continue under Open terms' });
+        // With extra files enabled the browser rejects before the open-terms dialog; otherwise the backend does after it.
+        await expect(error.or(openTerms).first()).toBeVisible();
+        if (await openTerms.isVisible()) {
+            await openTerms.click();
+        }
+        await expect(error.first()).toBeVisible();
     }
 
     // TODO #5357: improve this function by passing in whether we accepted open terms to simplify and also test modal appearance/absence
@@ -193,6 +212,34 @@ export class BulkSubmissionPage extends SubmissionPage {
             mimeType: 'text/plain',
             buffer: Buffer.from(tsvContent),
         });
+    }
+
+    /** Downloads the XLSX metadata template through the link on the upload form. */
+    async downloadXlsxTemplate() {
+        return XlsxTemplate.download(this.page);
+    }
+
+    /** Downloads the TSV metadata template through the link on the upload form. */
+    async downloadTsvTemplate() {
+        return TsvTemplate.download(this.page);
+    }
+
+    /** Discards the selected metadata file (no confirmation is asked for). */
+    async discardMetadataFile() {
+        await this.page.getByTestId('discard_metadata_file').click();
+        await expect(this.page.getByTestId('discard_metadata_file')).toHaveCount(0);
+    }
+
+    /** Fills the template with one row per entry, keyed by column header, and selects it. */
+    async uploadFilledTemplate(
+        template: XlsxTemplate | TsvTemplate,
+        rows: TemplateRow[],
+        mistakes?: TemplateMistakes,
+    ) {
+        await template.fillAndUpload(this.page, rows, mistakes);
+        if (!mistakes?.deleteHeaderRow) {
+            await expect(this.page.getByTestId('discard_metadata_file')).toBeEnabled();
+        }
     }
 
     async uploadSequencesFile(sequenceData: Record<string, string>) {

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="x14ac" xmlns:x14ac="http://schemas.microsoft.com/office/spreadsheetml/2009/9/ac">
+<dimension ref="A1:E1"/>
+<sheetViews>
+<sheetView workbookViewId="0">
+<pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/>
+<selection pane="bottomLeft"/>
+</sheetView>
+</sheetViews>
+<sheetFormatPr defaultRowHeight="15" outlineLevelRow="0" outlineLevelCol="0" x14ac:dyDescent="55"/>
+<cols>
+<col min="1" max="1" width="16" customWidth="1"/>
+<col min="2" max="2" width="16" style="1" customWidth="1"/>
+<col min="3" max="5" width="16" customWidth="1"/>
+</cols>
+<sheetData>
+<row r="1" spans="1:5" x14ac:dyDescent="0.25">
+<c r="A1" s="2" t="s">
+<v>0</v>
+</c>
+<c r="B1" s="3" t="s">
+<v>1</v>
+</c>
+<c r="C1" s="4" t="s">
+<v>2</v>
+</c>
+<c r="D1" s="5" t="s">
+<v>3</v>
+</c>
+<c r="E1" s="5" t="s">
+<v>4</v>
+</c>
+</row>
+</sheetData>
+<dataValidations count="2">
+<dataValidation type="list" allowBlank="1" showErrorMessage="1" errorStyle="stop" errorTitle="Invalid value" error="&quot;country&quot; must be one of the values in the dropdown list." sqref="C2:C100000">
+<formula1>OFFSET(&apos;_lists&apos;!$A$1,1,MATCH(C$1,&apos;_lists&apos;!$1:$1,0)-1,COUNTA(OFFSET(&apos;_lists&apos;!$A$1,1,MATCH(C$1,&apos;_lists&apos;!$1:$1,0)-1,100000,1)),1)</formula1>
+</dataValidation>
+<dataValidation type="list" allowBlank="1" showErrorMessage="1" errorStyle="stop" errorTitle="Invalid value" error="&quot;host&quot; must be one of the values in the dropdown list." sqref="D2:D100000">
+<formula1>OFFSET(&apos;_lists&apos;!$A$1,1,MATCH(D$1,&apos;_lists&apos;!$1:$1,0)-1,COUNTA(OFFSET(&apos;_lists&apos;!$A$1,1,MATCH(D$1,&apos;_lists&apos;!$1:$1,0)-1,100000,1)),1)</formula1>
+</dataValidation>
+</dataValidations>
+<pageMargins left="0.7" right="0.7" top="0.75" bottom="0.75" header="0.3" footer="0.3"/>
+<pageSetup orientation="portrait" horizontalDpi="4294967295" verticalDpi="4294967295" scale="100" fitToWidth="1" fitToHeight="1"/>
+<legacyDrawing r:id="rId2"/>
+</worksheet>

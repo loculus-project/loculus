@@ -1,5 +1,6 @@
 import { expect, type Page } from '@playwright/test';
 import { prepareTmpDirForBulkUpload, uploadFilesFromTmpDir } from '../utils/file-upload-helpers';
+import { type TemplateRow, TsvTemplate, type XlsxTemplate } from '../utils/metadata-template';
 
 /**
  * Page object for the sequence revision page.
@@ -123,22 +124,15 @@ export class RevisionPage {
         await this.clickSubmit();
     }
 
-    /**
-     * Download metadata template in TSV format
-     */
+    /** Downloads the TSV metadata template through the link on the upload form. */
     async downloadTsvTemplate() {
-        const downloadPromise = this.page.waitForEvent('download');
-        await this.page.locator('a[href*="fileType=tsv"]').click();
-        return downloadPromise;
+        return TsvTemplate.download(this.page);
     }
 
-    /**
-     * Download metadata template in XLSX format
-     */
-    async downloadXlsxTemplate() {
-        const downloadPromise = this.page.waitForEvent('download');
-        await this.page.locator('a[href*="fileType=xlsx"]').click();
-        return downloadPromise;
+    /** Fills the template with one row per entry, keyed by column header, and selects it. */
+    async uploadFilledTemplate(template: XlsxTemplate | TsvTemplate, rows: TemplateRow[]) {
+        await template.fillAndUpload(this.page, rows);
+        await expect(this.page.getByTestId('discard_metadata_file')).toBeEnabled();
     }
 
     async uploadExternalFiles(
