@@ -37,6 +37,8 @@ class SecurityConfig {
             auth.requestMatchers(
                 "/",
                 "/favicon.ico",
+                "/liveness",
+                "/readiness",
                 "/error/**",
                 "/actuator/**",
                 "/api-docs**",
