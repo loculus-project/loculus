@@ -19,9 +19,7 @@ def main() -> None:
     configure_logging()
     config = ImporterConfig.from_env()
     logger.info(f"Importer configuration: {config}")
-    paths = ImporterPaths.from_root(
-        config.root_dir, config.preprocessing_config
-    )
+    paths = ImporterPaths.from_root(config.root_dir, config.preprocessing_config)
     run_forever(config, paths)
 
 
