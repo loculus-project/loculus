@@ -6,7 +6,7 @@ import { backendClientHooks } from '../../services/serviceHooks';
 import { approveAllDataScope } from '../../types/backend';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
-import { stringifyMaybeAxiosError } from '../../utils/stringifyMaybeAxiosError';
+import { formatErrorMessage } from '../../utils/formatErrorMessage';
 import { Button } from '../common/Button';
 import { ModalBox } from '../common/ModalBox';
 import { withQueryProvider } from '../common/withQueryProvider';
@@ -177,9 +177,9 @@ const RevocationDialog: FC<RevocationDialogProps> = ({ dialogText, onConfirmatio
 export const RevokeButton = withQueryProvider(InnerRevokeButton);
 
 function getRevokeSequenceEntryErrorMessage(error: unknown) {
-    return 'Failed to revoke sequence entry: ' + stringifyMaybeAxiosError(error);
+    return 'Failed to revoke sequence entry: ' + formatErrorMessage(error);
 }
 
 function getApproveRevocationErrorMessage(error: unknown) {
-    return 'Failed to approve revocation: ' + stringifyMaybeAxiosError(error);
+    return 'Failed to approve revocation: ' + formatErrorMessage(error);
 }
