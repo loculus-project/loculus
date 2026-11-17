@@ -32,19 +32,19 @@ spec:
           {{- include "loculus.resources" (list "backend" $.Values) | nindent 10 }}
           startupProbe:
             httpGet:
-              path: "/actuator/health/liveness"
-              port: {{ .Values.enableServiceMonitor | ternary "management" "http" }}
+              path: "/liveness"
+              port: "http"
             periodSeconds: 5
             failureThreshold: 360 # 30 minutes to start
           livenessProbe:
             httpGet:
-              path: "/actuator/health/liveness"
-              port: {{ .Values.enableServiceMonitor | ternary "management" "http" }}
+              path: "/liveness"
+              port: "http"
             periodSeconds: 10
           readinessProbe:
             httpGet:
-              path: "/actuator/health/readiness"
-              port: {{ .Values.enableServiceMonitor | ternary "management" "http" }}
+              path: "/readiness"
+              port: "http"
           ports:
             - name: http
               containerPort: 8079
@@ -90,7 +90,6 @@ spec:
             - "--loculus.s3.bucket.secret-key=$(S3_BUCKET_SECRET_KEY)"
             {{- end }}
             {{- if .Values.enableServiceMonitor }}
-            - "--management.server.port=8078"
             - "--management.endpoint.prometheus.enabled=true"
             - "--management.endpoints.web.exposure.include=health,prometheus"
             {{- end }}
