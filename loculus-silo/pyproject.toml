@@ -7,7 +7,7 @@ dependencies = [
     "requests>=2.34.2,<3.0",
     "orjsonl>=1.0.0,<2.0",
     "pyyaml>=6.0.2,<7.0",
-    "rhydb==0.17.4",
+    "rhydb==0.17.4", # must match SILO_VERSION in the Dockerfile
 ]
 
 [project.scripts]
