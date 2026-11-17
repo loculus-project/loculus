@@ -64,12 +64,11 @@ def make_runner(tmp_path: Path) -> ImporterRunner:
         poll_interval=1,
         silo_run_timeout=5,
         root_dir=tmp_path,
-        silo_binary=tmp_path / "silo",
         preprocessing_config=tmp_path / "config.yaml",
         hierarchical_filters={HOST_TAXON: "http://taxonomy"},
         incremental=True,
     )
-    paths = ImporterPaths.from_root(tmp_path, config.silo_binary, config.preprocessing_config)
+    paths = ImporterPaths.from_root(tmp_path, config.preprocessing_config)
     return ImporterRunner(config, paths)
 
 

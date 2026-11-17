@@ -169,6 +169,8 @@ updates:
     directory: loculus-silo
     schedule:
       interval: monthly
+    ignore:
+      - dependency-name: "rhydb" # must match SILO_VERSION in loculus-silo/Dockerfile
     groups:
       minorAndPatch:
         update-types:

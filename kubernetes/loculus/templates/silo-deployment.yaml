@@ -108,8 +108,6 @@ spec:
               value: {{ $.Values.siloImport.pollIntervalSeconds | quote }}
             - name: SILO_IMPORT_INCREMENTAL
               value: {{ $.Values.siloImport.incremental | quote }}
-            - name: PATH_TO_SILO_BINARY
-              value: "/usr/local/bin/silo"
             - name: PREPROCESSING_CONFIG
               value: "/app/preprocessing_config.yaml"
           volumeMounts:

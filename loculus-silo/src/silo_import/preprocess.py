@@ -14,7 +14,7 @@ def preprocess(preprocessing_config: Path) -> None:
     input_dir = Path(config["inputDirectory"])
     database = Database()
     database.preprocess(
-        database_config=input_dir / "database_config.yaml",
+        database_config=input_dir / config.get("databaseConfig", "database_config.yaml"),
         reference_genomes=input_dir / config["referenceGenomeFilename"],
         input_file=input_dir / config["ndjsonInputFilename"],
         lineage_definitions=[
