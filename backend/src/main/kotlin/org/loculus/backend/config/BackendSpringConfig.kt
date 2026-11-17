@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import io.swagger.v3.oas.models.headers.Header
+import io.swagger.v3.oas.models.info.Info
 import io.swagger.v3.oas.models.media.StringSchema
 import io.swagger.v3.oas.models.parameters.HeaderParameter
 import org.flywaydb.core.Flyway
@@ -17,7 +18,8 @@ import org.loculus.backend.api.LoculusCustomHeaders
 import org.loculus.backend.log.REQUEST_ID_HEADER_DESCRIPTION
 import org.loculus.backend.service.submission.dbtables.CurrentProcessingPipelineTable
 import org.loculus.backend.utils.DateProvider
-import org.springdoc.core.customizers.OperationCustomizer
+import org.springdoc.core.customizers.GlobalOperationCustomizer
+import org.springdoc.core.models.GroupedOpenApi
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration
@@ -62,6 +64,8 @@ object BackendSpringProperty {
 const val DEBUG_MODE_ON_VALUE = "true"
 const val ENABLE_SEQSETS_TRUE_VALUE = "true"
 
+private val API_DOCS_TITLE = "$PROJECT_NAME API Documentation"
+
 private val logger = mu.KotlinLogging.logger {}
 
 @Configuration
@@ -100,6 +104,20 @@ class BackendSpringConfig {
     fun openApi(backendConfig: BackendConfig) = buildOpenApiSchema(backendConfig)
 
     @Bean
+    fun v0Api(): GroupedOpenApi = GroupedOpenApi.builder()
+        .group("v0")
+        .pathsToExclude("/v1/**")
+        .addOpenApiCustomizer { it.info(Info().title(API_DOCS_TITLE).version("v0")) }
+        .build()
+
+    @Bean
+    fun v1Api(): GroupedOpenApi = GroupedOpenApi.builder()
+        .group("v1")
+        .pathsToMatch("/v1/**")
+        .addOpenApiCustomizer { it.info(Info().title(API_DOCS_TITLE).version("v1")) }
+        .build()
+
+    @Bean
     fun s3Config(
         @Value("\${${BackendSpringProperty.S3_ENABLED}}") enabled: Boolean = false,
         @Value("\${${BackendSpringProperty.S3_BUCKET_ENDPOINT}}") endpoint: String? = null,
@@ -119,7 +137,7 @@ class BackendSpringConfig {
     }
 
     @Bean
-    fun headerCustomizer() = OperationCustomizer { operation, _ ->
+    fun headerCustomizer() = GlobalOperationCustomizer { operation, _ ->
         val foundRequestIdHeaderParameter = operation.parameters?.any { it.name == LoculusCustomHeaders.REQUEST_ID }
         if (foundRequestIdHeaderParameter == false || foundRequestIdHeaderParameter == null) {
             operation.addParametersItem(
