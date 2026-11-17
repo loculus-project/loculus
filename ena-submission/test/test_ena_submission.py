@@ -828,7 +828,7 @@ class DownloadFastqFilesTests(unittest.TestCase):
 
 
 class LogWebinCliOutputFilesTests(unittest.TestCase):
-    LOGGER: Final = "ena_deposition.ena_submission_helper"
+    LOGGER: Final = "ena_deposition.ena_client"
 
     def test_reports_are_logged_and_nothing_else_warns(self):
         tmp_dir = tempfile.TemporaryDirectory()
