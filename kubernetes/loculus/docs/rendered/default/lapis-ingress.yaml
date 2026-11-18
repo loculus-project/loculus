@@ -1,0 +1,251 @@
+# Source: loculus/templates/lapis-ingress.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: lapis-ingress
+  annotations:
+    traefik.ingress.kubernetes.io/router.middlewares: "default-cors-all-origins@kubernetescrd,default-strip-cchf-prefix@kubernetescrd,default-strip-dummy-organism-prefix@kubernetescrd,default-strip-dummy-organism-with-files-prefix@kubernetescrd,default-strip-ebola-sudan-prefix@kubernetescrd,default-strip-enteroviruses-prefix@kubernetescrd,default-strip-not-aligned-organism-prefix@kubernetescrd,default-strip-west-nile-prefix@kubernetescrd"
+spec:
+  rules:
+  - host: lapis-%!s(<nil>)
+    http:
+      paths:
+      - path: /cchf/
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: loculus-lapis-service-cchf
+            port:
+              number: 8080
+      - path: /dummy-organism/
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: loculus-lapis-service-dummy-organism
+            port:
+              number: 8080
+      - path: /dummy-organism-with-files/
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: loculus-lapis-service-dummy-organism-with-files
+            port:
+              number: 8080
+      - path: /ebola-sudan/
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: loculus-lapis-service-ebola-sudan
+            port:
+              number: 8080
+      - path: /enteroviruses/
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: loculus-lapis-service-enteroviruses
+            port:
+              number: 8080
+      - path: /not-aligned-organism/
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: loculus-lapis-service-not-aligned-organism
+            port:
+              number: 8080
+      - path: /west-nile/
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: loculus-lapis-service-west-nile
+            port:
+              number: 8080
+  tls:
+  - hosts:
+    - lapis-%!s(<nil>)
+---
+# Source: loculus/templates/lapis-ingress.yaml
+# This ingress is only used to redirect from $LAPIS_URL/$ORGANISM_NAME to $LAPIS_URL/$ORGANISM_NAME/
+# We need to do this so we can strip the /$ORGANISM_NAME/ prefix in the main lapis ingress (see #3360)
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: lapis-redirect-ingress
+  annotations:
+    traefik.ingress.kubernetes.io/router.middlewares: "default-redirect-middleware@kubernetescrd,default-redirect-slash@kubernetescrd"
+    # High priority to ensure this rule is evaluated first
+    traefik.ingress.kubernetes.io/router.priority: "500"
+spec:
+  rules:
+  - host: lapis-%!s(<nil>)
+    http:
+      paths:
+      - path: /cchf
+        pathType: Exact
+        backend:
+          # An Ingress path requires a backend. Since the redirect happens before
+          # the request is forwarded, we can point all paths to the first
+          # organism's service as a placeholder.
+          service:
+            name: loculus-lapis-service-cchf
+            port:
+              number: 8080
+      - path: /dummy-organism
+        pathType: Exact
+        backend:
+          # An Ingress path requires a backend. Since the redirect happens before
+          # the request is forwarded, we can point all paths to the first
+          # organism's service as a placeholder.
+          service:
+            name: loculus-lapis-service-cchf
+            port:
+              number: 8080
+      - path: /dummy-organism-with-files
+        pathType: Exact
+        backend:
+          # An Ingress path requires a backend. Since the redirect happens before
+          # the request is forwarded, we can point all paths to the first
+          # organism's service as a placeholder.
+          service:
+            name: loculus-lapis-service-cchf
+            port:
+              number: 8080
+      - path: /ebola-sudan
+        pathType: Exact
+        backend:
+          # An Ingress path requires a backend. Since the redirect happens before
+          # the request is forwarded, we can point all paths to the first
+          # organism's service as a placeholder.
+          service:
+            name: loculus-lapis-service-cchf
+            port:
+              number: 8080
+      - path: /enteroviruses
+        pathType: Exact
+        backend:
+          # An Ingress path requires a backend. Since the redirect happens before
+          # the request is forwarded, we can point all paths to the first
+          # organism's service as a placeholder.
+          service:
+            name: loculus-lapis-service-cchf
+            port:
+              number: 8080
+      - path: /not-aligned-organism
+        pathType: Exact
+        backend:
+          # An Ingress path requires a backend. Since the redirect happens before
+          # the request is forwarded, we can point all paths to the first
+          # organism's service as a placeholder.
+          service:
+            name: loculus-lapis-service-cchf
+            port:
+              number: 8080
+      - path: /west-nile
+        pathType: Exact
+        backend:
+          # An Ingress path requires a backend. Since the redirect happens before
+          # the request is forwarded, we can point all paths to the first
+          # organism's service as a placeholder.
+          service:
+            name: loculus-lapis-service-cchf
+            port:
+              number: 8080
+---
+# Source: loculus/templates/lapis-ingress.yaml
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: cors-all-origins
+spec:
+  headers:
+    accessControlAllowMethods:
+      - "GET"
+      - "OPTIONS"
+      - "POST"
+      - "HEAD"
+    accessControlAllowOriginList:
+      - "*"
+    accessControlMaxAge: 100
+    accessControlAllowHeaders:
+      - "*"
+---
+# Source: loculus/templates/lapis-ingress.yaml
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: strip-cchf-prefix
+spec:
+  stripPrefix:
+    prefixes:
+      - /cchf/
+---
+# Source: loculus/templates/lapis-ingress.yaml
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: strip-dummy-organism-prefix
+spec:
+  stripPrefix:
+    prefixes:
+      - /dummy-organism/
+---
+# Source: loculus/templates/lapis-ingress.yaml
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: strip-dummy-organism-with-files-prefix
+spec:
+  stripPrefix:
+    prefixes:
+      - /dummy-organism-with-files/
+---
+# Source: loculus/templates/lapis-ingress.yaml
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: strip-ebola-sudan-prefix
+spec:
+  stripPrefix:
+    prefixes:
+      - /ebola-sudan/
+---
+# Source: loculus/templates/lapis-ingress.yaml
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: strip-enteroviruses-prefix
+spec:
+  stripPrefix:
+    prefixes:
+      - /enteroviruses/
+---
+# Source: loculus/templates/lapis-ingress.yaml
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: strip-not-aligned-organism-prefix
+spec:
+  stripPrefix:
+    prefixes:
+      - /not-aligned-organism/
+---
+# Source: loculus/templates/lapis-ingress.yaml
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: strip-west-nile-prefix
+spec:
+  stripPrefix:
+    prefixes:
+      - /west-nile/
+---
+# Source: loculus/templates/lapis-ingress.yaml
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: redirect-slash
+spec:
+  redirectRegex:
+    regex: ".*"
+    replacement: "$0/"
+    permanent: true
+---
