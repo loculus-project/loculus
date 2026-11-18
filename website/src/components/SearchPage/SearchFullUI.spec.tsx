@@ -163,6 +163,20 @@ describe('SearchFullUI', () => {
         });
     });
 
+    it.each(['5', '-1', 'abc'])('moves invalid page %s to the first page', async (pageParam) => {
+        const mutateDetails = vi.fn();
+        mockUseDetails.mockReturnValue({ ...mockUseDetails(), mutate: mutateDetails });
+        // 250 with page size 100 gives 3 pages, so 5 is past last
+        mockUseAggregated.mockReturnValue({ ...mockUseAggregated(), data: { data: [{ count: 250 }] } });
+
+        Object.defineProperty(window, 'location', { value: { href: '', search: `?page=${pageParam}` } });
+        renderSearchFullUI();
+
+        await waitFor(() => {
+            expect(mutateDetails).toHaveBeenLastCalledWith(expect.objectContaining({ offset: 0 }));
+        });
+    });
+
     it('should render the form with all fields that are searchable', () => {
         renderSearchFullUI();
 
