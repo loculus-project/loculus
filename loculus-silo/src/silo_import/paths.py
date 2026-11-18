@@ -14,11 +14,10 @@ class ImporterPaths:
     input_dir: Path
     output_dir: Path
     silo_input_data_path: Path
-    silo_binary: Path
     preprocessing_config: Path
 
     @classmethod
-    def from_root(cls, root: Path, silo_binary: Path, preprocessing_config: Path) -> ImporterPaths:
+    def from_root(cls, root: Path, preprocessing_config: Path) -> ImporterPaths:
         preprocessing_dir = (root / "preprocessing").resolve()
         input_dir = preprocessing_dir / "input"
         output_dir = preprocessing_dir / "output"
@@ -27,7 +26,6 @@ class ImporterPaths:
             input_dir=input_dir,
             output_dir=output_dir,
             silo_input_data_path=input_dir / TRANSFORMED_DATA_FILENAME,
-            silo_binary=silo_binary,
             preprocessing_config=preprocessing_config,
         )
 

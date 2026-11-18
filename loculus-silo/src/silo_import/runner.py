@@ -27,7 +27,7 @@ class ImporterRunner:
         self.paths = paths
         self.paths.ensure_directories()
         self._clear_download_directories()
-        self.silo = SiloRunner(paths.silo_binary, paths.preprocessing_config)
+        self.silo = SiloRunner(paths.preprocessing_config)
         self.download_manager = DownloadManager()
         self.current_etag = SPECIAL_ETAG_NONE
         self.last_hard_refresh: float = 0

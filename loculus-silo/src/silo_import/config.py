@@ -17,7 +17,6 @@ class ImporterConfig:
     poll_interval: int
     silo_run_timeout: int
     root_dir: Path
-    silo_binary: Path
     preprocessing_config: Path
     hierarchical_filters: dict[MetadataField, HierarchicalServiceUrl] | None = None
 
@@ -58,7 +57,6 @@ class ImporterConfig:
         silo_run_timeout = int(env.get("SILO_RUN_TIMEOUT_SECONDS", "3600"))
         root_raw = env.get("ROOT_DIR")
         root_dir = Path(root_raw).resolve() if root_raw else Path("/")
-        silo_binary = Path(env.get("PATH_TO_SILO_BINARY", "/usr/local/bin/silo"))
         preprocessing_config = Path(
             env.get("PREPROCESSING_CONFIG", "/app/preprocessing_config.yaml")
         )
@@ -70,7 +68,6 @@ class ImporterConfig:
             poll_interval=poll_interval,
             silo_run_timeout=silo_run_timeout,
             root_dir=root_dir,
-            silo_binary=silo_binary,
             preprocessing_config=preprocessing_config,
             hierarchical_filters=hierarchical_filters,
         )
