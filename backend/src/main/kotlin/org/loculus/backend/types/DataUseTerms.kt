@@ -10,6 +10,7 @@ import com.fasterxml.jackson.core.JsonGenerator
 import com.fasterxml.jackson.databind.SerializerProvider
 import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import com.fasterxml.jackson.databind.ser.std.StdSerializer
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping
 import io.swagger.v3.oas.annotations.media.Schema
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
@@ -56,6 +57,13 @@ enum class DataUseTermsType {
     JsonSubTypes.Type(value = DataUseTerms.Restricted::class, name = "RESTRICTED"),
 )
 @JsonPropertyOrder(value = ["type", "restrictedUntil"])
+@Schema(
+    discriminatorProperty = "type",
+    discriminatorMapping = [
+        DiscriminatorMapping(value = "OPEN", schema = DataUseTerms.Open::class),
+        DiscriminatorMapping(value = "RESTRICTED", schema = DataUseTerms.Restricted::class),
+    ],
+)
 sealed interface DataUseTerms {
     @get:JsonIgnore
     val type: DataUseTermsType

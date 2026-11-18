@@ -1,10 +1,7 @@
-import { isErrorFromAlias } from '@zodios/core';
-import type { AxiosError } from 'axios';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { toast } from 'react-toastify';
 
-import { backendApi } from '../services/backendApi.ts';
-import { backendClientHooks } from '../services/serviceHooks.ts';
+import { useApproveProcessedData, useDeleteSequences, useGetSequences } from '../services/backend/backendHooks.ts';
 import {
     type Group,
     processedStatus,
@@ -14,9 +11,10 @@ import {
     noIssuesProcessingResult,
     warningsProcessingResult,
     errorsProcessingResult,
+    type SequenceEntryProcessingResultNames,
+    type SequenceEntryStatusNames,
 } from '../types/backend.ts';
 import type { ClientConfig } from '../types/runtimeConfig.ts';
-import { createAuthorizationHeader } from '../utils/createAuthorizationHeader.ts';
 import { stringifyMaybeAxiosError } from '../utils/stringifyMaybeAxiosError.ts';
 
 export function useSubmissionOperations(
@@ -27,25 +25,26 @@ export function useSubmissionOperations(
     openErrorFeedback: (message: string) => void,
     pageQuery: PageQuery,
 ) {
-    const hooks = useMemo(() => backendClientHooks(clientConfig), [clientConfig]);
-    const allRelevantStatuses = [receivedStatus, inProcessingStatus, processedStatus];
-    const allProcessingResults = [noIssuesProcessingResult, warningsProcessingResult, errorsProcessingResult];
+    const allRelevantStatuses: SequenceEntryStatusNames[] = [receivedStatus, inProcessingStatus, processedStatus];
+    const allProcessingResults: SequenceEntryProcessingResultNames[] = [
+        noIssuesProcessingResult,
+        warningsProcessingResult,
+        errorsProcessingResult,
+    ];
     const [includedStatuses, setIncludedStatuses] = useState(allRelevantStatuses);
     const [includedProcessingResults, setIncludedProcessingResults] = useState(allProcessingResults);
-    const useGetSequences = hooks.useGetSequences(
+    const getSequences = useGetSequences(
+        clientConfig,
+        accessToken,
+        organism,
         {
-            headers: createAuthorizationHeader(accessToken),
-            params: {
-                organism,
-            },
-            queries: {
-                groupIdsFilter: group.groupId.toString(),
-                includeReviewData: true,
-                statusesFilter: includedStatuses.join(','),
-                processingResultFilter: includedProcessingResults.join(','),
-                page: pageQuery.pageOneIndexed - 1,
-                size: pageQuery.size,
-            },
+            groupIdsFilter: [group.groupId],
+            // TODO: switch to the dedicated /review-data endpoint that replaces this flag
+            includeReviewData: true, // eslint-disable-line @typescript-eslint/no-deprecated
+            statusesFilter: includedStatuses,
+            processingResultFilter: includedProcessingResults,
+            page: pageQuery.pageOneIndexed - 1,
+            size: pageQuery.size,
         },
         {
             onError: (error) => openErrorFeedback(getSequencesErrorMessage(error)),
@@ -57,58 +56,52 @@ export function useSubmissionOperations(
         },
     );
 
-    if (useGetSequences.error) {
+    if (getSequences.error) {
         openErrorFeedback(`Failed to query Group`);
     }
 
-    const useDeleteSequenceEntries = hooks.useDeleteSequences(
-        { headers: createAuthorizationHeader(accessToken), params: { organism } },
-        {
-            onSuccess: () => useGetSequences.refetch(),
-            onError: (error) => openErrorFeedback(deleteSequenceEntriesErrorMessage(error)),
+    const deleteSequenceEntries = useDeleteSequences(clientConfig, accessToken, organism, {
+        onSuccess: () => getSequences.refetch(),
+        onError: (error) => openErrorFeedback(deleteSequenceEntriesErrorMessage(error)),
+    });
+    const approveProcessedData = useApproveProcessedData(clientConfig, accessToken, organism, {
+        onMutate: () => {
+            const toastId = toast.loading('Approving sequences...');
+            return { toastId };
         },
-    );
-    const useApproveProcessedData = hooks.useApproveProcessedData(
-        { headers: createAuthorizationHeader(accessToken), params: { organism } },
-        {
-            onMutate: () => {
-                const toastId = toast.loading('Approving sequences...');
-                return { toastId };
-            },
-            onSuccess: (data, _variables, context) => {
-                void useGetSequences.refetch();
-                const ctx = context as { toastId: string | number } | undefined;
-                if (ctx?.toastId) {
-                    const isBatchRelease = data.length > 1;
-                    toast.update(ctx.toastId, {
-                        render: isBatchRelease
-                            ? '🎉 All sequences have been approved. They will appear on the website shortly.'
-                            : 'Sequence approved. It will appear on the website shortly.',
-                        type: 'success',
-                        isLoading: false,
-                        autoClose: isBatchRelease ? false : 4000,
-                        closeButton: isBatchRelease,
-                    });
-                }
-            },
-            onError: (error, _variables, context) => {
-                const ctx = context as { toastId: string | number } | undefined;
-                if (ctx?.toastId) {
-                    toast.update(ctx.toastId, {
-                        render: approveProcessedDataErrorMessage(error),
-                        type: 'error',
-                        isLoading: false,
-                        autoClose: false,
-                    });
-                }
-            },
+        onSuccess: (data, _variables, context) => {
+            void getSequences.refetch();
+            const ctx = context as { toastId: string | number } | undefined;
+            if (ctx?.toastId) {
+                const isBatchRelease = data.length > 1;
+                toast.update(ctx.toastId, {
+                    render: isBatchRelease
+                        ? '🎉 All sequences have been approved. They will appear on the website shortly.'
+                        : 'Sequence approved. It will appear on the website shortly.',
+                    type: 'success',
+                    isLoading: false,
+                    autoClose: isBatchRelease ? false : 4000,
+                    closeButton: isBatchRelease,
+                });
+            }
         },
-    );
+        onError: (error, _variables, context) => {
+            const ctx = context as { toastId: string | number } | undefined;
+            if (ctx?.toastId) {
+                toast.update(ctx.toastId, {
+                    render: approveProcessedDataErrorMessage(error),
+                    type: 'error',
+                    isLoading: false,
+                    autoClose: false,
+                });
+            }
+        },
+    });
 
     return {
-        deleteSequenceEntries: useDeleteSequenceEntries.mutate,
-        approveProcessedData: useApproveProcessedData.mutate,
-        getSequences: useGetSequences,
+        deleteSequenceEntries: deleteSequenceEntries.mutate,
+        approveProcessedData: approveProcessedData.mutate,
+        getSequences,
         includedStatuses,
         setIncludedStatuses,
         includedProcessingResults,
@@ -116,23 +109,14 @@ export function useSubmissionOperations(
     };
 }
 
-function deleteSequenceEntriesErrorMessage(error: unknown | AxiosError) {
-    if (isErrorFromAlias(backendApi, 'deleteSequences', error)) {
-        return 'Failed to delete sequence entries: ' + error.response.data.detail;
-    }
+function deleteSequenceEntriesErrorMessage(error: unknown) {
     return 'Failed to delete sequence entries: ' + stringifyMaybeAxiosError(error);
 }
 
-function approveProcessedDataErrorMessage(error: unknown | AxiosError) {
-    if (isErrorFromAlias(backendApi, 'approveProcessedData', error)) {
-        return 'Failed to approve processed sequence entries: ' + error.response.data.detail;
-    }
+function approveProcessedDataErrorMessage(error: unknown) {
     return 'Failed to approve processed sequence entries: ' + stringifyMaybeAxiosError(error);
 }
 
-function getSequencesErrorMessage(error: unknown | AxiosError) {
-    if (isErrorFromAlias(backendApi, 'getSequences', error)) {
-        return 'Failed to query sequences: ' + error.response.data.detail;
-    }
+function getSequencesErrorMessage(error: unknown) {
     return 'Failed to query sequences: ' + stringifyMaybeAxiosError(error);
 }

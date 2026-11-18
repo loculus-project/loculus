@@ -1,62 +1,84 @@
-import axios, { type Method } from 'axios';
-import { err, ok, Result } from 'neverthrow';
-import { z, ZodSchema } from 'zod';
+import { err, ok, type Result } from 'neverthrow';
+import type { z } from 'zod';
 
 import {
-    dataUseTermsHistoryEntry,
-    getSequencesResponse,
-    info,
-    problemDetail,
-    requestMultipartUploadResponse,
-    sequenceEntryToEdit,
-    pipelineVersionStatistics,
-    currentPipelineVersions,
-    type ProblemDetail,
+    type BackendApiClient,
+    createBackendApiClient,
+    type FetchResult,
+    isBackendApiError,
+    unwrapBackendResponse,
+} from './backend/backendApiClient.ts';
+import {
     type CompleteMultipartUploadRequest,
+    type CurrentPipelineVersions,
+    type DataUseTermsHistoryEntry,
+    getSequencesResponse,
+    type GetSequencesResponse,
+    info,
+    type PipelineVersionStatistics,
+    type ProblemDetail,
+    type RequestMultipartUploadResponse,
+    type SequenceEntryStatusNames,
+    type SequenceEntryProcessingResultNames,
+    sequenceEntryToEdit,
+    type SequenceEntryToEdit,
 } from '../types/backend.ts';
-import { adminSeqSetCitation, adminSeqSetCitations, type AddSeqSetCitationRequest } from '../types/seqSetCitation.ts';
+import type { AddSeqSetCitationRequest, AdminSeqSetCitation } from '../types/seqSetCitation.ts';
 import { createAuthorizationHeader } from '../utils/createAuthorizationHeader.ts';
 
 type GetSequencesParameters = {
-    groupIdsFilter?: string | undefined;
-    statusesFilter?: string | undefined;
-    processingResultFilter?: string | undefined;
-    page?: number | undefined;
-    size?: number | undefined;
+    groupIdsFilter?: number[];
+    statusesFilter?: SequenceEntryStatusNames[];
+    processingResultFilter?: SequenceEntryProcessingResultNames[];
+    page?: number;
+    size?: number;
 };
+
+/**
+ * Backend client returning `Result`s, for Astro pages and for components that call the backend imperatively.
+ * React components that fetch data should prefer the react-query hooks in `./backend/backendHooks.ts`.
+ */
 export class BackendClient {
-    constructor(private readonly url: string) {}
+    private readonly client: BackendApiClient;
 
-    public getDataToEdit(organism: string, token: string, accession: string, version: string | number) {
+    constructor(private readonly url: string) {
+        this.client = createBackendApiClient(url);
+    }
+
+    public getDataToEdit(
+        organism: string,
+        token: string,
+        accession: string,
+        version: string | number,
+    ): Promise<Result<SequenceEntryToEdit, ProblemDetail>> {
         return this.request(
-            `/${organism}/get-data-to-edit/${accession}/${version}`,
-            'GET',
+            this.client.GET('/{organism}/get-data-to-edit/{accession}/{version}', {
+                params: { path: { organism, accession, version: Number(version) } },
+                headers: createAuthorizationHeader(token),
+            }),
             sequenceEntryToEdit,
-            createAuthorizationHeader(token),
-            undefined,
-            undefined,
         );
     }
 
-    public getDataUseTermsHistory(accession: string) {
+    public getDataUseTermsHistory(accession: string): Promise<Result<DataUseTermsHistoryEntry[], ProblemDetail>> {
         return this.request(
-            `/data-use-terms/${accession}`,
-            'GET',
-            z.array(dataUseTermsHistoryEntry),
-            undefined,
-            undefined,
-            undefined,
+            this.client.GET('/data-use-terms/{accession}', {
+                params: { path: { accession } },
+            }),
         );
     }
 
-    public getSequences(token: string, organism: string, params: GetSequencesParameters) {
+    public getSequences(
+        token: string,
+        organism: string,
+        params: GetSequencesParameters,
+    ): Promise<Result<GetSequencesResponse, ProblemDetail>> {
         return this.request(
-            `/${organism}/get-sequences`,
-            'GET',
+            this.client.GET('/{organism}/get-sequences', {
+                params: { path: { organism }, query: params },
+                headers: createAuthorizationHeader(token),
+            }),
             getSequencesResponse,
-            createAuthorizationHeader(token),
-            undefined,
-            params,
         );
     }
 
@@ -68,18 +90,17 @@ export class BackendClient {
      * @param numberParts How many parts per file.
      * @returns A list of file IDs with lists of presigned URLs for each part.
      */
-    public requestMultipartUpload(token: string, groupId: number, numberFiles: number, numberParts: number) {
+    public requestMultipartUpload(
+        token: string,
+        groupId: number,
+        numberFiles: number,
+        numberParts: number,
+    ): Promise<Result<RequestMultipartUploadResponse, ProblemDetail>> {
         return this.request(
-            '/files/request-multipart-upload',
-            'POST',
-            requestMultipartUploadResponse,
-            createAuthorizationHeader(token),
-            undefined,
-            {
-                groupId,
-                numberFiles,
-                numberParts,
-            },
+            this.client.POST('/files/request-multipart-upload', {
+                params: { query: { groupId, numberFiles, numberParts } },
+                headers: createAuthorizationHeader(token),
+            }),
         );
     }
 
@@ -88,121 +109,99 @@ export class BackendClient {
      * @param token The bearer token.
      * @param fileIdsAndEtags List of file IDs with their corresponding ETags.
      */
-    public completeMultipartUpload(token: string, fileIdsAndEtags: CompleteMultipartUploadRequest) {
+    public completeMultipartUpload(
+        token: string,
+        fileIdsAndEtags: CompleteMultipartUploadRequest,
+    ): Promise<Result<unknown, ProblemDetail>> {
         return this.request(
-            '/files/complete-multipart-upload',
-            'POST',
-            z.unknown(),
-            createAuthorizationHeader(token),
-            fileIdsAndEtags,
-            undefined,
+            this.client.POST('/files/complete-multipart-upload', {
+                body: fileIdsAndEtags,
+                headers: createAuthorizationHeader(token),
+            }),
         );
     }
 
+    /**
+     * The info endpoint (`/`) is hidden from the OpenAPI spec, so it's called with plain fetch.
+     */
     public async isInDebugMode() {
-        const infoResponse = await this.request('/', 'GET', info, undefined, undefined, undefined);
-        return infoResponse.match(
-            (info) => info.isInDebugMode,
-            () => false,
-        );
-    }
-
-    public getPipelineStatistics(token: string) {
-        return this.request(
-            '/admin/pipeline-statistics',
-            'GET',
-            pipelineVersionStatistics,
-            createAuthorizationHeader(token),
-            undefined,
-            undefined,
-        );
-    }
-
-    public getCurrentPipelineVersions(token: string) {
-        return this.request(
-            '/admin/current-pipeline-versions',
-            'GET',
-            currentPipelineVersions,
-            createAuthorizationHeader(token),
-            undefined,
-            undefined,
-        );
-    }
-
-    public getAllSeqSetCitations(token: string) {
-        return this.request(
-            '/admin/get-all-seqset-citations',
-            'GET',
-            adminSeqSetCitations,
-            createAuthorizationHeader(token),
-            undefined,
-            undefined,
-        );
-    }
-
-    public addSeqSetCitation(token: string, request: AddSeqSetCitationRequest) {
-        return this.request(
-            '/admin/add-seqset-citation',
-            'POST',
-            adminSeqSetCitation,
-            createAuthorizationHeader(token),
-            request,
-            undefined,
-        );
-    }
-
-    public deleteSeqSetCitation(token: string, sourceDOI: string) {
-        return this.request(
-            '/admin/delete-seqset-citation',
-            'DELETE',
-            z.unknown(),
-            createAuthorizationHeader(token),
-            undefined,
-            { sourceDOI },
-        );
-    }
-
-    private async request<T>(
-        endpoint: string,
-        method: Method,
-        responseSchema: ZodSchema<T>,
-        headers: Record<string, string> | undefined,
-        request: unknown,
-        params: unknown,
-    ): Promise<Result<T, ProblemDetail>> {
         try {
-            const response = await axios.request({
-                url: `${this.url}${endpoint}`,
-                method,
-                headers,
-                params,
-                data: request,
-            });
-
-            const responseDataResult = responseSchema.safeParse(response.data);
-            if (responseDataResult.success) {
-                return ok(responseDataResult.data);
+            const response = await fetch(this.url, { headers: { Accept: 'application/json' } }); // eslint-disable-line @typescript-eslint/naming-convention
+            if (!response.ok) {
+                return false;
             }
-            return err({
-                type: 'about:blank',
-                title: 'bad response',
-                status: 0,
-                detail: `Failed to parse backend response: ${responseDataResult.error.toString()}`,
-            });
-        } catch (e) {
-            const axiosError = axios.isAxiosError(e) ? e : undefined;
+            const parsed = info.safeParse(await response.json());
+            return parsed.success && parsed.data.isInDebugMode;
+        } catch {
+            return false;
+        }
+    }
 
-            const problemDetailResult = problemDetail.safeParse(axiosError?.response?.data);
-            if (problemDetailResult.success) {
-                return err(problemDetailResult.data);
+    public getPipelineStatistics(token: string): Promise<Result<PipelineVersionStatistics, ProblemDetail>> {
+        return this.request(
+            this.client.GET('/admin/pipeline-statistics', {
+                headers: createAuthorizationHeader(token),
+            }),
+        );
+    }
+
+    public getCurrentPipelineVersions(token: string): Promise<Result<CurrentPipelineVersions, ProblemDetail>> {
+        return this.request(
+            this.client.GET('/admin/current-pipeline-versions', {
+                headers: createAuthorizationHeader(token),
+            }),
+        );
+    }
+
+    public getAllSeqSetCitations(token: string): Promise<Result<AdminSeqSetCitation[], ProblemDetail>> {
+        return this.request(
+            this.client.GET('/admin/get-all-seqset-citations', {
+                headers: createAuthorizationHeader(token),
+            }),
+        );
+    }
+
+    public addSeqSetCitation(
+        token: string,
+        request: AddSeqSetCitationRequest,
+    ): Promise<Result<AdminSeqSetCitation, ProblemDetail>> {
+        return this.request(
+            this.client.POST('/admin/add-seqset-citation', {
+                body: request,
+                headers: createAuthorizationHeader(token),
+            }),
+        );
+    }
+
+    public deleteSeqSetCitation(token: string, sourceDOI: string): Promise<Result<unknown, ProblemDetail>> {
+        return this.request(
+            this.client.DELETE('/admin/delete-seqset-citation', {
+                params: { query: { sourceDOI } },
+                headers: createAuthorizationHeader(token),
+            }),
+        );
+    }
+
+    private request<T>(call: Promise<FetchResult<T>>): Promise<Result<T, ProblemDetail>>;
+    private request<S extends z.ZodTypeAny>(
+        call: Promise<FetchResult<unknown>>,
+        responseSchema: S,
+    ): Promise<Result<z.infer<S>, ProblemDetail>>;
+    private async request(
+        call: Promise<FetchResult<unknown>>,
+        responseSchema?: z.ZodTypeAny,
+    ): Promise<Result<unknown, ProblemDetail>> {
+        try {
+            return ok(
+                responseSchema === undefined
+                    ? await unwrapBackendResponse(call)
+                    : await unwrapBackendResponse(call, responseSchema),
+            );
+        } catch (error) {
+            if (isBackendApiError(error)) {
+                return err(error.problemDetail);
             }
-
-            return err({
-                type: 'about:blank',
-                title: 'bad response',
-                status: axiosError?.response?.status ?? 0,
-                detail: `Failed to make request: ${e instanceof Error ? e.message : String(e)}`,
-            });
+            throw error;
         }
     }
 }

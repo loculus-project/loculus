@@ -1,5 +1,6 @@
 package org.loculus.backend.types
 
+import io.swagger.v3.oas.annotations.media.ArraySchema
 import io.swagger.v3.oas.annotations.media.Schema
 import org.loculus.backend.utils.Accession
 import java.sql.Timestamp
@@ -121,10 +122,9 @@ data class AdminSeqSetCitation(val source: CitationSource, val seqSets: List<Seq
 @Schema(description = "A request to manually register a publication or other source as citing one or more SeqSets.")
 data class AddSeqSetCitationRequest(
     val source: CitationSource,
-    @Schema(
-        description = "Accession versions of the SeqSets that this source cites.",
-        type = "array",
-        example = "[\"PP_SS_1.1\"]",
+    @ArraySchema(
+        arraySchema = Schema(description = "Accession versions of the SeqSets that this source cites."),
+        schema = Schema(example = "PP_SS_1.1"),
     )
     val seqSetAccessionVersions: List<String>,
 )

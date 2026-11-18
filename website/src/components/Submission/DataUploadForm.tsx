@@ -1,5 +1,3 @@
-import { isErrorFromAlias } from '@zodios/core';
-import type { AxiosError } from 'axios';
 import { DateTime } from 'luxon';
 import type { Result } from 'neverthrow';
 import { type FormEvent, useState, type Dispatch, type SetStateAction, useMemo } from 'react';
@@ -16,8 +14,8 @@ import { deriveFileMapping, validateFileUploadStates, type FileUploadState } fro
 import DataUseTermsSelector from '../../components/DataUseTerms/DataUseTermsSelector';
 import { SubmissionRouteUtils } from '../../routes/SubmissionRoute.ts';
 import { routes } from '../../routes/routes.ts';
-import { backendApi } from '../../services/backendApi.ts';
-import { backendClientHooks } from '../../services/serviceHooks.ts';
+import { isBackendApiError } from '../../services/backend/backendApiClient.ts';
+import { useRevise, useSubmit } from '../../services/backend/backendHooks.ts';
 import { FILES_HEADER_PREFIX } from '../../settings.ts';
 import {
     type DataUseTermsOption,
@@ -28,7 +26,6 @@ import {
 import { type FileSharingConfig, type FileCategory, type InputField } from '../../types/config.ts';
 import type { SubmissionDataTypes } from '../../types/config.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
-import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
 import { stringifyMaybeAxiosError } from '../../utils/stringifyMaybeAxiosError.ts';
 import { dateTimeInMonths } from '../../utils/utcDates.ts';
 import { MAX_SUBMITTED_DATA_DOWNLOAD_ENTRIES } from '../SearchPage/DownloadDialog/DownloadSubmittedDataButton.tsx';
@@ -650,15 +647,8 @@ function useSubmitFiles(
     onSuccess: () => void,
     onError: (message: string) => void,
 ) {
-    const hooks = backendClientHooks(clientConfig);
-    const submit = hooks.useSubmit(
-        { params: { organism }, headers: createAuthorizationHeader(accessToken) },
-        { onSuccess, onError: handleError(onError, 'submit') },
-    );
-    const revise = hooks.useRevise(
-        { params: { organism }, headers: createAuthorizationHeader(accessToken) },
-        { onSuccess, onError: handleError(onError, 'revise') },
-    );
+    const submit = useSubmit(clientConfig, accessToken, organism, { onSuccess, onError: handleError(onError) });
+    const revise = useRevise(clientConfig, accessToken, organism, { onSuccess, onError: handleError(onError) });
 
     return {
         submit: submit.mutate,
@@ -667,19 +657,20 @@ function useSubmitFiles(
     };
 }
 
-function handleError(onError: (message: string) => void, action: UploadAction) {
-    return (error: unknown | AxiosError) => {
+function handleError(onError: (message: string) => void) {
+    return (error: unknown) => {
         void logger.error(`Received error from backend: ${stringifyMaybeAxiosError(error)}`);
-        if (isErrorFromAlias(backendApi, action, error)) {
-            switch (error.response.status) {
+        if (isBackendApiError(error) && error.isFromBackend) {
+            const { problemDetail } = error;
+            switch (problemDetail.status) {
                 case 400:
-                    onError('Failed to submit sequence entries: ' + error.response.data.detail);
+                    onError('Failed to submit sequence entries: ' + problemDetail.detail);
                     return;
                 case 422:
-                    onError('The submitted file content was invalid: ' + error.response.data.detail);
+                    onError('The submitted file content was invalid: ' + problemDetail.detail);
                     return;
                 default:
-                    onError(error.response.data.title + ': ' + error.response.data.detail);
+                    onError(problemDetail.title + ': ' + problemDetail.detail);
                     return;
             }
         }

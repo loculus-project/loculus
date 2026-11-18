@@ -16,7 +16,9 @@ import {
     type PageQuery,
     processedStatus,
     receivedStatus,
+    type SequenceEntryProcessingResultNames,
     type SequenceEntryStatus,
+    type SequenceEntryStatusNames,
     warningsProcessingResult,
 } from '../../types/backend.ts';
 import type { FileCategory, Metadata } from '../../types/config.ts';
@@ -95,7 +97,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({
     const showUnprocessed =
         hooks.includedStatuses.includes(inProcessingStatus) && hooks.includedStatuses.includes(receivedStatus);
 
-    const setAStatus = (status: string, value: boolean) => {
+    const setAStatus = (status: SequenceEntryStatusNames, value: boolean) => {
         hooks.setIncludedStatuses((prev) => {
             if (value) {
                 return [...prev, status];
@@ -104,7 +106,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({
         });
     };
 
-    const setAProcessingResult = (status: string, include: boolean) => {
+    const setAProcessingResult = (status: SequenceEntryProcessingResultNames, include: boolean) => {
         hooks.setIncludedProcessingResults((prev) => {
             if (include) {
                 return [...prev, status];

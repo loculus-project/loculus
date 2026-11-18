@@ -3,12 +3,12 @@ import { type FC, type FormEvent, useMemo, useState } from 'react';
 import { InputModeTabs } from './DataUploadForm.tsx';
 import { getLapisUrl } from '../../config.ts';
 import { routes } from '../../routes/routes.ts';
-import { backendClientHooks, useSequenceEntryHistory } from '../../services/serviceHooks.ts';
+import { useGetDataToEdit } from '../../services/backend/backendHooks.ts';
+import { useSequenceEntryHistory } from '../../services/serviceHooks.ts';
 import { type Group } from '../../types/backend.ts';
 import type { FileSharingConfig, InputField, SubmissionDataTypes } from '../../types/config.ts';
 import { getLatestAccessionVersionForRevision } from '../../types/lapis.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
-import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
 import { getUrl } from '../../utils/getUrl.ts';
 import { EditPage } from '../Edit/EditPage.tsx';
 import { Button } from '../common/Button';
@@ -152,15 +152,11 @@ const InnerIndividualRevisionForm: FC<IndividualRevisionFormProps> = ({
         data,
         error: dataToEditError,
         isFetching: isDataToEditFetching,
-    } = backendClientHooks(clientConfig).useGetDataToEdit(
-        {
-            headers: createAuthorizationHeader(accessToken),
-            params: {
-                organism,
-                accession: sequenceEntry?.accession ?? '',
-                version: sequenceEntry?.version ?? 1,
-            },
-        },
+    } = useGetDataToEdit(
+        clientConfig,
+        accessToken,
+        organism,
+        { accession: sequenceEntry?.accession ?? '', version: sequenceEntry?.version ?? 1 },
         { enabled: !!sequenceEntry },
     );
 

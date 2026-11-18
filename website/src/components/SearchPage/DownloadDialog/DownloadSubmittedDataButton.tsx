@@ -1,6 +1,7 @@
 import { type FC, useState, useCallback } from 'react';
 
 import { type SequenceFilter } from './SequenceFilters';
+import { isBackendApiError } from '../../../services/backend/backendApiClient.ts';
 import { getSubmittedData } from '../../../services/backendClientSideApi';
 import { downloadBlob } from '../../../utils/downloadBlob';
 import { parseAccessionVersionFromString } from '../../../utils/extractAccessionVersion';
@@ -77,26 +78,24 @@ export const DownloadSubmittedDataButton: FC<DownloadSubmittedDataButtonProps> =
                 );
             }
 
-            const result = await getSubmittedData(backendUrl, organism, accessToken, {
+            const blob = await getSubmittedData(backendUrl, organism, accessToken, {
                 groupId,
                 accessionsFilter: accessions,
             });
 
-            if (!result.ok) {
-                throw new Error(
-                    `Download failed: ${result.error.status} ${result.error.statusText}. ${result.error.detail}`,
-                );
-            }
-
-            if (result.blob.size === 0) {
+            if (blob.size === 0) {
                 throw new Error('No data to download');
             }
 
             const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
             const filename = `${organism}_submitted_data_${timestamp}.zip`;
-            downloadBlob(result.blob, filename);
+            downloadBlob(blob, filename);
         } catch (err) {
-            const message = err instanceof Error ? err.message : 'Download failed';
+            const message = isBackendApiError(err)
+                ? `Download failed: ${err.status} ${err.problemDetail.title}. ${err.problemDetail.detail}`
+                : err instanceof Error
+                  ? err.message
+                  : 'Download failed';
             setError(message);
         } finally {
             setIsDownloading(false);

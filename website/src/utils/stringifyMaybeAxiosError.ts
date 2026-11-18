@@ -1,8 +1,13 @@
 import { isAxiosError, type AxiosError } from 'axios';
 
+import { isBackendApiError } from '../services/backend/backendApiClient.ts';
 import type { ProblemDetail } from '../types/backend.ts';
 
 export const stringifyMaybeAxiosError = (error: unknown): string => {
+    if (isBackendApiError(error)) {
+        return error.problemDetail.detail;
+    }
+
     if (isAxiosError(error) && error.response === undefined && error.request !== undefined) {
         return `${error.message}; no response received`;
     }

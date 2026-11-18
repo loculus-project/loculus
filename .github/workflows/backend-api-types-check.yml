@@ -1,0 +1,54 @@
+name: backend-api-types-check
+# Fails when the backend's OpenAPI spec changed without regenerating the website's typed backend client.
+# Fix it by running `npm run generate-backend-api` in ./website and committing the result.
+on:
+  pull_request:
+    paths:
+      - "backend/**"
+      - "website/src/services/backend/**"
+      - "website/scripts/generateBackendApiTypes.mjs"
+      - "website/package.json"
+      - "website/package-lock.json"
+      - ".github/workflows/backend-api-types-check.yml"
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+concurrency:
+  group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-backend-api-types-check
+  cancel-in-progress: true
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - name: Set up JDK
+        uses: actions/setup-java@v6
+        with:
+          # Keep in sync with the other Java versions (backend/build.gradle, backend/Dockerfile)
+          java-version: "25"
+          distribution: "temurin"
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: ./website/.nvmrc
+      - name: Cache .npm
+        uses: actions/cache@v6
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('website/**/package-lock.json') }}
+      - name: Install website dependencies
+        run: npm ci
+        working-directory: ./website
+      - name: Regenerate the website's backend API types
+        run: npm run generate-backend-api
+        working-directory: ./website
+      - name: Check that the generated types are up to date
+        run: |
+          git add --intent-to-add website/src/services/backend
+          if ! git diff --exit-code -- website/src/services/backend; then
+            echo "::error::The backend API changed, but website/src/services/backend/openapi.d.ts is outdated. Run 'npm run generate-backend-api' in ./website and commit the result."
+            exit 1
+          fi

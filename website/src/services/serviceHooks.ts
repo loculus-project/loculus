@@ -3,7 +3,6 @@ import { Zodios } from '@zodios/core';
 import { ZodiosHooks, type ZodiosHooksInstance } from '@zodios/react';
 import { isAxiosError } from 'axios';
 
-import { backendApi } from './backendApi.ts';
 import { lapisApi } from './lapisApi.ts';
 import { seqSetCitationApi } from './seqSetCitationApi.ts';
 import {
@@ -31,10 +30,6 @@ const LAPIS_RETRY_OPTIONS = {
     retry: 6,
     retryDelay: (attemptIndex: number) => Math.min(250 * 2 ** attemptIndex, 30000),
 };
-
-export function backendClientHooks(clientConfig: ClientConfig) {
-    return new ZodiosHooks('loculus', new Zodios(clientConfig.backendUrl, backendApi));
-}
 
 export function lapisClientHooks(lapisUrl: string) {
     const zodiosHooks = new ZodiosHooks('lapis', new Zodios(lapisUrl, lapisApi, { transform: false }));

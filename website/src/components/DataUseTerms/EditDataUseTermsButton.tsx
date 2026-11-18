@@ -6,10 +6,9 @@ import { ModalBox } from '../common/ModalBox';
 import { withQueryProvider } from './../common/withQueryProvider';
 import DataUseTermsSelector from './DataUseTermsSelector';
 import { errorToast, successToast } from './EditDataUseTermsToasts.ts';
-import { backendClientHooks } from '../../services/serviceHooks';
+import { useSetDataUseTerms } from '../../services/backend/backendHooks.ts';
 import { type RestrictedDataUseTerms, type DataUseTerms } from '../../types/backend.ts';
 import type { ClientConfig } from '../../types/runtimeConfig';
-import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
 
 type EditDataUseTermsButtonProps = {
     accessToken: string;
@@ -41,10 +40,10 @@ const InnerEditDataUseTermsButton: FC<EditDataUseTermsButtonProps> = ({
         }
     };
 
-    const useSetDataUseTerms = backendClientHooks(clientConfig).useSetDataUseTerms(
-        { headers: createAuthorizationHeader(accessToken) },
-        { onError: errorToast, onSuccess: successToast },
-    );
+    const setDataUseTermsMutation = useSetDataUseTerms(clientConfig, accessToken, {
+        onError: errorToast,
+        onSuccess: successToast,
+    });
 
     return (
         <>
@@ -82,7 +81,7 @@ const InnerEditDataUseTermsButton: FC<EditDataUseTermsButtonProps> = ({
                             size='sm'
                             onClick={() => {
                                 closeDialog();
-                                useSetDataUseTerms.mutate({
+                                setDataUseTermsMutation.mutate({
                                     accessions: [accession],
                                     newDataUseTerms: selectedDataUseTerms,
                                 });

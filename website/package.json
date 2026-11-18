@@ -15,7 +15,10 @@
         "format": "eslint --cache \"./**/*.{ts,tsx,astro}\" --fix && npm run format-fast",
         "format-fast": "prettier --ignore-path \"../.gitignore\" --ignore-path \".gitignore\" --ignore-path \".prettierignore\" --write \"./**/*.{ts,tsx,json,astro,cjs,mjs,css,scss}\"",
         "test": "vitest",
-        "test-fast": "vitest --bail=1"
+        "test-fast": "vitest --bail=1",
+        "generate-backend-api": "npm run generate-backend-api:spec && npm run generate-backend-api:types",
+        "generate-backend-api:spec": "cd ../backend && OPENAPI_SPEC_OUTPUT=\"$PWD/build/openapi/openapi.json\" USE_NONDOCKER_INFRA=true ./gradlew test --rerun --tests org.loculus.backend.openapi.ExportOpenApiSpec --console=plain",
+        "generate-backend-api:types": "node scripts/generateBackendApiTypes.mjs ../backend/build/openapi/openapi.json && prettier --write src/services/backend/openapi.d.ts"
     },
     "dependencies": {
         "@astrojs/mdx": "^8.1.2",
@@ -47,6 +50,7 @@
         "luxon": "^3.7.2",
         "minisearch": "^6.3.0",
         "neverthrow": "^8.2.0",
+        "openapi-fetch": "^0.17.0",
         "openid-client": "^5.7.1",
         "papaparse": "^5.7.0",
         "react": "^18.3.1",
@@ -92,6 +96,7 @@
         "happy-dom": "^21.0.4",
         "jsdom-testing-mocks": "^1.16.0",
         "msw": "^3.0.3",
+        "openapi-typescript": "^7.13.0",
         "prettier": "3.9.10",
         "prettier-plugin-astro": "^1.1.2",
         "resize-observer-polyfill": "^1.5.1",
@@ -103,5 +108,10 @@
     },
     "comments": {
         "vite": "Keep the explicit Vite dev dependency aligned with Astro's Vite major. npm ci --omit=dev can otherwise resolve Astro's optional vitefu peer independently from the root Vite version."
+    },
+    "overrides": {
+        "openapi-typescript": {
+            "typescript": "$typescript"
+        }
     }
 }
