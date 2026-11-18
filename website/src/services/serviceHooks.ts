@@ -54,8 +54,8 @@ import {
     type UpdateSeqSetRequest,
     type ValidateSeqSetRecordsRequest,
 } from '../types/seqSetCitation.ts';
-import { createAuthorizationHeader } from '../utils/createAuthorizationHeader.ts';
 import type { SeqSetRecord } from '../types/seqSetCitation.ts';
+import { createAuthorizationHeader } from '../utils/createAuthorizationHeader.ts';
 import { fastaEntries } from '../utils/parseFasta.ts';
 import { isAlignedSequence, isUnalignedSequence, type SequenceType } from '../utils/sequenceTypeHelpers.ts';
 
@@ -342,6 +342,25 @@ export function seqSetCitationClientHooks(clientConfig: ClientConfig) {
                 ...options,
             });
         },
+    };
+}
+
+/**
+ * Query for all records of a SeqSet version, fetched in the browser. The response is deliberately not validated:
+ * validating a large record list with zod costs hundreds of MB (#7752).
+ */
+export function seqSetRecordsQueryOptions(clientConfig: ClientConfig, seqSetId: string, seqSetVersion: number) {
+    return {
+        queryKey: ['seqset-records', clientConfig.backendUrl, seqSetId, seqSetVersion],
+        queryFn: async (): Promise<SeqSetRecord[]> => {
+            const response = await axios.get<SeqSetRecord[]>('/get-seqset-records', {
+                baseURL: clientConfig.backendUrl,
+                params: { seqSetId, version: seqSetVersion },
+            });
+            return response.data;
+        },
+        staleTime: Infinity,
+        retry: 1,
     };
 }
 
