@@ -34,8 +34,19 @@ export type TimeSeriesDataPoint = {
 
 export type TimeSeriesData = Record<string, TimeSeriesDataPoint[]>;
 
-// Note: Colors will repeat if there are more than 8 organisms
-const ORGANISM_COLORS = ['#54858c', '#e6a756', '#7b68a6', '#5aa469', '#d4776b', '#4a90a4', '#9b8b6e', '#c97b84'];
+// Tableau 10 palette. Note: Colors will repeat if there are more than 10 organisms
+const ORGANISM_COLORS = [
+    '#4e79a7',
+    '#f28e2c',
+    '#e15759',
+    '#76b7b2',
+    '#59a14f',
+    '#edc949',
+    '#af7aa1',
+    '#ff9da7',
+    '#9c755f',
+    '#bab0ab',
+];
 
 type CumulativeSubmissionsChartProps = {
     timeSeriesData: TimeSeriesData;
@@ -50,7 +61,7 @@ export const CumulativeSubmissionsChart: FC<CumulativeSubmissionsChartProps> = (
 }) => {
     const { chartData, xBounds } = useMemo(() => {
         const datasets = organisms
-            .map((organism, index) => {
+            .map((organism) => {
                 const data = [...(timeSeriesData[organism.key] ?? [])].sort((a, b) => a.date.localeCompare(b.date));
 
                 let cumulative = 0;
@@ -64,11 +75,15 @@ export const CumulativeSubmissionsChart: FC<CumulativeSubmissionsChartProps> = (
                     points.push({ x: timestamp, y: cumulative });
                 }
 
+                return { label: organism.displayName, data: points };
+            })
+            .filter((ds) => ds.data.length > 0 && ds.data[ds.data.length - 1].y > 0)
+            .map((ds, index) => {
+                const color = ORGANISM_COLORS[index % ORGANISM_COLORS.length];
                 return {
-                    label: organism.displayName,
-                    data: points,
-                    borderColor: ORGANISM_COLORS[index % ORGANISM_COLORS.length],
-                    backgroundColor: ORGANISM_COLORS[index % ORGANISM_COLORS.length],
+                    ...ds,
+                    borderColor: color,
+                    backgroundColor: color,
                     borderWidth: 1.5,
                     // Cumulative counts only change on dates with submissions, so a
                     // step ('before') line is more faithful than linear interpolation:
@@ -81,8 +96,7 @@ export const CumulativeSubmissionsChart: FC<CumulativeSubmissionsChartProps> = (
                     pointRadius: 3,
                     pointHoverRadius: 5,
                 };
-            })
-            .filter((ds) => ds.data.length > 0 && ds.data[ds.data.length - 1].y > 0);
+            });
 
         // Determine x-axis bounds. When all submissions share a single date the
         // time axis would otherwise collapse to zero width, so pad either side.

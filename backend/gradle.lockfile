@@ -319,6 +319,7 @@ org.springframework.boot:spring-boot-starter-security:4.1.2=compileClasspath,pro
 org.springframework.boot:spring-boot-starter-test:4.1.2=testCompileClasspath,testRuntimeClasspath
 org.springframework.boot:spring-boot-starter-tomcat-runtime:4.1.2=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 org.springframework.boot:spring-boot-starter-tomcat:4.1.2=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
+org.springframework.boot:spring-boot-starter-validation:4.1.2=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 org.springframework.boot:spring-boot-starter-webmvc-test:4.1.2=testCompileClasspath,testRuntimeClasspath
 org.springframework.boot:spring-boot-starter-webmvc:4.1.2=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 org.springframework.boot:spring-boot-starter:4.1.2=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
