@@ -26,7 +26,7 @@ export class GroupManagementClient extends ApiClient {
     public getGroupDetails(groupId: number, token?: string) {
         return this.request({
             method: 'get',
-            path: apiPath`/groups/${groupId}`,
+            path: () => apiPath`/groups/${groupId}`,
             headers: createAuthorizationHeader(token),
             responseSchema: groupDetails,
         });

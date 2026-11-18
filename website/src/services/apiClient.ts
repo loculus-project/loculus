@@ -14,6 +14,11 @@ export type ApiClientLogger = {
     info: (message: string) => unknown;
 };
 
+export type ApiClientRequest = Omit<ApiRequest, 'path'> & {
+    /** A function is evaluated inside the error handling, so a failure to build the path becomes an `Err` */
+    path: string | (() => string);
+};
+
 /**
  * Base class for API clients. Requests return a neverthrow `Result` instead of throwing.
  */
@@ -26,13 +31,19 @@ export class ApiClient {
         private readonly serviceName: string,
     ) {}
 
+    /**
+     * Pass `path` as a function (e.g. `path: () => apiPath\`/x/${id}\``) when building it can throw,
+     * so that the error is returned as an `Err` instead of being thrown.
+     */
     protected async request<T>(
-        request: ApiRequest & { responseSchema: z.ZodType<T> },
+        request: ApiClientRequest & { responseSchema: z.ZodType<T> },
     ): Promise<Result<T, ProblemDetail>> {
+        let path: string | undefined;
         try {
-            return ok(await sendRequest(this.baseUrl, request));
+            path = typeof request.path === 'function' ? request.path() : request.path;
+            return ok(await sendRequest(this.baseUrl, { ...request, path }));
         } catch (error) {
-            return err(this.toProblemDetail(error, request.path));
+            return err(this.toProblemDetail(error, path ?? 'unknown path'));
         }
     }
 

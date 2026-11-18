@@ -36,7 +36,7 @@ export class BackendClient extends ApiClient {
     public getDataToEdit(organism: string, token: string, accession: string, version: string | number) {
         return this.request({
             method: 'get',
-            path: apiPath`/${organism}/get-data-to-edit/${accession}/${version}`,
+            path: () => apiPath`/${organism}/get-data-to-edit/${accession}/${version}`,
             headers: createAuthorizationHeader(token),
             responseSchema: sequenceEntryToEdit,
         });
@@ -45,7 +45,7 @@ export class BackendClient extends ApiClient {
     public getDataUseTermsHistory(accession: string) {
         return this.request({
             method: 'get',
-            path: apiPath`/data-use-terms/${accession}`,
+            path: () => apiPath`/data-use-terms/${accession}`,
             responseSchema: z.array(dataUseTermsHistoryEntry),
         });
     }
@@ -53,7 +53,7 @@ export class BackendClient extends ApiClient {
     public getSequences(token: string, organism: string, params: GetSequencesParameters) {
         return this.request({
             method: 'get',
-            path: apiPath`/${organism}/get-sequences`,
+            path: () => apiPath`/${organism}/get-sequences`,
             params,
             headers: createAuthorizationHeader(token),
             responseSchema: getSequencesResponse,

@@ -67,4 +67,14 @@ describe('BackendClient', () => {
             instance: '/admin/add-seqset-citation',
         });
     });
+
+    test('returns an error instead of throwing when a path parameter is missing', async () => {
+        const result = await createClient().getDataUseTermsHistory('');
+
+        expect(result._unsafeUnwrapErr()).toMatchObject({
+            status: 0,
+            title: "Missing path parameter #1 for path '/data-use-terms/{}'",
+            instance: 'unknown path',
+        });
+    });
 });

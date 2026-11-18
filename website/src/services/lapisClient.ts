@@ -193,7 +193,7 @@ export class LapisClient extends ApiClient {
             segmentNames.map((segment) =>
                 this.request({
                     method: 'post',
-                    path: apiPath`/sample/unalignedNucleotideSequences/${segment}`,
+                    path: () => apiPath`/sample/unalignedNucleotideSequences/${segment}`,
                     data: { [this.schema.primaryKey]: accessionVersion, dataFormat: 'FASTA' },
                     responseSchema: z.string(),
                 }),
