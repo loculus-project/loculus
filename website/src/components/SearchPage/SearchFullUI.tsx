@@ -71,7 +71,6 @@ const buildSequenceCountText = (totalSequences: number | undefined, oldCount: nu
     return `Search returned ${formattedCount} sequence${pluralSuffix}`;
 };
 
-/* eslint-disable @typescript-eslint/no-unsafe-member-access -- TODO(#3451) this component is a mess a needs to be refactored */
 const InnerSearchFullUI = ({
     accessToken,
     referenceGenomesInfo,
@@ -301,7 +300,6 @@ const InnerSearchFullUI = ({
                 <RecentSequencesBanner organism={organism} />
 
                 {(detailsHook.isError || aggregatedHook.isError) &&
-                    // @ts-expect-error because response is not expected on error, but does exist
                     (aggregatedHook.error?.response?.status === 503 ? (
                         <div className='p-3 rounded-lg text-lg text-gray-700 text-italic'>
                             {' '}

@@ -65,22 +65,26 @@ export const performLapisSearchQueries = async (
     const client = LapisClient.createForOrganism(organism);
 
     const [detailsResult, aggregatedResult] = await Promise.all([
-        // @ts-expect-error because OrderBy typing does not accept this for unknown reasons
         client.call('details', {
-            ...lapisSearchParameters,
-            fields: [...columnsToShow, schema.primaryKey],
-            limit: pageSize,
-            offset: (page - 1) * pageSize,
-            orderBy: [
-                {
-                    field: orderByField,
-                    type: orderDirection === 'ascending' ? 'ascending' : 'descending',
-                },
-            ],
+            // @ts-expect-error because OrderBy typing does not accept this for unknown reasons
+            body: {
+                ...lapisSearchParameters,
+                fields: [...columnsToShow, schema.primaryKey],
+                limit: pageSize,
+                offset: (page - 1) * pageSize,
+                orderBy: [
+                    {
+                        field: orderByField,
+                        type: orderDirection === 'ascending' ? 'ascending' : 'descending',
+                    },
+                ],
+            },
         }),
         client.call('aggregated', {
-            ...lapisSearchParameters,
-            fields: [],
+            body: {
+                ...lapisSearchParameters,
+                fields: [],
+            },
         }),
     ]);
 

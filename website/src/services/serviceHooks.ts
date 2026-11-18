@@ -1,8 +1,8 @@
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
-import { Zodios } from '@zodios/core';
-import { ZodiosHooks, type ZodiosHooksInstance } from '@zodios/react';
 import { isAxiosError } from 'axios';
 
+import { ApiClient } from './apiClient.ts';
+import { makeMutationHook, makeQueryHook } from './apiHooks.ts';
 import { backendApi } from './backendApi.ts';
 import { lapisApi } from './lapisApi.ts';
 import { seqSetCitationApi } from './seqSetCitationApi.ts';
@@ -21,7 +21,7 @@ import { fastaEntries } from '../utils/parseFasta.ts';
 import { isAlignedSequence, isUnalignedSequence, type SequenceType } from '../utils/sequenceTypeHelpers.ts';
 
 /**
- * Retry configuration for LAPIS mutations.
+ * Retry configuration for LAPIS requests.
  * LAPIS queries are safe to retry even though they use POST, as they only fetch data.
  * This configuration enables automatic retry on transient network errors.
  * Applied automatically by lapisClientHooks wrappers.
@@ -32,19 +32,50 @@ const LAPIS_RETRY_OPTIONS = {
 };
 
 export function backendClientHooks(clientConfig: ClientConfig) {
-    return new ZodiosHooks('loculus', new Zodios(clientConfig.backendUrl, backendApi));
+    const client = new ApiClient(clientConfig.backendUrl, backendApi);
+    return {
+        useGetDataToEdit: makeQueryHook(client, 'getDataToEdit'),
+        useGetSequences: makeQueryHook(client, 'getSequences'),
+        useSubmit: makeMutationHook(client, 'submit'),
+        useRevise: makeMutationHook(client, 'revise'),
+        useRevokeSequences: makeMutationHook(client, 'revokeSequences'),
+        useSubmitReviewedSequence: makeMutationHook(client, 'submitReviewedSequence'),
+        useApproveProcessedData: makeMutationHook(client, 'approveProcessedData'),
+        useDeleteSequences: makeMutationHook(client, 'deleteSequences'),
+        useSetDataUseTerms: makeMutationHook(client, 'setDataUseTerms'),
+    };
 }
 
-export function lapisClientHooks(lapisUrl: string) {
-    const zodiosHooks = new ZodiosHooks('lapis', new Zodios(lapisUrl, lapisApi, { transform: false }));
+export function seqSetCitationClientHooks(clientConfig: ClientConfig) {
+    const client = new ApiClient(clientConfig.backendUrl, seqSetCitationApi);
     return {
-        // All POST hooks must include retry options manually to enable retries
-        useAggregated: () => zodiosHooks.useAggregated({}, { ...LAPIS_RETRY_OPTIONS }),
-        useDetails: () => zodiosHooks.useDetails({}, { ...LAPIS_RETRY_OPTIONS }),
-        useLineageDefinition: zodiosHooks.useLineageDefinition,
+        useCreateSeqSet: makeMutationHook(client, 'createSeqSet'),
+        useUpdateSeqSet: makeMutationHook(client, 'updateSeqSet'),
+        useValidateSeqSetRecords: makeMutationHook(client, 'validateSeqSetRecords'),
+        useCreateSeqSetDOI: makeMutationHook(client, 'createSeqSetDOI'),
+        useDeleteSeqSet: makeMutationHook(client, 'deleteSeqSet'),
+    };
+}
+
+function createLapisClient(lapisUrl: string) {
+    return new ApiClient(lapisUrl, lapisApi, { transform: false });
+}
+
+type LapisClient = ReturnType<typeof createLapisClient>;
+
+export function lapisClientHooks(lapisUrl: string) {
+    const client = createLapisClient(lapisUrl);
+    const useAggregated = makeMutationHook(client, 'aggregated');
+    const useDetails = makeMutationHook(client, 'details');
+    const useLineageDefinition = makeQueryHook(client, 'lineageDefinition');
+    return {
+        // All LAPIS hooks must include retry options manually to enable retries
+        useAggregated: () => useAggregated({}, { ...LAPIS_RETRY_OPTIONS }),
+        useDetails: () => useDetails({}, { ...LAPIS_RETRY_OPTIONS }),
+        useLineageDefinition,
         useGetSequence(accessionVersion: string, sequenceType: SequenceType, useLapisMultiSegmentedEndpoint: boolean) {
-            return getSequenceHook(
-                zodiosHooks,
+            return useSequence(
+                client,
                 {
                     accessionVersion,
                     dataFormat: 'FASTA',
@@ -56,13 +87,13 @@ export function lapisClientHooks(lapisUrl: string) {
     };
 }
 
-function getSequenceHook(
-    hooks: ZodiosHooksInstance<typeof lapisApi>,
+function useSequence(
+    client: LapisClient,
     request: SequenceRequest, // these are request PARAMETERS, not requests
     sequenceType: SequenceType,
     isMultiSegmented: boolean,
 ) {
-    const rawResult = selectSequenceHook(hooks, request, sequenceType, isMultiSegmented);
+    const rawResult = useSequenceQuery(client, request, sequenceType, isMultiSegmented);
     const { data, error, isLoading } = rawResult;
 
     if (data === undefined) {
@@ -95,38 +126,36 @@ function getSequenceHook(
     };
 }
 
-function selectSequenceHook(
-    hooks: ZodiosHooksInstance<typeof lapisApi>,
+function useSequenceQuery(
+    client: LapisClient,
     request: SequenceRequest,
     sequenceType: SequenceType,
     isMultiSegmented: boolean,
 ) {
+    let alias: keyof typeof lapisApi;
+    let params: Record<string, string> | undefined;
     if (isUnalignedSequence(sequenceType)) {
-        return isMultiSegmented
-            ? hooks.useUnalignedNucleotideSequencesMultiSegment(request, {
-                  params: { segment: sequenceType.name.lapisName },
-                  ...LAPIS_RETRY_OPTIONS,
-              })
-            : hooks.useUnalignedNucleotideSequences(request, {}, { ...LAPIS_RETRY_OPTIONS });
+        alias = isMultiSegmented ? 'unalignedNucleotideSequencesMultiSegment' : 'unalignedNucleotideSequences';
+        params = isMultiSegmented ? { segment: sequenceType.name.lapisName } : undefined;
+    } else if (isAlignedSequence(sequenceType)) {
+        alias = isMultiSegmented ? 'alignedNucleotideSequencesMultiSegment' : 'alignedNucleotideSequences';
+        params = isMultiSegmented ? { segment: sequenceType.name.lapisName } : undefined;
+    } else {
+        alias = 'alignedAminoAcidSequences';
+        params = { gene: sequenceType.name.lapisName };
     }
 
-    if (isAlignedSequence(sequenceType)) {
-        return isMultiSegmented
-            ? hooks.useAlignedNucleotideSequencesMultiSegment(request, {
-                  params: { segment: sequenceType.name.lapisName },
-                  ...LAPIS_RETRY_OPTIONS,
-              })
-            : hooks.useAlignedNucleotideSequences(request, {}, { ...LAPIS_RETRY_OPTIONS });
-    }
-
-    return hooks.useAlignedAminoAcidSequences(request, {
-        params: { gene: sequenceType.name.lapisName },
+    return useQuery({
+        queryKey: [client.baseUrl, alias, { params, body: request }],
+        queryFn: ({ signal }) =>
+            // the path params are guaranteed to match the alias by the branches above
+            client.request(alias as 'alignedAminoAcidSequences', {
+                body: request,
+                params: params as { gene: string },
+                signal,
+            }),
         ...LAPIS_RETRY_OPTIONS,
     });
-}
-
-export function seqSetCitationClientHooks(clientConfig: ClientConfig) {
-    return new ZodiosHooks('loculus', new Zodios(clientConfig.backendUrl, seqSetCitationApi));
 }
 
 export function useSequenceEntryHistory(
@@ -136,20 +165,22 @@ export function useSequenceEntryHistory(
     return useQuery({
         queryKey: ['sequence-entry-history', lapisUrl, accession],
         queryFn: async (): Promise<SequenceEntryHistory> => {
-            const client = new Zodios(lapisUrl, lapisApi, { transform: false });
+            const client = createLapisClient(lapisUrl);
 
-            // @ts-expect-error Zod issue: https://github.com/colinhacks/zod/issues/3136
-            const response = await client.details({
-                accession: accession!,
-                fields: [
-                    ACCESSION_VERSION_FIELD,
-                    ACCESSION_FIELD,
-                    VERSION_FIELD,
-                    VERSION_STATUS_FIELD,
-                    IS_REVOCATION_FIELD,
-                    SUBMITTED_AT_FIELD,
-                ],
-                orderBy: [{ field: VERSION_FIELD, type: 'ascending' }],
+            const response = await client.request('details', {
+                // @ts-expect-error Zod issue: https://github.com/colinhacks/zod/issues/3136
+                body: {
+                    accession: accession!,
+                    fields: [
+                        ACCESSION_VERSION_FIELD,
+                        ACCESSION_FIELD,
+                        VERSION_FIELD,
+                        VERSION_STATUS_FIELD,
+                        IS_REVOCATION_FIELD,
+                        SUBMITTED_AT_FIELD,
+                    ],
+                    orderBy: [{ field: VERSION_FIELD, type: 'ascending' }],
+                },
             });
 
             const parseResult = sequenceEntryHistory.safeParse(response.data);

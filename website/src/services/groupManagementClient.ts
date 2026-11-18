@@ -1,5 +1,5 @@
+import { ApiWrapperClient } from './apiWrapperClient.ts';
 import { groupManagementApi } from './groupManagementApi.ts';
-import { ZodiosWrapperClient } from './zodiosWrapperClient.ts';
 import { getRuntimeConfig } from '../config.ts';
 import { getInstanceLogger } from '../logger.ts';
 import type { NewGroup } from '../types/backend.ts';
@@ -7,7 +7,7 @@ import { createAuthorizationHeader } from '../utils/createAuthorizationHeader.ts
 
 const instanceLogger = getInstanceLogger('GroupManagementClient');
 
-export class GroupManagementClient extends ZodiosWrapperClient<typeof groupManagementApi> {
+export class GroupManagementClient extends ApiWrapperClient<typeof groupManagementApi> {
     public static create(backendUrl: string = getRuntimeConfig().serverSide.backendUrl, logger = instanceLogger) {
         return new GroupManagementClient(
             backendUrl,
@@ -33,6 +33,6 @@ export class GroupManagementClient extends ZodiosWrapperClient<typeof groupManag
     }
 
     public createGroup(token: string, data: NewGroup) {
-        return this.call('createGroup', data, { headers: createAuthorizationHeader(token) });
+        return this.call('createGroup', { body: data, headers: createAuthorizationHeader(token) });
     }
 }

@@ -1,52 +1,37 @@
-import { Zodios, type ZodiosEndpointDefinitions, type ZodiosInstance } from '@zodios/core';
-import type { Narrow } from '@zodios/core/lib/utils.types';
-import type { Aliases, ZodiosAliases } from '@zodios/core/lib/zodios.types';
 import type { AxiosError, AxiosResponse } from 'axios';
 import { type Err, err, ok, type Result } from 'neverthrow';
 
+import { ApiClient, type ApiDefinition, type ApiResponse, type RequestArgs } from './apiClient.ts';
 import { type InstanceLogger } from '../logger.ts';
 import { problemDetail, type ProblemDetail } from '../types/backend.ts';
 
-type ZodiosMethods<Api extends ZodiosEndpointDefinitions> = Aliases<Api>;
-
-type ZodiosMethod<Api extends ZodiosEndpointDefinitions, Method extends ZodiosMethods<Api>> = {
-    parameters: Parameters<ZodiosAliases<Api>[Method]>;
-    response: ReturnType<ZodiosAliases<Api>[Method]>;
-};
-
-type TypeThatCanBeUsedAsArgs = [any, any]; // eslint-disable-line @typescript-eslint/no-explicit-any -- unfortunately, TS doesn't properly infer the correct types, so we have to use this workaround
-
-export class ZodiosWrapperClient<Api extends ZodiosEndpointDefinitions> {
-    public readonly zodios: ZodiosInstance<Api>;
+/**
+ * Wraps an ApiClient such that requests return a neverthrow Result instead of throwing.
+ */
+export class ApiWrapperClient<Api extends ApiDefinition> {
+    public readonly client: ApiClient<Api>;
 
     protected constructor(
         url: string,
-        api: Narrow<Api>,
+        api: Api,
         private readonly tryToExtractProblemDetail: (error: AxiosResponse) => ProblemDetail | undefined,
         private readonly logger: InstanceLogger,
         private readonly serviceName: string,
     ) {
-        this.zodios = new Zodios(url, api);
+        this.client = new ApiClient(url, api);
     }
 
     /**
-     *
-     * @param method An alias as defined in makeEndpoint()
-     * @param args Arguments such as params and headers; it's best to ask TypeScript/your IDE for the available options
+     * @param alias The name of the endpoint as defined in the API definition
+     * @param args Body, path params, queries and headers; it's best to ask TypeScript/your IDE for the available options
      */
-    public async call<Method extends ZodiosMethods<Api>>(
-        method: Method,
-        ...args: ZodiosMethod<Api, Method>['parameters']
-    ): Promise<Result<Awaited<ZodiosMethod<Api, Method>['response']>, ProblemDetail>> {
-        const zodiosMethod = this.zodios[method] as ZodiosAliases<Api>[Method];
-        const zodiosResponse = zodiosMethod(...(args as TypeThatCanBeUsedAsArgs)) as ZodiosMethod<
-            Api,
-            Method
-        >['response'];
-
-        return zodiosResponse.then(
+    public async call<Alias extends keyof Api & string>(
+        alias: Alias,
+        args: RequestArgs<Api[Alias]>,
+    ): Promise<Result<ApiResponse<Api[Alias]>, ProblemDetail>> {
+        return this.client.request(alias, args).then(
             (response) => ok(response),
-            (error: AxiosError): Err<never, ProblemDetail> => err(this.createProblemDetail(error, method)), // eslint-disable-line @typescript-eslint/use-unknown-in-catch-callback-variable
+            (error: AxiosError): Err<never, ProblemDetail> => err(this.createProblemDetail(error, alias)), // eslint-disable-line @typescript-eslint/use-unknown-in-catch-callback-variable
         );
     }
 

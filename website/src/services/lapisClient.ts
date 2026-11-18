@@ -1,12 +1,11 @@
 import type { Readable } from 'stream';
 
-import type { Narrow } from '@zodios/core/lib/utils.types';
 import axios, { type AxiosError, type Method } from 'axios';
 import { err, ok, Result } from 'neverthrow';
 import { ZodSchema } from 'zod';
 
+import { ApiWrapperClient } from './apiWrapperClient.ts';
 import { lapisApi } from './lapisApi.ts';
-import { ZodiosWrapperClient } from './zodiosWrapperClient.ts';
 import { getLapisUrl, getRuntimeConfig, getSchema } from '../config.ts';
 import { getInstanceLogger, type InstanceLogger } from '../logger.ts';
 import {
@@ -30,10 +29,10 @@ import {
 import { fastaEntryToString, parseFasta } from '../utils/parseFasta.ts';
 import type { BaseType } from '../utils/sequenceTypeHelpers.ts';
 
-export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
+export class LapisClient extends ApiWrapperClient<typeof lapisApi> {
     constructor(
         private readonly url: string,
-        api: Narrow<typeof lapisApi>,
+        api: typeof lapisApi,
         logger: InstanceLogger,
         private readonly schema: Schema,
     ) {
@@ -57,14 +56,18 @@ export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
 
     public getSequenceEntryVersionDetails(accessionVersion: string) {
         return this.call('details', {
-            [this.schema.primaryKey]: accessionVersion,
+            body: {
+                [this.schema.primaryKey]: accessionVersion,
+            },
         });
     }
 
     public async getSequenceEntryVersionDetailsTsv(accessionVersion: string): Promise<Result<string, ProblemDetail>> {
         const result = await this.call('details', {
-            [this.schema.primaryKey]: accessionVersion,
-            dataFormat: 'TSV',
+            body: {
+                [this.schema.primaryKey]: accessionVersion,
+                dataFormat: 'TSV',
+            },
         });
         // This type cast isn't pretty, but if the API would be typed correctly, the union type
         // of the actual details response and the potential 'string' would pollute the whole API,
@@ -74,9 +77,11 @@ export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
 
     public async getLatestAccessionVersion(accession: string): Promise<Result<AccessionVersion, ProblemDetail>> {
         const result = await this.call('details', {
-            accession,
-            versionStatus: versionStatuses.latestVersion,
-            fields: [ACCESSION_FIELD, VERSION_FIELD],
+            body: {
+                accession,
+                versionStatus: versionStatuses.latestVersion,
+                fields: [ACCESSION_FIELD, VERSION_FIELD],
+            },
         });
 
         return result.andThen(({ data }) => {
@@ -119,7 +124,7 @@ export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
             ],
             orderBy: [{ field: VERSION_FIELD, type: 'ascending' }],
         };
-        const result = await this.call('details', request);
+        const result = await this.call('details', { body: request });
         const createSequenceHistoryProblemDetail = (detail: string): ProblemDetail => ({
             type: 'about:blank',
             title: 'Could not get sequence entry history',
@@ -143,7 +148,9 @@ export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
     public getSequenceMutations(accessionVersion: string, type: BaseType) {
         const endpoint = type === 'nucleotide' ? 'nucleotideMutations' : 'aminoAcidMutations';
         return this.call(endpoint, {
-            [this.schema.primaryKey]: accessionVersion,
+            body: {
+                [this.schema.primaryKey]: accessionVersion,
+            },
         });
     }
 
@@ -156,28 +163,29 @@ export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
                 { field: 'position', type: 'ascending' },
             ],
         };
-        return this.call(endpoint, request as LapisBaseRequest);
+        return this.call(endpoint, { body: request as LapisBaseRequest });
     }
 
     public getUnalignedSequences(accessionVersion: string, options: { fastaHeaderTemplate?: string } = {}) {
         return this.call('unalignedNucleotideSequences', {
-            [this.schema.primaryKey]: accessionVersion,
-            dataFormat: 'FASTA',
-            ...options,
+            body: {
+                [this.schema.primaryKey]: accessionVersion,
+                dataFormat: 'FASTA',
+                ...options,
+            },
         });
     }
 
     public async getUnalignedSequencesMultiSegment(accessionVersion: string, segmentNames: string[]) {
         const results = await Promise.all(
             segmentNames.map((segment) =>
-                this.call(
-                    'unalignedNucleotideSequencesMultiSegment',
-                    {
+                this.call('unalignedNucleotideSequencesMultiSegment', {
+                    body: {
                         [this.schema.primaryKey]: accessionVersion,
                         dataFormat: 'FASTA',
                     },
-                    { params: { segment } },
-                ),
+                    params: { segment },
+                }),
             ),
         );
         return Result.combine(results);

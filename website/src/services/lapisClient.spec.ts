@@ -25,11 +25,13 @@ describe('LapisClient', () => {
         await client.getSequenceInsertions('LOC_123', 'nucleotide');
 
         expect(spy).toHaveBeenCalledWith('nucleotideInsertions', {
-            [schema.primaryKey]: 'LOC_123',
-            orderBy: [
-                { field: 'sequenceName', type: 'ascending' },
-                { field: 'position', type: 'ascending' },
-            ],
+            body: {
+                [schema.primaryKey]: 'LOC_123',
+                orderBy: [
+                    { field: 'sequenceName', type: 'ascending' },
+                    { field: 'position', type: 'ascending' },
+                ],
+            },
         });
     });
 });

@@ -1,192 +1,111 @@
-import { makeApi, makeEndpoint } from '@zodios/core';
 import z from 'zod';
 
-import { authorizationHeader, notAuthorizedError } from './commonApiTypes.ts';
+import type { ApiDefinition } from './apiClient.ts';
 import { authorProfile, seqSets, seqSetRecords, seqSetCitations, sequenceCitations } from '../types/seqSetCitation.ts';
 
-const getSeqSetsOfUserEndpoint = makeEndpoint({
-    method: 'get',
-    path: '/get-seqsets-of-user',
-    alias: 'getSeqSetsOfUser',
-    parameters: [authorizationHeader],
-    response: seqSets,
-    errors: [notAuthorizedError],
+const seqSetIdAndVersion = z.object({
+    seqSetId: z.string(),
+    seqSetVersion: z.number(),
 });
 
-const getSeqSetCitationsEndpoint = makeEndpoint({
-    method: 'get',
-    path: '/get-seqset-citations?seqSetId=:seqSetId&version=:version',
-    alias: 'getSeqSetCitations',
-    response: seqSetCitations,
-    errors: [notAuthorizedError],
-});
-
-const getSequenceCitationsEndpoint = makeEndpoint({
-    method: 'get',
-    path: '/get-sequence-citations?accession=:accession',
-    parameters: [
-        {
-            name: 'version',
-            type: 'Query',
-            schema: z.number().optional(),
-        },
-    ],
-    alias: 'getSequenceCitations',
-    response: sequenceCitations,
-    errors: [notAuthorizedError],
-});
-
-const getSeqSetEndpoint = makeEndpoint({
-    method: 'get',
-    path: '/get-seqset?seqSetId=:seqSetId&version=:version',
-    alias: 'getSeqSet',
-    response: seqSets,
-    errors: [notAuthorizedError],
-});
-
-const getSeqSetVersionsEndpoint = makeEndpoint({
-    method: 'get',
-    path: '/get-seqset?seqSetId=:seqSetId',
-    alias: 'getSeqSetVersions',
-    response: seqSets,
-    errors: [notAuthorizedError],
-});
-
-const getSeqSetRecordsEndpoint = makeEndpoint({
-    method: 'get',
-    path: '/get-seqset-records?seqSetId=:seqSetId&version=:version',
-    alias: 'getSeqSetRecords',
-    response: seqSetRecords,
-    errors: [notAuthorizedError],
-});
-
-const validateSeqSetRecords = makeEndpoint({
-    method: 'post',
-    path: '/validate-seqset-records',
-    alias: 'validateSeqSetRecords',
-    parameters: [
-        authorizationHeader,
-        {
-            name: 'data',
-            type: 'Body',
-            schema: z
+export const seqSetCitationApi = {
+    getSeqSetsOfUser: {
+        method: 'get',
+        path: '/get-seqsets-of-user',
+        response: seqSets,
+    },
+    getSeqSetCitations: {
+        method: 'get',
+        path: '/get-seqset-citations?seqSetId=:seqSetId&version=:version',
+        response: seqSetCitations,
+    },
+    getSequenceCitations: {
+        method: 'get',
+        path: '/get-sequence-citations?accession=:accession',
+        queries: z.object({
+            version: z.number().optional(),
+        }),
+        response: sequenceCitations,
+    },
+    getSeqSet: {
+        method: 'get',
+        path: '/get-seqset?seqSetId=:seqSetId&version=:version',
+        response: seqSets,
+    },
+    getSeqSetVersions: {
+        method: 'get',
+        path: '/get-seqset?seqSetId=:seqSetId',
+        response: seqSets,
+    },
+    getSeqSetRecords: {
+        method: 'get',
+        path: '/get-seqset-records?seqSetId=:seqSetId&version=:version',
+        response: seqSetRecords,
+    },
+    validateSeqSetRecords: {
+        method: 'post',
+        path: '/validate-seqset-records',
+        body: z
+            .array(
+                z.object({
+                    accession: z.string().optional(),
+                    type: z.string().optional(),
+                    isFocal: z.boolean(),
+                }),
+            )
+            .optional(),
+        response: z.object({
+            valid: z.boolean(),
+        }),
+    },
+    createSeqSet: {
+        method: 'post',
+        path: '/create-seqset',
+        body: z.object({
+            name: z.string(),
+            description: z.string().optional(),
+            records: z.array(
+                z.object({
+                    accession: z.string(),
+                    type: z.string(),
+                    isFocal: z.boolean(),
+                }),
+            ),
+        }),
+        response: seqSetIdAndVersion,
+    },
+    createSeqSetDOI: {
+        method: 'post',
+        path: '/create-seqset-doi?seqSetId=:seqSetId&version=:seqSetVersion',
+        response: seqSetIdAndVersion,
+    },
+    updateSeqSet: {
+        method: 'put',
+        path: '/update-seqset',
+        body: z.object({
+            seqSetId: z.string(),
+            name: z.string(),
+            description: z.string().optional(),
+            records: z
                 .array(
-                    z.object({
-                        accession: z.string().optional(),
-                        type: z.string().optional(),
-                        isFocal: z.boolean(),
-                    }),
-                )
-                .optional(),
-        },
-    ],
-    response: z.object({
-        valid: z.boolean(),
-    }),
-    errors: [notAuthorizedError],
-});
-
-const createSeqSetEndpoint = makeEndpoint({
-    method: 'post',
-    path: '/create-seqset',
-    alias: 'createSeqSet',
-    parameters: [
-        authorizationHeader,
-        {
-            name: 'data',
-            type: 'Body',
-            schema: z.object({
-                name: z.string(),
-                description: z.string().optional(),
-                records: z.array(
                     z.object({
                         accession: z.string(),
                         type: z.string(),
                         isFocal: z.boolean(),
                     }),
-                ),
-            }),
-        },
-    ],
-    response: z.object({
-        seqSetId: z.string(),
-        seqSetVersion: z.number(),
-    }),
-    errors: [notAuthorizedError],
-});
-
-const createSeqSetDOIEndpoint = makeEndpoint({
-    method: 'post',
-    path: '/create-seqset-doi?seqSetId=:seqSetId&version=:seqSetVersion',
-    alias: 'createSeqSetDOI',
-    parameters: [authorizationHeader],
-    response: z.object({
-        seqSetId: z.string(),
-        seqSetVersion: z.number(),
-    }),
-    errors: [notAuthorizedError],
-});
-
-const updateSeqSetEndpoint = makeEndpoint({
-    method: 'put',
-    path: '/update-seqset',
-    alias: 'updateSeqSet',
-    parameters: [
-        authorizationHeader,
-        {
-            name: 'data',
-            type: 'Body',
-            schema: z.object({
-                seqSetId: z.string(),
-                name: z.string(),
-                description: z.string().optional(),
-                records: z
-                    .array(
-                        z.object({
-                            accession: z.string(),
-                            type: z.string(),
-                            isFocal: z.boolean(),
-                        }),
-                    )
-                    .optional(),
-            }),
-        },
-    ],
-    response: z.object({
-        seqSetId: z.string(),
-        seqSetVersion: z.number(),
-    }),
-    errors: [notAuthorizedError],
-});
-
-const deleteSeqSetEndpoint = makeEndpoint({
-    method: 'delete',
-    path: '/delete-seqset?seqSetId=:seqSetId&version=:seqSetVersion',
-    alias: 'deleteSeqSet',
-    parameters: [authorizationHeader],
-    response: z.never(),
-    errors: [notAuthorizedError],
-});
-
-const getAuthorEndpoint = makeEndpoint({
-    method: 'get',
-    path: '/get-author?username=:username',
-    alias: 'getAuthor',
-    response: authorProfile,
-    errors: [notAuthorizedError],
-});
-
-export const seqSetCitationApi = makeApi([
-    getSeqSetsOfUserEndpoint,
-    getSeqSetCitationsEndpoint,
-    getSequenceCitationsEndpoint,
-    getSeqSetEndpoint,
-    getSeqSetVersionsEndpoint,
-    getSeqSetRecordsEndpoint,
-    validateSeqSetRecords,
-    createSeqSetEndpoint,
-    createSeqSetDOIEndpoint,
-    updateSeqSetEndpoint,
-    deleteSeqSetEndpoint,
-    getAuthorEndpoint,
-]);
+                )
+                .optional(),
+        }),
+        response: seqSetIdAndVersion,
+    },
+    deleteSeqSet: {
+        method: 'delete',
+        path: '/delete-seqset?seqSetId=:seqSetId&version=:seqSetVersion',
+        response: z.never(),
+    },
+    getAuthor: {
+        method: 'get',
+        path: '/get-author?username=:username',
+        response: authorProfile,
+    },
+} as const satisfies ApiDefinition;

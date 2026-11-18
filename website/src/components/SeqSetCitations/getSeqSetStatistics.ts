@@ -15,7 +15,7 @@ const getAggregate = async (
     field: string,
     params: Record<string, string[] | string>,
 ): Promise<Result<AggregateRow[], ProblemDetail>> => {
-    const result = await client.call('aggregated', params);
+    const result = await client.call('aggregated', { body: params });
     return result.map(({ data }) =>
         data.map((item) => ({
             value: item[field],
