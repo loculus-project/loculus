@@ -1604,7 +1604,14 @@ export interface operations {
     addSeqSetCitation: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /**
+                 * @description A UUID that uniquely identifies the request for tracing purposes.
+                 *     If none is provided in the request, the backend will generate one.
+                 * @example 1747481c-816c-4b60-af20-a61717a35067
+                 */
+                'x-request-id'?: string;
+            };
             path?: never;
             cookie?: never;
         };
@@ -1617,6 +1624,12 @@ export interface operations {
             /** @description OK */
             200: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -1626,6 +1639,12 @@ export interface operations {
             /** @description Bad Request */
             400: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -1635,6 +1654,12 @@ export interface operations {
             /** @description Unauthorized */
             401: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -1644,6 +1669,12 @@ export interface operations {
             /** @description Forbidden */
             403: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -1653,6 +1684,12 @@ export interface operations {
             /** @description Not Found */
             404: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -1662,6 +1699,12 @@ export interface operations {
             /** @description Conflict */
             409: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -1671,6 +1714,12 @@ export interface operations {
             /** @description Unprocessable Content */
             422: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -1680,6 +1729,12 @@ export interface operations {
             /** @description Internal Server Error */
             500: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -1689,6 +1744,12 @@ export interface operations {
             /** @description Service Unavailable */
             503: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -1700,7 +1761,14 @@ export interface operations {
     getCurrentPipelineVersions: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /**
+                 * @description A UUID that uniquely identifies the request for tracing purposes.
+                 *     If none is provided in the request, the backend will generate one.
+                 * @example 1747481c-816c-4b60-af20-a61717a35067
+                 */
+                'x-request-id'?: string;
+            };
             path?: never;
             cookie?: never;
         };
@@ -1709,6 +1777,12 @@ export interface operations {
             /** @description OK */
             200: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -1720,6 +1794,12 @@ export interface operations {
             /** @description Bad Request */
             400: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -1729,6 +1809,12 @@ export interface operations {
             /** @description Unauthorized */
             401: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -1738,6 +1824,12 @@ export interface operations {
             /** @description Forbidden */
             403: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -1747,6 +1839,12 @@ export interface operations {
             /** @description Not Found */
             404: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -1756,6 +1854,12 @@ export interface operations {
             /** @description Conflict */
             409: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -1765,6 +1869,12 @@ export interface operations {
             /** @description Unprocessable Content */
             422: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -1774,6 +1884,12 @@ export interface operations {
             /** @description Internal Server Error */
             500: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -1783,6 +1899,12 @@ export interface operations {
             /** @description Service Unavailable */
             503: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -1796,7 +1918,14 @@ export interface operations {
             query: {
                 sourceDOI: string;
             };
-            header?: never;
+            header?: {
+                /**
+                 * @description A UUID that uniquely identifies the request for tracing purposes.
+                 *     If none is provided in the request, the backend will generate one.
+                 * @example 1747481c-816c-4b60-af20-a61717a35067
+                 */
+                'x-request-id'?: string;
+            };
             path?: never;
             cookie?: never;
         };
@@ -1805,6 +1934,12 @@ export interface operations {
             /** @description OK */
             200: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content?: never;
@@ -1812,6 +1947,12 @@ export interface operations {
             /** @description Bad Request */
             400: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -1821,6 +1962,12 @@ export interface operations {
             /** @description Unauthorized */
             401: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -1830,6 +1977,12 @@ export interface operations {
             /** @description Forbidden */
             403: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -1839,6 +1992,12 @@ export interface operations {
             /** @description Not Found */
             404: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -1848,6 +2007,12 @@ export interface operations {
             /** @description Conflict */
             409: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -1857,6 +2022,12 @@ export interface operations {
             /** @description Unprocessable Content */
             422: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -1866,6 +2037,12 @@ export interface operations {
             /** @description Internal Server Error */
             500: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -1875,6 +2052,12 @@ export interface operations {
             /** @description Service Unavailable */
             503: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -1886,7 +2069,14 @@ export interface operations {
     getAllSeqSetCitations: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /**
+                 * @description A UUID that uniquely identifies the request for tracing purposes.
+                 *     If none is provided in the request, the backend will generate one.
+                 * @example 1747481c-816c-4b60-af20-a61717a35067
+                 */
+                'x-request-id'?: string;
+            };
             path?: never;
             cookie?: never;
         };
@@ -1895,6 +2085,12 @@ export interface operations {
             /** @description OK */
             200: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -1904,6 +2100,12 @@ export interface operations {
             /** @description Bad Request */
             400: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -1913,6 +2115,12 @@ export interface operations {
             /** @description Unauthorized */
             401: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -1922,6 +2130,12 @@ export interface operations {
             /** @description Forbidden */
             403: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -1931,6 +2145,12 @@ export interface operations {
             /** @description Not Found */
             404: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -1940,6 +2160,12 @@ export interface operations {
             /** @description Conflict */
             409: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -1949,6 +2175,12 @@ export interface operations {
             /** @description Unprocessable Content */
             422: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -1958,6 +2190,12 @@ export interface operations {
             /** @description Internal Server Error */
             500: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -1967,6 +2205,12 @@ export interface operations {
             /** @description Service Unavailable */
             503: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -1978,7 +2222,14 @@ export interface operations {
     getPipelineStatistics: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /**
+                 * @description A UUID that uniquely identifies the request for tracing purposes.
+                 *     If none is provided in the request, the backend will generate one.
+                 * @example 1747481c-816c-4b60-af20-a61717a35067
+                 */
+                'x-request-id'?: string;
+            };
             path?: never;
             cookie?: never;
         };
@@ -1987,6 +2238,12 @@ export interface operations {
             /** @description OK */
             200: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2000,6 +2257,12 @@ export interface operations {
             /** @description Bad Request */
             400: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2009,6 +2272,12 @@ export interface operations {
             /** @description Unauthorized */
             401: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2018,6 +2287,12 @@ export interface operations {
             /** @description Forbidden */
             403: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2027,6 +2302,12 @@ export interface operations {
             /** @description Not Found */
             404: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2036,6 +2317,12 @@ export interface operations {
             /** @description Conflict */
             409: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2045,6 +2332,12 @@ export interface operations {
             /** @description Unprocessable Content */
             422: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2054,6 +2347,12 @@ export interface operations {
             /** @description Internal Server Error */
             500: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2063,6 +2362,12 @@ export interface operations {
             /** @description Service Unavailable */
             503: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2074,7 +2379,14 @@ export interface operations {
     createSeqSet: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /**
+                 * @description A UUID that uniquely identifies the request for tracing purposes.
+                 *     If none is provided in the request, the backend will generate one.
+                 * @example 1747481c-816c-4b60-af20-a61717a35067
+                 */
+                'x-request-id'?: string;
+            };
             path?: never;
             cookie?: never;
         };
@@ -2087,6 +2399,12 @@ export interface operations {
             /** @description OK */
             200: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2096,6 +2414,12 @@ export interface operations {
             /** @description Bad Request */
             400: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2105,6 +2429,12 @@ export interface operations {
             /** @description Unauthorized */
             401: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2114,6 +2444,12 @@ export interface operations {
             /** @description Forbidden */
             403: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2123,6 +2459,12 @@ export interface operations {
             /** @description Not Found */
             404: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2132,6 +2474,12 @@ export interface operations {
             /** @description Conflict */
             409: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2141,6 +2489,12 @@ export interface operations {
             /** @description Unprocessable Content */
             422: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2150,6 +2504,12 @@ export interface operations {
             /** @description Internal Server Error */
             500: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2159,6 +2519,12 @@ export interface operations {
             /** @description Service Unavailable */
             503: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2173,7 +2539,14 @@ export interface operations {
                 seqSetId: string;
                 version: number;
             };
-            header?: never;
+            header?: {
+                /**
+                 * @description A UUID that uniquely identifies the request for tracing purposes.
+                 *     If none is provided in the request, the backend will generate one.
+                 * @example 1747481c-816c-4b60-af20-a61717a35067
+                 */
+                'x-request-id'?: string;
+            };
             path?: never;
             cookie?: never;
         };
@@ -2182,6 +2555,12 @@ export interface operations {
             /** @description OK */
             200: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2191,6 +2570,12 @@ export interface operations {
             /** @description Bad Request */
             400: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2200,6 +2585,12 @@ export interface operations {
             /** @description Unauthorized */
             401: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2209,6 +2600,12 @@ export interface operations {
             /** @description Forbidden */
             403: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2218,6 +2615,12 @@ export interface operations {
             /** @description Not Found */
             404: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2227,6 +2630,12 @@ export interface operations {
             /** @description Conflict */
             409: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2236,6 +2645,12 @@ export interface operations {
             /** @description Unprocessable Content */
             422: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2245,6 +2660,12 @@ export interface operations {
             /** @description Internal Server Error */
             500: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2254,6 +2675,12 @@ export interface operations {
             /** @description Service Unavailable */
             503: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2265,7 +2692,14 @@ export interface operations {
     setNewDataUseTerms: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /**
+                 * @description A UUID that uniquely identifies the request for tracing purposes.
+                 *     If none is provided in the request, the backend will generate one.
+                 * @example 1747481c-816c-4b60-af20-a61717a35067
+                 */
+                'x-request-id'?: string;
+            };
             path?: never;
             cookie?: never;
         };
@@ -2278,6 +2712,12 @@ export interface operations {
             /** @description No Content */
             204: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content?: never;
@@ -2285,6 +2725,12 @@ export interface operations {
             /** @description Bad Request */
             400: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2294,6 +2740,12 @@ export interface operations {
             /** @description Unauthorized */
             401: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2303,6 +2755,12 @@ export interface operations {
             /** @description Forbidden */
             403: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2312,6 +2770,12 @@ export interface operations {
             /** @description Not Found */
             404: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2321,6 +2785,12 @@ export interface operations {
             /** @description Conflict */
             409: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2330,6 +2800,12 @@ export interface operations {
             /** @description Unprocessable Content */
             422: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2339,6 +2815,12 @@ export interface operations {
             /** @description Internal Server Error */
             500: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2348,6 +2830,12 @@ export interface operations {
             /** @description Service Unavailable */
             503: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2359,7 +2847,14 @@ export interface operations {
     getDataUseTerms: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /**
+                 * @description A UUID that uniquely identifies the request for tracing purposes.
+                 *     If none is provided in the request, the backend will generate one.
+                 * @example 1747481c-816c-4b60-af20-a61717a35067
+                 */
+                'x-request-id'?: string;
+            };
             path: {
                 /** @description The accession of the sequence entry for which the data use terms should be retrieved */
                 accession: string;
@@ -2371,6 +2866,12 @@ export interface operations {
             /** @description OK */
             200: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2380,6 +2881,12 @@ export interface operations {
             /** @description Bad Request */
             400: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2389,6 +2896,12 @@ export interface operations {
             /** @description Unauthorized */
             401: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2398,6 +2911,12 @@ export interface operations {
             /** @description Forbidden */
             403: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2407,6 +2926,12 @@ export interface operations {
             /** @description Not Found */
             404: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2416,6 +2941,12 @@ export interface operations {
             /** @description Conflict */
             409: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2425,6 +2956,12 @@ export interface operations {
             /** @description Unprocessable Content */
             422: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2434,6 +2971,12 @@ export interface operations {
             /** @description Internal Server Error */
             500: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2443,6 +2986,12 @@ export interface operations {
             /** @description Service Unavailable */
             503: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2457,7 +3006,14 @@ export interface operations {
                 seqSetId: string;
                 version: number;
             };
-            header?: never;
+            header?: {
+                /**
+                 * @description A UUID that uniquely identifies the request for tracing purposes.
+                 *     If none is provided in the request, the backend will generate one.
+                 * @example 1747481c-816c-4b60-af20-a61717a35067
+                 */
+                'x-request-id'?: string;
+            };
             path?: never;
             cookie?: never;
         };
@@ -2466,6 +3022,12 @@ export interface operations {
             /** @description OK */
             200: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content?: never;
@@ -2473,6 +3035,12 @@ export interface operations {
             /** @description Bad Request */
             400: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2482,6 +3050,12 @@ export interface operations {
             /** @description Unauthorized */
             401: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2491,6 +3065,12 @@ export interface operations {
             /** @description Forbidden */
             403: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2500,6 +3080,12 @@ export interface operations {
             /** @description Not Found */
             404: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2509,6 +3095,12 @@ export interface operations {
             /** @description Conflict */
             409: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2518,6 +3110,12 @@ export interface operations {
             /** @description Unprocessable Content */
             422: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2527,6 +3125,12 @@ export interface operations {
             /** @description Internal Server Error */
             500: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2536,6 +3140,12 @@ export interface operations {
             /** @description Service Unavailable */
             503: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2547,7 +3157,14 @@ export interface operations {
     completeMultipartUploads: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /**
+                 * @description A UUID that uniquely identifies the request for tracing purposes.
+                 *     If none is provided in the request, the backend will generate one.
+                 * @example 1747481c-816c-4b60-af20-a61717a35067
+                 */
+                'x-request-id'?: string;
+            };
             path?: never;
             cookie?: never;
         };
@@ -2560,6 +3177,12 @@ export interface operations {
             /** @description OK */
             200: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content?: never;
@@ -2567,6 +3190,12 @@ export interface operations {
             /** @description Bad Request */
             400: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2576,6 +3205,12 @@ export interface operations {
             /** @description Unauthorized */
             401: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2585,6 +3220,12 @@ export interface operations {
             /** @description Forbidden */
             403: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2594,6 +3235,12 @@ export interface operations {
             /** @description Not Found */
             404: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2603,6 +3250,12 @@ export interface operations {
             /** @description Conflict */
             409: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2612,6 +3265,12 @@ export interface operations {
             /** @description Unprocessable Content */
             422: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2621,6 +3280,12 @@ export interface operations {
             /** @description Internal Server Error */
             500: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2630,6 +3295,12 @@ export interface operations {
             /** @description Service Unavailable */
             503: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2641,7 +3312,14 @@ export interface operations {
     getFileDownloadUrl: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /**
+                 * @description A UUID that uniquely identifies the request for tracing purposes.
+                 *     If none is provided in the request, the backend will generate one.
+                 * @example 1747481c-816c-4b60-af20-a61717a35067
+                 */
+                'x-request-id'?: string;
+            };
             path: {
                 accession: string;
                 version: number;
@@ -2656,7 +3334,13 @@ export interface operations {
             307: {
                 headers: {
                     /** @description S3 download URL */
-                    Location?: unknown;
+                    'Location'?: unknown;
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content?: never;
@@ -2664,6 +3348,12 @@ export interface operations {
             /** @description Bad Request */
             400: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2673,6 +3363,12 @@ export interface operations {
             /** @description Authentication needed: the file is not public */
             401: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2682,6 +3378,12 @@ export interface operations {
             /** @description Not authorized to access this non-public file. */
             403: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2691,6 +3393,12 @@ export interface operations {
             /** @description File or accession version does not exist. */
             404: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2700,6 +3408,12 @@ export interface operations {
             /** @description Conflict */
             409: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2709,6 +3423,12 @@ export interface operations {
             /** @description Unprocessable Content */
             422: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2718,6 +3438,12 @@ export interface operations {
             /** @description Internal Server Error */
             500: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2727,6 +3453,12 @@ export interface operations {
             /** @description Service Unavailable */
             503: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2738,7 +3470,14 @@ export interface operations {
     getFileDownloadUrl_1: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /**
+                 * @description A UUID that uniquely identifies the request for tracing purposes.
+                 *     If none is provided in the request, the backend will generate one.
+                 * @example 1747481c-816c-4b60-af20-a61717a35067
+                 */
+                'x-request-id'?: string;
+            };
             path: {
                 accession: string;
                 version: number;
@@ -2753,7 +3492,13 @@ export interface operations {
             307: {
                 headers: {
                     /** @description S3 download URL */
-                    Location?: unknown;
+                    'Location'?: unknown;
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content?: never;
@@ -2761,6 +3506,12 @@ export interface operations {
             /** @description Bad Request */
             400: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2770,6 +3521,12 @@ export interface operations {
             /** @description Authentication needed: the file is not public */
             401: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2779,6 +3536,12 @@ export interface operations {
             /** @description Not authorized to access this non-public file. */
             403: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2788,6 +3551,12 @@ export interface operations {
             /** @description File or accession version does not exist. */
             404: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2797,6 +3566,12 @@ export interface operations {
             /** @description Conflict */
             409: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2806,6 +3581,12 @@ export interface operations {
             /** @description Unprocessable Content */
             422: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2815,6 +3596,12 @@ export interface operations {
             /** @description Internal Server Error */
             500: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2824,6 +3611,12 @@ export interface operations {
             /** @description Service Unavailable */
             503: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2842,7 +3635,14 @@ export interface operations {
                 /** @description Number of parts, default is 1. */
                 numberParts?: number;
             };
-            header?: never;
+            header?: {
+                /**
+                 * @description A UUID that uniquely identifies the request for tracing purposes.
+                 *     If none is provided in the request, the backend will generate one.
+                 * @example 1747481c-816c-4b60-af20-a61717a35067
+                 */
+                'x-request-id'?: string;
+            };
             path?: never;
             cookie?: never;
         };
@@ -2851,6 +3651,12 @@ export interface operations {
             /** @description OK */
             200: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2860,6 +3666,12 @@ export interface operations {
             /** @description Bad Request */
             400: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2869,6 +3681,12 @@ export interface operations {
             /** @description Unauthorized */
             401: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2878,6 +3696,12 @@ export interface operations {
             /** @description Forbidden */
             403: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2887,6 +3711,12 @@ export interface operations {
             /** @description Not Found */
             404: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2896,6 +3726,12 @@ export interface operations {
             /** @description Conflict */
             409: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2905,6 +3741,12 @@ export interface operations {
             /** @description Unprocessable Content */
             422: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2914,6 +3756,12 @@ export interface operations {
             /** @description Internal Server Error */
             500: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2923,6 +3771,12 @@ export interface operations {
             /** @description Service Unavailable */
             503: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2939,7 +3793,14 @@ export interface operations {
                 /** @description Number of files, default is 1. */
                 numberFiles?: number;
             };
-            header?: never;
+            header?: {
+                /**
+                 * @description A UUID that uniquely identifies the request for tracing purposes.
+                 *     If none is provided in the request, the backend will generate one.
+                 * @example 1747481c-816c-4b60-af20-a61717a35067
+                 */
+                'x-request-id'?: string;
+            };
             path?: never;
             cookie?: never;
         };
@@ -2948,6 +3809,12 @@ export interface operations {
             /** @description Successfully generated pre-signed upload URLs */
             200: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2957,6 +3824,12 @@ export interface operations {
             /** @description Invalid request parameters */
             400: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2966,6 +3839,12 @@ export interface operations {
             /** @description Authentication required */
             401: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2975,6 +3854,12 @@ export interface operations {
             /** @description User is not a member of the specified group */
             403: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2984,6 +3869,12 @@ export interface operations {
             /** @description Group does not exist */
             404: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2993,6 +3884,12 @@ export interface operations {
             /** @description Conflict */
             409: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3002,6 +3899,12 @@ export interface operations {
             /** @description Unprocessable Content */
             422: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3011,6 +3914,12 @@ export interface operations {
             /** @description Internal Server Error */
             500: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3020,6 +3929,12 @@ export interface operations {
             /** @description Service Unavailable */
             503: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3033,7 +3948,14 @@ export interface operations {
             query: {
                 username: string;
             };
-            header?: never;
+            header?: {
+                /**
+                 * @description A UUID that uniquely identifies the request for tracing purposes.
+                 *     If none is provided in the request, the backend will generate one.
+                 * @example 1747481c-816c-4b60-af20-a61717a35067
+                 */
+                'x-request-id'?: string;
+            };
             path?: never;
             cookie?: never;
         };
@@ -3042,6 +3964,12 @@ export interface operations {
             /** @description OK */
             200: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3051,6 +3979,12 @@ export interface operations {
             /** @description Bad Request */
             400: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3060,6 +3994,12 @@ export interface operations {
             /** @description Unauthorized */
             401: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3069,6 +4009,12 @@ export interface operations {
             /** @description Forbidden */
             403: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3078,6 +4024,12 @@ export interface operations {
             /** @description Not Found */
             404: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3087,6 +4039,12 @@ export interface operations {
             /** @description Conflict */
             409: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3096,6 +4054,12 @@ export interface operations {
             /** @description Unprocessable Content */
             422: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3105,6 +4069,12 @@ export interface operations {
             /** @description Internal Server Error */
             500: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3114,6 +4084,12 @@ export interface operations {
             /** @description Service Unavailable */
             503: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3128,7 +4104,14 @@ export interface operations {
                 seqSetId: string;
                 version?: number;
             };
-            header?: never;
+            header?: {
+                /**
+                 * @description A UUID that uniquely identifies the request for tracing purposes.
+                 *     If none is provided in the request, the backend will generate one.
+                 * @example 1747481c-816c-4b60-af20-a61717a35067
+                 */
+                'x-request-id'?: string;
+            };
             path?: never;
             cookie?: never;
         };
@@ -3137,6 +4120,12 @@ export interface operations {
             /** @description OK */
             200: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3146,6 +4135,12 @@ export interface operations {
             /** @description Bad Request */
             400: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3155,6 +4150,12 @@ export interface operations {
             /** @description Unauthorized */
             401: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3164,6 +4165,12 @@ export interface operations {
             /** @description Forbidden */
             403: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3173,6 +4180,12 @@ export interface operations {
             /** @description Not Found */
             404: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3182,6 +4195,12 @@ export interface operations {
             /** @description Conflict */
             409: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3191,6 +4210,12 @@ export interface operations {
             /** @description Unprocessable Content */
             422: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3200,6 +4225,12 @@ export interface operations {
             /** @description Internal Server Error */
             500: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3209,6 +4240,12 @@ export interface operations {
             /** @description Service Unavailable */
             503: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3223,7 +4260,14 @@ export interface operations {
                 seqSetId: string;
                 version: number;
             };
-            header?: never;
+            header?: {
+                /**
+                 * @description A UUID that uniquely identifies the request for tracing purposes.
+                 *     If none is provided in the request, the backend will generate one.
+                 * @example 1747481c-816c-4b60-af20-a61717a35067
+                 */
+                'x-request-id'?: string;
+            };
             path?: never;
             cookie?: never;
         };
@@ -3232,6 +4276,12 @@ export interface operations {
             /** @description OK */
             200: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3241,6 +4291,12 @@ export interface operations {
             /** @description Bad Request */
             400: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3250,6 +4306,12 @@ export interface operations {
             /** @description Unauthorized */
             401: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3259,6 +4321,12 @@ export interface operations {
             /** @description Forbidden */
             403: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3268,6 +4336,12 @@ export interface operations {
             /** @description Not Found */
             404: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3277,6 +4351,12 @@ export interface operations {
             /** @description Conflict */
             409: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3286,6 +4366,12 @@ export interface operations {
             /** @description Unprocessable Content */
             422: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3295,6 +4381,12 @@ export interface operations {
             /** @description Internal Server Error */
             500: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3304,6 +4396,12 @@ export interface operations {
             /** @description Service Unavailable */
             503: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3318,7 +4416,14 @@ export interface operations {
                 seqSetId: string;
                 version?: number;
             };
-            header?: never;
+            header?: {
+                /**
+                 * @description A UUID that uniquely identifies the request for tracing purposes.
+                 *     If none is provided in the request, the backend will generate one.
+                 * @example 1747481c-816c-4b60-af20-a61717a35067
+                 */
+                'x-request-id'?: string;
+            };
             path?: never;
             cookie?: never;
         };
@@ -3327,6 +4432,12 @@ export interface operations {
             /** @description OK */
             200: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3336,6 +4447,12 @@ export interface operations {
             /** @description Bad Request */
             400: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3345,6 +4462,12 @@ export interface operations {
             /** @description Unauthorized */
             401: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3354,6 +4477,12 @@ export interface operations {
             /** @description Forbidden */
             403: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3363,6 +4492,12 @@ export interface operations {
             /** @description Not Found */
             404: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3372,6 +4507,12 @@ export interface operations {
             /** @description Conflict */
             409: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3381,6 +4522,12 @@ export interface operations {
             /** @description Unprocessable Content */
             422: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3390,6 +4537,12 @@ export interface operations {
             /** @description Internal Server Error */
             500: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3399,6 +4552,12 @@ export interface operations {
             /** @description Service Unavailable */
             503: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3410,7 +4569,14 @@ export interface operations {
     getSeqSets: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /**
+                 * @description A UUID that uniquely identifies the request for tracing purposes.
+                 *     If none is provided in the request, the backend will generate one.
+                 * @example 1747481c-816c-4b60-af20-a61717a35067
+                 */
+                'x-request-id'?: string;
+            };
             path?: never;
             cookie?: never;
         };
@@ -3419,6 +4585,12 @@ export interface operations {
             /** @description OK */
             200: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3428,6 +4600,12 @@ export interface operations {
             /** @description Bad Request */
             400: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3437,6 +4615,12 @@ export interface operations {
             /** @description Unauthorized */
             401: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3446,6 +4630,12 @@ export interface operations {
             /** @description Forbidden */
             403: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3455,6 +4645,12 @@ export interface operations {
             /** @description Not Found */
             404: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3464,6 +4660,12 @@ export interface operations {
             /** @description Conflict */
             409: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3473,6 +4675,12 @@ export interface operations {
             /** @description Unprocessable Content */
             422: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3482,6 +4690,12 @@ export interface operations {
             /** @description Internal Server Error */
             500: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3491,6 +4705,12 @@ export interface operations {
             /** @description Service Unavailable */
             503: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3505,7 +4725,14 @@ export interface operations {
                 accession: string;
                 version?: number;
             };
-            header?: never;
+            header?: {
+                /**
+                 * @description A UUID that uniquely identifies the request for tracing purposes.
+                 *     If none is provided in the request, the backend will generate one.
+                 * @example 1747481c-816c-4b60-af20-a61717a35067
+                 */
+                'x-request-id'?: string;
+            };
             path?: never;
             cookie?: never;
         };
@@ -3514,6 +4741,12 @@ export interface operations {
             /** @description OK */
             200: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3523,6 +4756,12 @@ export interface operations {
             /** @description Bad Request */
             400: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3532,6 +4771,12 @@ export interface operations {
             /** @description Unauthorized */
             401: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3541,6 +4786,12 @@ export interface operations {
             /** @description Forbidden */
             403: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3550,6 +4801,12 @@ export interface operations {
             /** @description Not Found */
             404: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3559,6 +4816,12 @@ export interface operations {
             /** @description Conflict */
             409: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3568,6 +4831,12 @@ export interface operations {
             /** @description Unprocessable Content */
             422: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3577,6 +4846,12 @@ export interface operations {
             /** @description Internal Server Error */
             500: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3586,6 +4861,12 @@ export interface operations {
             /** @description Service Unavailable */
             503: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3599,7 +4880,14 @@ export interface operations {
             query?: {
                 name?: string;
             };
-            header?: never;
+            header?: {
+                /**
+                 * @description A UUID that uniquely identifies the request for tracing purposes.
+                 *     If none is provided in the request, the backend will generate one.
+                 * @example 1747481c-816c-4b60-af20-a61717a35067
+                 */
+                'x-request-id'?: string;
+            };
             path?: never;
             cookie?: never;
         };
@@ -3608,6 +4896,12 @@ export interface operations {
             /** @description OK */
             200: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3617,6 +4911,12 @@ export interface operations {
             /** @description Bad Request */
             400: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3626,6 +4926,12 @@ export interface operations {
             /** @description Unauthorized */
             401: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3635,6 +4941,12 @@ export interface operations {
             /** @description Forbidden */
             403: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3644,6 +4956,12 @@ export interface operations {
             /** @description Not Found */
             404: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3653,6 +4971,12 @@ export interface operations {
             /** @description Conflict */
             409: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3662,6 +4986,12 @@ export interface operations {
             /** @description Unprocessable Content */
             422: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3671,6 +5001,12 @@ export interface operations {
             /** @description Internal Server Error */
             500: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3680,6 +5016,12 @@ export interface operations {
             /** @description Service Unavailable */
             503: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3691,7 +5033,14 @@ export interface operations {
     createNewGroup: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /**
+                 * @description A UUID that uniquely identifies the request for tracing purposes.
+                 *     If none is provided in the request, the backend will generate one.
+                 * @example 1747481c-816c-4b60-af20-a61717a35067
+                 */
+                'x-request-id'?: string;
+            };
             path?: never;
             cookie?: never;
         };
@@ -3704,6 +5053,12 @@ export interface operations {
             /** @description OK */
             200: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3713,6 +5068,12 @@ export interface operations {
             /** @description Bad Request */
             400: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3722,6 +5083,12 @@ export interface operations {
             /** @description Unauthorized */
             401: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3731,6 +5098,12 @@ export interface operations {
             /** @description Forbidden */
             403: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3740,6 +5113,12 @@ export interface operations {
             /** @description Not Found */
             404: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3749,6 +5128,12 @@ export interface operations {
             /** @description Conflict */
             409: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3758,6 +5143,12 @@ export interface operations {
             /** @description Unprocessable Content */
             422: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3767,6 +5158,12 @@ export interface operations {
             /** @description Internal Server Error */
             500: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3776,6 +5173,12 @@ export interface operations {
             /** @description Service Unavailable */
             503: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3787,7 +5190,14 @@ export interface operations {
     getUsersOfGroup: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /**
+                 * @description A UUID that uniquely identifies the request for tracing purposes.
+                 *     If none is provided in the request, the backend will generate one.
+                 * @example 1747481c-816c-4b60-af20-a61717a35067
+                 */
+                'x-request-id'?: string;
+            };
             path: {
                 /** @description The id of the group to get details of. */
                 groupId: number;
@@ -3799,6 +5209,12 @@ export interface operations {
             /** @description OK */
             200: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3808,6 +5224,12 @@ export interface operations {
             /** @description Bad Request */
             400: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3817,6 +5239,12 @@ export interface operations {
             /** @description Unauthorized */
             401: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3826,6 +5254,12 @@ export interface operations {
             /** @description Forbidden */
             403: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3835,6 +5269,12 @@ export interface operations {
             /** @description Not Found */
             404: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3844,6 +5284,12 @@ export interface operations {
             /** @description Conflict */
             409: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3853,6 +5299,12 @@ export interface operations {
             /** @description Unprocessable Content */
             422: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3862,6 +5314,12 @@ export interface operations {
             /** @description Internal Server Error */
             500: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3871,6 +5329,12 @@ export interface operations {
             /** @description Service Unavailable */
             503: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3882,7 +5346,14 @@ export interface operations {
     editGroup: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /**
+                 * @description A UUID that uniquely identifies the request for tracing purposes.
+                 *     If none is provided in the request, the backend will generate one.
+                 * @example 1747481c-816c-4b60-af20-a61717a35067
+                 */
+                'x-request-id'?: string;
+            };
             path: {
                 /** @description The id of the group to edit. */
                 groupId: number;
@@ -3898,6 +5369,12 @@ export interface operations {
             /** @description OK */
             200: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3907,6 +5384,12 @@ export interface operations {
             /** @description Bad Request */
             400: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3916,6 +5399,12 @@ export interface operations {
             /** @description Unauthorized */
             401: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3925,6 +5414,12 @@ export interface operations {
             /** @description Forbidden */
             403: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3934,6 +5429,12 @@ export interface operations {
             /** @description Not Found */
             404: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3943,6 +5444,12 @@ export interface operations {
             /** @description Conflict */
             409: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3952,6 +5459,12 @@ export interface operations {
             /** @description Unprocessable Content */
             422: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3961,6 +5474,12 @@ export interface operations {
             /** @description Internal Server Error */
             500: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3970,6 +5489,12 @@ export interface operations {
             /** @description Service Unavailable */
             503: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3981,7 +5506,14 @@ export interface operations {
     addUserToGroup: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /**
+                 * @description A UUID that uniquely identifies the request for tracing purposes.
+                 *     If none is provided in the request, the backend will generate one.
+                 * @example 1747481c-816c-4b60-af20-a61717a35067
+                 */
+                'x-request-id'?: string;
+            };
             path: {
                 /** @description The id of the group the user should be added to. */
                 groupId: number;
@@ -3995,6 +5527,12 @@ export interface operations {
             /** @description No Content */
             204: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content?: never;
@@ -4002,6 +5540,12 @@ export interface operations {
             /** @description Bad Request */
             400: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4011,6 +5555,12 @@ export interface operations {
             /** @description Unauthorized */
             401: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4020,6 +5570,12 @@ export interface operations {
             /** @description Forbidden */
             403: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4029,6 +5585,12 @@ export interface operations {
             /** @description Not Found */
             404: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4038,6 +5600,12 @@ export interface operations {
             /** @description Conflict */
             409: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4047,6 +5615,12 @@ export interface operations {
             /** @description Unprocessable Content */
             422: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4056,6 +5630,12 @@ export interface operations {
             /** @description Internal Server Error */
             500: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4065,6 +5645,12 @@ export interface operations {
             /** @description Service Unavailable */
             503: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4076,7 +5662,14 @@ export interface operations {
     removeUserFromGroup: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /**
+                 * @description A UUID that uniquely identifies the request for tracing purposes.
+                 *     If none is provided in the request, the backend will generate one.
+                 * @example 1747481c-816c-4b60-af20-a61717a35067
+                 */
+                'x-request-id'?: string;
+            };
             path: {
                 /** @description The id of the group the user should be removed from. */
                 groupId: number;
@@ -4090,6 +5683,12 @@ export interface operations {
             /** @description No Content */
             204: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content?: never;
@@ -4097,6 +5696,12 @@ export interface operations {
             /** @description Bad Request */
             400: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4106,6 +5711,12 @@ export interface operations {
             /** @description Unauthorized */
             401: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4115,6 +5726,12 @@ export interface operations {
             /** @description Forbidden */
             403: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4124,6 +5741,12 @@ export interface operations {
             /** @description Not Found */
             404: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4133,6 +5756,12 @@ export interface operations {
             /** @description Conflict */
             409: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4142,6 +5771,12 @@ export interface operations {
             /** @description Unprocessable Content */
             422: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4151,6 +5786,12 @@ export interface operations {
             /** @description Internal Server Error */
             500: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4160,6 +5801,12 @@ export interface operations {
             /** @description Service Unavailable */
             503: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4171,7 +5818,14 @@ export interface operations {
     updateSeqSet: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /**
+                 * @description A UUID that uniquely identifies the request for tracing purposes.
+                 *     If none is provided in the request, the backend will generate one.
+                 * @example 1747481c-816c-4b60-af20-a61717a35067
+                 */
+                'x-request-id'?: string;
+            };
             path?: never;
             cookie?: never;
         };
@@ -4184,6 +5838,12 @@ export interface operations {
             /** @description OK */
             200: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4193,6 +5853,12 @@ export interface operations {
             /** @description Bad Request */
             400: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4202,6 +5868,12 @@ export interface operations {
             /** @description Unauthorized */
             401: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4211,6 +5883,12 @@ export interface operations {
             /** @description Forbidden */
             403: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4220,6 +5898,12 @@ export interface operations {
             /** @description Not Found */
             404: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4229,6 +5913,12 @@ export interface operations {
             /** @description Conflict */
             409: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4238,6 +5928,12 @@ export interface operations {
             /** @description Unprocessable Content */
             422: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4247,6 +5943,12 @@ export interface operations {
             /** @description Internal Server Error */
             500: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4256,6 +5958,12 @@ export interface operations {
             /** @description Service Unavailable */
             503: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4267,7 +5975,14 @@ export interface operations {
     getGroupsOfUser: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /**
+                 * @description A UUID that uniquely identifies the request for tracing purposes.
+                 *     If none is provided in the request, the backend will generate one.
+                 * @example 1747481c-816c-4b60-af20-a61717a35067
+                 */
+                'x-request-id'?: string;
+            };
             path?: never;
             cookie?: never;
         };
@@ -4276,6 +5991,12 @@ export interface operations {
             /** @description OK */
             200: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4285,6 +6006,12 @@ export interface operations {
             /** @description Bad Request */
             400: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4294,6 +6021,12 @@ export interface operations {
             /** @description Unauthorized */
             401: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4303,6 +6036,12 @@ export interface operations {
             /** @description Forbidden */
             403: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4312,6 +6051,12 @@ export interface operations {
             /** @description Not Found */
             404: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4321,6 +6066,12 @@ export interface operations {
             /** @description Conflict */
             409: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4330,6 +6081,12 @@ export interface operations {
             /** @description Unprocessable Content */
             422: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4339,6 +6096,12 @@ export interface operations {
             /** @description Internal Server Error */
             500: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4348,6 +6111,12 @@ export interface operations {
             /** @description Service Unavailable */
             503: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4359,7 +6128,14 @@ export interface operations {
     validateSeqSetRecords: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /**
+                 * @description A UUID that uniquely identifies the request for tracing purposes.
+                 *     If none is provided in the request, the backend will generate one.
+                 * @example 1747481c-816c-4b60-af20-a61717a35067
+                 */
+                'x-request-id'?: string;
+            };
             path?: never;
             cookie?: never;
         };
@@ -4372,6 +6148,12 @@ export interface operations {
             /** @description OK */
             200: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content?: never;
@@ -4379,6 +6161,12 @@ export interface operations {
             /** @description Bad Request */
             400: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4388,6 +6176,12 @@ export interface operations {
             /** @description Unauthorized */
             401: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4397,6 +6191,12 @@ export interface operations {
             /** @description Forbidden */
             403: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4406,6 +6206,12 @@ export interface operations {
             /** @description Not Found */
             404: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4415,6 +6221,12 @@ export interface operations {
             /** @description Conflict */
             409: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4424,6 +6236,12 @@ export interface operations {
             /** @description Unprocessable Content */
             422: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4433,6 +6251,12 @@ export interface operations {
             /** @description Internal Server Error */
             500: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4442,6 +6266,12 @@ export interface operations {
             /** @description Service Unavailable */
             503: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4453,7 +6283,14 @@ export interface operations {
     approveProcessedData: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /**
+                 * @description A UUID that uniquely identifies the request for tracing purposes.
+                 *     If none is provided in the request, the backend will generate one.
+                 * @example 1747481c-816c-4b60-af20-a61717a35067
+                 */
+                'x-request-id'?: string;
+            };
             path: {
                 organism: components['schemas']['Organism'];
             };
@@ -4468,6 +6305,12 @@ export interface operations {
             /** @description OK */
             200: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4477,6 +6320,12 @@ export interface operations {
             /** @description Bad Request */
             400: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4486,6 +6335,12 @@ export interface operations {
             /** @description Unauthorized */
             401: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4495,6 +6350,12 @@ export interface operations {
             /** @description Forbidden */
             403: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4504,6 +6365,12 @@ export interface operations {
             /** @description Not Found */
             404: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4513,6 +6380,12 @@ export interface operations {
             /** @description Conflict */
             409: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4522,6 +6395,12 @@ export interface operations {
             /** @description Unprocessable Content */
             422: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4531,6 +6410,12 @@ export interface operations {
             /** @description Internal Server Error */
             500: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4540,6 +6425,12 @@ export interface operations {
             /** @description Service Unavailable */
             503: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4551,7 +6442,14 @@ export interface operations {
     deleteSequence: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /**
+                 * @description A UUID that uniquely identifies the request for tracing purposes.
+                 *     If none is provided in the request, the backend will generate one.
+                 * @example 1747481c-816c-4b60-af20-a61717a35067
+                 */
+                'x-request-id'?: string;
+            };
             path: {
                 organism: components['schemas']['Organism'];
             };
@@ -4566,6 +6464,12 @@ export interface operations {
             /** @description OK */
             200: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4575,6 +6479,12 @@ export interface operations {
             /** @description Bad Request */
             400: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4584,6 +6494,12 @@ export interface operations {
             /** @description Unauthorized */
             401: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4593,6 +6509,12 @@ export interface operations {
             /** @description Forbidden */
             403: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4602,6 +6524,12 @@ export interface operations {
             /** @description Not Found */
             404: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4611,6 +6539,12 @@ export interface operations {
             /** @description Conflict */
             409: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4620,6 +6554,12 @@ export interface operations {
             /** @description Unprocessable Content */
             422: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4629,6 +6569,12 @@ export interface operations {
             /** @description Internal Server Error */
             500: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4638,6 +6584,12 @@ export interface operations {
             /** @description Service Unavailable */
             503: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4654,6 +6606,12 @@ export interface operations {
             };
             header?: {
                 'If-None-Match'?: string;
+                /**
+                 * @description A UUID that uniquely identifies the request for tracing purposes.
+                 *     If none is provided in the request, the backend will generate one.
+                 * @example 1747481c-816c-4b60-af20-a61717a35067
+                 */
+                'x-request-id'?: string;
             };
             path: {
                 organism: components['schemas']['Organism'];
@@ -4669,7 +6627,13 @@ export interface operations {
             200: {
                 headers: {
                     /** @description Last database write Etag */
-                    eTag?: number;
+                    'eTag'?: number;
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4679,6 +6643,12 @@ export interface operations {
             /** @description No database changes since last request (Etag in HttpHeaders.IF_NONE_MATCH matches lastDatabaseWriteETag) */
             304: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4688,6 +6658,12 @@ export interface operations {
             /** @description Bad Request */
             400: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4697,6 +6673,12 @@ export interface operations {
             /** @description Unauthorized */
             401: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4706,6 +6688,12 @@ export interface operations {
             /** @description Forbidden */
             403: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4715,6 +6703,12 @@ export interface operations {
             /** @description Not Found */
             404: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4724,6 +6718,12 @@ export interface operations {
             /** @description Conflict */
             409: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4733,6 +6733,12 @@ export interface operations {
             /** @description The processing pipeline is outdated (i.e., the version is lower than the current version). */
             422: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4742,6 +6748,12 @@ export interface operations {
             /** @description Internal Server Error */
             500: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4751,6 +6763,12 @@ export interface operations {
             /** @description Service Unavailable */
             503: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4762,7 +6780,14 @@ export interface operations {
     getSequenceEntryVersionToEdit: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /**
+                 * @description A UUID that uniquely identifies the request for tracing purposes.
+                 *     If none is provided in the request, the backend will generate one.
+                 * @example 1747481c-816c-4b60-af20-a61717a35067
+                 */
+                'x-request-id'?: string;
+            };
             path: {
                 organism: components['schemas']['Organism'];
                 accession: string;
@@ -4775,6 +6800,12 @@ export interface operations {
             /** @description OK */
             200: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4784,6 +6815,12 @@ export interface operations {
             /** @description Bad Request */
             400: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4793,6 +6830,12 @@ export interface operations {
             /** @description Unauthorized */
             401: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4802,6 +6845,12 @@ export interface operations {
             /** @description Forbidden */
             403: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4811,6 +6860,12 @@ export interface operations {
             /** @description Not Found */
             404: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4820,6 +6875,12 @@ export interface operations {
             /** @description Conflict */
             409: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4829,6 +6890,12 @@ export interface operations {
             /** @description Unprocessable Content */
             422: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4838,6 +6905,12 @@ export interface operations {
             /** @description Internal Server Error */
             500: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4847,6 +6920,12 @@ export interface operations {
             /** @description Service Unavailable */
             503: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4863,6 +6942,12 @@ export interface operations {
             header?: {
                 /** @description (Optional) Only retrieve all released data if Etag has changed. */
                 'If-None-Match'?: string;
+                /**
+                 * @description A UUID that uniquely identifies the request for tracing purposes.
+                 *     If none is provided in the request, the backend will generate one.
+                 * @example 1747481c-816c-4b60-af20-a61717a35067
+                 */
+                'x-request-id'?: string;
             };
             path: {
                 organism: components['schemas']['Organism'];
@@ -4879,6 +6964,12 @@ export interface operations {
                 headers: {
                     /** @description Last database write Etag, combined with the current date */
                     'eTag'?: string;
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     /** @description The total number of records sent in responseBody */
                     'x-total-records'?: number;
                     [name: string]: unknown;
@@ -4890,6 +6981,12 @@ export interface operations {
             /** @description No database changes since last request, and the date has not changed (Etag in HttpHeaders.IF_NONE_MATCH matches lastDatabaseWriteETagWithDate) */
             304: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4899,6 +6996,12 @@ export interface operations {
             /** @description Bad Request */
             400: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4908,6 +7011,12 @@ export interface operations {
             /** @description Unauthorized */
             401: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4917,6 +7026,12 @@ export interface operations {
             /** @description Forbidden */
             403: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4926,6 +7041,12 @@ export interface operations {
             /** @description Not Found */
             404: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4935,6 +7056,12 @@ export interface operations {
             /** @description Conflict */
             409: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4944,6 +7071,12 @@ export interface operations {
             /** @description Unprocessable Content */
             422: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4953,6 +7086,12 @@ export interface operations {
             /** @description Internal Server Error */
             500: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4962,6 +7101,12 @@ export interface operations {
             /** @description Service Unavailable */
             503: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4989,7 +7134,14 @@ export interface operations {
                  */
                 includeReviewData?: boolean;
             };
-            header?: never;
+            header?: {
+                /**
+                 * @description A UUID that uniquely identifies the request for tracing purposes.
+                 *     If none is provided in the request, the backend will generate one.
+                 * @example 1747481c-816c-4b60-af20-a61717a35067
+                 */
+                'x-request-id'?: string;
+            };
             path: {
                 organism: components['schemas']['Organism'];
             };
@@ -5000,6 +7152,12 @@ export interface operations {
             /** @description OK */
             200: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -5009,6 +7167,12 @@ export interface operations {
             /** @description Bad Request */
             400: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -5018,6 +7182,12 @@ export interface operations {
             /** @description Unauthorized */
             401: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -5027,6 +7197,12 @@ export interface operations {
             /** @description Forbidden */
             403: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -5036,6 +7212,12 @@ export interface operations {
             /** @description Not Found */
             404: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -5045,6 +7227,12 @@ export interface operations {
             /** @description Conflict */
             409: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -5054,6 +7242,12 @@ export interface operations {
             /** @description Unprocessable Content */
             422: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -5063,6 +7257,12 @@ export interface operations {
             /** @description Internal Server Error */
             500: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -5072,6 +7272,12 @@ export interface operations {
             /** @description Service Unavailable */
             503: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -5083,7 +7289,14 @@ export interface operations {
     getSubmittedData: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /**
+                 * @description A UUID that uniquely identifies the request for tracing purposes.
+                 *     If none is provided in the request, the backend will generate one.
+                 * @example 1747481c-816c-4b60-af20-a61717a35067
+                 */
+                'x-request-id'?: string;
+            };
             path: {
                 organism: components['schemas']['Organism'];
             };
@@ -5098,6 +7311,12 @@ export interface operations {
             /** @description OK */
             200: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -5107,6 +7326,12 @@ export interface operations {
             /** @description Bad Request */
             400: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -5116,6 +7341,12 @@ export interface operations {
             /** @description Unauthorized */
             401: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -5125,6 +7356,12 @@ export interface operations {
             /** @description Forbidden */
             403: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -5134,6 +7371,12 @@ export interface operations {
             /** @description Not Found */
             404: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -5143,6 +7386,12 @@ export interface operations {
             /** @description Conflict */
             409: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -5152,6 +7401,12 @@ export interface operations {
             /** @description Unprocessable Content */
             422: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -5161,6 +7416,12 @@ export interface operations {
             /** @description Internal Server Error */
             500: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -5170,6 +7431,12 @@ export interface operations {
             /** @description Service Unavailable */
             503: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -5191,7 +7458,14 @@ export interface operations {
                 statusesFilter?: ('RECEIVED' | 'IN_PROCESSING' | 'PROCESSED' | 'APPROVED_FOR_RELEASE')[];
                 compression?: 'ZSTD';
             };
-            header?: never;
+            header?: {
+                /**
+                 * @description A UUID that uniquely identifies the request for tracing purposes.
+                 *     If none is provided in the request, the backend will generate one.
+                 * @example 1747481c-816c-4b60-af20-a61717a35067
+                 */
+                'x-request-id'?: string;
+            };
             path: {
                 organism: components['schemas']['Organism'];
             };
@@ -5205,6 +7479,12 @@ export interface operations {
              */
             200: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     /** @description The total number of records sent in responseBody */
                     'x-total-records'?: number;
                     [name: string]: unknown;
@@ -5216,6 +7496,12 @@ export interface operations {
             /** @description Bad Request */
             400: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -5225,6 +7511,12 @@ export interface operations {
             /** @description Unauthorized */
             401: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -5234,6 +7526,12 @@ export interface operations {
             /** @description Forbidden */
             403: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -5243,6 +7541,12 @@ export interface operations {
             /** @description Not Found */
             404: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -5252,6 +7556,12 @@ export interface operations {
             /** @description Conflict */
             409: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -5261,6 +7571,12 @@ export interface operations {
             /** @description Unprocessable Content */
             422: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -5270,6 +7586,12 @@ export interface operations {
             /** @description Internal Server Error */
             500: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -5279,6 +7601,12 @@ export interface operations {
             /** @description Service Unavailable */
             503: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -5301,7 +7629,14 @@ export interface operations {
                 /** @description Number of entries per page, between 0 and 100. Use 0 to only retrieve the counts. */
                 size: number;
             };
-            header?: never;
+            header?: {
+                /**
+                 * @description A UUID that uniquely identifies the request for tracing purposes.
+                 *     If none is provided in the request, the backend will generate one.
+                 * @example 1747481c-816c-4b60-af20-a61717a35067
+                 */
+                'x-request-id'?: string;
+            };
             path: {
                 organism: components['schemas']['Organism'];
             };
@@ -5312,6 +7647,12 @@ export interface operations {
             /** @description OK */
             200: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -5321,6 +7662,12 @@ export interface operations {
             /** @description Bad Request */
             400: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -5330,6 +7677,12 @@ export interface operations {
             /** @description Unauthorized */
             401: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -5339,6 +7692,12 @@ export interface operations {
             /** @description Forbidden */
             403: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -5348,6 +7707,12 @@ export interface operations {
             /** @description Not Found */
             404: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -5357,6 +7722,12 @@ export interface operations {
             /** @description Conflict */
             409: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -5366,6 +7737,12 @@ export interface operations {
             /** @description Unprocessable Content */
             422: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -5375,6 +7752,12 @@ export interface operations {
             /** @description Internal Server Error */
             500: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -5384,6 +7767,12 @@ export interface operations {
             /** @description Service Unavailable */
             503: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -5395,7 +7784,14 @@ export interface operations {
     revise: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /**
+                 * @description A UUID that uniquely identifies the request for tracing purposes.
+                 *     If none is provided in the request, the backend will generate one.
+                 * @example 1747481c-816c-4b60-af20-a61717a35067
+                 */
+                'x-request-id'?: string;
+            };
             path: {
                 organism: components['schemas']['Organism'];
             };
@@ -5433,6 +7829,12 @@ export interface operations {
              */
             200: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -5442,6 +7844,12 @@ export interface operations {
             /** @description Bad Request */
             400: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -5451,6 +7859,12 @@ export interface operations {
             /** @description Unauthorized */
             401: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -5460,6 +7874,12 @@ export interface operations {
             /** @description Forbidden */
             403: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -5469,6 +7889,12 @@ export interface operations {
             /** @description Not Found */
             404: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -5478,6 +7904,12 @@ export interface operations {
             /** @description Conflict */
             409: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -5487,6 +7919,12 @@ export interface operations {
             /** @description Unprocessable Content */
             422: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -5496,6 +7934,12 @@ export interface operations {
             /** @description Internal Server Error */
             500: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -5505,6 +7949,12 @@ export interface operations {
             /** @description Service Unavailable */
             503: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -5516,7 +7966,14 @@ export interface operations {
     revoke: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /**
+                 * @description A UUID that uniquely identifies the request for tracing purposes.
+                 *     If none is provided in the request, the backend will generate one.
+                 * @example 1747481c-816c-4b60-af20-a61717a35067
+                 */
+                'x-request-id'?: string;
+            };
             path: {
                 organism: components['schemas']['Organism'];
             };
@@ -5531,6 +7988,12 @@ export interface operations {
             /** @description OK */
             200: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -5540,6 +8003,12 @@ export interface operations {
             /** @description Bad Request */
             400: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -5549,6 +8018,12 @@ export interface operations {
             /** @description Unauthorized */
             401: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -5558,6 +8033,12 @@ export interface operations {
             /** @description Forbidden */
             403: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -5567,6 +8048,12 @@ export interface operations {
             /** @description Not Found */
             404: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -5576,6 +8063,12 @@ export interface operations {
             /** @description Conflict */
             409: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -5585,6 +8078,12 @@ export interface operations {
             /** @description Unprocessable Content */
             422: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -5594,6 +8093,12 @@ export interface operations {
             /** @description Internal Server Error */
             500: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -5603,6 +8108,12 @@ export interface operations {
             /** @description Service Unavailable */
             503: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -5624,7 +8135,14 @@ export interface operations {
                 /** @description Mandatory when data use terms are set to 'RESTRICTED'. It is the date when the sequence entries will become 'OPEN'. Format: YYYY-MM-DD */
                 restrictedUntil?: string;
             };
-            header?: never;
+            header?: {
+                /**
+                 * @description A UUID that uniquely identifies the request for tracing purposes.
+                 *     If none is provided in the request, the backend will generate one.
+                 * @example 1747481c-816c-4b60-af20-a61717a35067
+                 */
+                'x-request-id'?: string;
+            };
             path: {
                 organism: components['schemas']['Organism'];
             };
@@ -5666,6 +8184,12 @@ export interface operations {
              */
             200: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -5675,6 +8199,12 @@ export interface operations {
             /** @description The data use terms type have not been provided, even though they are enabled for this Loculus instance. */
             400: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -5684,6 +8214,12 @@ export interface operations {
             /** @description Unauthorized */
             401: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -5693,6 +8229,12 @@ export interface operations {
             /** @description Forbidden */
             403: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -5702,6 +8244,12 @@ export interface operations {
             /** @description Not Found */
             404: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -5711,6 +8259,12 @@ export interface operations {
             /** @description Conflict */
             409: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -5720,6 +8274,12 @@ export interface operations {
             /** @description Unprocessable Content */
             422: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -5729,6 +8289,12 @@ export interface operations {
             /** @description Internal Server Error */
             500: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -5738,6 +8304,12 @@ export interface operations {
             /** @description Service Unavailable */
             503: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -5749,7 +8321,14 @@ export interface operations {
     submitEditedData: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /**
+                 * @description A UUID that uniquely identifies the request for tracing purposes.
+                 *     If none is provided in the request, the backend will generate one.
+                 * @example 1747481c-816c-4b60-af20-a61717a35067
+                 */
+                'x-request-id'?: string;
+            };
             path: {
                 organism: components['schemas']['Organism'];
             };
@@ -5764,6 +8343,12 @@ export interface operations {
             /** @description No Content */
             204: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content?: never;
@@ -5771,6 +8356,12 @@ export interface operations {
             /** @description Bad Request */
             400: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -5780,6 +8371,12 @@ export interface operations {
             /** @description Unauthorized */
             401: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -5789,6 +8386,12 @@ export interface operations {
             /** @description Forbidden */
             403: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -5798,6 +8401,12 @@ export interface operations {
             /** @description Not Found */
             404: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -5807,6 +8416,12 @@ export interface operations {
             /** @description Conflict */
             409: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -5816,6 +8431,12 @@ export interface operations {
             /** @description Unprocessable Content */
             422: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -5825,6 +8446,12 @@ export interface operations {
             /** @description Internal Server Error */
             500: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -5834,6 +8461,12 @@ export interface operations {
             /** @description Service Unavailable */
             503: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -5848,7 +8481,14 @@ export interface operations {
                 /** @description Name of the pipeline submitting the external metadata update. This should match the externalMetadataUpdater value of the externalMetadata fields (in the backend_config.json) that are being updated. */
                 externalMetadataUpdater: string;
             };
-            header?: never;
+            header?: {
+                /**
+                 * @description A UUID that uniquely identifies the request for tracing purposes.
+                 *     If none is provided in the request, the backend will generate one.
+                 * @example 1747481c-816c-4b60-af20-a61717a35067
+                 */
+                'x-request-id'?: string;
+            };
             path: {
                 organism: components['schemas']['Organism'];
             };
@@ -5863,6 +8503,12 @@ export interface operations {
             /** @description No Content */
             204: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content?: never;
@@ -5870,6 +8516,12 @@ export interface operations {
             /** @description On invalid NDJSON line. Rolls back the whole transaction. */
             400: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -5879,6 +8531,12 @@ export interface operations {
             /** @description Unauthorized */
             401: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -5888,6 +8546,12 @@ export interface operations {
             /** @description Forbidden */
             403: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -5897,6 +8561,12 @@ export interface operations {
             /** @description Not Found */
             404: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -5906,6 +8576,12 @@ export interface operations {
             /** @description Conflict */
             409: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -5918,6 +8594,12 @@ export interface operations {
              */
             422: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -5927,6 +8609,12 @@ export interface operations {
             /** @description Internal Server Error */
             500: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -5936,6 +8624,12 @@ export interface operations {
             /** @description Service Unavailable */
             503: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -5950,7 +8644,14 @@ export interface operations {
                 /** @description Version of the processing pipeline */
                 pipelineVersion: number;
             };
-            header?: never;
+            header?: {
+                /**
+                 * @description A UUID that uniquely identifies the request for tracing purposes.
+                 *     If none is provided in the request, the backend will generate one.
+                 * @example 1747481c-816c-4b60-af20-a61717a35067
+                 */
+                'x-request-id'?: string;
+            };
             path: {
                 organism: components['schemas']['Organism'];
             };
@@ -5965,6 +8666,12 @@ export interface operations {
             /** @description No Content */
             204: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content?: never;
@@ -5972,6 +8679,12 @@ export interface operations {
             /** @description On invalid NDJSON line. Rolls back the whole transaction. */
             400: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -5981,6 +8694,12 @@ export interface operations {
             /** @description Unauthorized */
             401: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -5990,6 +8709,12 @@ export interface operations {
             /** @description Forbidden */
             403: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -5999,6 +8724,12 @@ export interface operations {
             /** @description Not Found */
             404: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -6008,6 +8739,12 @@ export interface operations {
             /** @description Conflict */
             409: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -6021,6 +8758,12 @@ export interface operations {
              */
             422: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -6030,6 +8773,12 @@ export interface operations {
             /** @description Internal Server Error */
             500: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -6039,6 +8788,12 @@ export interface operations {
             /** @description Service Unavailable */
             503: {
                 headers: {
+                    /**
+                     * @description A UUID that uniquely identifies the request for tracing purposes.
+                     *     If none is provided in the request, the backend will generate one.
+                     * @example 1747481c-816c-4b60-af20-a61717a35067
+                     */
+                    'x-request-id'?: string;
                     [name: string]: unknown;
                 };
                 content: {
