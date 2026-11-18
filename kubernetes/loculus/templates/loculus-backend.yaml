@@ -48,10 +48,8 @@ spec:
           ports:
             - name: http
               containerPort: 8079
-            {{- if .Values.enableServiceMonitor }}
             - name: management
               containerPort: 8078
-            {{- end }}
           args:
             - "--loculus.enable-seqsets={{ $.Values.seqSets.enabled }}"
             {{- if $.Values.seqSets.crossRef }}
