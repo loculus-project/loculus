@@ -30,6 +30,7 @@ ProcessedMetadata = dict[str, ProcessedMetadataValue]
 InputMetadataValue = str | None
 InputMetadata = dict[str, InputMetadataValue]
 FastaId = str
+ProcessingAttemptId = str
 
 ProcessingAnnotationAlignment: Final = "alignment"
 
@@ -107,6 +108,10 @@ class ProcessingContext:
     group_id: int
     insdc_ingest_group_id: int
     submitted_at: str
+    # Identifies the claim, returned unchanged with the result
+    processing_attempt_id: ProcessingAttemptId
+    # Unix timestamp at which the claim expires
+    lease_until: int
 
     @property
     def is_insdc_ingest_group(self) -> bool:
@@ -172,6 +177,8 @@ Alerts = dict[AccessionVersion, Alert]
 class ProcessedEntry:
     accession: str
     version: int
+    # The claim id from extract-unprocessed-data, returned unchanged
+    processingAttemptId: ProcessingAttemptId  # noqa: N815
     data: ProcessedData
     errors: list[ProcessingAnnotation] = field(default_factory=list)
     warnings: list[ProcessingAnnotation] = field(default_factory=list)

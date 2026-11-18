@@ -62,7 +62,7 @@ class SubmitEndpointTest(
 
     @Test
     fun `GIVEN invalid authorization token THEN returns 401 Unauthorized`() {
-        expectUnauthorizedResponse(isModifyingRequest = true) { jwt ->
+        expectUnauthorizedResponse { jwt ->
             submissionControllerClient.submit(
                 DefaultFiles.metadataFile,
                 DefaultFiles.sequencesFile,
@@ -83,7 +83,7 @@ class SubmitEndpointTest(
         )
             .andExpect(status().isNotFound)
             .andExpect(content().contentType(APPLICATION_PROBLEM_JSON))
-            .andExpect(jsonPath("\$.detail", containsString("Group(s) $groupId do(es) not exist")))
+            .andExpect(jsonPath("\$.detail", containsString("Group $groupId does not exist")))
     }
 
     @Test

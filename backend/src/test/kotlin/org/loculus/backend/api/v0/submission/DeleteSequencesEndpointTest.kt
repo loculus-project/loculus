@@ -44,7 +44,7 @@ class DeleteSequencesEndpointTest(
 
     @Test
     fun `GIVEN invalid authorization token THEN returns 401 Unauthorized`() {
-        expectUnauthorizedResponse(isModifyingRequest = true) {
+        expectUnauthorizedResponse {
             client.deleteSequenceEntries(
                 scope = ALL,
                 accessionVersionsFilter = emptyList(),
