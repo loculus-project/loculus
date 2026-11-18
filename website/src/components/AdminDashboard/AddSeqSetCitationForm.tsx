@@ -1,12 +1,15 @@
 import { type FC, type FormEvent, useState } from 'react';
 import { toast } from 'react-toastify';
 
+import { getClientLogger } from '../../clientLogger';
 import useClientFlag from '../../hooks/isClient';
 import { BackendClient } from '../../services/backendClient';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import type { AdminSeqSetCitation } from '../../types/seqSetCitation';
 import { Button } from '../common/Button';
 import { Spinner } from '../common/Spinner';
+
+const logger = getClientLogger('AddSeqSetCitationForm');
 
 interface Props {
     clientConfig: ClientConfig;
@@ -69,7 +72,7 @@ export const AddSeqSetCitationForm: FC<Props> = ({ clientConfig, accessToken, on
     const [isFetchingDoi, setIsFetchingDoi] = useState(false);
     const [validationMessage, setValidationMessage] = useState('');
 
-    const backendClient = new BackendClient(clientConfig.backendUrl);
+    const backendClient = new BackendClient(clientConfig.backendUrl, logger);
 
     const resetForm = () => {
         setSourceDOI('');
