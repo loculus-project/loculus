@@ -1,12 +1,11 @@
-import { AxiosError } from 'axios';
 import { capitalCase } from 'change-case';
 import { type FC, type FormEvent, useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 
 import { getClientLogger } from '../../clientLogger';
 import { routes } from '../../routes/routes.ts';
+import { getErrorMessage } from '../../services/apiRequest.ts';
 import { seqSetCitationClientHooks } from '../../services/serviceHooks';
-import type { ProblemDetail } from '../../types/backend.ts';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import { type SeqSet, type SeqSetRecord } from '../../types/seqSetCitation';
 import { deserializeAccessionInput, serializeSeqSetRecords } from '../../utils/parseAccessionInput';
@@ -229,13 +228,9 @@ function useActionHooks(
                 location.href = redirectUrl;
             },
             onError: async (error: unknown) => {
-                await logger.info(`Failed to create seqSet. Error: '${JSON.stringify(error)})}'`);
-                if (error instanceof AxiosError) {
-                    const responseData = error.response?.data as ProblemDetail | undefined;
-                    if (responseData !== undefined) {
-                        openErrorFeedback(`Failed to create seqSet. ${responseData.title}. ${responseData.detail}`);
-                    }
-                }
+                const message = `Failed to create seqSet: ${getErrorMessage(error)}`;
+                await logger.info(message);
+                openErrorFeedback(message);
             },
         },
     );
@@ -248,13 +243,9 @@ function useActionHooks(
                 location.href = redirectUrl;
             },
             onError: async (error) => {
-                await logger.info(`Failed to update seqSet. Error: '${JSON.stringify(error)})}'`);
-                if (error instanceof AxiosError) {
-                    const responseData = error.response?.data as ProblemDetail | undefined;
-                    if (responseData !== undefined) {
-                        openErrorFeedback(`Failed to update seqSet. ${responseData.title}. ${responseData.detail}`);
-                    }
-                }
+                const message = `Failed to update seqSet: ${getErrorMessage(error)}`;
+                await logger.info(message);
+                openErrorFeedback(message);
             },
         },
     );
@@ -265,12 +256,9 @@ function useActionHooks(
                 setSeqSetRecordValidation('');
             },
             onError: async (error) => {
-                await logger.info(`Failed to validate seqSet records. Error: '${JSON.stringify(error)})}'`);
-                if (error instanceof AxiosError && error.response?.data !== undefined) {
-                    const responseData = error.response.data as ProblemDetail;
-                    const message = `${responseData.title}. ${responseData.detail}`;
-                    setSeqSetRecordValidation(message);
-                }
+                const message = getErrorMessage(error);
+                await logger.info(`Failed to validate seqSet records: ${message}`);
+                setSeqSetRecordValidation(message);
             },
         },
     );
