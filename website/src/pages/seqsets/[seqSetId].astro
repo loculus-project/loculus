@@ -1,27 +1,18 @@
 ---
-import { getRuntimeConfig, seqSetsAreEnabled } from '../../config';
-import { getInstanceLogger } from '../../logger';
-import { seqSets } from '../../types/seqSetCitation';
-
-const logger = getInstanceLogger('seqSetRedirect');
+import { seqSetsAreEnabled } from '../../config';
+import { SeqSetCitationClient } from '../../services/seqSetCitationClient';
 
 if (!seqSetsAreEnabled()) {
     return Astro.rewrite('/404');
 }
 
 const { seqSetId = '' } = Astro.params;
-const backendUrl = getRuntimeConfig().serverSide.backendUrl;
 
-try {
-    const response = await fetch(`${backendUrl}/get-seqset?seqSetId=${encodeURIComponent(seqSetId)}`);
-    if (response.ok) {
-        const versions = seqSets.parse(await response.json());
-        if (versions.length > 0) {
-            return Astro.redirect(`/seqsets/${seqSetId}.${Math.max(...versions.map((s) => s.seqSetVersion))}`);
-        }
-    }
-} catch (error) {
-    logger.error(`Failed to fetch versions for seqset ${seqSetId}: ${error}`);
+const versionsResult = await SeqSetCitationClient.create().getSeqSetVersions(seqSetId);
+
+if (versionsResult.isOk() && versionsResult.value.length > 0) {
+    const latestVersion = Math.max(...versionsResult.value.map((s) => s.seqSetVersion));
+    return Astro.redirect(`/seqsets/${seqSetId}.${latestVersion}`);
 }
 
 return Astro.rewrite('/404');

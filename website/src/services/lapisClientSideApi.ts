@@ -1,14 +1,43 @@
-import axios from 'axios';
+import { sendRequest } from './apiRequest.ts';
+import {
+    aggregatedResponse,
+    type AggregatedResponse,
+    detailsResponse,
+    type DetailsResponse,
+    type LapisRequest,
+} from '../types/lapis.ts';
 
-import type { DetailsResponse } from '../types/lapis.ts';
+/**
+ * Plain LAPIS requests for use outside of React hooks (or inside a custom `queryFn`).
+ * Prefer `lapisClientHooks` in components where a hook fits.
+ *
+ * Throws an `AxiosError` on HTTP/network errors and a `ResponseValidationError` if the response doesn't match.
+ */
 
-export async function fetchDetailsFromLapis(
+export function fetchLapisDetails(
     lapisUrl: string,
-    request: Record<string, unknown>,
+    request: LapisRequest,
+    signal?: AbortSignal,
 ): Promise<DetailsResponse> {
-    const response = await axios.post<DetailsResponse>(`${lapisUrl}/sample/details`, {
-        ...request,
-        dataFormat: 'json',
+    return sendRequest(lapisUrl, {
+        method: 'post',
+        path: '/sample/details',
+        data: request,
+        signal,
+        responseSchema: detailsResponse,
     });
-    return response.data;
+}
+
+export function fetchLapisAggregated(
+    lapisUrl: string,
+    request: LapisRequest,
+    signal?: AbortSignal,
+): Promise<AggregatedResponse> {
+    return sendRequest(lapisUrl, {
+        method: 'post',
+        path: '/sample/aggregated',
+        data: request,
+        signal,
+        responseSchema: aggregatedResponse,
+    });
 }

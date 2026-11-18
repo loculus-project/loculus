@@ -9,6 +9,7 @@ import { isAxiosError } from 'axios';
 import z from 'zod';
 
 import { apiPath, sendRequest, toFormData } from './apiRequest.ts';
+import { fetchLapisAggregated, fetchLapisDetails } from './lapisClientSideApi.ts';
 import {
     ACCESSION_FIELD,
     ACCESSION_VERSION_FIELD,
@@ -36,7 +37,6 @@ import {
     type UploadFiles,
 } from '../types/backend.ts';
 import {
-    aggregatedResponse,
     type AggregatedResponse,
     detailsResponse,
     type DetailsResponse,
@@ -348,26 +348,14 @@ export function lapisClientHooks(lapisUrl: string) {
     return {
         useAggregated() {
             return useMutation<AggregatedResponse, Error, LapisRequest>({
-                mutationFn: (request) =>
-                    sendRequest(lapisUrl, {
-                        method: 'post',
-                        path: '/sample/aggregated',
-                        data: request,
-                        responseSchema: aggregatedResponse,
-                    }),
+                mutationFn: (request) => fetchLapisAggregated(lapisUrl, request),
                 ...LAPIS_RETRY_OPTIONS,
             });
         },
 
         useDetails() {
             return useMutation<DetailsResponse, Error, LapisRequest>({
-                mutationFn: (request) =>
-                    sendRequest(lapisUrl, {
-                        method: 'post',
-                        path: '/sample/details',
-                        data: request,
-                        responseSchema: detailsResponse,
-                    }),
+                mutationFn: (request) => fetchLapisDetails(lapisUrl, request),
                 ...LAPIS_RETRY_OPTIONS,
             });
         },
