@@ -124,11 +124,20 @@ class GetReviewDataEndpointTest(
 
     @Test
     fun `review data requires bounded pagination`() {
-        for ((page, size) in listOf(null to null, 0 to null, null to 10, -1 to 10, 0 to 0, 0 to 101)) {
+        convenienceClient.prepareDataTo(Status.PROCESSED)
+        for ((page, size) in listOf(null to null, 0 to null, null to 10, -1 to 10, 0 to 101)) {
             client.getReviewData(page = page, size = size)
                 .andExpect(status().isBadRequest)
             client.getSequenceEntries(page = page, size = size, includeReviewData = true)
                 .andExpect(status().isBadRequest)
+        }
+        for (response in listOf(
+            client.getReviewData(page = 0, size = 0),
+            client.getSequenceEntries(page = 0, size = 0, includeReviewData = true),
+        )) {
+            response.andExpect(status().isOk)
+                .andExpect(jsonPath("$.sequenceEntries").isEmpty)
+                .andExpect(jsonPath("$.statusCounts.PROCESSED").value(10))
         }
     }
 

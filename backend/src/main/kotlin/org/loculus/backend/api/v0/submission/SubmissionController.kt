@@ -440,7 +440,7 @@ open class SubmissionController(
         @Parameter(
             deprecated = true,
             description = "Include compact review data and revision comparisons, without sequence strings. " +
-                "Requires page >= 0 and size between 1 and 100.",
+                "Requires page >= 0 and size between 0 and 100.",
         ) @RequestParam(defaultValue = "false") includeReviewData: Boolean,
     ): GetSequenceResponse = submissionDatabaseService.getSequences(
         authenticatedUser,
@@ -467,9 +467,9 @@ open class SubmissionController(
         @Parameter(description = "Page number, starting from 0.")
         @RequestParam
         @Min(0) page: Int,
-        @Parameter(description = "Number of entries per page, between 1 and 100.")
+        @Parameter(description = "Number of entries per page, between 0 and 100. Use 0 to only retrieve the counts.")
         @RequestParam
-        @Min(1)
+        @Min(0)
         @Max(100) size: Int,
     ): GetSequenceResponse = submissionDatabaseService.getSequences(
         authenticatedUser,
