@@ -13,7 +13,7 @@ RUN cargo install --git $REPO --rev $COMMIT
 FROM curlimages/curl:8.12.1 AS silo-downloader
 
 # must match the rhydb version in pyproject.toml
-ARG SILO_VERSION=0.17.4
+ARG SILO_VERSION=0.17.6
 ARG TARGETARCH
 
 RUN curl -fsSL "https://github.com/GenSpectrum/LAPIS-SILO/releases/download/v${SILO_VERSION}/silo-linux-${TARGETARCH}.tar.gz" \

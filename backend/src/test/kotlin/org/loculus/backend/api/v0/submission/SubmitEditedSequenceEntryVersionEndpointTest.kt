@@ -54,7 +54,7 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
 
     @Test
     fun `GIVEN invalid authorization token THEN returns 401 Unauthorized`() {
-        expectUnauthorizedResponse(isModifyingRequest = true) {
+        expectUnauthorizedResponse {
             client.submitEditedSequenceEntryVersion(
                 generateEditedData("1"),
                 jwt = it,

@@ -43,7 +43,7 @@ class GetSubmittedDataEndpointTest(
     @Test
     fun `GIVEN invalid authorization token THEN returns 401 Unauthorized`() {
         val groupId = groupManagementClient.createNewGroup().andGetGroupId()
-        expectUnauthorizedResponse(isModifyingRequest = true) {
+        expectUnauthorizedResponse {
             submissionControllerClient.getSubmittedData(groupId = groupId, jwt = it)
         }
     }

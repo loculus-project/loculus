@@ -17,6 +17,7 @@ type SubmissionFormProps = {
     group: Group;
     inputMode: InputMode;
     metadataTemplateFields: Map<string, InputField[]>;
+    authorsFields: string[];
     submissionDataTypes: SubmissionDataTypes;
     dataUseTermsEnabled: boolean;
     fileSharingConfig: FileSharingConfig;
@@ -30,6 +31,7 @@ export const SubmissionForm: FC<SubmissionFormProps> = ({
     group,
     inputMode,
     metadataTemplateFields,
+    authorsFields,
     submissionDataTypes,
     dataUseTermsEnabled,
     fileSharingConfig,
@@ -41,6 +43,7 @@ export const SubmissionForm: FC<SubmissionFormProps> = ({
                 instanceName={instanceName}
                 organism={organism}
                 metadataTemplateFields={metadataTemplateFields}
+                authorsFields={authorsFields}
                 clientConfig={clientConfig}
                 action='submit'
                 inputMode={inputMode}

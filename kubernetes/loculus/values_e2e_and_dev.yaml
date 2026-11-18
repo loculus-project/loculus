@@ -1,3 +1,4 @@
+dateFieldForGroupGraph: earliestReleaseDate
 secrets:
   service-accounts:
     type: raw

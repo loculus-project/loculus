@@ -26,12 +26,27 @@ jobs:
           environment-name: datasets
           create-args: -c conda-forge -c bioconda ncbi-datasets-cli s3cmd seqkit
       - name: Download NCBI Dataset and create tzst archive
-        shell: bash -l {0}
+        shell: bash -el {0}
         run: |
-          datasets download virus genome taxon ${{ inputs.taxon_id }} --no-progressbar --filename ${{ inputs.taxon_id }}.zip
+          # NCBI sometimes drops the connection mid-download, leaving a truncated zip.
+          # Wait long enough for transient server-side problems to clear before retrying.
+          max_attempts=2
+          for attempt in $(seq 1 "$max_attempts"); do
+            rm -f ${{ inputs.taxon_id }}.zip
+            if datasets download virus genome taxon ${{ inputs.taxon_id }} --no-progressbar --filename ${{ inputs.taxon_id }}.zip \
+              && unzip -tq ${{ inputs.taxon_id }}.zip; then
+              break
+            fi
+            if [ "$attempt" -eq "$max_attempts" ]; then
+              echo "::error::Download of taxon ${{ inputs.taxon_id }} failed after $max_attempts attempts"
+              exit 1
+            fi
+            echo "::warning::Download attempt $attempt of $max_attempts failed, retrying in 15 minutes"
+            sleep 900
+          done
           unzip -o ${{ inputs.taxon_id }}.zip
           tar -I 'zstd -T0 -18' -cvf ${{ inputs.taxon_id }}.tar.zst ncbi_dataset
-          cat md5sum.txt
+          md5sum -c --quiet md5sum.txt
           ls -lh ${{ inputs.taxon_id }}.* ncbi_dataset/data/*
           seqkit stats ncbi_dataset/data/genomic.fna
       - name: Create S3cmd config
@@ -45,7 +60,7 @@ jobs:
           verbosity = WARNING
           EOF
       - name: Upload to Object Storage
-        shell: bash -l {0}
+        shell: bash -el {0}
         run: |
           for file in ${{ inputs.taxon_id }}.zip ${{ inputs.taxon_id }}.tar.zst ; do
             s3cmd put "${file}" s3://loculus-public/mirror/"${file}"

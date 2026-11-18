@@ -120,7 +120,7 @@ defaultOrganismConfig: &defaultOrganismConfig
     # header: Grouping of fields in sequence details UI (default: "Other")
     # hideOnSequenceDetailsPage: Whether the field should be hidden on the sequence details page (default false)
     # customDisplay: Custom display dict for the field
-    #     type: Enum with values "link"
+    #     type: see `customDisplayTypes` in website/src/types/config.ts
     #     url: URL to link to with template __value__ for the field value: "https://www.ncbi.nlm.nih.gov/nuccore/__value__"
     ## SearchUI related
     # initiallyVisible: Whether it appear in searchUI by default (default false)
@@ -2878,7 +2878,7 @@ images:
     pullPolicy: Always
   lapis:
     repository: "ghcr.io/genspectrum/lapis"
-    tag: "0.9.2@sha256:a51fe27ec94af3470ee607b0680eadf381386615daf36e46beccd2435892e928"
+    tag: "0.9.3@sha256:92e83b49dc09b13638c5176c50a0b31765c7caaa549a75e4d8289425527a3a4a"
     pullPolicy: Always
   website:
     repository: "ghcr.io/loculus-project/website"
