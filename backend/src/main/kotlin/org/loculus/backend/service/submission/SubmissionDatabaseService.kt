@@ -1116,8 +1116,8 @@ class SubmissionDatabaseService(
         size: Int? = null,
         includeReviewData: Boolean = false,
     ): GetSequenceResponse {
-        if (includeReviewData && (page == null || page < 0 || size == null || size !in 1..100)) {
-            throw BadRequestException("includeReviewData requires page >= 0 and size between 1 and 100")
+        if (includeReviewData && (page == null || page < 0 || size == null || size !in 0..100)) {
+            throw BadRequestException("includeReviewData requires page >= 0 and size between 0 and 100")
         }
         log.info {
             "getting sequences for user ${authenticatedUser.username} " +

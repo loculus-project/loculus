@@ -97,6 +97,8 @@ updates:
     directory: preprocessing/nextclade
     schedule:
       interval: monthly
+    ignore:
+      - dependency-name: "nextclade"  # https://github.com/loculus-project/loculus/issues/7784
     groups:
       minorAndPatch:
         update-types:
@@ -115,6 +117,8 @@ updates:
     directory: ingest
     schedule:
       interval: monthly
+    ignore:
+      - dependency-name: "nextclade"  # https://github.com/loculus-project/loculus/issues/7784
     groups:
       minorAndPatch:
         update-types:

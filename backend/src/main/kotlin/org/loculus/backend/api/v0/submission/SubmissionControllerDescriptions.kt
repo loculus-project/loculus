@@ -96,9 +96,21 @@ When no constraints are applied, the endpoint returns all sequences from all gro
 If a filter is applied for a group the user is not a member of, the endpoint will return an error.
 Set includeReviewData=true to include processed metadata, annotations, file descriptors and revision
 comparisons for processed, non-revocation entries. Sequence strings are never included. This mode requires
-page >= 0 and size between 1 and 100. By default the lightweight response is unchanged.
+page >= 0 and size between 0 and 100. By default the lightweight response is unchanged.
 """
 
+const val GET_REVIEW_DATA_DESCRIPTION = """
+Retrieve one page of submitted accession versions with their statuses and the data needed to review
+them, filtered by groups, statuses and processing results.
+If no group filter is applied, entries from all groups the user is a member of are returned.
+If a filter is applied for a group the user is not a member of, the endpoint returns an error.
+Entries in status PROCESSED or APPROVED_FOR_RELEASE that are not revocations additionally carry their
+processed metadata, errors, warnings, file descriptors and, for revisions, a comparison with the previous
+version. Sequence strings are never included.
+The response also contains status counts and processing result counts. These are totals for the
+authorized groups and organism, independent of the status/result filters and pagination.
+Requires page >= 0 and size between 0 and 100. Use size=0 to only retrieve the counts.
+"""
 const val APPROVE_PROCESSED_DATA_DESCRIPTION = """
 Approve processed accession versions and set the status to 'APPROVED_FOR_RELEASE'.
 This can only be done for accession versions in status 'PROCESSED' that the user is allowed to edit and
