@@ -1,6 +1,7 @@
 """Backend API client for Loculus."""
 
 from pathlib import Path
+from typing import Any
 
 import httpx
 from pydantic import ValidationError
@@ -11,6 +12,9 @@ from .models import (
     AccessionVersion,
     GroupInfo,
     InstanceInfo,
+    ProcessingResult,
+    SequencesResponse,
+    SequenceStatus,
     SubmissionResponse,
     UnprocessedData,
 )
@@ -234,6 +238,106 @@ class BackendClient:
             raise RuntimeError(f"Invalid response format: {e}") from e
         except Exception as e:
             raise RuntimeError(f"Failed to get groups: {e}") from e
+
+    def get_review_sequences(
+        self,
+        username: str,
+        organism: str,
+        group_ids: list[int] | None = None,
+        statuses: list[SequenceStatus] | None = None,
+        results: list[ProcessingResult] | None = None,
+        page: int = 0,
+        size: int = 50,
+    ) -> SequencesResponse:
+        """Fetch sequences for review with filtering and pagination."""
+        headers = self._get_headers(username)
+
+        params: dict[str, Any] = {
+            "page": page,
+            "size": size,
+        }
+
+        if group_ids:
+            params["groupIdsFilter"] = ",".join(map(str, group_ids))
+
+        if statuses:
+            params["statusesFilter"] = ",".join(status.value for status in statuses)
+
+        if results:
+            params["processingResultFilter"] = ",".join(
+                result.value for result in results
+            )
+
+        try:
+            response = self.client.get(
+                f"/{organism}/get-sequences", headers=headers, params=params
+            )
+            response.raise_for_status()
+        except httpx.HTTPStatusError as e:
+            raise RuntimeError(
+                f"Failed to get sequences: HTTP {e.response.status_code}"
+            ) from e
+        except Exception as e:
+            raise RuntimeError(f"Failed to get sequences: {e}") from e
+
+        try:
+            return SequencesResponse.from_api_response(response.json())
+        except (KeyError, TypeError, ValueError) as e:
+            raise RuntimeError(f"Invalid response format: {e}") from e
+
+    def get_review_sequence_details(
+        self, username: str, organism: str, accession: str, version: int
+    ) -> dict[str, Any]:
+        """Fetch detailed sequence information for review."""
+        headers = self._get_headers(username)
+
+        try:
+            response = self.client.get(
+                f"/{organism}/get-data-to-edit/{accession}/{version}",
+                headers=headers,
+            )
+            response.raise_for_status()
+            return response.json()
+        except httpx.HTTPStatusError as e:
+            raise RuntimeError(
+                f"Failed to get sequence details: HTTP {e.response.status_code}"
+            ) from e
+        except Exception as e:
+            raise RuntimeError(f"Failed to get sequence details: {e}") from e
+
+    def approve_sequences_for_release(
+        self,
+        username: str,
+        organism: str,
+        group_ids: list[int],
+        accession_versions: list[dict[str, Any]] | None = None,
+        scope: str = "ALL",
+    ) -> list[dict[str, Any]]:
+        """Approve sequences for release."""
+        headers = self._get_headers(username)
+
+        data: dict[str, Any] = {
+            "groupIdsFilter": group_ids,
+            "scope": scope,
+        }
+
+        if accession_versions:
+            data["accessionVersionsFilter"] = accession_versions
+
+        try:
+            response = self.client.post(
+                f"/{organism}/approve-processed-data",
+                headers=headers,
+                json=data,
+            )
+            response.raise_for_status()
+            return response.json()
+        except httpx.HTTPStatusError as e:
+            raise RuntimeError(
+                f"Failed to approve sequences: HTTP {e.response.status_code}"
+            ) from e
+        except Exception as e:
+            raise RuntimeError(f"Failed to approve sequences: {e}") from e
 
     def close(self) -> None:
         """Close the HTTP client."""
