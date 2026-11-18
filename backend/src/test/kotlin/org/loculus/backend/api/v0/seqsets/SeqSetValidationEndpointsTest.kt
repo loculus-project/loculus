@@ -168,43 +168,6 @@ class SeqSetValidationEndpointsTest(
     }
 
     @Test
-    fun `WHEN updating seqSet with the same records in a different order THEN returns unprocessable entity`() {
-        val accessions = submissionConvenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
-        val focal = """{"accession": "${accessions[0].accession}", "type": "loculus", "isFocal": true}"""
-        val background = """{"accession": "${accessions[1].accession}", "type": "loculus", "isFocal": false}"""
-        val seqSetResult = client.createSeqSet(seqSetRecords = "[$focal, $background]")
-            .andExpect(status().isOk)
-            .andReturn()
-        val seqSetId = JsonPath.read<String>(seqSetResult.response.contentAsString, "$.seqSetId")
-
-        client.updateSeqSet(seqSetId = seqSetId, seqSetRecords = "[$background, $focal]")
-            .andExpect(status().isUnprocessableContent())
-            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
-            .andExpect(
-                jsonPath(
-                    "\$.detail",
-                    containsString("SeqSet update must contain at least one change"),
-                ),
-            )
-    }
-
-    @Test
-    fun `WHEN updating seqSet changing only whether a record is focal THEN returns ok`() {
-        val accessions = submissionConvenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
-        val first = """{"accession": "${accessions[0].accession}", "type": "loculus", "isFocal": true}"""
-        val second = """{"accession": "${accessions[1].accession}", "type": "loculus", "isFocal": false}"""
-        val secondNowFocal = """{"accession": "${accessions[1].accession}", "type": "loculus", "isFocal": true}"""
-        val seqSetResult = client.createSeqSet(seqSetRecords = "[$first, $second]")
-            .andExpect(status().isOk)
-            .andReturn()
-        val seqSetId = JsonPath.read<String>(seqSetResult.response.contentAsString, "$.seqSetId")
-
-        client.updateSeqSet(seqSetId = seqSetId, seqSetRecords = "[$first, $secondNowFocal]")
-            .andExpect(status().isOk)
-            .andExpect(jsonPath("\$.seqSetVersion").value(2))
-    }
-
-    @Test
     fun `WHEN writing seqSet with missing records THEN returns unprocessable entity`() {
         client.createSeqSet(seqSetRecords = "[]")
             .andExpect(status().isUnprocessableContent())

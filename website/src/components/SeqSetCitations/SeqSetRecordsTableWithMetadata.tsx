@@ -4,7 +4,7 @@ import { type FC, useMemo } from 'react';
 
 import { versionStatuses } from '../../types/lapis';
 import type { ClientConfig } from '../../types/runtimeConfig';
-import type { SeqSetRecord } from '../../types/seqSetCitation';
+import { type SeqSetRecord, SeqSetRecordType } from '../../types/seqSetCitation';
 import { Spinner } from '../common/Spinner';
 
 type RecordMetadata = {
@@ -148,6 +148,10 @@ export const SeqSetRecordsTableWithMetadata: FC<SeqSetRecordsTableWithMetadataPr
         return null;
     }
 
+    const accessionOutlink = {
+        [SeqSetRecordType.loculus]: (acc: string) => `/seq/${acc}`,
+    };
+
     const sortedSeqRecords = useMemo(() => {
         return [...seqSetRecords].sort((a: SeqSetRecord, b: SeqSetRecord) => {
             const x = a[sortByKey];
@@ -172,7 +176,7 @@ export const SeqSetRecordsTableWithMetadata: FC<SeqSetRecordsTableWithMetadataPr
                 {sortedSeqRecords.map((seqSetRecord, index) => {
                     const metadata = metadataMap?.get(seqSetRecord.accession);
                     const handleRowClick = () => {
-                        window.location.href = `/seq/${seqSetRecord.accession}`;
+                        window.location.href = accessionOutlink[seqSetRecord.type](seqSetRecord.accession);
                     };
                     return (
                         <tr

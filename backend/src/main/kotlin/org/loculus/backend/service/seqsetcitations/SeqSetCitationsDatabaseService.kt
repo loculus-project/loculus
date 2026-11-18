@@ -265,7 +265,12 @@ class SeqSetCitationsDatabaseService(
             // Focal first, then newest accessions first. A fixed order lets LAPIS cache queries built from this list.
             .orderBy(SeqSetRecordsTable.isFocal to SortOrder.DESC, SeqSetRecordsTable.accession to SortOrder.DESC)
             .map {
-                SeqSetRecord(it[SeqSetRecordsTable.accession], it[SeqSetRecordsTable.isFocal])
+                SeqSetRecord(
+                    it[SeqSetRecordsTable.seqSetRecordId],
+                    it[SeqSetRecordsTable.accession],
+                    it[SeqSetRecordsTable.type],
+                    it[SeqSetRecordsTable.isFocal],
+                )
             }
 
         return selectedSeqSetRecords
@@ -687,11 +692,17 @@ class SeqSetCitationsDatabaseService(
         newSeqSetRecords: List<SubmittedSeqSetRecord>,
         newSeqSetDescription: String?,
     ) {
-        val newRecords = newSeqSetRecords.map { SeqSetRecord(it.accession, it.isFocal) }
+        val oldSubmittedSeqSetRecords = oldSeqSetRecords.map {
+            SubmittedSeqSetRecord(
+                it.accession,
+                it.type,
+                it.isFocal,
+            )
+        }
 
         if (oldSeqSet.name == newSeqSetName &&
             oldSeqSet.description.orEmpty() == newSeqSetDescription.orEmpty() &&
-            oldSeqSetRecords.toSet() == newRecords.toSet()
+            oldSubmittedSeqSetRecords == newSeqSetRecords
         ) {
             throw UnprocessableEntityException("SeqSet update must contain at least one change")
         }
