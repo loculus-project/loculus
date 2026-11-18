@@ -20,7 +20,7 @@ import { TableColumnSelectorModal } from './TableColumnSelectorModal.tsx';
 import { useSearchPageState } from './useSearchPageState.ts';
 import { type QueryState } from './useStateSyncedWithUrlQueryParams.ts';
 import { getLapisUrl } from '../../config.ts';
-import { fetchDetailsFromLapis } from '../../services/lapisClientSideApi.ts';
+import { fetchLapisDetails } from '../../services/lapisClientSideApi.ts';
 import { lapisClientHooks } from '../../services/serviceHooks.ts';
 import { DATA_USE_TERMS_FIELD, pageSize } from '../../settings';
 import type { Group } from '../../types/backend.ts';
@@ -224,7 +224,7 @@ const InnerSearchFullUI = ({
     const linkOutSequenceCount = downloadFilter.sequenceCount() ?? totalSequences;
 
     const fetchAccessions = useCallback(async (): Promise<string[]> => {
-        const response = await fetchDetailsFromLapis(lapisUrl, {
+        const response = await fetchLapisDetails(lapisUrl, {
             ...lapisSearchParameters,
             fields: [schema.primaryKey],
             limit: MAX_SUBMITTED_DATA_DOWNLOAD_ENTRIES + 1,

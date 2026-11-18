@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
-import axios from 'axios';
 import { type FC, useMemo } from 'react';
 
-import { versionStatuses } from '../../types/lapis';
+import { fetchLapisDetails } from '../../services/lapisClientSideApi';
+import { type LapisRequest, versionStatuses } from '../../types/lapis';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import type { SeqSetRecord } from '../../types/seqSetCitation';
 import { Spinner } from '../common/Spinner';
@@ -28,17 +28,12 @@ type SeqSetRecordsTableWithMetadataProps = {
 
 async function queryLapisDetails(
     lapisUrl: string,
-    filter: Record<string, unknown>,
+    filter: LapisRequest,
     fields: string[],
 ): Promise<Record<string, unknown>[]> {
     try {
-        const response = await axios.post(`${lapisUrl}/sample/details`, {
-            ...filter,
-            fields,
-            dataFormat: 'json',
-        });
-        const responseData = response.data as { data?: Record<string, unknown>[] } | undefined;
-        return responseData?.data ?? [];
+        const response = await fetchLapisDetails(lapisUrl, { ...filter, fields });
+        return response.data;
     } catch (_error) {
         return [];
     }

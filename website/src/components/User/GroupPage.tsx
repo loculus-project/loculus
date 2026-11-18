@@ -1,5 +1,4 @@
 import { useQuery } from '@tanstack/react-query';
-import axios from 'axios';
 import { type FC, type FormEvent, useMemo, useState, type ReactNode } from 'react';
 
 import { CumulativeSubmissionsChart, type TimeSeriesData } from './CumulativeSubmissionsChart.tsx';
@@ -8,6 +7,7 @@ import type { Organism } from '../../config.ts';
 import { useGroupPageHooks } from '../../hooks/useGroupOperations.ts';
 import { routes } from '../../routes/routes.ts';
 import type { ContinueSubmissionIntent } from '../../routes/routes.ts';
+import { fetchLapisAggregated } from '../../services/lapisClientSideApi.ts';
 import { GROUP_ID_FIELD, IS_REVOCATION_FIELD, VERSION_STATUS_FIELD } from '../../settings.ts';
 import type { Address, Group, GroupDetails } from '../../types/backend.ts';
 import { versionStatuses } from '../../types/lapis.ts';
@@ -323,14 +323,13 @@ async function fetchSequenceCounts(groupId: number, clientConfig: ClientConfig, 
                 return;
             }
             try {
-                const response = await axios.post(`${url}/sample/aggregated`, {
+                const response = await fetchLapisAggregated(url, {
                     [GROUP_ID_FIELD]: groupId,
                     [VERSION_STATUS_FIELD]: versionStatuses.latestVersion,
                     [IS_REVOCATION_FIELD]: 'false',
                     fields: [],
                 });
-                const count = (response.data as { data?: { count?: number }[] }).data?.[0]?.count ?? 0;
-                counts[key] = count;
+                counts[key] = response.data[0]?.count ?? 0;
             } catch (error) {
                 void logger.error(`Failed to fetch sequence count for ${key}: ${JSON.stringify(error)}`);
                 counts[key] = 0;
@@ -355,18 +354,17 @@ async function fetchTimeSeriesData(
                 return;
             }
             try {
-                const response = await axios.post(`${url}/sample/aggregated`, {
+                const response = await fetchLapisAggregated(url, {
                     [GROUP_ID_FIELD]: groupId,
                     [VERSION_STATUS_FIELD]: versionStatuses.latestVersion,
                     [IS_REVOCATION_FIELD]: 'false',
                     fields: [metadataField],
                 });
-                const rawData = (response.data as { data?: Record<string, unknown>[] }).data ?? [];
-                data[key] = rawData
+                data[key] = response.data
                     .filter((d) => d[metadataField])
                     .map((d) => ({
                         date: String(d[metadataField]),
-                        count: typeof d.count === 'number' ? d.count : 0,
+                        count: d.count,
                     }))
                     .sort((a, b) => a.date.localeCompare(b.date));
             } catch (error) {
