@@ -15,7 +15,7 @@ dependencies:
   - ijson=3.6.0
   - jsonlines=4.0.0
   - ncbi-datasets-cli=18.39.0
-  - nextclade=3.25.1
+  - nextclade=3.24.0
   - orjsonl=1.0.0
   - pandas=3.0.6
   - psycopg2=2.9.13
