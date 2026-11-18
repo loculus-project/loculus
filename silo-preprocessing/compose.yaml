@@ -1,0 +1,29 @@
+version: "3.8"
+
+services:
+  lapis-silo:
+    image: ghcr.io/genspectrum/lapis-silo:latest
+    entrypoint:
+      [
+        "sh",
+        "/silo_import_job.sh",
+      ]
+    environment:
+      BACKEND_BASE_URL: "https://backend-main.loculus.org/ebola-zaire"
+      KEYCLOAK_TOKEN_URL: "https://authentication-main.loculus.org/realms/loculus/protocol/openid-connect/token"
+      KEYCLOAK_CLIENT_ID: "test-cli"
+      IMPORT_JOB_USER: "silo_import_job"
+      IMPORT_JOB_USER_PASSWORD: "silo_import_job"
+    volumes:
+      - type: bind
+        source: ./config
+        target: /config
+      - type: bind
+        source: ./output
+        target: /preprocessing/output
+      - type: bind
+        source: ./input
+        target: /preprocessing/input
+      - type: bind
+        source: ./silo_import_job.sh
+        target: /silo_import_job.sh
