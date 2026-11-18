@@ -80,6 +80,8 @@ class FastaReader(inputStream: InputStream) :
         )
     }
 
+    // Printable ASCII (' ' = 0x20 through '~' = 0x7E) plus tab. Line breaks don't need to be allowed
+    // because the sequence is assembled from lines returned by readLine(), which strips them.
     private fun isAllowedSequenceCharacter(char: Char): Boolean = char == '\t' || char in ' '..'~'
 
     override fun close() {
