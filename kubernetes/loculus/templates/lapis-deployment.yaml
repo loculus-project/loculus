@@ -10,7 +10,9 @@ metadata:
   name: loculus-lapis-{{ $key }}
   annotations:
 spec:
+  {{- if not $.Values.autoscaling.enabled }}
   replicas: {{ $.Values.replicas.lapis | default 1 }}
+  {{- end }}
   selector:
     matchLabels:
       app: loculus
