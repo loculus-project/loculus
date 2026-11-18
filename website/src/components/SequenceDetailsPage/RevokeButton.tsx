@@ -5,7 +5,6 @@ import { toast } from 'react-toastify';
 import { backendClientHooks } from '../../services/serviceHooks';
 import { approveAllDataScope } from '../../types/backend';
 import type { ClientConfig } from '../../types/runtimeConfig';
-import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
 import { stringifyMaybeAxiosError } from '../../utils/stringifyMaybeAxiosError';
 import { Button } from '../common/Button';
 import { ModalBox } from '../common/ModalBox';
@@ -33,10 +32,7 @@ const InnerRevokeButton: FC<RevokeSequenceEntryProps> = ({
     const hooks = backendClientHooks(clientConfig);
 
     const useApproveProcessedData = hooks.useApproveProcessedData(
-        {
-            headers: createAuthorizationHeader(accessToken),
-            params: { organism },
-        },
+        { organism, accessToken },
         {
             onSuccess: () => {
                 toast.update(REVOCATION_TOAST_ID, {
@@ -59,10 +55,7 @@ const InnerRevokeButton: FC<RevokeSequenceEntryProps> = ({
     );
 
     const useRevokeSequenceEntries = hooks.useRevokeSequences(
-        {
-            headers: createAuthorizationHeader(accessToken),
-            params: { organism },
-        },
+        { organism, accessToken },
         {
             onSuccess: (data) => {
                 useApproveProcessedData.mutate({

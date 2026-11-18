@@ -1,9 +1,8 @@
-import { ok } from 'neverthrow';
+import axios from 'axios';
 import { describe, expect, test, vi } from 'vitest';
 
 import { LapisClient } from './lapisClient.ts';
 import type { Schema } from '../types/config.ts';
-import type { InsertionsResponse } from '../types/lapis.ts';
 
 describe('LapisClient', () => {
     test('getSequenceInsertions should order by sequence and position', async () => {
@@ -18,18 +17,24 @@ describe('LapisClient', () => {
             submissionDataTypes: { consensusSequences: false },
         };
         const client = LapisClient.create('http://lapis.example', schema);
-        const spy = vi
-            .spyOn(client, 'call')
-            .mockResolvedValue(ok({ data: [], info: { dataVersion: '' } } as InsertionsResponse));
+        const spy = vi.spyOn(axios, 'request').mockResolvedValue({ data: { data: [], info: { dataVersion: '' } } });
 
-        await client.getSequenceInsertions('LOC_123', 'nucleotide');
+        const result = await client.getSequenceInsertions('LOC_123', 'nucleotide');
 
-        expect(spy).toHaveBeenCalledWith('nucleotideInsertions', {
-            [schema.primaryKey]: 'LOC_123',
-            orderBy: [
-                { field: 'sequenceName', type: 'ascending' },
-                { field: 'position', type: 'ascending' },
-            ],
-        });
+        expect(result.isOk()).toBe(true);
+        expect(spy).toHaveBeenCalledWith(
+            expect.objectContaining({
+                baseURL: 'http://lapis.example',
+                url: '/sample/nucleotideInsertions',
+                method: 'post',
+                data: {
+                    [schema.primaryKey]: 'LOC_123',
+                    orderBy: [
+                        { field: 'sequenceName', type: 'ascending' },
+                        { field: 'position', type: 'ascending' },
+                    ],
+                },
+            }),
+        );
     });
 });

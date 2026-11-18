@@ -1,11 +1,14 @@
-import { useQuery, type UseQueryResult } from '@tanstack/react-query';
-import { Zodios } from '@zodios/core';
-import { ZodiosHooks, type ZodiosHooksInstance } from '@zodios/react';
+import {
+    useMutation,
+    type UseMutationOptions,
+    useQuery,
+    type UseQueryOptions,
+    type UseQueryResult,
+} from '@tanstack/react-query';
 import { isAxiosError } from 'axios';
+import z from 'zod';
 
-import { backendApi } from './backendApi.ts';
-import { lapisApi } from './lapisApi.ts';
-import { seqSetCitationApi } from './seqSetCitationApi.ts';
+import { apiPath, sendRequest, toFormData } from './apiRequest.ts';
 import {
     ACCESSION_FIELD,
     ACCESSION_VERSION_FIELD,
@@ -14,58 +17,406 @@ import {
     VERSION_FIELD,
     VERSION_STATUS_FIELD,
 } from '../settings.ts';
-import { problemDetail } from '../types/backend.ts';
-import { sequenceEntryHistory, type SequenceEntryHistory, type SequenceRequest } from '../types/lapis.ts';
+import {
+    accessionVersion,
+    type AccessionVersion,
+    type AccessionVersionsFilterWithApprovalScope,
+    type AccessionVersionsFilterWithDeletionScope,
+    type EditedSequenceEntryData,
+    getSequencesResponse,
+    type GetSequencesResponse,
+    problemDetail,
+    type RevocationRequest,
+    sequenceEntryToEdit,
+    type SequenceEntryToEdit,
+    type SetDataUseTermsRequest,
+    submissionIdMapping,
+    type SubmissionIdMapping,
+    type SubmitFiles,
+    type UploadFiles,
+} from '../types/backend.ts';
+import {
+    aggregatedResponse,
+    type AggregatedResponse,
+    detailsResponse,
+    type DetailsResponse,
+    lineageDefinition,
+    type LineageDefinition,
+    type LapisRequest,
+    sequenceEntryHistory,
+    type SequenceEntryHistory,
+} from '../types/lapis.ts';
 import type { ClientConfig } from '../types/runtimeConfig.ts';
+import {
+    type CreateSeqSetRequest,
+    seqSetIdAndVersion,
+    type SeqSetIdAndVersion,
+    type UpdateSeqSetRequest,
+    type ValidateSeqSetRecordsRequest,
+} from '../types/seqSetCitation.ts';
+import { createAuthorizationHeader } from '../utils/createAuthorizationHeader.ts';
 import type { SeqSetRecord } from '../types/seqSetCitation.ts';
 import { fastaEntries } from '../utils/parseFasta.ts';
 import { isAlignedSequence, isUnalignedSequence, type SequenceType } from '../utils/sequenceTypeHelpers.ts';
 
 /**
- * Retry configuration for LAPIS mutations.
+ * Retry configuration for LAPIS requests.
  * LAPIS queries are safe to retry even though they use POST, as they only fetch data.
  * This configuration enables automatic retry on transient network errors.
- * Applied automatically by lapisClientHooks wrappers.
  */
 const LAPIS_RETRY_OPTIONS = {
     retry: 6,
     retryDelay: (attemptIndex: number) => Math.min(250 * 2 ** attemptIndex, 30000),
 };
 
-export function backendClientHooks(clientConfig: ClientConfig) {
-    return new ZodiosHooks('loculus', new Zodios(clientConfig.backendUrl, backendApi));
-}
+/**
+ * Errors are AxiosErrors for HTTP/network errors and ResponseValidationErrors for unexpected response bodies.
+ */
+type QueryOptions<TData> = Omit<UseQueryOptions<TData, Error, TData>, 'queryKey' | 'queryFn'>;
+type MutationOptions<TData, TVariables> = Omit<UseMutationOptions<TData, Error, TVariables>, 'mutationFn'>;
 
-export function lapisClientHooks(lapisUrl: string) {
-    const zodiosHooks = new ZodiosHooks('lapis', new Zodios(lapisUrl, lapisApi, { transform: false }));
+type OrganismRequestConfig = { organism: string; accessToken: string };
+
+export function backendClientHooks(clientConfig: ClientConfig) {
+    const { backendUrl } = clientConfig;
+
     return {
-        // All POST hooks must include retry options manually to enable retries
-        useAggregated: () => zodiosHooks.useAggregated({}, { ...LAPIS_RETRY_OPTIONS }),
-        useDetails: () => zodiosHooks.useDetails({}, { ...LAPIS_RETRY_OPTIONS }),
-        useLineageDefinition: zodiosHooks.useLineageDefinition,
-        useGetSequence(accessionVersion: string, sequenceType: SequenceType, useLapisMultiSegmentedEndpoint: boolean) {
-            return getSequenceHook(
-                zodiosHooks,
-                {
-                    accessionVersion,
-                    dataFormat: 'FASTA',
-                },
-                sequenceType,
-                useLapisMultiSegmentedEndpoint,
-            );
+        useGetDataToEdit(
+            {
+                organism,
+                accessToken,
+                accession,
+                version,
+            }: OrganismRequestConfig & { accession: string; version: number },
+            options: QueryOptions<SequenceEntryToEdit> = {},
+        ) {
+            return useQuery<SequenceEntryToEdit, Error>({
+                queryKey: ['getDataToEdit', backendUrl, organism, accession, version, accessToken],
+                queryFn: ({ signal }) =>
+                    sendRequest(backendUrl, {
+                        method: 'get',
+                        path: apiPath`/${organism}/get-data-to-edit/${accession}/${version}`,
+                        headers: createAuthorizationHeader(accessToken),
+                        signal,
+                        responseSchema: sequenceEntryToEdit,
+                    }),
+                ...options,
+            });
+        },
+
+        useGetSequences(
+            { organism, accessToken, queries }: OrganismRequestConfig & { queries: GetSequencesQueries },
+            options: QueryOptions<GetSequencesResponse> = {},
+        ) {
+            return useQuery<GetSequencesResponse, Error>({
+                queryKey: ['getSequences', backendUrl, organism, queries, accessToken],
+                queryFn: ({ signal }) =>
+                    sendRequest(backendUrl, {
+                        method: 'get',
+                        path: apiPath`/${organism}/get-sequences`,
+                        params: queries,
+                        headers: createAuthorizationHeader(accessToken),
+                        signal,
+                        responseSchema: getSequencesResponse,
+                    }),
+                ...options,
+            });
+        },
+
+        useSubmit(
+            { organism, accessToken }: OrganismRequestConfig,
+            options: MutationOptions<SubmissionIdMapping[], SubmitFiles> = {},
+        ) {
+            return useMutation({
+                mutationFn: (files: SubmitFiles) =>
+                    sendRequest(backendUrl, {
+                        method: 'post',
+                        path: apiPath`/${organism}/submit`,
+                        data: toFormData(files),
+                        headers: createAuthorizationHeader(accessToken),
+                        responseSchema: z.array(submissionIdMapping),
+                    }),
+                ...options,
+            });
+        },
+
+        useRevise(
+            { organism, accessToken }: OrganismRequestConfig,
+            options: MutationOptions<SubmissionIdMapping[], UploadFiles> = {},
+        ) {
+            return useMutation({
+                mutationFn: (files: UploadFiles) =>
+                    sendRequest(backendUrl, {
+                        method: 'post',
+                        path: apiPath`/${organism}/revise`,
+                        data: toFormData(files),
+                        headers: createAuthorizationHeader(accessToken),
+                        responseSchema: z.array(submissionIdMapping),
+                    }),
+                ...options,
+            });
+        },
+
+        useRevokeSequences(
+            { organism, accessToken }: OrganismRequestConfig,
+            options: MutationOptions<SubmissionIdMapping[], RevocationRequest> = {},
+        ) {
+            return useMutation({
+                mutationFn: (request: RevocationRequest) =>
+                    sendRequest(backendUrl, {
+                        method: 'post',
+                        path: apiPath`/${organism}/revoke`,
+                        data: request,
+                        headers: createAuthorizationHeader(accessToken),
+                        responseSchema: z.array(submissionIdMapping),
+                    }),
+                ...options,
+            });
+        },
+
+        useSubmitReviewedSequence(
+            { organism, accessToken }: OrganismRequestConfig,
+            options: MutationOptions<void, EditedSequenceEntryData> = {},
+        ) {
+            return useMutation({
+                mutationFn: (data: EditedSequenceEntryData) =>
+                    sendRequest(backendUrl, {
+                        method: 'post',
+                        path: apiPath`/${organism}/submit-edited-data`,
+                        data,
+                        headers: createAuthorizationHeader(accessToken),
+                    }),
+                ...options,
+            });
+        },
+
+        useApproveProcessedData(
+            { organism, accessToken }: OrganismRequestConfig,
+            options: MutationOptions<AccessionVersion[], AccessionVersionsFilterWithApprovalScope> = {},
+        ) {
+            return useMutation({
+                mutationFn: (filter: AccessionVersionsFilterWithApprovalScope) =>
+                    sendRequest(backendUrl, {
+                        method: 'post',
+                        path: apiPath`/${organism}/approve-processed-data`,
+                        data: filter,
+                        headers: createAuthorizationHeader(accessToken),
+                        responseSchema: z.array(accessionVersion),
+                    }),
+                ...options,
+            });
+        },
+
+        useDeleteSequences(
+            { organism, accessToken }: OrganismRequestConfig,
+            options: MutationOptions<AccessionVersion[], AccessionVersionsFilterWithDeletionScope> = {},
+        ) {
+            return useMutation({
+                mutationFn: (filter: AccessionVersionsFilterWithDeletionScope) =>
+                    sendRequest(backendUrl, {
+                        method: 'delete',
+                        path: apiPath`/${organism}/delete-sequence-entry-versions`,
+                        data: filter,
+                        headers: createAuthorizationHeader(accessToken),
+                        responseSchema: z.array(accessionVersion),
+                    }),
+                ...options,
+            });
+        },
+
+        useSetDataUseTerms(
+            { accessToken }: { accessToken: string },
+            options: MutationOptions<void, SetDataUseTermsRequest> = {},
+        ) {
+            return useMutation({
+                mutationFn: (request: SetDataUseTermsRequest) =>
+                    sendRequest(backendUrl, {
+                        method: 'put',
+                        path: '/data-use-terms',
+                        data: request,
+                        headers: createAuthorizationHeader(accessToken),
+                    }),
+                ...options,
+            });
         },
     };
 }
 
-function getSequenceHook(
-    hooks: ZodiosHooksInstance<typeof lapisApi>,
-    request: SequenceRequest, // these are request PARAMETERS, not requests
-    sequenceType: SequenceType,
-    isMultiSegmented: boolean,
-) {
-    const rawResult = selectSequenceHook(hooks, request, sequenceType, isMultiSegmented);
-    const { data, error, isLoading } = rawResult;
+export type GetSequencesQueries = {
+    includeReviewData?: boolean;
+    /** comma separated list of group ids */
+    groupIdsFilter?: string;
+    statusesFilter?: string;
+    processingResultFilter?: string;
+    /** 0-indexed */
+    page?: number;
+    size?: number;
+};
 
+type SeqSetRequestConfig = { accessToken: string; seqSetId: string; seqSetVersion: number };
+
+export function seqSetCitationClientHooks(clientConfig: ClientConfig) {
+    const { backendUrl } = clientConfig;
+
+    return {
+        useCreateSeqSet(
+            { accessToken }: { accessToken: string },
+            options: MutationOptions<SeqSetIdAndVersion, CreateSeqSetRequest> = {},
+        ) {
+            return useMutation({
+                mutationFn: (request: CreateSeqSetRequest) =>
+                    sendRequest(backendUrl, {
+                        method: 'post',
+                        path: '/create-seqset',
+                        data: request,
+                        headers: createAuthorizationHeader(accessToken),
+                        responseSchema: seqSetIdAndVersion,
+                    }),
+                ...options,
+            });
+        },
+
+        useUpdateSeqSet(
+            { accessToken }: { accessToken: string },
+            options: MutationOptions<SeqSetIdAndVersion, UpdateSeqSetRequest> = {},
+        ) {
+            return useMutation({
+                mutationFn: (request: UpdateSeqSetRequest) =>
+                    sendRequest(backendUrl, {
+                        method: 'put',
+                        path: '/update-seqset',
+                        data: request,
+                        headers: createAuthorizationHeader(accessToken),
+                        responseSchema: seqSetIdAndVersion,
+                    }),
+                ...options,
+            });
+        },
+
+        useValidateSeqSetRecords(
+            { accessToken }: { accessToken: string },
+            options: MutationOptions<{ valid: boolean }, ValidateSeqSetRecordsRequest> = {},
+        ) {
+            return useMutation({
+                mutationFn: (records: ValidateSeqSetRecordsRequest) =>
+                    sendRequest(backendUrl, {
+                        method: 'post',
+                        path: '/validate-seqset-records',
+                        data: records,
+                        headers: createAuthorizationHeader(accessToken),
+                        responseSchema: z.object({ valid: z.boolean() }),
+                    }),
+                ...options,
+            });
+        },
+
+        useCreateSeqSetDOI(
+            { accessToken, seqSetId, seqSetVersion }: SeqSetRequestConfig,
+            options: MutationOptions<SeqSetIdAndVersion, void> = {},
+        ) {
+            return useMutation({
+                mutationFn: () =>
+                    sendRequest(backendUrl, {
+                        method: 'post',
+                        path: '/create-seqset-doi',
+                        params: { seqSetId, version: seqSetVersion },
+                        headers: createAuthorizationHeader(accessToken),
+                        responseSchema: seqSetIdAndVersion,
+                    }),
+                ...options,
+            });
+        },
+
+        useDeleteSeqSet(
+            { accessToken, seqSetId, seqSetVersion }: SeqSetRequestConfig,
+            options: MutationOptions<void, void> = {},
+        ) {
+            return useMutation({
+                mutationFn: () =>
+                    sendRequest(backendUrl, {
+                        method: 'delete',
+                        path: '/delete-seqset',
+                        params: { seqSetId, version: seqSetVersion },
+                        headers: createAuthorizationHeader(accessToken),
+                    }),
+                ...options,
+            });
+        },
+    };
+}
+
+export function lapisClientHooks(lapisUrl: string) {
+    return {
+        useAggregated() {
+            return useMutation<AggregatedResponse, Error, LapisRequest>({
+                mutationFn: (request) =>
+                    sendRequest(lapisUrl, {
+                        method: 'post',
+                        path: '/sample/aggregated',
+                        data: request,
+                        responseSchema: aggregatedResponse,
+                    }),
+                ...LAPIS_RETRY_OPTIONS,
+            });
+        },
+
+        useDetails() {
+            return useMutation<DetailsResponse, Error, LapisRequest>({
+                mutationFn: (request) =>
+                    sendRequest(lapisUrl, {
+                        method: 'post',
+                        path: '/sample/details',
+                        data: request,
+                        responseSchema: detailsResponse,
+                    }),
+                ...LAPIS_RETRY_OPTIONS,
+            });
+        },
+
+        useLineageDefinition(column: string, options: QueryOptions<LineageDefinition> = {}) {
+            return useQuery<LineageDefinition, Error>({
+                queryKey: ['lineageDefinition', lapisUrl, column],
+                queryFn: ({ signal }) =>
+                    sendRequest(lapisUrl, {
+                        method: 'get',
+                        path: apiPath`/sample/lineageDefinition/${column}`,
+                        signal,
+                        responseSchema: lineageDefinition,
+                    }),
+                ...options,
+            });
+        },
+
+        useGetSequence(accessionVersion: string, sequenceType: SequenceType, useLapisMultiSegmentedEndpoint: boolean) {
+            const path = sequencesPath(sequenceType, useLapisMultiSegmentedEndpoint);
+            const request = { accessionVersion, dataFormat: 'FASTA' };
+            const { data, error, isLoading } = useQuery<string, Error>({
+                queryKey: ['sequences', lapisUrl, path, request],
+                queryFn: ({ signal }) =>
+                    sendRequest(lapisUrl, { method: 'post', path, data: request, signal, responseSchema: z.string() }),
+                ...LAPIS_RETRY_OPTIONS,
+            });
+            return parseSequenceResult(data, error, isLoading);
+        },
+    };
+}
+
+function sequencesPath(sequenceType: SequenceType, isMultiSegmented: boolean) {
+    const name = sequenceType.name.lapisName;
+    if (isUnalignedSequence(sequenceType)) {
+        return isMultiSegmented
+            ? apiPath`/sample/unalignedNucleotideSequences/${name}`
+            : '/sample/unalignedNucleotideSequences';
+    }
+    if (isAlignedSequence(sequenceType)) {
+        return isMultiSegmented
+            ? apiPath`/sample/alignedNucleotideSequences/${name}`
+            : '/sample/alignedNucleotideSequences';
+    }
+    return apiPath`/sample/alignedAminoAcidSequences/${name}`;
+}
+
+function parseSequenceResult(data: string | undefined, error: Error | null, isLoading: boolean) {
     if (data === undefined) {
         if (isAxiosError(error)) {
             const maybeProblemDetail = error.response?.data?.error ?? error.response?.data; // eslint-disable-line @typescript-eslint/no-unsafe-member-access
@@ -96,77 +447,30 @@ function getSequenceHook(
     };
 }
 
-function selectSequenceHook(
-    hooks: ZodiosHooksInstance<typeof lapisApi>,
-    request: SequenceRequest,
-    sequenceType: SequenceType,
-    isMultiSegmented: boolean,
-) {
-    if (isUnalignedSequence(sequenceType)) {
-        return isMultiSegmented
-            ? hooks.useUnalignedNucleotideSequencesMultiSegment(request, {
-                  params: { segment: sequenceType.name.lapisName },
-                  ...LAPIS_RETRY_OPTIONS,
-              })
-            : hooks.useUnalignedNucleotideSequences(request, {}, { ...LAPIS_RETRY_OPTIONS });
-    }
-
-    if (isAlignedSequence(sequenceType)) {
-        return isMultiSegmented
-            ? hooks.useAlignedNucleotideSequencesMultiSegment(request, {
-                  params: { segment: sequenceType.name.lapisName },
-                  ...LAPIS_RETRY_OPTIONS,
-              })
-            : hooks.useAlignedNucleotideSequences(request, {}, { ...LAPIS_RETRY_OPTIONS });
-    }
-
-    return hooks.useAlignedAminoAcidSequences(request, {
-        params: { gene: sequenceType.name.lapisName },
-        ...LAPIS_RETRY_OPTIONS,
-    });
-}
-
-export function seqSetCitationClientHooks(clientConfig: ClientConfig) {
-    return new ZodiosHooks('loculus', new Zodios(clientConfig.backendUrl, seqSetCitationApi));
-}
-
-/**
- * Query for all records of a SeqSet version, fetched in the browser. Response validation is off because zodios'
- * async validation of a large record list costs hundreds of MB (#7752).
- */
-export function seqSetRecordsQueryOptions(clientConfig: ClientConfig, seqSetId: string, seqSetVersion: number) {
-    return {
-        queryKey: ['seqset-records', clientConfig.backendUrl, seqSetId, seqSetVersion],
-        queryFn: (): Promise<SeqSetRecord[]> =>
-            new Zodios(clientConfig.backendUrl, seqSetCitationApi, { validate: false }).getSeqSetRecords({
-                params: { seqSetId, version: seqSetVersion },
-            }),
-        staleTime: Infinity,
-        retry: 1,
-    };
-}
-
 export function useSequenceEntryHistory(
     lapisUrl: string,
     accession: string | undefined,
 ): UseQueryResult<SequenceEntryHistory, Error> {
     return useQuery({
         queryKey: ['sequence-entry-history', lapisUrl, accession],
-        queryFn: async (): Promise<SequenceEntryHistory> => {
-            const client = new Zodios(lapisUrl, lapisApi, { transform: false });
-
-            // @ts-expect-error Zod issue: https://github.com/colinhacks/zod/issues/3136
-            const response = await client.details({
-                accession: accession!,
-                fields: [
-                    ACCESSION_VERSION_FIELD,
-                    ACCESSION_FIELD,
-                    VERSION_FIELD,
-                    VERSION_STATUS_FIELD,
-                    IS_REVOCATION_FIELD,
-                    SUBMITTED_AT_FIELD,
-                ],
-                orderBy: [{ field: VERSION_FIELD, type: 'ascending' }],
+        queryFn: async ({ signal }): Promise<SequenceEntryHistory> => {
+            const response = await sendRequest(lapisUrl, {
+                method: 'post',
+                path: '/sample/details',
+                data: {
+                    accession: accession!,
+                    fields: [
+                        ACCESSION_VERSION_FIELD,
+                        ACCESSION_FIELD,
+                        VERSION_FIELD,
+                        VERSION_STATUS_FIELD,
+                        IS_REVOCATION_FIELD,
+                        SUBMITTED_AT_FIELD,
+                    ],
+                    orderBy: [{ field: VERSION_FIELD, type: 'ascending' }],
+                } satisfies LapisRequest,
+                signal,
+                responseSchema: detailsResponse,
             });
 
             const parseResult = sequenceEntryHistory.safeParse(response.data);

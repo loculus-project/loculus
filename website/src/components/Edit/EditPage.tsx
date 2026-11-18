@@ -1,4 +1,3 @@
-import { isErrorFromAlias } from '@zodios/core';
 import { type FC, useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
 
@@ -7,7 +6,7 @@ import { EditableMetadata, MetadataForm, SubmissionIdRow, Subtitle } from './Met
 import { SequencesForm } from './SequencesForm.tsx';
 import { getClientLogger } from '../../clientLogger.ts';
 import { routes } from '../../routes/routes.ts';
-import { backendApi } from '../../services/backendApi.ts';
+import { isProblemDetailError } from '../../services/apiRequest.ts';
 import { backendClientHooks } from '../../services/serviceHooks.ts';
 import { type FilesByCategory, type SequenceEntryToEdit, approvedForReleaseStatus } from '../../types/backend.ts';
 import { type FileSharingConfig, type InputField, type SubmissionDataTypes } from '../../types/config.ts';
@@ -17,7 +16,6 @@ import {
     type SequenceEntryHistory,
 } from '../../types/lapis.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
-import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
 import { getAccessionVersionString, parseAccessionVersionFromString } from '../../utils/extractAccessionVersion.ts';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { SequenceEntryHistoryMenu } from '../SequenceDetailsPage/SequenceEntryHistoryMenu.tsx';
@@ -56,10 +54,7 @@ const logger = getClientLogger('EditPage');
  * Extracts the detail field from a backend error response
  */
 function getErrorDetail(error: unknown): string {
-    if (
-        isErrorFromAlias(backendApi, 'revise', error) ||
-        isErrorFromAlias(backendApi, 'submitReviewedSequence', error)
-    ) {
+    if (isProblemDetailError(error)) {
         return error.response.data.detail;
     }
     return JSON.stringify(error);
@@ -311,10 +306,7 @@ function useSubmitRevision(
     openErrorFeedback: (message: string) => void,
 ) {
     return backendClientHooks(clientConfig).useRevise(
-        {
-            params: { organism },
-            headers: createAuthorizationHeader(accessToken),
-        },
+        { organism, accessToken },
         {
             onSuccess: async () => {
                 await logger.info('Successfully submitted revision for ' + getAccessionVersionString(reviewData));
@@ -340,10 +332,7 @@ function useSubmitEdit(
     openErrorFeedback: (message: string) => void,
 ) {
     return backendClientHooks(clientConfig).useSubmitReviewedSequence(
-        {
-            headers: createAuthorizationHeader(accessToken),
-            params: { organism },
-        },
+        { organism, accessToken },
         {
             onSuccess: async () => {
                 await logger.info('Successfully submitted edited data ' + getAccessionVersionString(reviewData));

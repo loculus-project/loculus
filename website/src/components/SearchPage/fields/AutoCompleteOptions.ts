@@ -193,14 +193,7 @@ const createLineageOptionsHook = (
             data: lineageDefinition,
             isLoading: definitionIsLoading,
             error: definitionEndpointError,
-        } = lapisClientHooks(lapisUrl).useLineageDefinition(
-            {
-                params: {
-                    column: fieldName,
-                },
-            },
-            {},
-        );
+        } = lapisClientHooks(lapisUrl).useLineageDefinition(fieldName);
 
         const unaggregatedCounts = new Map<string, number>();
 
