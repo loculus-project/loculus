@@ -17,7 +17,6 @@ const seqSet: SeqSet = {
 
 const records = Array.from({ length: 25 }, (_, i) => ({
     accession: `LOC_${String(i).padStart(6, '0')}.1`,
-
     isFocal: true,
 }));
 
