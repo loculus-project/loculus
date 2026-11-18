@@ -5,10 +5,9 @@ import {
     type UseQueryOptions,
     type UseQueryResult,
 } from '@tanstack/react-query';
-import axios from 'axios';
 import z from 'zod';
 
-import { apiPath, extractProblemDetail, sendRequest, toFormData } from './apiRequest.ts';
+import { apiPath, extractProblemDetail, sendRequest, toFormData, unvalidated } from './apiRequest.ts';
 import { fetchLapisAggregated, fetchLapisDetails } from './lapisClientSideApi.ts';
 import {
     ACCESSION_FIELD,
@@ -351,13 +350,14 @@ export function seqSetCitationClientHooks(clientConfig: ClientConfig) {
 export function seqSetRecordsQueryOptions(clientConfig: ClientConfig, seqSetId: string, seqSetVersion: number) {
     return {
         queryKey: ['seqset-records', clientConfig.backendUrl, seqSetId, seqSetVersion],
-        queryFn: async (): Promise<SeqSetRecord[]> => {
-            const response = await axios.get<SeqSetRecord[]>('/get-seqset-records', {
-                baseURL: clientConfig.backendUrl,
+        queryFn: ({ signal }: { signal?: AbortSignal }) =>
+            sendRequest(clientConfig.backendUrl, {
+                method: 'get',
+                path: '/get-seqset-records',
                 params: { seqSetId, version: seqSetVersion },
-            });
-            return response.data;
-        },
+                signal,
+                responseSchema: unvalidated<SeqSetRecord[]>(),
+            }),
         staleTime: Infinity,
         retry: 1,
     };

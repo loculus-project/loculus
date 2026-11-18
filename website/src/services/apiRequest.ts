@@ -1,5 +1,5 @@
 import axios, { type AxiosError, type AxiosResponse, isAxiosError, type Method } from 'axios';
-import type { z } from 'zod';
+import { z } from 'zod';
 
 import { problemDetail, type ProblemDetail } from '../types/backend.ts';
 
@@ -81,6 +81,12 @@ export async function sendRequest<T>(
     }
     return parsed.data;
 }
+
+/**
+ * A `responseSchema` that accepts any response without checking it, typed as `T`.
+ * Only use it when validation is too expensive, e.g. for very large responses, and say why at the callsite.
+ */
+export const unvalidated = <T>(): z.ZodType<T> => z.custom<T>();
 
 /**
  * Converts an object to multipart/form-data. Values that aren't files are converted to strings.
