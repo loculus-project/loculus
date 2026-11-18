@@ -196,6 +196,11 @@ def regex_error(
     )
 
 
+def strip_if_str(value: str | None) -> str | None:
+    """Strip leading/trailing whitespace from strings, leave None unchanged."""
+    return value.strip() if isinstance(value, str) else value
+
+
 @dataclass
 class DateRange:
     date_range_lower: datetime
@@ -370,7 +375,7 @@ class ProcessingFunctions:
         If in future, return warning
         Expects input_data to be an ordered dictionary with a single key "date"
         """
-        date = input_data["date"]
+        date = strip_if_str(input_data["date"])
 
         if not date:
             return RawProcessingResult()
@@ -412,7 +417,7 @@ class ProcessingFunctions:
         if not args:
             args = {"fieldType": "dateRangeString"}
 
-        input_date_str = input_data["date"]
+        input_date_str = strip_if_str(input_data["date"])
         release_date_str = input_data.get("releaseDate", "") or ""
         try:
             release_date = dateutil.parse(release_date_str).replace(tzinfo=pytz.utc)
@@ -558,7 +563,7 @@ class ProcessingFunctions:
             date: str, date string to parse
             release_date: str, optional release date to compare against if None use today
         """
-        date_str = input_data["date"]
+        date_str = strip_if_str(input_data["date"])
 
         if not date_str:
             return RawProcessingResult()
@@ -620,7 +625,7 @@ class ProcessingFunctions:
         external_services: ExternalServices,
     ) -> RawProcessingResult:
         """Parse a timestamp string, e.g. 2022-11-01T00:00:00Z and return a YYYY-MM-DD string"""
-        timestamp = input_data["timestamp"]
+        timestamp = strip_if_str(input_data["timestamp"])
 
         if not timestamp:
             return RawProcessingResult()
