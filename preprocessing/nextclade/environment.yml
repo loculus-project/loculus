@@ -8,7 +8,7 @@ dependencies:
   - ca-certificates=2026.10.23 # >=2026.10.19 drops distrusted emSign ECC Root CA - G3
   - certifi=2026.10.23
   - biopython=1.88
-  - nextclade=3.28.0
+  - nextclade=3.24.0
   - pip=25.2
   - uv=0.13.7
   - pyyaml=6.0.3

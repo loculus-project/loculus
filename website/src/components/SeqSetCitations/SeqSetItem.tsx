@@ -1,4 +1,3 @@
-import MUIPagination from '@mui/material/Pagination';
 import { useQuery } from '@tanstack/react-query';
 import { AxiosError } from 'axios';
 import { type FC, useState } from 'react';
@@ -18,6 +17,7 @@ import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader
 import { getThemeColor } from '../../utils/getThemeColor';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { Button } from '../common/Button.tsx';
+import { Pagination } from '../common/Pagination.tsx';
 import { Spinner } from '../common/Spinner.tsx';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 import MdiDotsGrid from '~icons/mdi/dots-grid';
@@ -235,19 +235,14 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
                         )}
                     </div>
                 )}
-                {maxPages > 1 ? (
-                    <MUIPagination
-                        className='my-4 w-full flex justify-center'
-                        page={page}
-                        count={maxPages}
-                        color='primary'
-                        variant='outlined'
-                        shape='rounded'
-                        onChange={(_, newPage) => {
-                            setPage(newPage);
-                        }}
-                    />
-                ) : null}
+                <Pagination
+                    className='my-4 w-full flex justify-center'
+                    page={page}
+                    count={maxPages}
+                    onChange={(newPage) => {
+                        setPage(newPage);
+                    }}
+                />
             </SeqSetSection>
         </div>
     );
