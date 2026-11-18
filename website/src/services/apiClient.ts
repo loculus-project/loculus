@@ -3,18 +3,26 @@ import { err, ok, type Result } from 'neverthrow';
 import type { z } from 'zod';
 
 import { type ApiRequest, ResponseValidationError, sendRequest } from './apiRequest.ts';
-import { type InstanceLogger } from '../logger.ts';
 import { problemDetail, type ProblemDetail } from '../types/backend.ts';
 
 /**
- * Base class for server-side API clients. Requests return a neverthrow `Result` instead of throwing.
+ * The subset of a logger that `ApiClient` needs.
+ * Satisfied by both the server-side `InstanceLogger` and the browser `ClientLogger`.
+ */
+export type ApiClientLogger = {
+    error: (message: string) => unknown;
+    info: (message: string) => unknown;
+};
+
+/**
+ * Base class for API clients. Requests return a neverthrow `Result` instead of throwing.
  */
 export class ApiClient {
     protected constructor(
         protected readonly baseUrl: string,
         /** Extracts the (unvalidated) problem detail from an error response body */
         private readonly tryToExtractProblemDetail: (responseData: unknown) => unknown,
-        private readonly logger: InstanceLogger,
+        private readonly logger: ApiClientLogger,
         private readonly serviceName: string,
     ) {}
 
@@ -79,7 +87,7 @@ export class ApiClient {
                 return {
                     type: 'about:blank',
                     title: error.message,
-                    status: 0,
+                    status: error.response.status,
                     detail: `Unknown error from ${this.serviceName}`,
                     instance: path,
                 };

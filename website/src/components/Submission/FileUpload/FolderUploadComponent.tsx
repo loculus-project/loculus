@@ -11,6 +11,7 @@ import type {
     Uploaded,
     UploadStatus,
 } from './fileUpload';
+import { getClientLogger } from '../../../clientLogger';
 import useClientFlag from '../../../hooks/isClient';
 import { BackendClient } from '../../../services/backendClient';
 import { type FileCategory, type FileSharingConfig } from '../../../types/config';
@@ -22,6 +23,8 @@ import type { InputMode } from '../FormOrUploadWrapper';
 import LucideFile from '~icons/lucide/file';
 import LucideFolderUp from '~icons/lucide/folder-up';
 import LucideLoader from '~icons/lucide/loader';
+
+const logger = getClientLogger('FolderUploadComponent');
 
 type FolderUploadComponentProps = {
     fileCategory: FileCategory;
@@ -96,7 +99,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
 }) => {
     const [isDragging, setIsDragging] = useState(false);
 
-    const backendClient = new BackendClient(clientConfig.backendUrl);
+    const backendClient = new BackendClient(clientConfig.backendUrl, logger);
 
     function updatePartProgress(fileId: string, uploadedParts: number, totalParts: number) {
         setFileUploadState((state) => {

@@ -18,6 +18,9 @@ const addCitationRequest: AddSeqSetCitationRequest = {
 
 const addCitationUrl = `${testConfig.serverSide.backendUrl}/admin/add-seqset-citation`;
 
+const noopLogger = { error: () => undefined, info: () => undefined };
+const createClient = () => new BackendClient(testConfig.serverSide.backendUrl, noopLogger);
+
 describe('BackendClient', () => {
     test('returns a ProblemDetail received from the backend', async () => {
         const problemDetail: ProblemDetail = {
@@ -37,10 +40,7 @@ describe('BackendClient', () => {
             ),
         );
 
-        const result = await new BackendClient(testConfig.serverSide.backendUrl).addSeqSetCitation(
-            'access-token',
-            addCitationRequest,
-        );
+        const result = await createClient().addSeqSetCitation('access-token', addCitationRequest);
 
         expect(result._unsafeUnwrapErr()).toEqual(problemDetail);
     });
@@ -57,16 +57,14 @@ describe('BackendClient', () => {
             ),
         );
 
-        const result = await new BackendClient(testConfig.serverSide.backendUrl).addSeqSetCitation(
-            'access-token',
-            addCitationRequest,
-        );
+        const result = await createClient().addSeqSetCitation('access-token', addCitationRequest);
 
         expect(result._unsafeUnwrapErr()).toEqual({
             type: 'about:blank',
-            title: 'bad response',
+            title: 'Request failed with status code 503',
             status: 503,
-            detail: 'Failed to make request: Request failed with status code 503',
+            detail: 'Unknown error from backend',
+            instance: '/admin/add-seqset-citation',
         });
     });
 });

@@ -3,10 +3,13 @@ import { toast } from 'react-toastify';
 
 import { AddSeqSetCitationForm } from './AddSeqSetCitationForm';
 import { AdminSeqSetCitationsTable } from './AdminSeqSetCitationsTable';
+import { getClientLogger } from '../../clientLogger';
 import { BackendClient } from '../../services/backendClient';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import type { AdminSeqSetCitation } from '../../types/seqSetCitation';
 import { displayConfirmationDialog } from '../ConfirmationDialog';
+
+const logger = getClientLogger('AdminSeqSetCitationsSection');
 
 interface Props {
     citations: AdminSeqSetCitation[];
@@ -17,7 +20,7 @@ interface Props {
 export const AdminSeqSetCitationsSection: FC<Props> = ({ citations, clientConfig, accessToken }) => {
     const [citationList, setCitationList] = useState(citations);
 
-    const backendClient = new BackendClient(clientConfig.backendUrl);
+    const backendClient = new BackendClient(clientConfig.backendUrl, logger);
 
     const handleCitationAdded = (citation: AdminSeqSetCitation) => {
         setCitationList((current) => [

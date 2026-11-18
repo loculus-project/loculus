@@ -1,17 +1,15 @@
-import axios, { type Method } from 'axios';
-import { err, ok, Result } from 'neverthrow';
-import { z, ZodSchema } from 'zod';
+import { z } from 'zod';
 
+import { ApiClient, type ApiClientLogger } from './apiClient.ts';
+import { apiPath } from './apiRequest.ts';
 import {
     dataUseTermsHistoryEntry,
     getSequencesResponse,
     info,
-    problemDetail,
     requestMultipartUploadResponse,
     sequenceEntryToEdit,
     pipelineVersionStatistics,
     currentPipelineVersions,
-    type ProblemDetail,
     type CompleteMultipartUploadRequest,
 } from '../types/backend.ts';
 import { adminSeqSetCitation, adminSeqSetCitations, type AddSeqSetCitationRequest } from '../types/seqSetCitation.ts';
@@ -24,40 +22,42 @@ type GetSequencesParameters = {
     page?: number | undefined;
     size?: number | undefined;
 };
-export class BackendClient {
-    constructor(private readonly url: string) {}
+
+/**
+ * Client for the Loculus backend, usable both server-side and in the browser.
+ * Server-side code should use `createBackendClient()` from `backendClientFactory.ts`;
+ * browser code should pass a `ClientLogger` (see `getClientLogger`).
+ */
+export class BackendClient extends ApiClient {
+    constructor(backendUrl: string, logger: ApiClientLogger) {
+        super(backendUrl, (responseData) => responseData, logger, 'backend');
+    }
 
     public getDataToEdit(organism: string, token: string, accession: string, version: string | number) {
-        return this.request(
-            `/${organism}/get-data-to-edit/${accession}/${version}`,
-            'GET',
-            sequenceEntryToEdit,
-            createAuthorizationHeader(token),
-            undefined,
-            undefined,
-        );
+        return this.request({
+            method: 'get',
+            path: apiPath`/${organism}/get-data-to-edit/${accession}/${version}`,
+            headers: createAuthorizationHeader(token),
+            responseSchema: sequenceEntryToEdit,
+        });
     }
 
     public getDataUseTermsHistory(accession: string) {
-        return this.request(
-            `/data-use-terms/${accession}`,
-            'GET',
-            z.array(dataUseTermsHistoryEntry),
-            undefined,
-            undefined,
-            undefined,
-        );
+        return this.request({
+            method: 'get',
+            path: apiPath`/data-use-terms/${accession}`,
+            responseSchema: z.array(dataUseTermsHistoryEntry),
+        });
     }
 
     public getSequences(token: string, organism: string, params: GetSequencesParameters) {
-        return this.request(
-            `/${organism}/get-sequences`,
-            'GET',
-            getSequencesResponse,
-            createAuthorizationHeader(token),
-            undefined,
+        return this.request({
+            method: 'get',
+            path: apiPath`/${organism}/get-sequences`,
             params,
-        );
+            headers: createAuthorizationHeader(token),
+            responseSchema: getSequencesResponse,
+        });
     }
 
     /**
@@ -69,18 +69,13 @@ export class BackendClient {
      * @returns A list of file IDs with lists of presigned URLs for each part.
      */
     public requestMultipartUpload(token: string, groupId: number, numberFiles: number, numberParts: number) {
-        return this.request(
-            '/files/request-multipart-upload',
-            'POST',
-            requestMultipartUploadResponse,
-            createAuthorizationHeader(token),
-            undefined,
-            {
-                groupId,
-                numberFiles,
-                numberParts,
-            },
-        );
+        return this.request({
+            method: 'post',
+            path: '/files/request-multipart-upload',
+            params: { groupId, numberFiles, numberParts },
+            headers: createAuthorizationHeader(token),
+            responseSchema: requestMultipartUploadResponse,
+        });
     }
 
     /**
@@ -89,18 +84,17 @@ export class BackendClient {
      * @param fileIdsAndEtags List of file IDs with their corresponding ETags.
      */
     public completeMultipartUpload(token: string, fileIdsAndEtags: CompleteMultipartUploadRequest) {
-        return this.request(
-            '/files/complete-multipart-upload',
-            'POST',
-            z.unknown(),
-            createAuthorizationHeader(token),
-            fileIdsAndEtags,
-            undefined,
-        );
+        return this.request({
+            method: 'post',
+            path: '/files/complete-multipart-upload',
+            data: fileIdsAndEtags,
+            headers: createAuthorizationHeader(token),
+            responseSchema: z.unknown(),
+        });
     }
 
     public async isInDebugMode() {
-        const infoResponse = await this.request('/', 'GET', info, undefined, undefined, undefined);
+        const infoResponse = await this.request({ method: 'get', path: '/', responseSchema: info });
         return infoResponse.match(
             (info) => info.isInDebugMode,
             () => false,
@@ -108,101 +102,49 @@ export class BackendClient {
     }
 
     public getPipelineStatistics(token: string) {
-        return this.request(
-            '/admin/pipeline-statistics',
-            'GET',
-            pipelineVersionStatistics,
-            createAuthorizationHeader(token),
-            undefined,
-            undefined,
-        );
+        return this.request({
+            method: 'get',
+            path: '/admin/pipeline-statistics',
+            headers: createAuthorizationHeader(token),
+            responseSchema: pipelineVersionStatistics,
+        });
     }
 
     public getCurrentPipelineVersions(token: string) {
-        return this.request(
-            '/admin/current-pipeline-versions',
-            'GET',
-            currentPipelineVersions,
-            createAuthorizationHeader(token),
-            undefined,
-            undefined,
-        );
+        return this.request({
+            method: 'get',
+            path: '/admin/current-pipeline-versions',
+            headers: createAuthorizationHeader(token),
+            responseSchema: currentPipelineVersions,
+        });
     }
 
     public getAllSeqSetCitations(token: string) {
-        return this.request(
-            '/admin/get-all-seqset-citations',
-            'GET',
-            adminSeqSetCitations,
-            createAuthorizationHeader(token),
-            undefined,
-            undefined,
-        );
+        return this.request({
+            method: 'get',
+            path: '/admin/get-all-seqset-citations',
+            headers: createAuthorizationHeader(token),
+            responseSchema: adminSeqSetCitations,
+        });
     }
 
     public addSeqSetCitation(token: string, request: AddSeqSetCitationRequest) {
-        return this.request(
-            '/admin/add-seqset-citation',
-            'POST',
-            adminSeqSetCitation,
-            createAuthorizationHeader(token),
-            request,
-            undefined,
-        );
+        return this.request({
+            method: 'post',
+            path: '/admin/add-seqset-citation',
+            data: request,
+            headers: createAuthorizationHeader(token),
+            responseSchema: adminSeqSetCitation,
+        });
     }
 
     public deleteSeqSetCitation(token: string, sourceDOI: string) {
-        return this.request(
-            '/admin/delete-seqset-citation',
-            'DELETE',
-            z.unknown(),
-            createAuthorizationHeader(token),
-            undefined,
-            { sourceDOI },
-        );
-    }
-
-    private async request<T>(
-        endpoint: string,
-        method: Method,
-        responseSchema: ZodSchema<T>,
-        headers: Record<string, string> | undefined,
-        request: unknown,
-        params: unknown,
-    ): Promise<Result<T, ProblemDetail>> {
-        try {
-            const response = await axios.request({
-                url: `${this.url}${endpoint}`,
-                method,
-                headers,
-                params,
-                data: request,
-            });
-
-            const responseDataResult = responseSchema.safeParse(response.data);
-            if (responseDataResult.success) {
-                return ok(responseDataResult.data);
-            }
-            return err({
-                type: 'about:blank',
-                title: 'bad response',
-                status: 0,
-                detail: `Failed to parse backend response: ${responseDataResult.error.toString()}`,
-            });
-        } catch (e) {
-            const axiosError = axios.isAxiosError(e) ? e : undefined;
-
-            const problemDetailResult = problemDetail.safeParse(axiosError?.response?.data);
-            if (problemDetailResult.success) {
-                return err(problemDetailResult.data);
-            }
-
-            return err({
-                type: 'about:blank',
-                title: 'bad response',
-                status: axiosError?.response?.status ?? 0,
-                detail: `Failed to make request: ${e instanceof Error ? e.message : String(e)}`,
-            });
-        }
+        return this.request({
+            method: 'delete',
+            path: '/admin/delete-seqset-citation',
+            params: { sourceDOI },
+            headers: createAuthorizationHeader(token),
+            responseSchema: z.unknown(),
+        });
     }
 }
