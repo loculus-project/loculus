@@ -101,18 +101,21 @@ class BackendSpringConfig {
     @Bean
     fun openApi(backendConfig: BackendConfig) = buildOpenApiSchema(backendConfig)
 
+    fun apiInfo(backendConfig: BackendConfig, apiVersion: String): Info =
+        Info().title("${backendConfig.name} API Documentation").version(apiVersion)
+
     @Bean
     fun v0Api(backendConfig: BackendConfig): GroupedOpenApi = GroupedOpenApi.builder()
         .group("v0")
         .pathsToExclude("/v1/**")
-        .addOpenApiCustomizer { it.info(Info().title("${backendConfig.name} API Documentation").version("v0")) }
+        .addOpenApiCustomizer { it.info(apiInfo(backendConfig, "v0")) }
         .build()
 
     @Bean
     fun v1Api(backendConfig: BackendConfig): GroupedOpenApi = GroupedOpenApi.builder()
         .group("v1")
         .pathsToMatch("/v1/**")
-        .addOpenApiCustomizer { it.info(Info().title("${backendConfig.name} API Documentation").version("v1")) }
+        .addOpenApiCustomizer { it.info(apiInfo(backendConfig, "v1")) }
         .build()
 
     @Bean
