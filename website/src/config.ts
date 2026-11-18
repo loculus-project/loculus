@@ -173,6 +173,12 @@ export function getSchema(organism: string): Schema {
     return getConfig(organism).schema;
 }
 
+export function getAuthorsFields(organism: string): string[] {
+    return getSchema(organism)
+        .metadata.filter((metadata) => metadata.type === 'authors')
+        .map((metadata) => metadata.name);
+}
+
 export function getMetadataTemplateFields(
     organism: string,
     action: 'submit' | 'revise',
