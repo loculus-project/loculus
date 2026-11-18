@@ -5,7 +5,7 @@ import {
     type UseQueryOptions,
     type UseQueryResult,
 } from '@tanstack/react-query';
-import { isAxiosError } from 'axios';
+import axios, { isAxiosError } from 'axios';
 import z from 'zod';
 
 import { apiPath, sendRequest, toFormData } from './apiRequest.ts';
