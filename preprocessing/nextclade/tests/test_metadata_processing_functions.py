@@ -1425,10 +1425,11 @@ date_range_cases = [
         submitted_at=ts_from_ymd(2021, 12, 16),
     ),
     DateRangeCase(
-        name="dateRangeString: invalid date should be returned as None.",
+        name="dateRangeString: invalid date is reported as an error.",
         date="not.date",
         field_type="dateRangeString",
         submitted_at=ts_from_ymd(2021, 12, 16),
+        expected_error="Metadata field field_name: Date not.date could not be parsed.",
     ),
     DateRangeCase(
         name="dateRangeLower: empty date should be returned as None.",
@@ -1604,6 +1605,7 @@ def test_parse_date_into_range(case: DateRangeCase) -> None:
     if case.expected_error is not None:
         assert result.errors[0] == case.expected_error, case.name
     else:
+        assert result.errors == [], case.name
         assert result.datum == case.expected_datum, case.name
 
 
