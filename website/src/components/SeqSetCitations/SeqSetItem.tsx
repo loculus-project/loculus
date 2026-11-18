@@ -12,7 +12,6 @@ import type { ProblemDetail } from '../../types/backend.ts';
 import type { SeqSetGraph } from '../../types/config.ts';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import { type SeqSet, type SeqSetCitation, type SeqSetRecord } from '../../types/seqSetCitation';
-import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
 import { getThemeColor } from '../../utils/getThemeColor';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { Button } from '../common/Button.tsx';
@@ -234,7 +233,7 @@ function useCreateSeqSetDOIAction(
     onError: (message: string) => void,
 ) {
     return seqSetCitationClientHooks(clientConfig).useCreateSeqSetDOI(
-        { headers: createAuthorizationHeader(accessToken), params: { seqSetId, seqSetVersion } },
+        { accessToken, seqSetId, seqSetVersion },
         {
             onSuccess: async () => {
                 await logger.info(

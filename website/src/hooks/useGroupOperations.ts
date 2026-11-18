@@ -1,9 +1,15 @@
-import { useCallback, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { useCallback } from 'react';
+import z from 'zod';
 
-import { ApiClient } from '../services/apiClient.ts';
-import { makeQueryHook } from '../services/apiHooks.ts';
-import { groupManagementApi } from '../services/groupManagementApi.ts';
-import type { Group, GroupDetails, NewGroup } from '../types/backend.ts';
+import { apiPath, sendRequest } from '../services/apiRequest.ts';
+import {
+    group,
+    groupDetails as groupDetailsSchema,
+    type Group,
+    type GroupDetails,
+    type NewGroup,
+} from '../types/backend.ts';
 import type { ClientConfig } from '../types/runtimeConfig.ts';
 import { createAuthorizationHeader } from '../utils/createAuthorizationHeader.ts';
 import { stringifyMaybeAxiosError } from '../utils/stringifyMaybeAxiosError.ts';
@@ -22,15 +28,21 @@ export const useGroupPageHooks = ({
 }: UseGroupOperationsProps & { prefetchedGroupDetails: GroupDetails }) => {
     const groupName = prefetchedGroupDetails.group.groupName;
     const groupId = prefetchedGroupDetails.group.groupId;
-    const { client, useGetGroupDetails } = useGroupManagementClient(clientConfig);
+    const { backendUrl } = clientConfig;
 
-    const groupDetails = useGetGroupDetails(
-        {
-            headers: createAuthorizationHeader(accessToken),
-            params: { groupId },
-        },
-        { enabled: false, initialData: prefetchedGroupDetails },
-    );
+    const groupDetails = useQuery<GroupDetails, Error>({
+        queryKey: ['getGroupDetails', backendUrl, groupId, accessToken],
+        queryFn: ({ signal }) =>
+            sendRequest(backendUrl, {
+                method: 'get',
+                path: apiPath`/groups/${groupId}`,
+                headers: createAuthorizationHeader(accessToken),
+                signal,
+                responseSchema: groupDetailsSchema,
+            }),
+        enabled: false,
+        initialData: prefetchedGroupDetails,
+    });
 
     if (groupDetails.error) {
         setErrorMessage(`Failed to query Group ${groupName}: ${stringifyMaybeAxiosError(groupDetails.error)}`);
@@ -38,16 +50,21 @@ export const useGroupPageHooks = ({
 
     const addUserToGroup = useCallback(
         async (username: string) => {
-            await callAddToGroup(accessToken, setErrorMessage, client, groupDetails.refetch)(groupId, username);
+            await callAddToGroup(accessToken, setErrorMessage, backendUrl, groupDetails.refetch)(groupId, username);
         },
-        [accessToken, setErrorMessage, groupDetails.refetch, client, groupId],
+        [accessToken, setErrorMessage, groupDetails.refetch, backendUrl, groupId],
     );
 
     const removeFromGroup = useCallback(
         async (username: string) => {
-            await callRemoveFromGroup(accessToken, setErrorMessage, client, groupDetails.refetch)(groupId, username);
+            await callRemoveFromGroup(
+                accessToken,
+                setErrorMessage,
+                backendUrl,
+                groupDetails.refetch,
+            )(groupId, username);
         },
-        [accessToken, setErrorMessage, groupDetails.refetch, client, groupId],
+        [accessToken, setErrorMessage, groupDetails.refetch, backendUrl, groupId],
     );
 
     return {
@@ -64,11 +81,11 @@ export const useGroupCreation = ({
     clientConfig: ClientConfig;
     accessToken: string;
 }) => {
-    const { client } = useGroupManagementClient(clientConfig);
+    const { backendUrl } = clientConfig;
 
     const createGroup = useCallback(
-        async (group: NewGroup) => callCreateGroup(accessToken, client)(group),
-        [accessToken, client],
+        async (group: NewGroup) => callCreateGroup(accessToken, backendUrl)(group),
+        [accessToken, backendUrl],
     );
 
     return {
@@ -77,11 +94,11 @@ export const useGroupCreation = ({
 };
 
 export const useGetGroups = ({ clientConfig, accessToken }: { clientConfig: ClientConfig; accessToken: string }) => {
-    const { client } = useGroupManagementClient(clientConfig);
+    const { backendUrl } = clientConfig;
 
     const getGroups = useCallback(
-        async (groupName?: string) => callGetGroups(accessToken, client)(groupName),
-        [accessToken, client],
+        async (groupName?: string) => callGetGroups(accessToken, backendUrl)(groupName),
+        [accessToken, backendUrl],
     );
 
     return {
@@ -90,28 +107,17 @@ export const useGetGroups = ({ clientConfig, accessToken }: { clientConfig: Clie
 };
 
 export const useGroupEdit = ({ clientConfig, accessToken }: { clientConfig: ClientConfig; accessToken: string }) => {
-    const { client } = useGroupManagementClient(clientConfig);
+    const { backendUrl } = clientConfig;
 
     const editGroup = useCallback(
-        async (groupId: number, group: NewGroup) => callEditGroup(accessToken, client)(groupId, group),
-        [accessToken, client],
+        async (groupId: number, group: NewGroup) => callEditGroup(accessToken, backendUrl)(groupId, group),
+        [accessToken, backendUrl],
     );
 
     return {
         editGroup,
     };
 };
-
-export const useGroupManagementClient = (clientConfig: ClientConfig) => {
-    const client = useMemo(() => new ApiClient(clientConfig.backendUrl, groupManagementApi), [clientConfig]);
-    const useGetGroupDetails = useMemo(() => makeQueryHook(client, 'getGroupDetails'), [client]);
-    return {
-        client,
-        useGetGroupDetails,
-    };
-};
-
-type GroupManagementApiClient = ApiClient<typeof groupManagementApi>;
 
 type CreateGroupSuccess = {
     succeeded: true;
@@ -123,12 +129,15 @@ type CreateGroupError = {
 };
 export type CreateGroupResult = CreateGroupSuccess | CreateGroupError;
 
-function callCreateGroup(accessToken: string, client: GroupManagementApiClient) {
-    return async (group: NewGroup) => {
+function callCreateGroup(accessToken: string, backendUrl: string) {
+    return async (newGroup: NewGroup) => {
         try {
-            const groupResult = await client.request('createGroup', {
-                body: group,
+            const groupResult = await sendRequest(backendUrl, {
+                method: 'post',
+                path: '/groups',
+                data: newGroup,
                 headers: createAuthorizationHeader(accessToken),
+                responseSchema: group,
             });
             return {
                 succeeded: true,
@@ -154,12 +163,15 @@ type GetGroupsError = {
 };
 export type GetGroupsResult = GetGroupsSuccess | GetGroupsError;
 
-function callGetGroups(accessToken: string, client: GroupManagementApiClient) {
+function callGetGroups(accessToken: string, backendUrl: string) {
     return async (groupName?: string) => {
         try {
-            const existingGroups = await client.request('getAllGroups', {
+            const existingGroups = await sendRequest(backendUrl, {
+                method: 'get',
+                path: '/groups',
+                params: { name: groupName },
                 headers: createAuthorizationHeader(accessToken),
-                queries: { name: groupName },
+                responseSchema: z.array(group),
             });
             return {
                 succeeded: true,
@@ -185,15 +197,15 @@ type EditGroupError = {
 };
 export type EditGroupResult = EditGroupSuccess | EditGroupError;
 
-function callEditGroup(accessToken: string, client: GroupManagementApiClient) {
-    return async (groupId: number, group: NewGroup) => {
+function callEditGroup(accessToken: string, backendUrl: string) {
+    return async (groupId: number, newGroup: NewGroup) => {
         try {
-            const groupResult = await client.request('editGroup', {
-                body: group,
+            const groupResult = await sendRequest(backendUrl, {
+                method: 'put',
+                path: apiPath`/groups/${groupId}`,
+                data: newGroup,
                 headers: createAuthorizationHeader(accessToken),
-                params: {
-                    groupId,
-                },
+                responseSchema: group,
             });
             return {
                 succeeded: true,
@@ -212,17 +224,15 @@ function callEditGroup(accessToken: string, client: GroupManagementApiClient) {
 function callRemoveFromGroup(
     accessToken: string | undefined,
     openErrorFeedback: (message: string | undefined) => void,
-    client: GroupManagementApiClient,
+    backendUrl: string,
     refetchGroups: () => Promise<unknown>,
 ) {
     return async (groupId: number, username: string) => {
         try {
-            await client.request('removeUserFromGroup', {
+            await sendRequest(backendUrl, {
+                method: 'delete',
+                path: apiPath`/groups/${groupId}/users/${username}`,
                 headers: createAuthorizationHeader(accessToken),
-                params: {
-                    groupId,
-                    userToRemove: username,
-                },
             });
             await refetchGroups();
         } catch (error) {
@@ -235,17 +245,15 @@ function callRemoveFromGroup(
 function callAddToGroup(
     accessToken: string | undefined,
     openErrorFeedback: (message: string | undefined) => void,
-    client: GroupManagementApiClient,
+    backendUrl: string,
     refetchGroups: () => Promise<unknown>,
 ) {
     return async (groupId: number, username: string) => {
         try {
-            await client.request('addUserToGroup', {
+            await sendRequest(backendUrl, {
+                method: 'put',
+                path: apiPath`/groups/${groupId}/users/${username}`,
                 headers: createAuthorizationHeader(accessToken),
-                params: {
-                    groupId,
-                    userToAdd: username,
-                },
             });
             await refetchGroups();
         } catch (error) {

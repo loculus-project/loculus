@@ -15,7 +15,7 @@ import { deriveFileMapping, validateFileUploadStates, type FileUploadState } fro
 import DataUseTermsSelector from '../../components/DataUseTerms/DataUseTermsSelector';
 import { SubmissionRouteUtils } from '../../routes/SubmissionRoute.ts';
 import { routes } from '../../routes/routes.ts';
-import { isProblemDetailError } from '../../services/apiClient.ts';
+import { isProblemDetailError } from '../../services/apiRequest.ts';
 import { backendClientHooks } from '../../services/serviceHooks.ts';
 import { FILES_HEADER_PREFIX } from '../../settings.ts';
 import {
@@ -27,7 +27,6 @@ import {
 import { type FileSharingConfig, type FileCategory, type InputField } from '../../types/config.ts';
 import type { SubmissionDataTypes } from '../../types/config.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
-import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
 import { stringifyMaybeAxiosError } from '../../utils/stringifyMaybeAxiosError.ts';
 import { dateTimeInMonths } from '../../utils/utcDates.ts';
 import { MAX_SUBMITTED_DATA_DOWNLOAD_ENTRIES } from '../SearchPage/DownloadDialog/DownloadSubmittedDataButton.tsx';
@@ -650,14 +649,8 @@ function useSubmitFiles(
     onError: (message: string) => void,
 ) {
     const hooks = backendClientHooks(clientConfig);
-    const submit = hooks.useSubmit(
-        { params: { organism }, headers: createAuthorizationHeader(accessToken) },
-        { onSuccess, onError: handleError(onError) },
-    );
-    const revise = hooks.useRevise(
-        { params: { organism }, headers: createAuthorizationHeader(accessToken) },
-        { onSuccess, onError: handleError(onError) },
-    );
+    const submit = hooks.useSubmit({ organism, accessToken }, { onSuccess, onError: handleError(onError) });
+    const revise = hooks.useRevise({ organism, accessToken }, { onSuccess, onError: handleError(onError) });
 
     return {
         submit: submit.mutate,

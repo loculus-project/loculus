@@ -1,38 +1,44 @@
-import { ApiWrapperClient } from './apiWrapperClient.ts';
-import { groupManagementApi } from './groupManagementApi.ts';
+import z from 'zod';
+
+import { ApiClient } from './apiClient.ts';
+import { apiPath } from './apiRequest.ts';
 import { getRuntimeConfig } from '../config.ts';
 import { getInstanceLogger } from '../logger.ts';
-import type { NewGroup } from '../types/backend.ts';
+import { group, groupDetails, type NewGroup } from '../types/backend.ts';
 import { createAuthorizationHeader } from '../utils/createAuthorizationHeader.ts';
 
 const instanceLogger = getInstanceLogger('GroupManagementClient');
 
-export class GroupManagementClient extends ApiWrapperClient<typeof groupManagementApi> {
+export class GroupManagementClient extends ApiClient {
     public static create(backendUrl: string = getRuntimeConfig().serverSide.backendUrl, logger = instanceLogger) {
-        return new GroupManagementClient(
-            backendUrl,
-            groupManagementApi,
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-            (axiosError) => axiosError.data,
-            logger,
-            'backend',
-        );
+        return new GroupManagementClient(backendUrl, (responseData) => responseData, logger, 'backend');
     }
 
     public getGroupsOfUser(token: string | undefined) {
-        return this.call('getGroupsOfUser', {
+        return this.request({
+            method: 'get',
+            path: '/user/groups',
             headers: createAuthorizationHeader(token),
+            responseSchema: z.array(group),
         });
     }
 
     public getGroupDetails(groupId: number, token?: string) {
-        return this.call('getGroupDetails', {
+        return this.request({
+            method: 'get',
+            path: apiPath`/groups/${groupId}`,
             headers: createAuthorizationHeader(token),
-            params: { groupId },
+            responseSchema: groupDetails,
         });
     }
 
     public createGroup(token: string, data: NewGroup) {
-        return this.call('createGroup', { body: data, headers: createAuthorizationHeader(token) });
+        return this.request({
+            method: 'post',
+            path: '/groups',
+            data,
+            headers: createAuthorizationHeader(token),
+            responseSchema: group,
+        });
     }
 }

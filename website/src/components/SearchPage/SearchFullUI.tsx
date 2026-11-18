@@ -1,4 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { isAxiosError } from 'axios';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { Button } from '../common/Button';
@@ -204,7 +205,6 @@ const InnerSearchFullUI = ({
 
         if (!(page >= 1)) return;
 
-        // @ts-expect-error because the hooks don't accept OrderBy
         detailsHook.mutate({
             ...lapisSearchParameters,
             fields: [...columnsToShow, schema.primaryKey],
@@ -300,7 +300,7 @@ const InnerSearchFullUI = ({
                 <RecentSequencesBanner organism={organism} />
 
                 {(detailsHook.isError || aggregatedHook.isError) &&
-                    (aggregatedHook.error?.response?.status === 503 ? (
+                    (isAxiosError(aggregatedHook.error) && aggregatedHook.error.response?.status === 503 ? (
                         <div className='p-3 rounded-lg text-lg text-gray-700 text-italic'>
                             {' '}
                             The retrieval database is currently initializing – please check back later.

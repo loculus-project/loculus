@@ -83,6 +83,7 @@ export const accessionVersionsFilterWithApprovalScope = accessionVersionsFilter.
         scope: z.union([approveAllDataScope, approveProcessedDataWithoutWarningsScope]),
     }),
 );
+export type AccessionVersionsFilterWithApprovalScope = z.infer<typeof accessionVersionsFilterWithApprovalScope>;
 
 export const deleteAllDataScope = z.literal('ALL');
 export const deleteProcessedAndRevocationConfirmationDataScope = z.literal('ALL_PROCESSED_AND_REVOCATIONS');
@@ -100,6 +101,7 @@ export const accessionVersionsFilterWithDeletionScope = accessionVersionsFilter.
         ]),
     }),
 );
+export type AccessionVersionsFilterWithDeletionScope = z.infer<typeof accessionVersionsFilterWithDeletionScope>;
 
 export const openDataUseTermsOption = 'OPEN';
 
@@ -124,6 +126,12 @@ export const dataUseTerms = z.union([
 ]);
 
 export type DataUseTerms = z.infer<typeof dataUseTerms>;
+
+export const setDataUseTermsRequest = z.object({
+    accessions: z.array(accession),
+    newDataUseTerms: dataUseTerms,
+});
+export type SetDataUseTermsRequest = z.infer<typeof setDataUseTermsRequest>;
 
 export const dataUseTermsHistoryEntry = z.object({
     accession,
@@ -296,6 +304,8 @@ export const submitFiles = uploadFiles.merge(
         restrictedUntil: z.string().nullable(),
     }),
 );
+export type UploadFiles = z.infer<typeof uploadFiles>;
+export type SubmitFiles = z.infer<typeof submitFiles>;
 
 // Technically RFC 9457 also doesn't guarantee title/status/detail
 // to be non-null, but in practice our backend emits those

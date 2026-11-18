@@ -14,7 +14,6 @@ import {
 } from '../../types/backend';
 import type { Details } from '../../types/lapis';
 import type { ClientConfig } from '../../types/runtimeConfig';
-import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
 import { formatNumberWithDefaultLocale } from '../../utils/formatNumber';
 import type { SequenceFilter } from '../SearchPage/DownloadDialog/SequenceFilters';
 import { ActiveFilters } from '../common/ActiveFilters';
@@ -267,7 +266,7 @@ const CancelSubmitButtons: FC<CancelSubmitButtonProps> = ({
     affectedAccessions,
 }) => {
     const setDataUseTermsHook = backendClientHooks(clientConfig).useSetDataUseTerms(
-        { headers: createAuthorizationHeader(accessToken) },
+        { accessToken },
         { onError: errorToast, onSuccess: successToast },
     );
 

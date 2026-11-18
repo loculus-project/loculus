@@ -9,7 +9,6 @@ import { errorToast, successToast } from './EditDataUseTermsToasts.ts';
 import { backendClientHooks } from '../../services/serviceHooks';
 import { type RestrictedDataUseTerms, type DataUseTerms } from '../../types/backend.ts';
 import type { ClientConfig } from '../../types/runtimeConfig';
-import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
 
 type EditDataUseTermsButtonProps = {
     accessToken: string;
@@ -42,7 +41,7 @@ const InnerEditDataUseTermsButton: FC<EditDataUseTermsButtonProps> = ({
     };
 
     const useSetDataUseTerms = backendClientHooks(clientConfig).useSetDataUseTerms(
-        { headers: createAuthorizationHeader(accessToken) },
+        { accessToken },
         { onError: errorToast, onSuccess: successToast },
     );
 

@@ -8,7 +8,6 @@ import { getClientLogger } from '../../clientLogger';
 import { seqSetCitationClientHooks } from '../../services/serviceHooks';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import type { AuthorProfile, SeqSetRecord, SeqSet } from '../../types/seqSetCitation';
-import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
 import { getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { BaseDialog } from '../common/BaseDialog.tsx';
@@ -181,7 +180,7 @@ function useDeleteSeqSetAction(
     onError: (message: string) => void,
 ) {
     return seqSetCitationClientHooks(clientConfig).useDeleteSeqSet(
-        { headers: createAuthorizationHeader(accessToken), params: { seqSetId, seqSetVersion } },
+        { accessToken, seqSetId, seqSetVersion },
         {
             onSuccess: async () => {
                 await logger.info(`Successfully deleted seqSet with seqSetId: ${seqSetId}, version ${seqSetVersion}`);

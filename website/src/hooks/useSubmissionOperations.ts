@@ -2,7 +2,7 @@ import type { AxiosError } from 'axios';
 import { useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
 
-import { isProblemDetailError } from '../services/apiClient.ts';
+import { isProblemDetailError } from '../services/apiRequest.ts';
 import { backendClientHooks } from '../services/serviceHooks.ts';
 import {
     type Group,
@@ -15,7 +15,6 @@ import {
     errorsProcessingResult,
 } from '../types/backend.ts';
 import type { ClientConfig } from '../types/runtimeConfig.ts';
-import { createAuthorizationHeader } from '../utils/createAuthorizationHeader.ts';
 import { stringifyMaybeAxiosError } from '../utils/stringifyMaybeAxiosError.ts';
 
 export function useSubmissionOperations(
@@ -33,10 +32,8 @@ export function useSubmissionOperations(
     const [includedProcessingResults, setIncludedProcessingResults] = useState(allProcessingResults);
     const useGetSequences = hooks.useGetSequences(
         {
-            headers: createAuthorizationHeader(accessToken),
-            params: {
-                organism,
-            },
+            organism,
+            accessToken,
             queries: {
                 groupIdsFilter: group.groupId.toString(),
                 includeReviewData: true,
@@ -61,14 +58,14 @@ export function useSubmissionOperations(
     }
 
     const useDeleteSequenceEntries = hooks.useDeleteSequences(
-        { headers: createAuthorizationHeader(accessToken), params: { organism } },
+        { organism, accessToken },
         {
             onSuccess: () => useGetSequences.refetch(),
             onError: (error) => openErrorFeedback(deleteSequenceEntriesErrorMessage(error)),
         },
     );
     const useApproveProcessedData = hooks.useApproveProcessedData(
-        { headers: createAuthorizationHeader(accessToken), params: { organism } },
+        { organism, accessToken },
         {
             onMutate: () => {
                 const toastId = toast.loading('Approving sequences...');

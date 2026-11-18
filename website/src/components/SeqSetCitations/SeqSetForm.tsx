@@ -9,7 +9,6 @@ import { seqSetCitationClientHooks } from '../../services/serviceHooks';
 import type { ProblemDetail } from '../../types/backend.ts';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import { type SeqSet, type SeqSetRecord } from '../../types/seqSetCitation';
-import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
 import { deserializeAccessionInput, serializeSeqSetRecords } from '../../utils/parseAccessionInput';
 import { Button } from '../common/Button';
 import { Spinner } from '../common/Spinner';
@@ -222,7 +221,7 @@ function useActionHooks(
 ) {
     const hooks = seqSetCitationClientHooks(clientConfig);
     const create = hooks.useCreateSeqSet(
-        { headers: createAuthorizationHeader(accessToken) },
+        { accessToken },
         {
             onSuccess: async (response) => {
                 await logger.info(`Successfully created seqSet with seqSetId: ${response.seqSetId}`);
@@ -241,7 +240,7 @@ function useActionHooks(
         },
     );
     const update = hooks.useUpdateSeqSet(
-        { headers: createAuthorizationHeader(accessToken) },
+        { accessToken },
         {
             onSuccess: async (response) => {
                 await logger.info(`Successfully updated seqSet with seqSetId: ${response.seqSetId}`);
@@ -260,7 +259,7 @@ function useActionHooks(
         },
     );
     const validateRecords = hooks.useValidateSeqSetRecords(
-        { headers: createAuthorizationHeader(accessToken) },
+        { accessToken },
         {
             onSuccess: () => {
                 setSeqSetRecordValidation('');
