@@ -2,22 +2,11 @@ import { useQuery } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { compareVersionData } from './compareVersions';
-import { detailsJsonSchema } from '../../types/detailsJson';
+import { getErrorMessage } from '../../services/apiRequest';
+import { fetchDetailsJson } from '../../services/detailsJsonApi';
 import type { SequenceEntryHistoryEntry } from '../../types/lapis';
 
 const STALE_TIME_MS = 5 * 60 * 1000;
-
-async function fetchVersionDetails(accession: string, version: number) {
-    const response = await fetch(`/seq/${accession}.${version}/details.json`);
-    if (!response.ok) {
-        throw new Error(`Failed to fetch version ${version}`);
-    }
-    const parsed = detailsJsonSchema.safeParse(await response.json());
-    if (!parsed.success) {
-        throw new Error(`Unexpected data format for version ${version}`);
-    }
-    return parsed.data;
-}
 
 function readComparePairFromUrl(): [number, number] | null {
     const compareParam = new URLSearchParams(window.location.search).get('compare');
@@ -72,11 +61,11 @@ export function useVersionComparison(accession: string, versions: SequenceEntryH
         error,
     } = useQuery({
         queryKey: ['version-diff', accession, selectedPair],
-        queryFn: async () => {
+        queryFn: async ({ signal }) => {
             const [v1, v2] = selectedPair!;
             const [data1, data2] = await Promise.all([
-                fetchVersionDetails(accession, v1),
-                fetchVersionDetails(accession, v2),
+                fetchDetailsJson(`${accession}.${v1}`, signal),
+                fetchDetailsJson(`${accession}.${v2}`, signal),
             ]);
             return { versions: [v1, v2] as [number, number], result: compareVersionData(data1, data2) };
         },
@@ -111,6 +100,6 @@ export function useVersionComparison(accession: string, versions: SequenceEntryH
         comparison,
         isLoading,
         isFetching,
-        error: error instanceof Error ? error.message : error !== null ? 'Failed to fetch version data' : null,
+        error: error !== null ? getErrorMessage(error) : null,
     };
 }
