@@ -23,6 +23,13 @@ export const lapisApi = {
         body: lapisBaseRequest,
         response: detailsResponse,
     },
+    /** Same endpoint as `details`, but for non-JSON data formats (e.g. `dataFormat: 'TSV'`), which return plain text. */
+    detailsText: {
+        method: 'post',
+        path: withSample('/details'),
+        body: lapisBaseRequest,
+        response: z.string(),
+    },
     aggregated: {
         method: 'post',
         path: withSample('/aggregated'),
