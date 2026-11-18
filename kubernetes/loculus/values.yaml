@@ -49,6 +49,7 @@ siloImport:
   siloTimeoutSeconds: 3600
   hardRefreshIntervalSeconds: 3600
   pollIntervalSeconds: 30
+  incremental: false
 ingestLimitSeconds: 1800
 getSubmissionListLimitSeconds: 600
 preprocessingTimeout: 600

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import logging
+import os
 import time
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -79,6 +80,8 @@ class DownloadResult:
     transformed_path: Path
     etag: str
     analysis: NdjsonAnalysis
+    total_records: int | None = None
+    complete: bool = True
 
 
 def _download_file(
@@ -86,6 +89,8 @@ def _download_file(
     output_path: Path,
     etag: str | None = None,
     timeout: int = 300,
+    method: str = "GET",
+    body: dict[str, str] | None = None,
 ) -> HttpResponse:
     """
     Download a file using requests.
@@ -95,6 +100,8 @@ def _download_file(
         output_path: Where to save the response body
         etag: Optional ETag for conditional request
         timeout: Request timeout in seconds
+        method: HTTP method
+        body: Optional JSON request body
 
     Returns:
         HttpResponse with status code and headers
@@ -109,7 +116,7 @@ def _download_file(
     try:  # ruff:ignore[too-many-statements-in-try-clause]
         session = requests.Session()
         session.headers.update(headers)
-        response = session.get(url, timeout=timeout, stream=True)
+        response = session.request(method, url, json=body, timeout=timeout, stream=True)
 
         # Write response body to file (raw, no automatic decompression)
         with output_path.open("wb") as f:
@@ -128,7 +135,7 @@ def _download_file(
 
 
 # Type for download function (allows test mocking)
-DownloadFunc = Callable[[str, Path, str | None, int], HttpResponse]
+DownloadFunc = Callable[..., HttpResponse]
 
 
 class DownloadManager:
@@ -137,11 +144,18 @@ class DownloadManager:
     def __init__(self, download_func: DownloadFunc | None = None) -> None:
         self.download_func = download_func or _download_file
 
-    def download_release(
+    def changes_status(self, config: ImporterConfig, last_etag: str) -> int:
+        response = self.download_func(
+            config.released_data_changes_endpoint, Path(os.devnull), last_etag, 300, "HEAD"
+        )
+        return response.status_code
+
+    def download_release(  # ruff:ignore[too-many-statements]
         self,
         config: ImporterConfig,
         paths: ImporterPaths,
         last_etag: str,
+        known_hashes: dict[str, str] | None = None,
     ) -> DownloadResult:
         """
         Download and validate a data release from the backend.
@@ -150,6 +164,7 @@ class DownloadManager:
             config: Importer configuration
             paths: Importer paths
             last_etag: ETag from previous download for conditional request
+            known_hashes: Hash per record to request only changed records
 
         Returns:
             DownloadResult with paths and metadata
@@ -169,13 +184,24 @@ class DownloadManager:
 
         try:  # ruff:ignore[too-many-statements-in-try-clause]
             # Download data from backend
-            logger.info("Requesting released data from %s", config.released_data_endpoint)
-            response = self.download_func(
-                config.released_data_endpoint,
-                data_path,
-                last_etag,
-                300,
-            )
+            if known_hashes is None:
+                logger.info("Requesting released data from %s", config.released_data_endpoint)
+                response = self.download_func(
+                    config.released_data_endpoint,
+                    data_path,
+                    last_etag,
+                    300,
+                )
+            else:
+                logger.info("Requesting changes from %s", config.released_data_changes_endpoint)
+                response = self.download_func(
+                    config.released_data_changes_endpoint,
+                    data_path,
+                    None,
+                    300,
+                    "POST",
+                    known_hashes,
+                )
 
             if response.status_code >= BAD_REQUEST:
                 msg = (
@@ -227,15 +253,19 @@ class DownloadManager:
                 safe_remove(download_dir)
                 raise TransformationError from exc
 
+            complete = not known_hashes or analysis.record_count == expected_count
+
             # Validate record count
             try:
-                _validate_record_count(analysis.record_count, expected_count)
+                if complete:
+                    _validate_record_count(analysis.record_count, expected_count)
             except RecordCountValidationError as err:
                 safe_remove(download_dir)
                 raise RecordCountMismatchError from err
 
             # Check against previous download to avoid reprocessing
-            _handle_previous_directory(paths, download_dir, transformed_path, etag_value)
+            if known_hashes is None:
+                _handle_previous_directory(paths, download_dir, transformed_path, etag_value)
 
             # Prune old directories
             prune_timestamped_directories(paths.input_dir)
@@ -245,6 +275,8 @@ class DownloadManager:
                 transformed_path=transformed_path,
                 etag=etag_value,
                 analysis=analysis,
+                total_records=expected_count,
+                complete=complete,
             )
 
         except (

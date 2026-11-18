@@ -26,6 +26,7 @@ Environment variables mirror the historical shell scripts:
 - `HARD_REFRESH_INTERVAL` (seconds, default `3600`)
 - `SILO_IMPORT_POLL_INTERVAL_SECONDS` (default `30`)
 - `SILO_RUN_TIMEOUT_SECONDS` (default `3600`)
+- `SILO_IMPORT_INCREMENTAL` (default `false`, `true` fetches only new and changed records from `get-released-data-changes` and applies them instead of rebuilding the database on every change. With more than 500,000 released records the importer fetches all records whenever something changed and rebuilds the database, as it does without the flag, because the hashes would exceed the request size limit of the backend)
 - `ROOT_DIR` (optional alternative root for the `/preprocessing` tree)
 
 ## Container image
