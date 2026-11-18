@@ -5,10 +5,9 @@ import {
     type UseQueryOptions,
     type UseQueryResult,
 } from '@tanstack/react-query';
-import { isAxiosError } from 'axios';
 import z from 'zod';
 
-import { apiPath, sendRequest, toFormData } from './apiRequest.ts';
+import { apiPath, extractProblemDetail, sendRequest, toFormData } from './apiRequest.ts';
 import { fetchLapisAggregated, fetchLapisDetails } from './lapisClientSideApi.ts';
 import {
     ACCESSION_FIELD,
@@ -26,7 +25,6 @@ import {
     type EditedSequenceEntryData,
     getSequencesResponse,
     type GetSequencesResponse,
-    problemDetail,
     type RevocationRequest,
     sequenceEntryToEdit,
     type SequenceEntryToEdit,
@@ -405,14 +403,9 @@ function sequencesPath(sequenceType: SequenceType, isMultiSegmented: boolean) {
 
 function parseSequenceResult(data: string | undefined, error: Error | null, isLoading: boolean) {
     if (data === undefined) {
-        if (isAxiosError(error)) {
-            const maybeProblemDetail = error.response?.data?.error ?? error.response?.data; // eslint-disable-line @typescript-eslint/no-unsafe-member-access
-
-            const problemDetailParseResult = problemDetail.safeParse(maybeProblemDetail);
-
-            if (problemDetailParseResult.success) {
-                return { data: null, error: problemDetailParseResult.data, isLoading };
-            }
+        const problem = extractProblemDetail(error);
+        if (problem !== undefined) {
+            return { data: null, error: problem, isLoading };
         }
 
         return { data, error, isLoading };

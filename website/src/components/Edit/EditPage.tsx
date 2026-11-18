@@ -6,7 +6,7 @@ import { EditableMetadata, MetadataForm, SubmissionIdRow, Subtitle } from './Met
 import { SequencesForm } from './SequencesForm.tsx';
 import { getClientLogger } from '../../clientLogger.ts';
 import { routes } from '../../routes/routes.ts';
-import { isProblemDetailError } from '../../services/apiRequest.ts';
+import { getErrorMessage } from '../../services/apiRequest.ts';
 import { backendClientHooks } from '../../services/serviceHooks.ts';
 import { type FilesByCategory, type SequenceEntryToEdit, approvedForReleaseStatus } from '../../types/backend.ts';
 import { type FileSharingConfig, type InputField, type SubmissionDataTypes } from '../../types/config.ts';
@@ -49,16 +49,6 @@ type EditPageProps = {
 };
 
 const logger = getClientLogger('EditPage');
-
-/**
- * Extracts the detail field from a backend error response
- */
-function getErrorDetail(error: unknown): string {
-    if (isProblemDetailError(error)) {
-        return error.response.data.detail;
-    }
-    return JSON.stringify(error);
-}
 
 const InnerEditPage: FC<EditPageProps> = ({
     organism,
@@ -313,7 +303,7 @@ function useSubmitRevision(
                 location.href = routes.userSequenceReviewPage(organism, reviewData.groupId);
             },
             onError: async (error) => {
-                const errorDetail = getErrorDetail(error);
+                const errorDetail = getErrorMessage(error);
                 const message = `Failed to submit revision for ${getAccessionVersionString(
                     reviewData,
                 )}: ${errorDetail}`;
@@ -339,7 +329,7 @@ function useSubmitEdit(
                 location.href = routes.userSequenceReviewPage(organism, reviewData.groupId);
             },
             onError: async (error) => {
-                const errorDetail = getErrorDetail(error);
+                const errorDetail = getErrorMessage(error);
                 const message = `Failed to submit edited data for ${getAccessionVersionString(
                     reviewData,
                 )}: ${errorDetail}`;

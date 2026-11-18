@@ -3,6 +3,12 @@ import { DateTime } from 'luxon';
 import type { Result } from 'neverthrow';
 import { type FormEvent, useState, type Dispatch, type SetStateAction, useMemo } from 'react';
 
+import {
+    resolveFileMappings,
+    type CategoryLinkage,
+    type FileLinkage,
+    type SubmissionFileMapping,
+} from './FileUpload/fileMapping.ts';
 import { type FileFactory, FormOrUploadWrapper, type InputMode } from './FormOrUploadWrapper.tsx';
 import {
     displaySubmissionConfirmationWizard,
@@ -12,10 +18,11 @@ import { extractAuthorLists } from './authorNames.ts';
 import { getClientLogger } from '../../clientLogger.ts';
 import { FolderUploadComponent } from './FileUpload/FolderUploadComponent.tsx';
 import { deriveFileMapping, validateFileUploadStates, type FileUploadState } from './FileUpload/fileUpload.ts';
+import { extraFilesUploadDocsUrl } from './extraFilesUploadDocsUrl.ts';
 import DataUseTermsSelector from '../../components/DataUseTerms/DataUseTermsSelector';
 import { SubmissionRouteUtils } from '../../routes/SubmissionRoute.ts';
 import { routes } from '../../routes/routes.ts';
-import { isProblemDetailError } from '../../services/apiRequest.ts';
+import { getErrorMessage, isProblemDetailError } from '../../services/apiRequest.ts';
 import { backendClientHooks } from '../../services/serviceHooks.ts';
 import { FILES_HEADER_PREFIX } from '../../settings.ts';
 import {
@@ -27,20 +34,12 @@ import {
 import { type FileSharingConfig, type FileCategory, type InputField } from '../../types/config.ts';
 import type { SubmissionDataTypes } from '../../types/config.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
-import { stringifyMaybeAxiosError } from '../../utils/stringifyMaybeAxiosError.ts';
 import { dateTimeInMonths } from '../../utils/utcDates.ts';
 import { MAX_SUBMITTED_DATA_DOWNLOAD_ENTRIES } from '../SearchPage/DownloadDialog/DownloadSubmittedDataButton.tsx';
 import { Button } from '../common/Button';
 import { Checkbox } from '../common/Checkbox';
 import { Spinner } from '../common/Spinner';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
-import {
-    resolveFileMappings,
-    type CategoryLinkage,
-    type FileLinkage,
-    type SubmissionFileMapping,
-} from './FileUpload/fileMapping.ts';
-import { extraFilesUploadDocsUrl } from './extraFilesUploadDocsUrl.ts';
 
 export type UploadAction = 'submit' | 'revise';
 
@@ -172,7 +171,7 @@ const InnerDataUploadForm = ({
         try {
             authorLists = await extractAuthorLists(processedMetadataFile, authorsFields);
         } catch (error) {
-            void logger.error(`Failed to read metadata file for the author check: ${stringifyMaybeAxiosError(error)}`);
+            void logger.error(`Failed to read metadata file for the author check: ${getErrorMessage(error)}`);
             onError(`Could not read the metadata file: ${error instanceof Error ? error.message : String(error)}`);
             return;
         }
@@ -661,7 +660,7 @@ function useSubmitFiles(
 
 function handleError(onError: (message: string) => void) {
     return (error: unknown | AxiosError) => {
-        void logger.error(`Received error from backend: ${stringifyMaybeAxiosError(error)}`);
+        void logger.error(`Received error from backend: ${getErrorMessage(error)}`);
         if (isProblemDetailError(error)) {
             switch (error.response.status) {
                 case 400:
@@ -675,6 +674,6 @@ function handleError(onError: (message: string) => void) {
                     return;
             }
         }
-        onError('Received unexpected message from backend: ' + stringifyMaybeAxiosError(error));
+        onError('Received unexpected message from backend: ' + getErrorMessage(error));
     };
 }
