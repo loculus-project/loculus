@@ -1,8 +1,8 @@
-import { GroupManagementClient } from '../services/groupManagementClient.js';
+import { serverBackendApi } from '../services/serverApi.ts';
 
 export const getMyGroups = async (accessToken: string) => {
     try {
-        const groups = await GroupManagementClient.create().getGroupsOfUser(accessToken);
+        const groups = await serverBackendApi(accessToken).getGroupsOfUser();
 
         return groups.match(
             (groups) => groups,

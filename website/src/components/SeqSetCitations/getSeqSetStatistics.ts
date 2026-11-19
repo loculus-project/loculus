@@ -2,7 +2,7 @@ import { ok } from 'neverthrow';
 import type { Result } from 'neverthrow';
 
 import { getConfiguredOrganisms, getSchema } from '../../config.ts';
-import { LapisClient } from '../../services/lapisClient.ts';
+import { serverLapisApi, type ServerLapisApi } from '../../services/serverApi.ts';
 import { ACCESSION_FIELD, ACCESSION_VERSION_FIELD, VERSION_STATUS_FIELD } from '../../settings.ts';
 import type { ProblemDetail } from '../../types/backend.ts';
 import { versionStatuses } from '../../types/lapis.ts';
@@ -11,11 +11,11 @@ type AggregateValue = string | number | boolean | null | undefined;
 export type AggregateRow = { value: AggregateValue; count: number };
 
 const getAggregate = async (
-    client: LapisClient,
+    client: ServerLapisApi,
     field: string,
     params: Record<string, string[] | string>,
 ): Promise<Result<AggregateRow[], ProblemDetail>> => {
-    const result = await client.getAggregated(params);
+    const result = await client.aggregated(params);
     return result.map(({ data }) =>
         data.map((item) => ({
             value: item[field],
@@ -42,7 +42,7 @@ export const getSeqSetStatistics = async (
     const organisms = getConfiguredOrganisms();
     const aggregateResponses = await Promise.all(
         organisms.flatMap((organism) => {
-            const client = LapisClient.createForOrganism(organism.key);
+            const client = serverLapisApi(organism.key);
             const schema = getSchema(organism.key);
 
             // Find the first field option that exists in the schema metadata, and skip if none are found

@@ -20,16 +20,18 @@ import { FolderUploadComponent } from './FileUpload/FolderUploadComponent.tsx';
 import { deriveFileMapping, validateFileUploadStates, type FileUploadState } from './FileUpload/fileUpload.ts';
 import { extraFilesUploadDocsUrl } from './extraFilesUploadDocsUrl.ts';
 import DataUseTermsSelector from '../../components/DataUseTerms/DataUseTermsSelector';
+import { useBackendMutation } from '../../hooks/useBackend.ts';
 import { SubmissionRouteUtils } from '../../routes/SubmissionRoute.ts';
 import { routes } from '../../routes/routes.ts';
 import { getErrorMessage, isProblemDetailError } from '../../services/apiRequest.ts';
-import { backendClientHooks } from '../../services/serviceHooks.ts';
 import { FILES_HEADER_PREFIX } from '../../settings.ts';
 import {
     type DataUseTermsOption,
     type Group,
     openDataUseTermsOption,
     restrictedDataUseTermsOption,
+    type SubmitFiles,
+    type UploadFiles,
 } from '../../types/backend.ts';
 import { type FileSharingConfig, type FileCategory, type InputField } from '../../types/config.ts';
 import type { SubmissionDataTypes } from '../../types/config.ts';
@@ -647,13 +649,13 @@ function useSubmitFiles(
     onSuccess: () => void,
     onError: (message: string) => void,
 ) {
-    const hooks = backendClientHooks(clientConfig);
-    const submit = hooks.useSubmit({ organism, accessToken }, { onSuccess, onError: handleError(onError) });
-    const revise = hooks.useRevise({ organism, accessToken }, { onSuccess, onError: handleError(onError) });
+    const context = { clientConfig, accessToken };
+    const submit = useBackendMutation(context, 'submit', { onSuccess, onError: handleError(onError) });
+    const revise = useBackendMutation(context, 'revise', { onSuccess, onError: handleError(onError) });
 
     return {
-        submit: submit.mutate,
-        revise: revise.mutate,
+        submit: (files: SubmitFiles) => submit.mutate({ organism, ...files }),
+        revise: (files: UploadFiles) => revise.mutate({ organism, ...files }),
         isPending: submit.isPending || revise.isPending,
     };
 }

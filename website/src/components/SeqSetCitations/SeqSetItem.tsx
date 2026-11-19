@@ -6,8 +6,8 @@ import { DatePlot, CategoryPlot } from './SeqSetPlots.tsx';
 import { SeqSetRecordsTableWithMetadata } from './SeqSetRecordsTableWithMetadata';
 import type { AggregateRow } from './getSeqSetStatistics.ts';
 import { getClientLogger } from '../../clientLogger';
+import { useBackendMutation } from '../../hooks/useBackend.ts';
 import { getErrorMessage } from '../../services/apiRequest.ts';
-import { seqSetCitationClientHooks } from '../../services/serviceHooks';
 import type { SeqSetGraph } from '../../types/config.ts';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import { type SeqSet, type SeqSetCitation, type SeqSetRecord } from '../../types/seqSetCitation';
@@ -85,7 +85,7 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
     );
 
     const handleCreateDOI = () => {
-        createSeqSetDOI(undefined);
+        createSeqSetDOI({ seqSetId: seqSet.seqSetId, version: seqSet.seqSetVersion });
     };
 
     const getCrossRefUrl = () => {
@@ -231,22 +231,17 @@ function useCreateSeqSetDOIAction(
     seqSetVersion: number,
     onError: (message: string) => void,
 ) {
-    return seqSetCitationClientHooks(clientConfig).useCreateSeqSetDOI(
-        { accessToken, seqSetId, seqSetVersion },
-        {
-            onSuccess: async () => {
-                await logger.info(
-                    `Successfully created seqSet DOI for seqSetId: ${seqSetId}, version ${seqSetVersion}`,
-                );
-                location.reload();
-            },
-            onError: async (error) => {
-                const message = `Failed to create seqSet DOI: ${getErrorMessage(error)}`;
-                await logger.info(message);
-                onError(message);
-            },
+    return useBackendMutation({ clientConfig, accessToken }, 'createSeqSetDOI', {
+        onSuccess: async () => {
+            await logger.info(`Successfully created seqSet DOI for seqSetId: ${seqSetId}, version ${seqSetVersion}`);
+            location.reload();
         },
-    );
+        onError: async (error) => {
+            const message = `Failed to create seqSet DOI: ${getErrorMessage(error)}`;
+            await logger.info(message);
+            onError(message);
+        },
+    });
 }
 
 export const SeqSetItem = withQueryProvider(SeqSetItemInner);

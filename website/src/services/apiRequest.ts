@@ -32,6 +32,8 @@ export type ApiRequest = {
     params?: Record<string, unknown>;
     headers?: Record<string, string>;
     signal?: AbortSignal;
+    /** Defaults to JSON. With `'blob'`, an error response body is still parsed as JSON where possible. */
+    responseType?: 'json' | 'text' | 'blob';
 };
 
 /**
@@ -60,17 +62,33 @@ export async function sendRequest<T>(
 export async function sendRequest(baseUrl: string, request: ApiRequest & { responseSchema?: undefined }): Promise<void>;
 export async function sendRequest<T>(
     baseUrl: string,
-    { method, path, data, params, headers, signal, responseSchema }: ApiRequest & { responseSchema?: z.ZodType<T> },
-): Promise<T | void> {
-    const response = await axios.request<unknown>({
-        baseURL: baseUrl,
-        url: path,
+    {
         method,
+        path,
         data,
         params,
         headers,
         signal,
-    });
+        responseType,
+        responseSchema,
+    }: ApiRequest & { responseSchema?: z.ZodType<T> },
+): Promise<T | void> {
+    let response: AxiosResponse<unknown>;
+    try {
+        response = await axios.request<unknown>({
+            baseURL: baseUrl,
+            url: path,
+            method,
+            data,
+            params,
+            headers,
+            signal,
+            responseType,
+        });
+    } catch (error) {
+        await parseBlobErrorBody(error);
+        throw error;
+    }
 
     if (responseSchema === undefined) {
         return;
@@ -80,6 +98,22 @@ export async function sendRequest<T>(
         throw new ResponseValidationError(`${method.toUpperCase()} ${path}`, parsed.error);
     }
     return parsed.data;
+}
+
+/**
+ * With `responseType: 'blob'`, axios also returns error bodies as a `Blob`.
+ * Turn them back into JSON (or text) so that `getErrorMessage` can read the problem detail.
+ */
+async function parseBlobErrorBody(error: unknown) {
+    if (!isAxiosError(error) || !(error.response?.data instanceof Blob)) {
+        return;
+    }
+    const text = await error.response.data.text();
+    try {
+        error.response.data = JSON.parse(text);
+    } catch {
+        error.response.data = text;
+    }
 }
 
 /**

@@ -3,9 +3,9 @@ import { type FC, type FormEvent, useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 
 import { getClientLogger } from '../../clientLogger';
+import { useBackendMutation } from '../../hooks/useBackend.ts';
 import { routes } from '../../routes/routes.ts';
 import { getErrorMessage } from '../../services/apiRequest.ts';
-import { seqSetCitationClientHooks } from '../../services/serviceHooks';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import { type SeqSet, type SeqSetRecord } from '../../types/seqSetCitation';
 import { deserializeAccessionInput, serializeSeqSetRecords } from '../../utils/parseAccessionInput';
@@ -218,50 +218,41 @@ function useActionHooks(
     openErrorFeedback: (message: string) => void,
     setSeqSetRecordValidation: (message: string) => void,
 ) {
-    const hooks = seqSetCitationClientHooks(clientConfig);
-    const create = hooks.useCreateSeqSet(
-        { accessToken },
-        {
-            onSuccess: async (response) => {
-                await logger.info(`Successfully created seqSet with seqSetId: ${response.seqSetId}`);
-                const redirectUrl = `/seqsets/${response.seqSetId}.${response.seqSetVersion}`;
-                location.href = redirectUrl;
-            },
-            onError: async (error: unknown) => {
-                const message = `Failed to create seqSet: ${getErrorMessage(error)}`;
-                await logger.info(message);
-                openErrorFeedback(message);
-            },
+    const context = { clientConfig, accessToken };
+    const create = useBackendMutation(context, 'createSeqSet', {
+        onSuccess: async (response) => {
+            await logger.info(`Successfully created seqSet with seqSetId: ${response.seqSetId}`);
+            const redirectUrl = `/seqsets/${response.seqSetId}.${response.seqSetVersion}`;
+            location.href = redirectUrl;
         },
-    );
-    const update = hooks.useUpdateSeqSet(
-        { accessToken },
-        {
-            onSuccess: async (response) => {
-                await logger.info(`Successfully updated seqSet with seqSetId: ${response.seqSetId}`);
-                const redirectUrl = `/seqsets/${response.seqSetId}.${response.seqSetVersion}`;
-                location.href = redirectUrl;
-            },
-            onError: async (error) => {
-                const message = `Failed to update seqSet: ${getErrorMessage(error)}`;
-                await logger.info(message);
-                openErrorFeedback(message);
-            },
+        onError: async (error: unknown) => {
+            const message = `Failed to create seqSet: ${getErrorMessage(error)}`;
+            await logger.info(message);
+            openErrorFeedback(message);
         },
-    );
-    const validateRecords = hooks.useValidateSeqSetRecords(
-        { accessToken },
-        {
-            onSuccess: () => {
-                setSeqSetRecordValidation('');
-            },
-            onError: async (error) => {
-                const message = getErrorMessage(error);
-                await logger.info(`Failed to validate seqSet records: ${message}`);
-                setSeqSetRecordValidation(message);
-            },
+    });
+    const update = useBackendMutation(context, 'updateSeqSet', {
+        onSuccess: async (response) => {
+            await logger.info(`Successfully updated seqSet with seqSetId: ${response.seqSetId}`);
+            const redirectUrl = `/seqsets/${response.seqSetId}.${response.seqSetVersion}`;
+            location.href = redirectUrl;
         },
-    );
+        onError: async (error) => {
+            const message = `Failed to update seqSet: ${getErrorMessage(error)}`;
+            await logger.info(message);
+            openErrorFeedback(message);
+        },
+    });
+    const validateRecords = useBackendMutation(context, 'validateSeqSetRecords', {
+        onSuccess: () => {
+            setSeqSetRecordValidation('');
+        },
+        onError: async (error) => {
+            const message = getErrorMessage(error);
+            await logger.info(`Failed to validate seqSet records: ${message}`);
+            setSeqSetRecordValidation(message);
+        },
+    });
     return {
         createSeqSet: create.mutate,
         updateSeqSet: update.mutate,

@@ -4,7 +4,7 @@ import ErrorBox from '../../../components/common/ErrorBox.tsx';
 import NeedToLogin from '../../../components/common/NeedToLogin.astro';
 import { getRuntimeConfig } from '../../../config';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
-import { GroupManagementClient } from '../../../services/groupManagementClient';
+import { serverBackendApi } from '../../../services/serverApi.ts';
 import { getAccessToken } from '../../../utils/getAccessToken';
 
 const session = Astro.locals.session!;
@@ -18,8 +18,7 @@ if (isNaN(groupId)) {
     });
 }
 
-const groupManagementClient = GroupManagementClient.create();
-const groupDetailsResult = await groupManagementClient.getGroupDetails(groupId, accessToken);
+const groupDetailsResult = await serverBackendApi(accessToken).getGroupDetails({ groupId });
 ---
 
 <BaseLayout title='Edit group' activeTopNavigationItem='account'>

@@ -1,9 +1,11 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { toast } from 'react-toastify';
 
+import { useBackendMutation, useBackendQuery } from './useBackend.ts';
 import { getErrorMessage } from '../services/apiRequest.ts';
-import { backendClientHooks } from '../services/serviceHooks.ts';
 import {
+    type AccessionVersionsFilterWithApprovalScope,
+    type AccessionVersionsFilterWithDeletionScope,
     type Group,
     processedStatus,
     inProcessingStatus,
@@ -23,23 +25,22 @@ export function useSubmissionOperations(
     openErrorFeedback: (message: string) => void,
     pageQuery: PageQuery,
 ) {
-    const hooks = useMemo(() => backendClientHooks(clientConfig), [clientConfig]);
+    const context = { clientConfig, accessToken };
     const allRelevantStatuses = [receivedStatus, inProcessingStatus, processedStatus];
     const allProcessingResults = [noIssuesProcessingResult, warningsProcessingResult, errorsProcessingResult];
     const [includedStatuses, setIncludedStatuses] = useState(allRelevantStatuses);
     const [includedProcessingResults, setIncludedProcessingResults] = useState(allProcessingResults);
-    const useGetSequences = hooks.useGetSequences(
+    const useGetSequences = useBackendQuery(
+        context,
+        'getSequences',
         {
             organism,
-            accessToken,
-            queries: {
-                groupIdsFilter: group.groupId.toString(),
-                includeReviewData: true,
-                statusesFilter: includedStatuses.join(','),
-                processingResultFilter: includedProcessingResults.join(','),
-                page: pageQuery.pageOneIndexed - 1,
-                size: pageQuery.size,
-            },
+            groupIdsFilter: group.groupId.toString(),
+            includeReviewData: true,
+            statusesFilter: includedStatuses.join(','),
+            processingResultFilter: includedProcessingResults.join(','),
+            page: pageQuery.pageOneIndexed - 1,
+            size: pageQuery.size,
         },
         {
             onError: (error) => openErrorFeedback(getSequencesErrorMessage(error)),
@@ -55,53 +56,49 @@ export function useSubmissionOperations(
         openErrorFeedback(`Failed to query Group`);
     }
 
-    const useDeleteSequenceEntries = hooks.useDeleteSequences(
-        { organism, accessToken },
-        {
-            onSuccess: () => useGetSequences.refetch(),
-            onError: (error) => openErrorFeedback(deleteSequenceEntriesErrorMessage(error)),
+    const useDeleteSequenceEntries = useBackendMutation(context, 'deleteSequenceEntryVersions', {
+        onSuccess: () => useGetSequences.refetch(),
+        onError: (error) => openErrorFeedback(deleteSequenceEntriesErrorMessage(error)),
+    });
+    const useApproveProcessedData = useBackendMutation(context, 'approveProcessedData', {
+        onMutate: () => {
+            const toastId = toast.loading('Approving sequences...');
+            return { toastId };
         },
-    );
-    const useApproveProcessedData = hooks.useApproveProcessedData(
-        { organism, accessToken },
-        {
-            onMutate: () => {
-                const toastId = toast.loading('Approving sequences...');
-                return { toastId };
-            },
-            onSuccess: (data, _variables, context) => {
-                void useGetSequences.refetch();
-                const ctx = context as { toastId: string | number } | undefined;
-                if (ctx?.toastId) {
-                    const isBatchRelease = data.length > 1;
-                    toast.update(ctx.toastId, {
-                        render: isBatchRelease
-                            ? '🎉 All sequences have been approved. They will appear on the website shortly.'
-                            : 'Sequence approved. It will appear on the website shortly.',
-                        type: 'success',
-                        isLoading: false,
-                        autoClose: isBatchRelease ? false : 4000,
-                        closeButton: isBatchRelease,
-                    });
-                }
-            },
-            onError: (error, _variables, context) => {
-                const ctx = context as { toastId: string | number } | undefined;
-                if (ctx?.toastId) {
-                    toast.update(ctx.toastId, {
-                        render: approveProcessedDataErrorMessage(error),
-                        type: 'error',
-                        isLoading: false,
-                        autoClose: false,
-                    });
-                }
-            },
+        onSuccess: (data, _variables, context) => {
+            void useGetSequences.refetch();
+            const ctx = context as { toastId: string | number } | undefined;
+            if (ctx?.toastId) {
+                const isBatchRelease = data.length > 1;
+                toast.update(ctx.toastId, {
+                    render: isBatchRelease
+                        ? '🎉 All sequences have been approved. They will appear on the website shortly.'
+                        : 'Sequence approved. It will appear on the website shortly.',
+                    type: 'success',
+                    isLoading: false,
+                    autoClose: isBatchRelease ? false : 4000,
+                    closeButton: isBatchRelease,
+                });
+            }
         },
-    );
+        onError: (error, _variables, context) => {
+            const ctx = context as { toastId: string | number } | undefined;
+            if (ctx?.toastId) {
+                toast.update(ctx.toastId, {
+                    render: approveProcessedDataErrorMessage(error),
+                    type: 'error',
+                    isLoading: false,
+                    autoClose: false,
+                });
+            }
+        },
+    });
 
     return {
-        deleteSequenceEntries: useDeleteSequenceEntries.mutate,
-        approveProcessedData: useApproveProcessedData.mutate,
+        deleteSequenceEntries: (filter: AccessionVersionsFilterWithDeletionScope) =>
+            useDeleteSequenceEntries.mutate({ organism, ...filter }),
+        approveProcessedData: (filter: AccessionVersionsFilterWithApprovalScope) =>
+            useApproveProcessedData.mutate({ organism, ...filter }),
         getSequences: useGetSequences,
         includedStatuses,
         setIncludedStatuses,

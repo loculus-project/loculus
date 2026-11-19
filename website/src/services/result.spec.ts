@@ -1,7 +1,8 @@
 import { http } from 'msw';
 import { describe, expect, test } from 'vitest';
 
-import { BackendClient } from './backendClient.ts';
+import { backendApi } from './backendApi.ts';
+import { withResult } from './result.ts';
 import { testConfig, testServer } from '../../vitest.setup.ts';
 import type { ProblemDetail } from '../types/backend.ts';
 import type { AddSeqSetCitationRequest } from '../types/seqSetCitation.ts';
@@ -19,9 +20,13 @@ const addCitationRequest: AddSeqSetCitationRequest = {
 const addCitationUrl = `${testConfig.serverSide.backendUrl}/admin/add-seqset-citation`;
 
 const noopLogger = { error: () => undefined, info: () => undefined };
-const createClient = () => new BackendClient(testConfig.serverSide.backendUrl, noopLogger);
+const createApi = () =>
+    withResult(backendApi(testConfig.serverSide.backendUrl, 'access-token'), {
+        logger: noopLogger,
+        serviceName: 'backend',
+    });
 
-describe('BackendClient', () => {
+describe('withResult', () => {
     test('returns a ProblemDetail received from the backend', async () => {
         const problemDetail: ProblemDetail = {
             title: 'Unprocessable Content',
@@ -40,7 +45,7 @@ describe('BackendClient', () => {
             ),
         );
 
-        const result = await createClient().addSeqSetCitation('access-token', addCitationRequest);
+        const result = await createApi().addSeqSetCitation(addCitationRequest);
 
         expect(result._unsafeUnwrapErr()).toEqual(problemDetail);
     });
@@ -57,7 +62,7 @@ describe('BackendClient', () => {
             ),
         );
 
-        const result = await createClient().addSeqSetCitation('access-token', addCitationRequest);
+        const result = await createApi().addSeqSetCitation(addCitationRequest);
 
         expect(result._unsafeUnwrapErr()).toEqual({
             type: 'about:blank',
@@ -69,7 +74,7 @@ describe('BackendClient', () => {
     });
 
     test('returns an error instead of throwing when a path parameter is missing', async () => {
-        const result = await createClient().getDataUseTermsHistory('');
+        const result = await createApi().getDataUseTermsHistory({ accession: '' });
 
         expect(result._unsafeUnwrapErr()).toMatchObject({
             status: 0,

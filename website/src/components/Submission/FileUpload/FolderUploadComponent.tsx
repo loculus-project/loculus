@@ -11,9 +11,9 @@ import type {
     Uploaded,
     UploadStatus,
 } from './fileUpload';
-import { getClientLogger } from '../../../clientLogger';
 import useClientFlag from '../../../hooks/isClient';
-import { BackendClient } from '../../../services/backendClient';
+import { getErrorMessage } from '../../../services/apiRequest';
+import { backendApi } from '../../../services/backendApi';
 import { type FileCategory, type FileSharingConfig } from '../../../types/config';
 import type { ClientConfig } from '../../../types/runtimeConfig';
 import { calculatePartSizeAndCount, splitFileIntoParts, uploadPart } from '../../../utils/multipartUpload';
@@ -23,8 +23,6 @@ import type { InputMode } from '../FormOrUploadWrapper';
 import LucideFile from '~icons/lucide/file';
 import LucideFolderUp from '~icons/lucide/folder-up';
 import LucideLoader from '~icons/lucide/loader';
-
-const logger = getClientLogger('FolderUploadComponent');
 
 type FolderUploadComponentProps = {
     fileCategory: FileCategory;
@@ -99,7 +97,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
 }) => {
     const [isDragging, setIsDragging] = useState(false);
 
-    const backendClient = new BackendClient(clientConfig.backendUrl, logger);
+    const backend = backendApi(clientConfig.backendUrl, accessToken);
 
     function updatePartProgress(fileId: string, uploadedParts: number, totalParts: number) {
         setFileUploadState((state) => {
@@ -151,14 +149,14 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
             updatePartProgress(pending.fileId, i + 1, pending.totalParts);
         }
 
-        const result = await backendClient.completeMultipartUpload(accessToken, [{ fileId: pending.fileId, etags }]);
-        result.match(
-            () => updateFileState(pending.fileId, 'uploaded'),
-            (err) => {
-                updateFileState(pending.fileId, 'error', err.detail);
-                throw new Error(err.detail);
-            },
-        );
+        try {
+            await backend.completeMultipartUpload([{ fileId: pending.fileId, etags }]);
+        } catch (error) {
+            const message = getErrorMessage(error);
+            updateFileState(pending.fileId, 'error', message);
+            throw new Error(message);
+        }
+        updateFileState(pending.fileId, 'uploaded');
     }
 
     async function startUploading(pendingFiles: Pending[]) {
@@ -178,24 +176,23 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
         const pendingFiles: Pending[] = [];
         for (const file of filesAwaitingUrls) {
             const { partCount, partSize } = calculatePartSizeAndCount(file.size);
-            const result = await backendClient.requestMultipartUpload(accessToken, groupId, 1, partCount);
-            result.match(
-                (data) => {
-                    pendingFiles.push({
-                        type: 'pending',
-                        file: file.file,
-                        path: file.path,
-                        size: file.size,
-                        fileId: data[0].fileId,
-                        urls: data[0].urls,
-                        uploadedParts: 0,
-                        totalParts: partCount,
-                        partSize,
-                        etags: [],
-                    });
-                },
-                (err) => onError(err.detail),
-            );
+            try {
+                const data = await backend.requestMultipartUpload({ groupId, numberFiles: 1, numberParts: partCount });
+                pendingFiles.push({
+                    type: 'pending',
+                    file: file.file,
+                    path: file.path,
+                    size: file.size,
+                    fileId: data[0].fileId,
+                    urls: data[0].urls,
+                    uploadedParts: 0,
+                    totalParts: partCount,
+                    partSize,
+                    etags: [],
+                });
+            } catch (error) {
+                onError(getErrorMessage(error));
+            }
         }
         return pendingFiles;
     }

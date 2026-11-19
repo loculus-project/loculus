@@ -1,15 +1,13 @@
 import { type FC, type FormEvent, useState } from 'react';
 import { toast } from 'react-toastify';
 
-import { getClientLogger } from '../../clientLogger';
 import useClientFlag from '../../hooks/isClient';
-import { BackendClient } from '../../services/backendClient';
+import { getErrorMessage } from '../../services/apiRequest';
+import { backendApi } from '../../services/backendApi';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import type { AdminSeqSetCitation } from '../../types/seqSetCitation';
 import { Button } from '../common/Button';
 import { Spinner } from '../common/Spinner';
-
-const logger = getClientLogger('AddSeqSetCitationForm');
 
 interface Props {
     clientConfig: ClientConfig;
@@ -72,7 +70,7 @@ export const AddSeqSetCitationForm: FC<Props> = ({ clientConfig, accessToken, on
     const [isFetchingDoi, setIsFetchingDoi] = useState(false);
     const [validationMessage, setValidationMessage] = useState('');
 
-    const backendClient = new BackendClient(clientConfig.backendUrl, logger);
+    const backend = backendApi(clientConfig.backendUrl, accessToken);
 
     const resetForm = () => {
         setSourceDOI('');
@@ -149,31 +147,28 @@ export const AddSeqSetCitationForm: FC<Props> = ({ clientConfig, accessToken, on
         }
 
         setIsPending(true);
-        const result = await backendClient.addSeqSetCitation(accessToken, {
-            source: {
-                sourceDOI: sourceDOI.trim(),
-                title: title.trim(),
-                year: parsedYear,
-                contributors: splitLines(contributorsInput).map(parseContributor),
-                journal: journal.trim() || undefined,
-            },
-            seqSetAccessionVersions,
-        });
-        setIsPending(false);
-
-        result.match(
-            (citation) => {
-                onCitationAdded(citation);
-                resetForm();
-                toast.success('Citation added.', { position: 'top-center', autoClose: 3000 });
-            },
-            (error) => {
-                toast.error(`Failed to add citation. ${error.title}. ${error.detail}`, {
-                    position: 'top-center',
-                    autoClose: false,
-                });
-            },
-        );
+        try {
+            const citation = await backend.addSeqSetCitation({
+                source: {
+                    sourceDOI: sourceDOI.trim(),
+                    title: title.trim(),
+                    year: parsedYear,
+                    contributors: splitLines(contributorsInput).map(parseContributor),
+                    journal: journal.trim() || undefined,
+                },
+                seqSetAccessionVersions,
+            });
+            onCitationAdded(citation);
+            resetForm();
+            toast.success('Citation added.', { position: 'top-center', autoClose: 3000 });
+        } catch (error) {
+            toast.error(`Failed to add citation: ${getErrorMessage(error)}`, {
+                position: 'top-center',
+                autoClose: false,
+            });
+        } finally {
+            setIsPending(false);
+        }
     };
 
     const inputStyles =

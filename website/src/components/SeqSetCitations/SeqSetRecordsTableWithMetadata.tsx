@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { type FC, useMemo } from 'react';
 
-import { fetchLapisDetails } from '../../services/lapisClientSideApi';
+import { lapisApi } from '../../services/lapisApi.ts';
 import { type LapisRequest, versionStatuses } from '../../types/lapis';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import type { SeqSetRecord } from '../../types/seqSetCitation';
@@ -32,7 +32,7 @@ async function queryLapisDetails(
     fields: string[],
 ): Promise<Record<string, unknown>[]> {
     try {
-        const response = await fetchLapisDetails(lapisUrl, { ...filter, fields });
+        const response = await lapisApi(lapisUrl).details({ ...filter, fields });
         return response.data;
     } catch (_error) {
         return [];

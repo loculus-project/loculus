@@ -5,7 +5,7 @@ import { AdminSeqSetCitationsSection } from '../../components/AdminDashboard/Adm
 import { PipelineStatisticsTable } from '../../components/AdminDashboard/PipelineStatisticsTable';
 import { seqSetsAreEnabled, getRuntimeConfig } from '../../config';
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { createBackendClient } from '../../services/backendClientFactory';
+import { serverBackendApi } from '../../services/serverApi.ts';
 import type { CurrentPipelineVersions, ProblemDetail } from '../../types/backend';
 import type { AdminSeqSetCitation } from '../../types/seqSetCitation';
 import { getAccessToken } from '../../utils/getAccessToken';
@@ -17,11 +17,11 @@ let statisticsResult;
 let currentVersionsResult: Result<CurrentPipelineVersions, ProblemDetail> | undefined;
 let seqSetCitationsResult: Result<AdminSeqSetCitation[], ProblemDetail> | undefined;
 if (accessToken !== undefined) {
-    const backendClient = createBackendClient();
+    const backendApi = serverBackendApi(accessToken);
     [statisticsResult, currentVersionsResult, seqSetCitationsResult] = await Promise.all([
-        backendClient.getPipelineStatistics(accessToken),
-        backendClient.getCurrentPipelineVersions(accessToken),
-        seqSetsEnabled ? backendClient.getAllSeqSetCitations(accessToken) : Promise.resolve(undefined),
+        backendApi.getPipelineStatistics(),
+        backendApi.getCurrentPipelineVersions(),
+        seqSetsEnabled ? backendApi.getAllSeqSetCitations() : Promise.resolve(undefined),
     ]);
 }
 ---

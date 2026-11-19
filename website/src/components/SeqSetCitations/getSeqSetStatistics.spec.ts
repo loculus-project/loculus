@@ -87,29 +87,26 @@ vi.mock('../../config.ts', () => ({
     }),
 }));
 
-vi.mock('../../services/lapisClient.ts', () => ({
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    LapisClient: {
-        createForOrganism: vi.fn().mockImplementation((organism: string) => ({
-            getAggregated: vi.fn().mockImplementation((params: MockParams) => {
-                // Determine if the call is for versioned or unversioned accessions
-                const isVersioned = params[ACCESSION_VERSION_FIELD] !== undefined;
-                const versionType = isVersioned ? 'versioned' : 'unversioned';
-                const accessions = (isVersioned ? params[ACCESSION_VERSION_FIELD] : params[ACCESSION_FIELD])!;
+vi.mock('../../services/serverApi.ts', () => ({
+    serverLapisApi: vi.fn().mockImplementation((organism: string) => ({
+        aggregated: vi.fn().mockImplementation((params: MockParams) => {
+            // Determine if the call is for versioned or unversioned accessions
+            const isVersioned = params[ACCESSION_VERSION_FIELD] !== undefined;
+            const versionType = isVersioned ? 'versioned' : 'unversioned';
+            const accessions = (isVersioned ? params[ACCESSION_VERSION_FIELD] : params[ACCESSION_FIELD])!;
 
-                // Check if all accessions in the call match the mock accessions for the organism and version type
-                const hasOrganismAccessions = mockAccessions[organism]
-                    .filter((a) => (isVersioned ? a.includes('.') : !a.includes('.')))
-                    .every((a) => accessions.includes(a));
+            // Check if all accessions in the call match the mock accessions for the organism and version type
+            const hasOrganismAccessions = mockAccessions[organism]
+                .filter((a) => (isVersioned ? a.includes('.') : !a.includes('.')))
+                .every((a) => accessions.includes(a));
 
-                const matchingField = params.fields.find((f) => f in mockResponses[organism][versionType]);
-                if (hasOrganismAccessions && matchingField !== undefined) {
-                    return Promise.resolve(ok({ data: mockResponses[organism][versionType][matchingField] }));
-                }
-                return Promise.resolve(ok({ data: [] }));
-            }),
-        })),
-    },
+            const matchingField = params.fields.find((f) => f in mockResponses[organism][versionType]);
+            if (hasOrganismAccessions && matchingField !== undefined) {
+                return Promise.resolve(ok({ data: mockResponses[organism][versionType][matchingField] }));
+            }
+            return Promise.resolve(ok({ data: [] }));
+        }),
+    })),
 }));
 
 describe('getSeqSetStatistics', () => {

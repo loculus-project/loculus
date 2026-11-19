@@ -1,6 +1,6 @@
 ---
 import { seqSetsAreEnabled } from '../../config';
-import { SeqSetCitationClient } from '../../services/seqSetCitationClient';
+import { serverBackendApi } from '../../services/serverApi.ts';
 
 if (!seqSetsAreEnabled()) {
     return Astro.rewrite('/404');
@@ -8,7 +8,7 @@ if (!seqSetsAreEnabled()) {
 
 const { seqSetId = '' } = Astro.params;
 
-const versionsResult = await SeqSetCitationClient.create().getSeqSetVersions(seqSetId);
+const versionsResult = await serverBackendApi().getSeqSetVersions({ seqSetId });
 
 if (versionsResult.isOk() && versionsResult.value.length > 0) {
     const latestVersion = Math.max(...versionsResult.value.map((s) => s.seqSetVersion));

@@ -3,7 +3,6 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, test } from 'vitest';
 
 import { GroupForm } from './GroupForm';
-import type { GetGroupsResult } from '../../hooks/useGroupOperations';
 
 const MOCK_GROUP = {
     groupId: 1,
@@ -24,21 +23,9 @@ const noOpSubmit = () => {
     throw new Error('Not implemented');
 };
 
-// eslint-disable-next-line @typescript-eslint/require-await
-const mockGetGroupsWithNoGroups = async (_groupName?: string): Promise<GetGroupsResult> => {
-    return {
-        succeeded: true,
-        groups: [],
-    };
-};
+const mockGetGroupsWithNoGroups = (_groupName: string) => Promise.resolve([]);
 
-// eslint-disable-next-line @typescript-eslint/require-await
-const mockGetGroupsWithGroup = async (_groupName?: string): Promise<GetGroupsResult> => {
-    return {
-        succeeded: true,
-        groups: [MOCK_GROUP],
-    };
-};
+const mockGetGroupsWithGroup = (_groupName: string) => Promise.resolve([MOCK_GROUP]);
 
 describe('GroupForm', () => {
     test('test empty form', () => {

@@ -20,8 +20,8 @@ import { TableColumnSelectorModal } from './TableColumnSelectorModal.tsx';
 import { useSearchPageState } from './useSearchPageState.ts';
 import { type QueryState } from './useStateSyncedWithUrlQueryParams.ts';
 import { getLapisUrl } from '../../config.ts';
-import { fetchLapisDetails } from '../../services/lapisClientSideApi.ts';
-import { lapisClientHooks } from '../../services/serviceHooks.ts';
+import { useLapisMutation } from '../../hooks/useLapis.ts';
+import { lapisApi } from '../../services/lapisApi.ts';
 import { DATA_USE_TERMS_FIELD, pageSize } from '../../settings';
 import type { Group } from '../../types/backend.ts';
 import type { LinkOut, ContactConfig } from '../../types/config.ts';
@@ -164,9 +164,8 @@ const InnerSearchFullUI = ({
         schema.richFastaHeaderFields,
     );
 
-    const hooks = lapisClientHooks(lapisUrl);
-    const aggregatedHook = hooks.useAggregated();
-    const detailsHook = hooks.useDetails();
+    const aggregatedHook = useLapisMutation(lapisUrl, 'aggregated');
+    const detailsHook = useLapisMutation(lapisUrl, 'details');
 
     const [selectedSeqs, setSelectedSeqs] = useState(new Set<string>());
     const sequencesSelected = selectedSeqs.size > 0;
@@ -224,7 +223,7 @@ const InnerSearchFullUI = ({
     const linkOutSequenceCount = downloadFilter.sequenceCount() ?? totalSequences;
 
     const fetchAccessions = useCallback(async (): Promise<string[]> => {
-        const response = await fetchLapisDetails(lapisUrl, {
+        const response = await lapisApi(lapisUrl).details({
             ...lapisSearchParameters,
             fields: [schema.primaryKey],
             limit: MAX_SUBMITTED_DATA_DOWNLOAD_ENTRIES + 1,

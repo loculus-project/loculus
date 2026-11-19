@@ -5,9 +5,9 @@ import { EditableSequences } from './EditableSequences.ts';
 import { EditableMetadata, MetadataForm, SubmissionIdRow, Subtitle } from './MetadataForm.tsx';
 import { SequencesForm } from './SequencesForm.tsx';
 import { getClientLogger } from '../../clientLogger.ts';
+import { useBackendMutation } from '../../hooks/useBackend.ts';
 import { routes } from '../../routes/routes.ts';
 import { getErrorMessage } from '../../services/apiRequest.ts';
-import { backendClientHooks } from '../../services/serviceHooks.ts';
 import { type FilesByCategory, type SequenceEntryToEdit, approvedForReleaseStatus } from '../../types/backend.ts';
 import { type FileSharingConfig, type InputField, type SubmissionDataTypes } from '../../types/config.ts';
 import {
@@ -126,6 +126,7 @@ const InnerEditPage: FC<EditPageProps> = ({
 
             if (!submissionDataTypes.consensusSequences) {
                 submitRevision({
+                    organism,
                     metadataFile: mFile.inner(),
                 });
                 return;
@@ -138,6 +139,7 @@ const InnerEditPage: FC<EditPageProps> = ({
                 return;
             }
             submitRevision({
+                organism,
                 metadataFile: mFile.inner(),
                 sequenceFile: editableSequences.getSequenceFasta(),
             });
@@ -168,6 +170,7 @@ const InnerEditPage: FC<EditPageProps> = ({
                 return;
             }
             submitEdit({
+                organism,
                 accession: dataToEdit.accession,
                 version: dataToEdit.version,
                 data: {
@@ -295,23 +298,18 @@ function useSubmitRevision(
     reviewData: SequenceEntryToEdit,
     openErrorFeedback: (message: string) => void,
 ) {
-    return backendClientHooks(clientConfig).useRevise(
-        { organism, accessToken },
-        {
-            onSuccess: async () => {
-                await logger.info('Successfully submitted revision for ' + getAccessionVersionString(reviewData));
-                location.href = routes.userSequenceReviewPage(organism, reviewData.groupId);
-            },
-            onError: async (error) => {
-                const errorDetail = getErrorMessage(error);
-                const message = `Failed to submit revision for ${getAccessionVersionString(
-                    reviewData,
-                )}: ${errorDetail}`;
-                await logger.info(message);
-                openErrorFeedback(message);
-            },
+    return useBackendMutation({ clientConfig, accessToken }, 'revise', {
+        onSuccess: async () => {
+            await logger.info('Successfully submitted revision for ' + getAccessionVersionString(reviewData));
+            location.href = routes.userSequenceReviewPage(organism, reviewData.groupId);
         },
-    );
+        onError: async (error) => {
+            const errorDetail = getErrorMessage(error);
+            const message = `Failed to submit revision for ${getAccessionVersionString(reviewData)}: ${errorDetail}`;
+            await logger.info(message);
+            openErrorFeedback(message);
+        },
+    });
 }
 
 function useSubmitEdit(
@@ -321,21 +319,16 @@ function useSubmitEdit(
     reviewData: SequenceEntryToEdit,
     openErrorFeedback: (message: string) => void,
 ) {
-    return backendClientHooks(clientConfig).useSubmitReviewedSequence(
-        { organism, accessToken },
-        {
-            onSuccess: async () => {
-                await logger.info('Successfully submitted edited data ' + getAccessionVersionString(reviewData));
-                location.href = routes.userSequenceReviewPage(organism, reviewData.groupId);
-            },
-            onError: async (error) => {
-                const errorDetail = getErrorMessage(error);
-                const message = `Failed to submit edited data for ${getAccessionVersionString(
-                    reviewData,
-                )}: ${errorDetail}`;
-                await logger.info(message);
-                openErrorFeedback(message);
-            },
+    return useBackendMutation({ clientConfig, accessToken }, 'submitEditedData', {
+        onSuccess: async () => {
+            await logger.info('Successfully submitted edited data ' + getAccessionVersionString(reviewData));
+            location.href = routes.userSequenceReviewPage(organism, reviewData.groupId);
         },
-    );
+        onError: async (error) => {
+            const errorDetail = getErrorMessage(error);
+            const message = `Failed to submit edited data for ${getAccessionVersionString(reviewData)}: ${errorDetail}`;
+            await logger.info(message);
+            openErrorFeedback(message);
+        },
+    });
 }
