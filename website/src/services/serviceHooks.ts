@@ -2,9 +2,9 @@ import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 import { Zodios } from '@zodios/core';
 import { ZodiosHooks, type ZodiosHooksInstance } from '@zodios/react';
 
-import { lapisApi } from './lapisApi.ts';
 import { seqSetCitationApi } from './seqSetCitationApi.ts';
 import { backendApi } from './zodiosBackendApi.ts';
+import { lapisApi } from './zodiosLapisApi.ts';
 import {
     ACCESSION_FIELD,
     ACCESSION_VERSION_FIELD,

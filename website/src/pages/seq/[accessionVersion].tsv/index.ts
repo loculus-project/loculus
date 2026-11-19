@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 
 import { routes } from '../../../routes/routes';
-import { LapisClient } from '../../../services/lapisClient';
+import { serverLapisApi } from '../../../services/serverApi.ts';
 import { createDownloadAPIRoute } from '../../../utils/createDownloadAPIRoute';
 
 export const GET: APIRoute = createDownloadAPIRoute(
@@ -9,7 +9,6 @@ export const GET: APIRoute = createDownloadAPIRoute(
     'tsv',
     routes.sequenceEntryTsvPage,
     (accessionVersion: string, organism: string) => {
-        const lapisClient = LapisClient.createForOrganism(organism);
-        return lapisClient.getSequenceEntryVersionDetailsTsv(accessionVersion);
+        return serverLapisApi(organism).getSequenceEntryVersionDetailsTsv({ accessionVersion });
     },
 );

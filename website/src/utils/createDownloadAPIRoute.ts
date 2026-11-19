@@ -3,7 +3,7 @@ import { err, ok, type Result } from 'neverthrow';
 
 import { parseAccessionVersionFromString } from './extractAccessionVersion';
 import { getConfiguredOrganisms } from '../config';
-import { LapisClient } from '../services/lapisClient';
+import { serverLapisApi } from '../services/serverApi.ts';
 import { type ProblemDetail } from '../types/backend';
 
 export type RedirectRoute = (
@@ -93,10 +93,8 @@ const getSequenceDataWithOrganism = async (
 ): Promise<Result<Data | Redirect, ProblemDetail>> => {
     const { accession, version } = parseAccessionVersionFromString(accessionVersion);
 
-    const lapisClient = LapisClient.createForOrganism(organism);
-
     if (version === undefined) {
-        const latestVersionResult = await lapisClient.getLatestAccessionVersion(accession);
+        const latestVersionResult = await serverLapisApi(organism).getLatestAccessionVersion({ accession });
         return latestVersionResult.map((latestVersion) => ({
             type: ResultType.REDIRECT,
             redirectUrl: undefinedVersionRedirectUrl(latestVersion),
