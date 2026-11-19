@@ -19,7 +19,6 @@ import {
 } from '../../types/backend.ts';
 import type { FileCategory, Metadata } from '../../types/config.ts';
 import type { ReferenceGenomesInfo } from '../../types/referencesGenomes.ts';
-import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { CustomTooltip } from '../../utils/CustomTooltip.tsx';
 import { displayMetadataField } from '../../utils/displayMetadataField.ts';
 import { getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';
@@ -44,9 +43,7 @@ type ReviewCardProps = {
     deleteAccessionVersion: () => void;
     approveAccessionVersion: () => void;
     editAccessionVersion: () => void;
-    clientConfig: ClientConfig;
     organism: string;
-    accessToken: string;
     outputFileCategories?: FileCategory[];
     referenceGenomesInfo: ReferenceGenomesInfo;
 };
@@ -57,9 +54,7 @@ export const ReviewCard: FC<ReviewCardProps> = ({
     approveAccessionVersion,
     deleteAccessionVersion,
     editAccessionVersion,
-    clientConfig,
     organism,
-    accessToken,
     outputFileCategories,
     referenceGenomesInfo,
 }) => {
@@ -73,7 +68,6 @@ export const ReviewCard: FC<ReviewCardProps> = ({
     );
     const data = sequenceEntryStatus.reviewData;
     const sequencePreview = useBackendQuery(
-        { clientConfig, accessToken },
         'getDataToEdit',
         { organism, accession: sequenceEntryStatus.accession, version: sequenceEntryStatus.version },
         {

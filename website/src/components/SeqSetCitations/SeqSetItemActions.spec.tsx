@@ -5,7 +5,7 @@ import { toast } from 'react-toastify';
 import { describe, expect, test, vi } from 'vitest';
 
 import { SeqSetItemActions } from './SeqSetItemActions';
-import { testConfig, testServer } from '../../../vitest.setup.ts';
+import { testBackendProxyUrl, testServer } from '../../../vitest.setup.ts';
 import type { SeqSet } from '../../types/seqSetCitation';
 
 const seqSet: SeqSet = {
@@ -24,7 +24,7 @@ const records = [
 function mockRecords(response: () => Response) {
     let requestCount = 0;
     testServer.use(
-        http.get(`${testConfig.public.backendUrl}/get-seqset-records`, () => {
+        http.get(`${testBackendProxyUrl}/get-seqset-records`, () => {
             requestCount++;
             return response();
         }),
@@ -33,15 +33,7 @@ function mockRecords(response: () => Response) {
 }
 
 function renderActions() {
-    render(
-        <SeqSetItemActions
-            clientConfig={testConfig.public}
-            accessToken='token'
-            seqSet={seqSet}
-            isAdminView
-            databaseName='testDatabase'
-        />,
-    );
+    render(<SeqSetItemActions seqSet={seqSet} isAdminView databaseName='testDatabase' />);
 }
 
 describe('SeqSetItemActions', () => {

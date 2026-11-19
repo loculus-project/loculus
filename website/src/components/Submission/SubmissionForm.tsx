@@ -7,13 +7,10 @@ import { routes } from '../../routes/routes.ts';
 import { type Group } from '../../types/backend.ts';
 import type { FileSharingConfig, InputField } from '../../types/config.ts';
 import type { SubmissionDataTypes } from '../../types/config.ts';
-import type { ClientConfig } from '../../types/runtimeConfig.ts';
 
 type SubmissionFormProps = {
-    accessToken: string;
     instanceName: string;
     organism: string;
-    clientConfig: ClientConfig;
     group: Group;
     inputMode: InputMode;
     metadataTemplateFields: Map<string, InputField[]>;
@@ -24,10 +21,8 @@ type SubmissionFormProps = {
 };
 
 export const SubmissionForm: FC<SubmissionFormProps> = ({
-    accessToken,
     instanceName,
     organism,
-    clientConfig,
     group,
     inputMode,
     metadataTemplateFields,
@@ -39,12 +34,10 @@ export const SubmissionForm: FC<SubmissionFormProps> = ({
     return (
         <div className='flex flex-col items-center'>
             <DataUploadForm
-                accessToken={accessToken}
                 instanceName={instanceName}
                 organism={organism}
                 metadataTemplateFields={metadataTemplateFields}
                 authorsFields={authorsFields}
-                clientConfig={clientConfig}
                 action='submit'
                 inputMode={inputMode}
                 onError={(message) => toast.error(message, { position: 'top-center', autoClose: false })}

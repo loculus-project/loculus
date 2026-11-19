@@ -13,9 +13,8 @@ import type {
 } from './fileUpload';
 import useClientFlag from '../../../hooks/isClient';
 import { getErrorMessage } from '../../../services/apiRequest';
-import { backendApi } from '../../../services/backendApi';
+import { browserBackendApi } from '../../../services/backendApi';
 import { type FileCategory, type FileSharingConfig } from '../../../types/config';
-import type { ClientConfig } from '../../../types/runtimeConfig';
 import { calculatePartSizeAndCount, splitFileIntoParts, uploadPart } from '../../../utils/multipartUpload';
 import { displayConfirmationDialog } from '../../ConfirmationDialog';
 import { Button } from '../../common/Button';
@@ -27,8 +26,6 @@ import LucideLoader from '~icons/lucide/loader';
 type FolderUploadComponentProps = {
     fileCategory: FileCategory;
     inputMode: InputMode;
-    accessToken: string;
-    clientConfig: ClientConfig;
     groupId: number;
     fileUploadState: FileUploadState | undefined;
     setFileUploadState: Dispatch<SetStateAction<FileUploadState | undefined>>;
@@ -86,8 +83,6 @@ const FileInput = ({
 export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
     fileCategory,
     inputMode,
-    accessToken,
-    clientConfig,
     groupId,
     fileUploadState,
     setFileUploadState,
@@ -97,7 +92,7 @@ export const FolderUploadComponent: FC<FolderUploadComponentProps> = ({
 }) => {
     const [isDragging, setIsDragging] = useState(false);
 
-    const backend = backendApi(clientConfig.backendUrl, accessToken);
+    const backend = browserBackendApi();
 
     function updatePartProgress(fileId: string, uploadedParts: number, totalParts: number) {
         setFileUploadState((state) => {

@@ -8,8 +8,7 @@ import {
     defaultReviewData,
     testServer,
     mockRequest,
-    testAccessToken,
-    testConfig,
+    testBackendProxyUrl,
     testGroups,
     testOrganism,
 } from '../../../vitest.setup.ts';
@@ -39,8 +38,7 @@ function renderReviewPage() {
             group={testGroup}
             organism={testOrganism}
             metadataSchema={[]}
-            accessToken={testAccessToken}
-            clientConfig={testConfig.public}
+
             referenceGenomesInfo={SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES}
         />,
     );
@@ -174,7 +172,7 @@ describe('ReviewPage', () => {
         const requests = vi.fn();
         let entries = [receivedTestData];
         testServer.use(
-            http.get(`${testConfig.public.backendUrl}/${testOrganism}/get-sequences`, () => {
+            http.get(`${testBackendProxyUrl}/${testOrganism}/get-sequences`, () => {
                 requests();
                 return HttpResponse.json(generateGetSequencesResponse(entries));
             }),
@@ -260,19 +258,16 @@ describe('ReviewPage', () => {
         const requestedVersions = vi.fn();
         let fail = true;
         testServer.use(
-            http.get(
-                `${testConfig.public.backendUrl}/${testOrganism}/get-data-to-edit/:accession/:version`,
-                ({ params }) => {
-                    requestedVersions(params.accession, params.version);
-                    return fail
-                        ? new HttpResponse(null, { status: 500 })
-                        : HttpResponse.json({
-                              ...defaultReviewData,
-                              accession: params.accession,
-                              version: Number(params.version),
-                          });
-                },
-            ),
+            http.get(`${testBackendProxyUrl}/${testOrganism}/get-data-to-edit/:accession/:version`, ({ params }) => {
+                requestedVersions(params.accession, params.version);
+                return fail
+                    ? new HttpResponse(null, { status: 500 })
+                    : HttpResponse.json({
+                          ...defaultReviewData,
+                          accession: params.accession,
+                          version: Number(params.version),
+                      });
+            }),
         );
         const user = userEvent.setup();
         const page = renderReviewPage();
@@ -293,7 +288,7 @@ describe('ReviewPage', () => {
     test('returns to page one when a filter leaves no matching entries', async () => {
         const requestedPages: number[] = [];
         testServer.use(
-            http.get(`${testConfig.public.backendUrl}/${testOrganism}/get-sequences`, ({ request }) => {
+            http.get(`${testBackendProxyUrl}/${testOrganism}/get-sequences`, ({ request }) => {
                 const params = new URL(request.url).searchParams;
                 requestedPages.push(Number(params.get('page')));
                 const response = generateGetSequencesResponse([awaitingApprovalTestData]);

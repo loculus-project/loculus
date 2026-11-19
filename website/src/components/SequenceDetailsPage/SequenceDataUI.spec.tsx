@@ -3,7 +3,7 @@ import { describe, expect, test } from 'vitest';
 
 import { SequenceDataUI } from './SequenceDataUI';
 import type { SequenceData, TableDataEntry } from './types';
-import { testAccessToken, testConfig, testGroups, testOrganism } from '../../../vitest.setup.ts';
+import { testConfig, testGroups, testOrganism } from '../../../vitest.setup.ts';
 import type { DataUseTermsHistoryEntry } from '../../types/backend';
 import type { Schema, SequenceFlaggingConfig } from '../../types/config';
 import type { SequenceEntryHistory, SequenceEntryHistoryEntry } from '../../types/lapis';
@@ -119,7 +119,7 @@ function renderSequenceDataUI(sequenceDataToRender: SequenceData, accessionVersi
             schema={schema}
             clientConfig={testConfig.public}
             myGroups={testGroups}
-            accessToken={testAccessToken}
+            isLoggedIn
             sequenceFlaggingConfig={sequenceFlaggingConfig}
             referenceGenomesInfo={referenceGenomesInfo}
             sequenceCitations={sequenceCitations}

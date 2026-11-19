@@ -8,21 +8,13 @@ import DataUseTermsSelector from './DataUseTermsSelector';
 import { errorToast, successToast } from './EditDataUseTermsToasts.ts';
 import { useBackendMutation } from '../../hooks/useBackend.ts';
 import { type RestrictedDataUseTerms, type DataUseTerms } from '../../types/backend.ts';
-import type { ClientConfig } from '../../types/runtimeConfig';
 
 type EditDataUseTermsButtonProps = {
-    accessToken: string;
-    clientConfig: ClientConfig;
     accession: string;
     dataUseTerms: RestrictedDataUseTerms;
 };
 
-const InnerEditDataUseTermsButton: FC<EditDataUseTermsButtonProps> = ({
-    accessToken,
-    clientConfig,
-    accession,
-    dataUseTerms,
-}) => {
+const InnerEditDataUseTermsButton: FC<EditDataUseTermsButtonProps> = ({ accession, dataUseTerms }) => {
     const restrictedUntil = DateTime.fromISO(dataUseTerms.restrictedUntil);
     const [selectedDataUseTerms, setDataUseTerms] = useState<DataUseTerms>(dataUseTerms);
 
@@ -40,7 +32,7 @@ const InnerEditDataUseTermsButton: FC<EditDataUseTermsButtonProps> = ({
         }
     };
 
-    const useSetDataUseTerms = useBackendMutation({ clientConfig, accessToken }, 'setDataUseTerms', {
+    const useSetDataUseTerms = useBackendMutation('setDataUseTerms', {
         onError: errorToast,
         onSuccess: successToast,
     });

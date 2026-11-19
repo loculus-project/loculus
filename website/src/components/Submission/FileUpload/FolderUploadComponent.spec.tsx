@@ -13,7 +13,7 @@ const mockCompleteMultipartUpload = vi.fn();
 const mockOnError = vi.fn();
 
 vi.mock('../../../services/backendApi', () => ({
-    backendApi: () => ({
+    browserBackendApi: () => ({
         requestMultipartUpload: mockRequestMultipartUpload,
         completeMultipartUpload: mockCompleteMultipartUpload,
     }),
@@ -57,7 +57,6 @@ const defaultProps = {
         displayName: 'Extra Files',
     },
     inputMode: 'bulk' as const,
-    accessToken: 'test-token',
     clientConfig: { backendUrl: 'http://test-backend', lapisUrls: {} },
     groupId: 1,
     onError: mockOnError,

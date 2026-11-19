@@ -47,7 +47,6 @@ const SeqSetSectionEntry: FC<{ label: string; value: React.ReactNode }> = ({ lab
 
 type SeqSetItemProps = {
     clientConfig: ClientConfig;
-    accessToken: string;
     seqSetAccessionVersion: string;
     seqSet: SeqSet;
     seqSetRecords: SeqSetRecord[];
@@ -61,7 +60,6 @@ type SeqSetItemProps = {
 
 const SeqSetItemInner: FC<SeqSetItemProps> = ({
     clientConfig,
-    accessToken,
     seqSetAccessionVersion,
     seqSet,
     seqSetRecords,
@@ -76,12 +74,8 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
     const [wideGraphs, setWideGraphs] = useState(false);
     const sequencesPerPage = 10;
 
-    const { mutate: createSeqSetDOI } = useCreateSeqSetDOIAction(
-        clientConfig,
-        accessToken,
-        seqSet.seqSetId,
-        seqSet.seqSetVersion,
-        (message) => toast.error(message, { position: 'top-center', autoClose: false }),
+    const { mutate: createSeqSetDOI } = useCreateSeqSetDOIAction(seqSet.seqSetId, seqSet.seqSetVersion, (message) =>
+        toast.error(message, { position: 'top-center', autoClose: false }),
     );
 
     const handleCreateDOI = () => {
@@ -224,14 +218,8 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
     );
 };
 
-function useCreateSeqSetDOIAction(
-    clientConfig: ClientConfig,
-    accessToken: string,
-    seqSetId: string,
-    seqSetVersion: number,
-    onError: (message: string) => void,
-) {
-    return useBackendMutation({ clientConfig, accessToken }, 'createSeqSetDOI', {
+function useCreateSeqSetDOIAction(seqSetId: string, seqSetVersion: number, onError: (message: string) => void) {
+    return useBackendMutation('createSeqSetDOI', {
         onSuccess: async () => {
             await logger.info(`Successfully created seqSet DOI for seqSetId: ${seqSetId}, version ${seqSetVersion}`);
             location.reload();

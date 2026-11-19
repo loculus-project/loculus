@@ -81,7 +81,7 @@ function renderSearchFullUI({
     }));
 
     const props = {
-        accessToken: 'dummyAccessToken',
+        isLoggedIn: true,
         referenceGenomesInfo,
         myGroups: [],
         organism: testOrganism,

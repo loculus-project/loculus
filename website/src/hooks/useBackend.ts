@@ -1,12 +1,6 @@
 import { useMutation, type UseMutationOptions, useQuery, type UseQueryOptions } from '@tanstack/react-query';
 
-import { backendApi, type BackendApi, type RequestOptions } from '../services/backendApi.ts';
-import type { ClientConfig } from '../types/runtimeConfig.ts';
-
-export type BackendContext = {
-    clientConfig: ClientConfig;
-    accessToken?: string;
-};
+import { type BackendApi, browserBackendApi, type RequestOptions } from '../services/backendApi.ts';
 
 export type BackendEndpoint = keyof BackendApi;
 export type BackendParams<K extends BackendEndpoint> = Parameters<BackendApi[K]>[0];
@@ -23,12 +17,11 @@ export type BackendMutationOptions<K extends BackendEndpoint> = Omit<
 >;
 
 function callEndpoint<K extends BackendEndpoint>(
-    { clientConfig, accessToken }: BackendContext,
     endpoint: K,
     params: BackendParams<K>,
     options: RequestOptions = {},
 ): Promise<BackendData<K>> {
-    const fn = backendApi(clientConfig.backendUrl, accessToken)[endpoint] as (
+    const fn = browserBackendApi()[endpoint] as (
         params: BackendParams<K>,
         options: RequestOptions,
     ) => Promise<BackendData<K>>;
@@ -36,51 +29,39 @@ function callEndpoint<K extends BackendEndpoint>(
 }
 
 /**
- * Query options for a backend endpoint, e.g. for `queryClient.fetchQuery`.
+ * Query options for a backend endpoint, e.g. for `queryClient.fetchQuery`. The query key is `['backend', endpoint, params]`.
  *
- * The query key is `['backend', endpoint, params]`. The access token is deliberately not part of it,
- * because it's a secret, and it doesn't change during a page's lifetime.
+ * Requests go through the website's backend proxy, which authenticates them with the session cookie.
  */
-export function backendQueryOptions<K extends BackendEndpoint>(
-    context: BackendContext,
-    endpoint: K,
-    params: BackendParams<K>,
-) {
-    // `context` contains the access token, which must not be part of the query key (see above)
-    // eslint-disable-next-line @tanstack/query/exhaustive-deps
+export function backendQueryOptions<K extends BackendEndpoint>(endpoint: K, params: BackendParams<K>) {
     return {
         queryKey: ['backend', endpoint, params] as const,
-        queryFn: ({ signal }: { signal?: AbortSignal }) => callEndpoint(context, endpoint, params, { signal }),
+        queryFn: ({ signal }: { signal?: AbortSignal }) => callEndpoint(endpoint, params, { signal }),
     };
 }
 
 /**
  * @example
- * const { data } = useBackendQuery(context, 'getDataToEdit', { organism, accession, version }, { enabled: open });
+ * const { data } = useBackendQuery('getDataToEdit', { organism, accession, version }, { enabled: open });
  */
 export function useBackendQuery<K extends BackendEndpoint>(
-    context: BackendContext,
     endpoint: K,
     params: BackendParams<K>,
     options: BackendQueryOptions<K> = {},
 ) {
-    return useQuery<BackendData<K>, Error>({ ...backendQueryOptions(context, endpoint, params), ...options });
+    return useQuery<BackendData<K>, Error>({ ...backendQueryOptions(endpoint, params), ...options });
 }
 
 /**
  * The mutation variables are the endpoint's params.
  *
  * @example
- * const { mutate } = useBackendMutation(context, 'approveProcessedData', { onSuccess: ... });
+ * const { mutate } = useBackendMutation('approveProcessedData', { onSuccess: ... });
  * mutate({ organism, scope: 'ALL', groupIdsFilter: [groupId] });
  */
-export function useBackendMutation<K extends BackendEndpoint>(
-    context: BackendContext,
-    endpoint: K,
-    options: BackendMutationOptions<K> = {},
-) {
+export function useBackendMutation<K extends BackendEndpoint>(endpoint: K, options: BackendMutationOptions<K> = {}) {
     return useMutation<BackendData<K>, Error, BackendParams<K>>({
-        mutationFn: (params) => callEndpoint(context, endpoint, params),
+        mutationFn: (params) => callEndpoint(endpoint, params),
         ...options,
     });
 }

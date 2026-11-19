@@ -14,7 +14,6 @@ import {
     type DataUseTermsOption,
 } from '../../types/backend';
 import type { Details } from '../../types/lapis';
-import type { ClientConfig } from '../../types/runtimeConfig';
 import { formatNumberWithDefaultLocale } from '../../utils/formatNumber';
 import type { SequenceFilter } from '../SearchPage/DownloadDialog/SequenceFilters';
 import { ActiveFilters } from '../common/ActiveFilters';
@@ -22,9 +21,8 @@ import { BaseDialog } from '../common/BaseDialog';
 import { Button } from '../common/Button';
 
 interface EditDataUseTermsModalProps {
+    isLoggedIn: boolean;
     lapisUrl: string;
-    clientConfig: ClientConfig;
-    accessToken?: string;
     sequenceFilter: SequenceFilter;
 }
 
@@ -91,12 +89,7 @@ function getLoadedState(rows: Details[]): LoadedState {
 
 type DataState = LoadingState | ErrorState | LoadedState;
 
-export const EditDataUseTermsModal: FC<EditDataUseTermsModalProps> = ({
-    lapisUrl,
-    clientConfig,
-    accessToken,
-    sequenceFilter,
-}) => {
+export const EditDataUseTermsModal: FC<EditDataUseTermsModalProps> = ({ lapisUrl, sequenceFilter, isLoggedIn }) => {
     const [isOpen, setIsOpen] = useState(false);
     const openDialog = () => setIsOpen(true);
     const closeDialog = () => setIsOpen(false);
@@ -143,16 +136,10 @@ export const EditDataUseTermsModal: FC<EditDataUseTermsModalProps> = ({
                 {state.type === 'loading' && 'loading'}
                 {state.type === 'error' && `error: ${state.error}`}
                 {state.type === 'loaded' &&
-                    (accessToken === undefined ? (
+                    (!isLoggedIn ? (
                         <p>You need to be logged in to edit data use terms.</p>
                     ) : (
-                        <EditControl
-                            clientConfig={clientConfig}
-                            accessToken={accessToken}
-                            state={state}
-                            closeDialog={closeDialog}
-                            sequenceFilter={sequenceFilter}
-                        />
+                        <EditControl state={state} closeDialog={closeDialog} sequenceFilter={sequenceFilter} />
                     ))}
             </BaseDialog>
         </>
@@ -160,14 +147,12 @@ export const EditDataUseTermsModal: FC<EditDataUseTermsModalProps> = ({
 };
 
 interface EditControlProps {
-    clientConfig: ClientConfig;
-    accessToken: string;
     state: LoadedState;
     sequenceFilter: SequenceFilter;
     closeDialog: () => void;
 }
 
-const EditControl: FC<EditControlProps> = ({ clientConfig, accessToken, state, closeDialog, sequenceFilter }) => {
+const EditControl: FC<EditControlProps> = ({ state, closeDialog, sequenceFilter }) => {
     const [dataUseTerms, setDataUseTerms] = useState<DataUseTerms | null>(null);
 
     let affectedAccessions: string[] = [];
@@ -207,8 +192,6 @@ const EditControl: FC<EditControlProps> = ({ clientConfig, accessToken, state, c
                         just restricted sequences. You can use the filters to do so.
                     </p>
                     <CancelSubmitButtons
-                        clientConfig={clientConfig}
-                        accessToken={accessToken}
                         newTerms={{ type: openDataUseTermsOption }}
                         affectedAccessions={affectedAccessions}
                         closeDialog={closeDialog}
@@ -239,8 +222,6 @@ const EditControl: FC<EditControlProps> = ({ clientConfig, accessToken, state, c
                         />
                     </div>
                     <CancelSubmitButtons
-                        clientConfig={clientConfig}
-                        accessToken={accessToken}
                         newTerms={dataUseTerms}
                         affectedAccessions={affectedAccessions}
                         closeDialog={closeDialog}
@@ -252,21 +233,13 @@ const EditControl: FC<EditControlProps> = ({ clientConfig, accessToken, state, c
 };
 
 interface CancelSubmitButtonProps {
-    clientConfig: ClientConfig;
-    accessToken: string;
     newTerms: DataUseTerms | null;
     affectedAccessions: string[];
     closeDialog: () => void;
 }
 
-const CancelSubmitButtons: FC<CancelSubmitButtonProps> = ({
-    clientConfig,
-    accessToken,
-    closeDialog,
-    newTerms,
-    affectedAccessions,
-}) => {
-    const setDataUseTermsHook = useBackendMutation({ clientConfig, accessToken }, 'setDataUseTerms', {
+const CancelSubmitButtons: FC<CancelSubmitButtonProps> = ({ closeDialog, newTerms, affectedAccessions }) => {
+    const setDataUseTermsHook = useBackendMutation('setDataUseTerms', {
         onError: errorToast,
         onSuccess: successToast,
     });

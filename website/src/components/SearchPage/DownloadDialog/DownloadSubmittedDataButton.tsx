@@ -2,7 +2,7 @@ import { type FC, useState, useCallback } from 'react';
 
 import { type SequenceFilter } from './SequenceFilters';
 import { getErrorMessage } from '../../../services/apiRequest';
-import { backendApi } from '../../../services/backendApi';
+import { browserBackendApi } from '../../../services/backendApi';
 import { downloadBlob } from '../../../utils/downloadBlob';
 import { parseAccessionVersionFromString } from '../../../utils/extractAccessionVersion';
 import { formatNumberWithDefaultLocale } from '../../../utils/formatNumber';
@@ -12,8 +12,6 @@ export const MAX_SUBMITTED_DATA_DOWNLOAD_ENTRIES = 500;
 
 type DownloadSubmittedDataButtonProps = {
     sequenceFilter: SequenceFilter;
-    backendUrl: string;
-    accessToken: string;
     organism: string;
     groupId: number;
     totalSequences?: number;
@@ -27,8 +25,6 @@ const extractAccessions = (accessionVersions: string[]): string[] => {
 
 export const DownloadSubmittedDataButton: FC<DownloadSubmittedDataButtonProps> = ({
     sequenceFilter,
-    backendUrl,
-    accessToken,
     organism,
     groupId,
     totalSequences,
@@ -80,7 +76,7 @@ export const DownloadSubmittedDataButton: FC<DownloadSubmittedDataButtonProps> =
 
             let blob: Blob;
             try {
-                blob = await backendApi(backendUrl, accessToken).getSubmittedData({
+                blob = await browserBackendApi().getSubmittedData({
                     organism,
                     groupId,
                     accessionsFilter: accessions,
@@ -102,7 +98,7 @@ export const DownloadSubmittedDataButton: FC<DownloadSubmittedDataButtonProps> =
         } finally {
             setIsDownloading(false);
         }
-    }, [sequenceFilter, backendUrl, accessToken, organism, groupId, sequenceCount, fetchAccessions]);
+    }, [sequenceFilter, organism, groupId, sequenceCount, fetchAccessions]);
 
     const isDisabled = isDownloading || exceedsLimit;
 

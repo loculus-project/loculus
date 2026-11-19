@@ -35,7 +35,6 @@ import {
 } from '../../types/backend.ts';
 import { type FileSharingConfig, type FileCategory, type InputField } from '../../types/config.ts';
 import type { SubmissionDataTypes } from '../../types/config.ts';
-import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { dateTimeInMonths } from '../../utils/utcDates.ts';
 import { MAX_SUBMITTED_DATA_DOWNLOAD_ENTRIES } from '../SearchPage/DownloadDialog/DownloadSubmittedDataButton.tsx';
 import { Button } from '../common/Button';
@@ -46,10 +45,8 @@ import { withQueryProvider } from '../common/withQueryProvider.tsx';
 export type UploadAction = 'submit' | 'revise';
 
 type DataUploadFormProps = {
-    accessToken: string;
     instanceName: string;
     organism: string;
-    clientConfig: ClientConfig;
     action: UploadAction;
     inputMode: InputMode;
     group: Group;
@@ -66,10 +63,8 @@ type DataUploadFormProps = {
 const logger = getClientLogger('DataUploadForm');
 
 const InnerDataUploadForm = ({
-    accessToken,
     instanceName,
     organism,
-    clientConfig,
     action,
     inputMode,
     onSuccess,
@@ -83,7 +78,7 @@ const InnerDataUploadForm = ({
 }: DataUploadFormProps) => {
     const extraFilesEnabled = submissionDataTypes.files?.enabled ?? false;
 
-    const { submit, revise, isPending } = useSubmitFiles(accessToken, organism, clientConfig, onSuccess, onError);
+    const { submit, revise, isPending } = useSubmitFiles(organism, onSuccess, onError);
     const [fileFactory, setFileFactory] = useState<FileFactory | undefined>(undefined);
     const [fileUploadStates, setFileUploadStates] = useState<Map<string, FileUploadState>>(new Map());
     const fileMapping = useMemo(() => deriveFileMapping(fileUploadStates), [fileUploadStates]);
@@ -219,9 +214,7 @@ const InnerDataUploadForm = ({
                     <>
                         <ExtraFilesUpload
                             fileCategories={submissionDataTypes.files?.categories ?? []}
-                            accessToken={accessToken}
                             inputMode={inputMode}
-                            clientConfig={clientConfig}
                             groupId={group.groupId}
                             onError={onError}
                             fileUploadStates={fileUploadStates}
@@ -406,8 +399,6 @@ const CategoryLinkageStatus = ({ categoryLinkage }: { categoryLinkage: CategoryL
 };
 
 export const ExtraFilesUpload = ({
-    accessToken,
-    clientConfig,
     inputMode,
     groupId,
     fileCategories,
@@ -417,8 +408,6 @@ export const ExtraFilesUpload = ({
     onError,
     fileSharingConfig,
 }: {
-    accessToken: string;
-    clientConfig: ClientConfig;
     inputMode: InputMode;
     groupId: number;
     fileCategories: FileCategory[];
@@ -484,8 +473,6 @@ export const ExtraFilesUpload = ({
                         <FolderUploadComponent
                             fileCategory={fileCategory}
                             inputMode={inputMode}
-                            accessToken={accessToken}
-                            clientConfig={clientConfig}
                             groupId={groupId}
                             onError={onError}
                             fileUploadState={fileUploadStates.get(fileCategory.name)}
@@ -642,16 +629,9 @@ const Acknowledgement = ({
     );
 };
 
-function useSubmitFiles(
-    accessToken: string,
-    organism: string,
-    clientConfig: ClientConfig,
-    onSuccess: () => void,
-    onError: (message: string) => void,
-) {
-    const context = { clientConfig, accessToken };
-    const submit = useBackendMutation(context, 'submit', { onSuccess, onError: handleError(onError) });
-    const revise = useBackendMutation(context, 'revise', { onSuccess, onError: handleError(onError) });
+function useSubmitFiles(organism: string, onSuccess: () => void, onError: (message: string) => void) {
+    const submit = useBackendMutation('submit', { onSuccess, onError: handleError(onError) });
+    const revise = useBackendMutation('revise', { onSuccess, onError: handleError(onError) });
 
     return {
         submit: (files: SubmitFiles) => submit.mutate({ organism, ...files }),

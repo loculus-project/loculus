@@ -4,7 +4,7 @@ import { type FC, type FormEvent, useMemo, useState, type ReactNode } from 'reac
 import { CumulativeSubmissionsChart, type TimeSeriesData } from './CumulativeSubmissionsChart.tsx';
 import { getClientLogger } from '../../clientLogger.ts';
 import type { Organism } from '../../config.ts';
-import { type BackendContext, useBackendMutation, useBackendQuery } from '../../hooks/useBackend.ts';
+import { useBackendMutation, useBackendQuery } from '../../hooks/useBackend.ts';
 import { routes } from '../../routes/routes.ts';
 import type { ContinueSubmissionIntent } from '../../routes/routes.ts';
 import { getErrorMessage } from '../../services/apiRequest.ts';
@@ -26,9 +26,10 @@ import IwwaArrowDown from '~icons/iwwa/arrow-down';
 const logger = getClientLogger('GroupPage');
 
 type GroupPageProps = {
+    /** Only decides what to show; requests are authenticated by the backend proxy */
+    isLoggedIn: boolean;
     prefetchedGroupDetails: GroupDetails;
     clientConfig: ClientConfig;
-    accessToken: string | undefined;
     username: string;
     userGroups: Group[];
     organisms: Organism[];
@@ -40,9 +41,9 @@ type GroupPageProps = {
 };
 
 const InnerGroupPage: FC<GroupPageProps> = ({
+    isLoggedIn,
     prefetchedGroupDetails,
     clientConfig,
-    accessToken,
     username,
     userGroups,
     organisms,
@@ -59,7 +60,6 @@ const InnerGroupPage: FC<GroupPageProps> = ({
     const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
 
     const { groupDetails, removeFromGroup, addUserToGroup } = useGroupMembership(
-        { clientConfig, accessToken },
         prefetchedGroupDetails,
         setErrorMessage,
     );
@@ -208,7 +208,7 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                         <TableRow label='Institution' noWrapLabel>
                             {groupDetails.group.institution}
                         </TableRow>
-                        {accessToken && (
+                        {isLoggedIn && (
                             <TableRow label='Contact email' noWrapLabel>
                                 {groupDetails.group.contactEmail}
                             </TableRow>
@@ -219,7 +219,7 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                     </tbody>
                 </table>
                 <div className='w-full mt-2 text-center'>
-                    {!accessToken && (
+                    {!isLoggedIn && (
                         <span className='text-sm italic'>
                             <a href={loginUrl} className='underline cursor-pointer'>
                                 Log in
@@ -379,15 +379,10 @@ async function fetchTimeSeriesData(
 /**
  * The group details, and actions to add or remove members. Errors are reported via `setErrorMessage`.
  */
-function useGroupMembership(
-    context: BackendContext,
-    prefetchedGroupDetails: GroupDetails,
-    setErrorMessage: (message: string) => void,
-) {
+function useGroupMembership(prefetchedGroupDetails: GroupDetails, setErrorMessage: (message: string) => void) {
     const { groupId, groupName } = prefetchedGroupDetails.group;
 
     const groupDetails = useBackendQuery(
-        context,
         'getGroupDetails',
         { groupId },
         {
@@ -398,11 +393,11 @@ function useGroupMembership(
     );
     const refetchGroupDetails = () => groupDetails.refetch();
 
-    const addUser = useBackendMutation(context, 'addUserToGroup', {
+    const addUser = useBackendMutation('addUserToGroup', {
         onSuccess: refetchGroupDetails,
         onError: (error) => setErrorMessage(`Failed to add user to group: ${getErrorMessage(error)}`),
     });
-    const removeUser = useBackendMutation(context, 'removeUserFromGroup', {
+    const removeUser = useBackendMutation('removeUserFromGroup', {
         onSuccess: refetchGroupDetails,
         onError: (error) => setErrorMessage(`Failed to leave group: ${getErrorMessage(error)}`),
     });

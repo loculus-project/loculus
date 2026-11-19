@@ -10,7 +10,6 @@ import {
     editableEntry,
     metadataDisplayName,
     metadataKey,
-    testAccessToken,
     testOrganism,
 } from '../../../vitest.setup.ts';
 import {
@@ -20,11 +19,9 @@ import {
 } from '../../types/backend.ts';
 import type { InputField } from '../../types/config.ts';
 import type { SequenceEntryHistory, SequenceEntryHistoryEntry } from '../../types/lapis.ts';
-import type { ClientConfig } from '../../types/runtimeConfig.ts';
 
 const queryClient = new QueryClient();
 
-const dummyConfig = { backendUrl: 'dummy' } as ClientConfig;
 const groupedInputFields = new Map<string, InputField[]>([
     [
         'Header',
@@ -63,7 +60,6 @@ const NOT_LATEST_WARNING = 'This is not the latest version of this sequence entr
 
 function renderEditPage({
     editedData = defaultReviewData,
-    clientConfig = dummyConfig,
     allowSubmissionOfConsensusSequences = true,
     sequenceEntryHistory = undefined as SequenceEntryHistory | undefined,
 } = {}) {
@@ -72,8 +68,6 @@ function renderEditPage({
             <EditPage
                 organism={testOrganism}
                 dataToEdit={editedData}
-                clientConfig={clientConfig}
-                accessToken={testAccessToken}
                 groupedInputFields={groupedInputFields}
                 submissionDataTypes={{
                     consensusSequences: allowSubmissionOfConsensusSequences,

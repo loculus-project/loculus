@@ -54,7 +54,7 @@ const userGroups = userGroupsResponse.match(
         (groupDetails) => (
             <GroupPage
                 prefetchedGroupDetails={groupDetails}
-                accessToken={accessToken}
+                isLoggedIn={accessToken !== undefined}
                 clientConfig={clientConfig}
                 username={username}
                 userGroups={userGroups}

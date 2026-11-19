@@ -62,7 +62,7 @@ const contactConfig = getContactConfig(websiteConfig);
         organism={cleanedOrganism.key}
         schema={schema}
         myGroups={myGroups}
-        accessToken={accessToken}
+        isLoggedIn={accessToken !== undefined}
         referenceGenomesInfo={referenceGenomesInfo}
         hiddenFieldValues={hiddenFieldValues}
         initialData={data}

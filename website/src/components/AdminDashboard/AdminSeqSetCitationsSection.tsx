@@ -4,21 +4,18 @@ import { toast } from 'react-toastify';
 import { AddSeqSetCitationForm } from './AddSeqSetCitationForm';
 import { AdminSeqSetCitationsTable } from './AdminSeqSetCitationsTable';
 import { getErrorMessage } from '../../services/apiRequest';
-import { backendApi } from '../../services/backendApi';
-import type { ClientConfig } from '../../types/runtimeConfig';
+import { browserBackendApi } from '../../services/backendApi';
 import type { AdminSeqSetCitation } from '../../types/seqSetCitation';
 import { displayConfirmationDialog } from '../ConfirmationDialog';
 
 interface Props {
     citations: AdminSeqSetCitation[];
-    clientConfig: ClientConfig;
-    accessToken: string;
 }
 
-export const AdminSeqSetCitationsSection: FC<Props> = ({ citations, clientConfig, accessToken }) => {
+export const AdminSeqSetCitationsSection: FC<Props> = ({ citations }) => {
     const [citationList, setCitationList] = useState(citations);
 
-    const backend = backendApi(clientConfig.backendUrl, accessToken);
+    const backend = browserBackendApi();
 
     const handleCitationAdded = (citation: AdminSeqSetCitation) => {
         setCitationList((current) => [
@@ -55,11 +52,7 @@ export const AdminSeqSetCitationsSection: FC<Props> = ({ citations, clientConfig
             <div className='overflow-x-auto'>
                 <AdminSeqSetCitationsTable citations={citationList} onDelete={handleDelete} />
             </div>
-            <AddSeqSetCitationForm
-                clientConfig={clientConfig}
-                accessToken={accessToken}
-                onCitationAdded={handleCitationAdded}
-            />
+            <AddSeqSetCitationForm onCitationAdded={handleCitationAdded} />
         </>
     );
 };

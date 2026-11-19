@@ -11,12 +11,10 @@ import { routes } from '../../routes/routes';
 import { serverBackendApi } from '../../services/serverApi.ts';
 import type { ProblemDetail } from '../../types/backend';
 import type { SeqSet } from '../../types/seqSetCitation';
-import { getAccessToken } from '../../utils/getAccessToken';
 
 const clientConfig = getRuntimeConfig().public;
 const websiteConfig = getWebsiteConfig();
 const session = Astro.locals.session;
-const accessToken = getAccessToken(session)!;
 const seqSetId = Astro.params.seqSetId!;
 const version = Astro.params.version!;
 const username = session?.user?.username;
@@ -102,8 +100,6 @@ const secondaryErrors = (
         <div class='mt-8'>
             {secondaryErrors.length > 0 && <ErrorFeedback message={secondaryErrors.join(', ')} client:only='react' />}
             <SeqSetItemActions
-                clientConfig={clientConfig}
-                accessToken={accessToken}
                 seqSet={seqSetResponse.value}
                 seqSetAuthor={seqSetAuthor}
                 isAdminView={seqSetResponse.value.createdBy === username}
@@ -112,7 +108,6 @@ const secondaryErrors = (
             />
             <SeqSetItem
                 clientConfig={clientConfig}
-                accessToken={accessToken}
                 seqSetAccessionVersion={seqSetAccessionVersion}
                 seqSet={seqSetResponse.value}
                 seqSetRecords={seqSetRecordsResponse.value}

@@ -15,7 +15,6 @@ import {
     isLatestVersionRevocation,
     type SequenceEntryHistory,
 } from '../../types/lapis.ts';
-import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { getAccessionVersionString, parseAccessionVersionFromString } from '../../utils/extractAccessionVersion.ts';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { SequenceEntryHistoryMenu } from '../SequenceDetailsPage/SequenceEntryHistoryMenu.tsx';
@@ -39,9 +38,7 @@ import { withQueryProvider } from '../common/withQueryProvider.tsx';
 
 type EditPageProps = {
     organism: string;
-    clientConfig: ClientConfig;
     dataToEdit: SequenceEntryToEdit;
-    accessToken: string;
     groupedInputFields: Map<string, InputField[]>;
     submissionDataTypes: SubmissionDataTypes;
     fileSharingConfig: FileSharingConfig;
@@ -53,8 +50,6 @@ const logger = getClientLogger('EditPage');
 const InnerEditPage: FC<EditPageProps> = ({
     organism,
     dataToEdit,
-    clientConfig,
-    accessToken,
     groupedInputFields,
     submissionDataTypes,
     fileSharingConfig,
@@ -76,18 +71,12 @@ const InnerEditPage: FC<EditPageProps> = ({
 
     const { mutate: submitRevision, isPending: isRevisionPending } = useSubmitRevision(
         organism,
-        clientConfig,
-        accessToken,
         dataToEdit,
         (message) => toast.error(message, { position: 'top-center', autoClose: false }),
     );
 
-    const { mutate: submitEdit, isPending: isEditPending } = useSubmitEdit(
-        organism,
-        clientConfig,
-        accessToken,
-        dataToEdit,
-        (message) => toast.error(message, { position: 'top-center', autoClose: false }),
+    const { mutate: submitEdit, isPending: isEditPending } = useSubmitEdit(organism, dataToEdit, (message) =>
+        toast.error(message, { position: 'top-center', autoClose: false }),
     );
 
     const submitEditedDataForAccessionVersion = async () => {
@@ -267,8 +256,6 @@ const InnerEditPage: FC<EditPageProps> = ({
             {extraFilesEnabled && (
                 <div className='mt-4'>
                     <ExtraFilesUpload
-                        accessToken={accessToken}
-                        clientConfig={clientConfig}
                         inputMode='form'
                         groupId={dataToEdit.groupId}
                         fileCategories={submissionDataTypes.files?.categories ?? []}
@@ -293,12 +280,10 @@ export const EditPage = withQueryProvider(InnerEditPage);
 
 function useSubmitRevision(
     organism: string,
-    clientConfig: ClientConfig,
-    accessToken: string,
     reviewData: SequenceEntryToEdit,
     openErrorFeedback: (message: string) => void,
 ) {
-    return useBackendMutation({ clientConfig, accessToken }, 'revise', {
+    return useBackendMutation('revise', {
         onSuccess: async () => {
             await logger.info('Successfully submitted revision for ' + getAccessionVersionString(reviewData));
             location.href = routes.userSequenceReviewPage(organism, reviewData.groupId);
@@ -314,12 +299,10 @@ function useSubmitRevision(
 
 function useSubmitEdit(
     organism: string,
-    clientConfig: ClientConfig,
-    accessToken: string,
     reviewData: SequenceEntryToEdit,
     openErrorFeedback: (message: string) => void,
 ) {
-    return useBackendMutation({ clientConfig, accessToken }, 'submitEditedData', {
+    return useBackendMutation('submitEditedData', {
         onSuccess: async () => {
             await logger.info('Successfully submitted edited data ' + getAccessionVersionString(reviewData));
             location.href = routes.userSequenceReviewPage(organism, reviewData.groupId);

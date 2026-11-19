@@ -69,7 +69,7 @@ const searchProps = groupsResult.isOk() ? await loadReleasedSequences(groupsResu
             organism={cleanedOrganism.key}
             schema={schema}
             myGroups={[searchProps.group]}
-            accessToken={accessToken}
+            isLoggedIn={accessToken !== undefined}
             referenceGenomesInfo={referenceGenomesInfo}
             hiddenFieldValues={searchProps.hiddenFieldValues}
             initialData={searchProps.data}

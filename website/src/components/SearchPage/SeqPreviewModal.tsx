@@ -26,8 +26,8 @@ const BUTTONCLASS =
     'inline-flex justify-center px-4 py-2 text-sm font-medium text-gray-900 border border-transparent rounded-md hover:bg-blue-200 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary-500';
 
 interface SeqPreviewModalProps {
+    isLoggedIn: boolean;
     seqId: string;
-    accessToken?: string;
     isOpen: boolean;
     onClose: () => void;
     referenceGenomesInfo: ReferenceGenomesInfo;
@@ -41,8 +41,8 @@ interface SeqPreviewModalProps {
 const logger = getClientLogger('SeqPreviewModal');
 
 export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
+    isLoggedIn,
     seqId,
-    accessToken,
     isOpen,
     onClose,
     referenceGenomesInfo,
@@ -86,6 +86,7 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
             ) : data !== null && !isError ? (
                 <div className='px-6'>
                     <SequenceDataUI
+                        isLoggedIn={isLoggedIn}
                         sequenceData={data}
                         organism={data.organism}
                         accessionVersion={data.accessionVersion}
@@ -94,7 +95,6 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
                         sequenceCitations={data.sequenceCitations}
                         referenceGenomesInfo={referenceGenomesInfo}
                         myGroups={myGroups}
-                        accessToken={accessToken}
                         sequenceFlaggingConfig={sequenceFlaggingConfig}
                         onRevokeSuccess={onClose}
                     />
