@@ -43,8 +43,7 @@ import ErrorContactMessage from '../common/ErrorContactMessage.tsx';
 import { Spinner } from '../common/Spinner';
 
 export interface InnerSearchFullUIProps {
-    /** Only decides what to show; requests are authenticated by the backend proxy */
-    isLoggedIn: boolean;
+    accessToken?: string;
     referenceGenomesInfo: ReferenceGenomesInfo;
     myGroups: Group[];
     organism: string;
@@ -74,6 +73,7 @@ const buildSequenceCountText = (totalSequences: number | undefined, oldCount: nu
 };
 
 const InnerSearchFullUI = ({
+    accessToken,
     referenceGenomesInfo,
     myGroups,
     organism,
@@ -91,7 +91,6 @@ const InnerSearchFullUI = ({
     contactConfig,
     groupId,
     isReleasedPage,
-    isLoggedIn,
 }: InnerSearchFullUIProps) => {
     hiddenFieldValues ??= {};
 
@@ -265,9 +264,9 @@ const InnerSearchFullUI = ({
                 referenceGenomesInfo={referenceGenomesInfo}
             />
             <SeqPreviewModal
-                isLoggedIn={isLoggedIn}
                 key={previewedSeqId ?? 'seq-modal'}
                 seqId={previewedSeqId ?? ''}
+                accessToken={accessToken}
                 isOpen={Boolean(previewedSeqId)}
                 onClose={() => setPreviewedSeqId(null)}
                 referenceGenomesInfo={referenceGenomesInfo}
@@ -361,9 +360,9 @@ const InnerSearchFullUI = ({
                         <div className='flex flex-wrap justify-start gap-2'>
                             {showEditDataUseTermsControls && dataUseTermsEnabled && (
                                 <EditDataUseTermsModal
-                                    isLoggedIn={isLoggedIn}
                                     lapisUrl={lapisUrl}
-
+                                    clientConfig={clientConfig}
+                                    accessToken={accessToken}
                                     sequenceFilter={downloadFilter}
                                 />
                             )}
@@ -394,9 +393,11 @@ const InnerSearchFullUI = ({
                                 selectedReferenceNames={referenceSelection?.selectedReferences}
                                 referenceIdentifierField={schema.referenceIdentifierField}
                             />
-                            {isReleasedPage && isLoggedIn && groupId !== undefined && (
+                            {isReleasedPage && accessToken !== undefined && groupId !== undefined && (
                                 <DownloadSubmittedDataButton
                                     sequenceFilter={downloadFilter}
+                                    backendUrl={clientConfig.backendUrl}
+                                    accessToken={accessToken}
                                     organism={organism}
                                     groupId={groupId}
                                     totalSequences={totalSequences}

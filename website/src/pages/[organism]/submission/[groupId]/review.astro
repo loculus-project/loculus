@@ -2,7 +2,9 @@
 import { cleanOrganism } from '../../../../components/Navigation/cleanOrganism';
 import { ReviewPage } from '../../../../components/ReviewPage/ReviewPage';
 import SubmissionPageWrapper from '../../../../components/Submission/SubmissionPageWrapper.astro';
-import { getReferenceGenomes, getSchema } from '../../../../config';
+import { getReferenceGenomes, getRuntimeConfig, getSchema } from '../../../../config';
+import { type ClientConfig } from '../../../../types/runtimeConfig';
+import { getAccessToken } from '../../../../utils/getAccessToken';
 import { getGroupsAndCurrentGroup } from '../../../../utils/submissionPages';
 
 const organism = Astro.params.organism!;
@@ -17,6 +19,7 @@ if (!cleanedOrganism) {
 }
 const schema = getSchema(cleanedOrganism.key);
 
+const clientConfig: ClientConfig = getRuntimeConfig().public;
 const referenceGenomesInfo = getReferenceGenomes(organism);
 ---
 
@@ -24,8 +27,10 @@ const referenceGenomesInfo = getReferenceGenomes(organism);
     {groupsResult.match(
         ({ currentGroup: group }) => (
             <ReviewPage
+                clientConfig={clientConfig}
                 organism={organism}
                 group={group}
+                accessToken={getAccessToken(Astro.locals.session)!}
                 metadataSchema={schema.metadata}
                 outputFileCategories={schema.files}
                 referenceGenomesInfo={referenceGenomesInfo}

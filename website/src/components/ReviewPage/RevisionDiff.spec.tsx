@@ -5,7 +5,7 @@ import { http, HttpResponse } from 'msw';
 import { expect, test, vi } from 'vitest';
 
 import { ReviewCard } from './ReviewCard';
-import { defaultReviewData, testBackendProxyUrl, testOrganism, testServer } from '../../../vitest.setup';
+import { defaultReviewData, testAccessToken, testConfig, testOrganism, testServer } from '../../../vitest.setup';
 import { processedStatus, receivedStatus, type SequenceEntryStatus } from '../../types/backend';
 import type { Metadata } from '../../types/config';
 import {
@@ -47,10 +47,13 @@ function reviewData() {
 function trackSequenceRequests() {
     const requestedVersions = vi.fn();
     testServer.use(
-        http.get(`${testBackendProxyUrl}/${testOrganism}/get-data-to-edit/:accession/:version`, ({ params }) => {
-            requestedVersions(params.version);
-            return HttpResponse.json(defaultReviewData);
-        }),
+        http.get(
+            `${testConfig.public.backendUrl}/${testOrganism}/get-data-to-edit/:accession/:version`,
+            ({ params }) => {
+                requestedVersions(params.version);
+                return HttpResponse.json(defaultReviewData);
+            },
+        ),
     );
     return requestedVersions;
 }
@@ -65,7 +68,9 @@ function renderCard(
             <ReviewCard
                 sequenceEntryStatus={status}
                 metadataSchema={metadataSchema}
+                clientConfig={testConfig.public}
                 organism={testOrganism}
+                accessToken={testAccessToken}
                 referenceGenomesInfo={referenceGenomesInfo}
                 approveAccessionVersion={vi.fn()}
                 deleteAccessionVersion={vi.fn()}

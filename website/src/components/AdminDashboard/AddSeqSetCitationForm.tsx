@@ -3,12 +3,15 @@ import { toast } from 'react-toastify';
 
 import useClientFlag from '../../hooks/isClient';
 import { getErrorMessage } from '../../services/apiRequest';
-import { browserBackendApi } from '../../services/backendApi';
+import { backendApi } from '../../services/backendApi';
+import type { ClientConfig } from '../../types/runtimeConfig';
 import type { AdminSeqSetCitation } from '../../types/seqSetCitation';
 import { Button } from '../common/Button';
 import { Spinner } from '../common/Spinner';
 
 interface Props {
+    clientConfig: ClientConfig;
+    accessToken: string;
     onCitationAdded: (citation: AdminSeqSetCitation) => void;
 }
 
@@ -55,7 +58,7 @@ const extractYear = (work: CrossRefWork): number | undefined => {
     return undefined;
 };
 
-export const AddSeqSetCitationForm: FC<Props> = ({ onCitationAdded }) => {
+export const AddSeqSetCitationForm: FC<Props> = ({ clientConfig, accessToken, onCitationAdded }) => {
     const isClient = useClientFlag();
     const [sourceDOI, setSourceDOI] = useState('');
     const [title, setTitle] = useState('');
@@ -67,7 +70,7 @@ export const AddSeqSetCitationForm: FC<Props> = ({ onCitationAdded }) => {
     const [isFetchingDoi, setIsFetchingDoi] = useState(false);
     const [validationMessage, setValidationMessage] = useState('');
 
-    const backend = browserBackendApi();
+    const backend = backendApi(clientConfig.backendUrl, accessToken);
 
     const resetForm = () => {
         setSourceDOI('');

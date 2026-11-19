@@ -61,7 +61,7 @@ type SeqSetVersion = { seqSetId: string; version: number | string };
  * Every endpoint takes a single params object (path parameters plus query parameters or body)
  * and an optional `RequestOptions` object. Endpoints throw on errors, like `sendRequest`.
  *
- * - In the browser, use `useBackendQuery` / `useBackendMutation` from `hooks/useBackend.ts`, or `browserBackendApi()`.
+ * - In React components, use `useBackendQuery` / `useBackendMutation` from `hooks/useBackend.ts`.
  * - Server-side, use `serverBackendApi()` from `serverApi.ts`, which returns neverthrow `Result`s.
  */
 export function backendApi(backendUrl: string, accessToken?: string) {
@@ -404,14 +404,3 @@ export function backendApi(backendUrl: string, accessToken?: string) {
 }
 
 export type BackendApi = ReturnType<typeof backendApi>;
-
-/** Website route that proxies requests to the backend, see `pages/api/backend/[...path].ts` */
-export const BACKEND_PROXY_PATH = '/api/backend';
-
-/**
- * The backend API for client-side code. Requests go through the website's backend proxy,
- * which adds the access token from the session cookie, so client-side code never sees the token.
- */
-export function browserBackendApi() {
-    return backendApi(BACKEND_PROXY_PATH);
-}

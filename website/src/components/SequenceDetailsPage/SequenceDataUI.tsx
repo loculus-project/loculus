@@ -29,13 +29,13 @@ import { Button } from '../common/Button';
 import RestrictedUseWarning from '../common/RestrictedUseWarning';
 
 interface Props {
-    isLoggedIn: boolean;
     sequenceData: SequenceData;
     organism: string;
     accessionVersion: string;
     schema: Schema;
     clientConfig: ClientConfig;
     myGroups: Group[];
+    accessToken: string | undefined;
     sequenceFlaggingConfig: SequenceFlaggingConfig | undefined;
     referenceGenomesInfo: ReferenceGenomesInfo;
     sequenceCitations?: SequenceCitation[];
@@ -58,13 +58,13 @@ const REVOCATION_VERSION_FIELDS = [
 ];
 
 export const SequenceDataUI: FC<Props> = ({
-    isLoggedIn,
     sequenceData,
     organism,
     accessionVersion,
     schema,
     clientConfig,
     myGroups,
+    accessToken,
     sequenceFlaggingConfig,
     referenceGenomesInfo,
     sequenceCitations,
@@ -104,13 +104,14 @@ export const SequenceDataUI: FC<Props> = ({
                 </div>
             )}
             <SequenceManagement
-                isLoggedIn={isLoggedIn}
                 tableData={tableData}
                 organism={organism}
                 accessionVersion={accessionVersion}
                 dataUseTermsHistory={dataUseTermsHistory}
                 sequenceEntryHistory={sequenceEntryHistory}
+                clientConfig={clientConfig}
                 myGroups={myGroups}
+                accessToken={accessToken}
                 isRevocation={isRevocation}
                 onRevokeSuccess={onRevokeSuccess}
             />

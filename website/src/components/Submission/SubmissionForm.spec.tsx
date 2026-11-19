@@ -6,7 +6,7 @@ import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import type { InputMode } from './FormOrUploadWrapper.tsx';
 import { SubmissionForm } from './SubmissionForm';
-import { mockRequest, testGroups, testOrganism } from '../../../vitest.setup.ts';
+import { mockRequest, testAccessToken, testConfig, testGroups, testOrganism } from '../../../vitest.setup.ts';
 import { SUBMISSION_ID_INPUT_FIELD } from '../../settings.ts';
 import type { Group, ProblemDetail, SubmissionIdMapping } from '../../types/backend.ts';
 
@@ -54,8 +54,9 @@ function renderSubmissionForm({
         <SubmissionForm
             instanceName={INSTANCE_NAME}
             inputMode={inputMode}
+            accessToken={testAccessToken}
             organism={testOrganism}
-
+            clientConfig={testConfig.public}
             group={group}
             metadataTemplateFields={
                 new Map([

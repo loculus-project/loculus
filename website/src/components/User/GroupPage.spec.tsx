@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, test } from 'vitest';
 
 import { GroupPage } from './GroupPage';
-import { testConfig, testDatabaseName, testGroups, testUser } from '../../../vitest.setup';
+import { testAccessToken, testConfig, testDatabaseName, testGroups, testUser } from '../../../vitest.setup';
 
 const DUMMY_GROUP_DETAILS = {
     group: testGroups[0],
@@ -15,7 +15,7 @@ describe('GroupPage', () => {
             <GroupPage
                 prefetchedGroupDetails={DUMMY_GROUP_DETAILS}
                 clientConfig={testConfig.public}
-                isLoggedIn
+                accessToken={testAccessToken}
                 username={testUser.name}
                 userGroups={testGroups}
                 organisms={[]}
@@ -38,7 +38,7 @@ describe('GroupPage', () => {
             <GroupPage
                 prefetchedGroupDetails={DUMMY_GROUP_DETAILS}
                 clientConfig={testConfig.public}
-                isLoggedIn
+                accessToken={testAccessToken}
                 username={testUser.name}
                 userGroups={[]}
                 organisms={[]}
@@ -61,7 +61,7 @@ describe('GroupPage', () => {
             <GroupPage
                 prefetchedGroupDetails={DUMMY_GROUP_DETAILS}
                 clientConfig={testConfig.public}
-                isLoggedIn={false}
+                accessToken=''
                 username=''
                 userGroups={[]}
                 organisms={[]}

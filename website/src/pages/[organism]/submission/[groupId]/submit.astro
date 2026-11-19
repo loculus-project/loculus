@@ -8,9 +8,11 @@ import {
     getFileSharingConfig,
     getAuthorsFields,
     getGroupedInputFields,
+    getRuntimeConfig,
     getSchema,
     getWebsiteConfig,
 } from '../../../../config';
+import { getAccessToken } from '../../../../utils/getAccessToken';
 import { getGroupsAndCurrentGroup } from '../../../../utils/submissionPages';
 
 const instanceName = getWebsiteConfig().name;
@@ -30,6 +32,8 @@ const groupedInputFields = getGroupedInputFields(cleanedOrganism.key, 'submit', 
 
 const groupsResult = await getGroupsAndCurrentGroup(Astro.params, Astro.locals.session);
 
+const clientConfig = getRuntimeConfig().public;
+
 // Prevent caching to allow back button after user creates group
 Astro.response.headers.append('Cache-Control', 'no-cache, no-store, must-revalidate');
 Astro.response.headers.append('Pragma', 'no-cache');
@@ -40,10 +44,12 @@ Astro.response.headers.append('Expires', '0');
     {groupsResult.match(
         ({ currentGroup: group }) => (
             <SubmissionForm
+                accessToken={getAccessToken(Astro.locals.session)!}
                 instanceName={instanceName}
                 metadataTemplateFields={groupedInputFields}
                 authorsFields={getAuthorsFields(cleanedOrganism.key)}
                 organism={organism}
+                clientConfig={clientConfig}
                 group={group}
                 inputMode={inputMode}
                 submissionDataTypes={schema.submissionDataTypes}

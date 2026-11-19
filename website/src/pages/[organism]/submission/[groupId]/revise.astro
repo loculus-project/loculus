@@ -12,6 +12,7 @@ import {
     getSchema,
     getWebsiteConfig,
 } from '../../../../config';
+import { getAccessToken } from '../../../../utils/getAccessToken';
 import { getGroupsAndCurrentGroup } from '../../../../utils/submissionPages';
 
 const instanceName = getWebsiteConfig().name;
@@ -40,6 +41,7 @@ const clientConfig = getRuntimeConfig().public;
     {groupsResult.match(
         ({ currentGroup: group }) => (
             <RevisionForm
+                accessToken={getAccessToken(Astro.locals.session)!}
                 instanceName={instanceName}
                 organism={organism}
                 metadataTemplateFields={groupedInputFields}

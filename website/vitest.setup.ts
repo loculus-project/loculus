@@ -10,7 +10,6 @@ import { afterAll, afterEach, beforeAll, beforeEach, vi } from 'vitest';
 
 mockAnimationsApi();
 
-import { BACKEND_PROXY_PATH } from './src/services/backendApi.ts';
 import {
     type GetSequencesResponse,
     type Group,
@@ -152,16 +151,10 @@ export const testServer = setupServer(
     ),
 );
 
-/**
- * Client-side code calls the backend via the website's proxy (relative URL), which resolves against the test location.
- * Server-side code calls `testConfig.serverSide.backendUrl` directly.
- */
-export const testBackendProxyUrl = `http://localhost:3000${BACKEND_PROXY_PATH}`;
-
 const backendRequestMocks = {
     submit: (statusCode: number = 200, response: SubmissionIdMapping[] | unknown = []) => {
         testServer.use(
-            http.post(`${testBackendProxyUrl}/${testOrganism}/submit`, () => {
+            http.post(`${testConfig.serverSide.backendUrl}/${testOrganism}/submit`, () => {
                 return new Response(JSON.stringify(response), {
                     status: statusCode,
                 });
@@ -170,7 +163,7 @@ const backendRequestMocks = {
     },
     getGroupsOfUser: (statusCode: number = 200, response: unknown = [{ groupName: DEFAULT_GROUP_NAME }]) => {
         testServer.use(
-            http.get(`${testBackendProxyUrl}/user/groups`, () => {
+            http.get(`${testConfig.serverSide.backendUrl}/user/groups`, () => {
                 return new Response(JSON.stringify(response), {
                     status: statusCode,
                 });
@@ -183,7 +176,7 @@ const backendRequestMocks = {
         callback?: (request: Request) => void,
     ) => {
         testServer.use(
-            http.get(`${testBackendProxyUrl}/${testOrganism}/get-sequences`, ({ request }) => {
+            http.get(`${testConfig.serverSide.backendUrl}/${testOrganism}/get-sequences`, ({ request }) => {
                 if (callback !== undefined) {
                     callback(request);
                 }
@@ -195,7 +188,7 @@ const backendRequestMocks = {
     },
     getDataToEdit: (statusCode: number = 200, response = defaultReviewData) => {
         testServer.use(
-            http.get(`${testBackendProxyUrl}/${testOrganism}/get-data-to-edit/*`, () => {
+            http.get(`${testConfig.serverSide.backendUrl}/${testOrganism}/get-data-to-edit/*`, () => {
                 return new Response(JSON.stringify(response), {
                     status: statusCode,
                 });
@@ -204,7 +197,7 @@ const backendRequestMocks = {
     },
     deleteSequences: (statusCode: number = 200, response: unknown = []) => {
         testServer.use(
-            http.delete(`${testBackendProxyUrl}/${testOrganism}/delete-sequence-entry-versions`, () => {
+            http.delete(`${testConfig.serverSide.backendUrl}/${testOrganism}/delete-sequence-entry-versions`, () => {
                 return new Response(JSON.stringify(response), {
                     status: statusCode,
                 });
@@ -213,7 +206,7 @@ const backendRequestMocks = {
     },
     approveSequences: (statusCode: number = 200, response: unknown = []) => {
         testServer.use(
-            http.post(`${testBackendProxyUrl}/${testOrganism}/approve-processed-data`, () => {
+            http.post(`${testConfig.serverSide.backendUrl}/${testOrganism}/approve-processed-data`, () => {
                 return new Response(JSON.stringify(response), {
                     status: statusCode,
                 });

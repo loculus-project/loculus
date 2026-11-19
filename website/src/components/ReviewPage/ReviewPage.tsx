@@ -22,6 +22,7 @@ import {
 } from '../../types/backend.ts';
 import type { FileCategory, Metadata } from '../../types/config.ts';
 import { type ReferenceGenomesInfo } from '../../types/referencesGenomes.ts';
+import { type ClientConfig } from '../../types/runtimeConfig.ts';
 import { getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { getLastApprovalTimeKey } from '../SearchPage/RecentSequencesBanner.tsx';
@@ -38,8 +39,10 @@ const menuItemClassName = `group flex rounded-md items-center w-full px-2 py-2 t
 hover:bg-primary-500 bg-primary-600 text-white text-left mb-1`;
 
 type ReviewPageProps = {
+    clientConfig: ClientConfig;
     organism: string;
     group: Group;
+    accessToken: string;
     metadataSchema: Metadata[];
     outputFileCategories?: FileCategory[];
     referenceGenomesInfo: ReferenceGenomesInfo;
@@ -75,15 +78,17 @@ const NumberAndVisibility = ({
 };
 
 const InnerReviewPage: FC<ReviewPageProps> = ({
+    clientConfig,
     organism,
     group,
+    accessToken,
     metadataSchema,
     outputFileCategories,
     referenceGenomesInfo,
 }) => {
     const [pageQuery, setPageQuery] = useState<PageQuery>({ pageOneIndexed: 1, size: pageSizeOptions[2] });
 
-    const hooks = useSubmissionOperations(organism, group, toast.error, pageQuery);
+    const hooks = useSubmissionOperations(organism, group, clientConfig, accessToken, toast.error, pageQuery);
 
     const showNoIssues = hooks.includedProcessingResults.includes(noIssuesProcessingResult);
     const showWarnings = hooks.includedProcessingResults.includes(warningsProcessingResult);
@@ -359,7 +364,9 @@ const InnerReviewPage: FC<ReviewPageProps> = ({
                             editAccessionVersion={() => {
                                 window.location.href = routes.editPage(organism, sequence);
                             }}
+                            clientConfig={clientConfig}
                             organism={organism}
+                            accessToken={accessToken}
                             outputFileCategories={outputFileCategories}
                             referenceGenomesInfo={referenceGenomesInfo}
                         />

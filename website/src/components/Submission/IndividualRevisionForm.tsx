@@ -16,6 +16,7 @@ import { Spinner } from '../common/Spinner';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 
 type IndividualRevisionFormProps = {
+    accessToken: string;
     organism: string;
     clientConfig: ClientConfig;
     group: Group;
@@ -95,6 +96,7 @@ const formatAccessionVersion = (accession: string | undefined, version: string |
 };
 
 const InnerIndividualRevisionForm: FC<IndividualRevisionFormProps> = ({
+    accessToken,
     organism,
     clientConfig,
     group,
@@ -156,6 +158,7 @@ const InnerIndividualRevisionForm: FC<IndividualRevisionFormProps> = ({
         error: dataToEditError,
         isFetching: isDataToEditFetching,
     } = useBackendQuery(
+        { clientConfig, accessToken },
         'getDataToEdit',
         {
             organism,
@@ -227,7 +230,8 @@ const InnerIndividualRevisionForm: FC<IndividualRevisionFormProps> = ({
                         <EditPage
                             key={`${data.accession}.${data.version}`}
                             organism={organism}
-
+                            accessToken={accessToken}
+                            clientConfig={clientConfig}
                             dataToEdit={data}
                             groupedInputFields={metadataTemplateFields}
                             submissionDataTypes={submissionDataTypes}

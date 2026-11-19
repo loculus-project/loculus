@@ -91,7 +91,7 @@ const sequenceFlaggingConfig = getWebsiteConfig().sequenceFlagging;
                             schema={getSchema(organism)}
                             clientConfig={clientConfig}
                             myGroups={myGroups}
-                            isLoggedIn={accessToken !== undefined}
+                            accessToken={accessToken}
                             sequenceFlaggingConfig={sequenceFlaggingConfig}
                             sequenceCitations={sequenceCitations}
                             client:load

@@ -6,6 +6,7 @@ import { routes } from '../../routes/routes';
 import { DATA_USE_TERMS_FIELD, GROUP_ID_FIELD } from '../../settings.ts';
 import { type DataUseTermsHistoryEntry, type Group, type RestrictedDataUseTerms } from '../../types/backend';
 import { isLatestVersionRevocation, type SequenceEntryHistory, versionStatuses } from '../../types/lapis';
+import { type ClientConfig } from '../../types/runtimeConfig';
 import { getCurrentDataUseTerms } from '../../utils/dataUseTerms.ts';
 import { parseAccessionVersionFromString } from '../../utils/extractAccessionVersion.ts';
 import { EditDataUseTermsButton } from '../DataUseTerms/EditDataUseTermsButton';
@@ -13,32 +14,34 @@ import { Button } from '../common/Button';
 import MdiEye from '~icons/mdi/eye';
 
 interface Props {
-    isLoggedIn: boolean;
     tableData: TableDataEntry[];
     organism: string;
     accessionVersion: string;
     dataUseTermsHistory: DataUseTermsHistoryEntry[];
     sequenceEntryHistory: SequenceEntryHistory;
+    clientConfig: ClientConfig;
     myGroups: Group[];
+    accessToken: string | undefined;
     isRevocation?: boolean;
     onRevokeSuccess?: () => void;
 }
 
 export const SequenceManagement: FC<Props> = ({
-    isLoggedIn,
     tableData,
     organism,
     accessionVersion,
     dataUseTermsHistory,
     sequenceEntryHistory,
+    clientConfig,
     myGroups,
+    accessToken,
     isRevocation,
     onRevokeSuccess,
 }: Props) => {
     const groupId = tableData.find((entry) => entry.name === GROUP_ID_FIELD)!.value as number;
     const isMyGroup = myGroups.some((group) => group.groupId === groupId);
 
-    if (!isMyGroup || !isLoggedIn) return null;
+    if (!isMyGroup || accessToken === undefined) return null;
 
     const isLatestVersion =
         sequenceEntryHistory.find((entry) => entry.accessionVersion === accessionVersion)?.versionStatus ===
@@ -72,6 +75,8 @@ export const SequenceManagement: FC<Props> = ({
                         <>
                             {isRestricted && currentDataUseTerms !== undefined && (
                                 <EditDataUseTermsButton
+                                    clientConfig={clientConfig}
+                                    accessToken={accessToken}
                                     accession={accession}
                                     dataUseTerms={currentDataUseTerms as RestrictedDataUseTerms}
                                 />
@@ -86,7 +91,9 @@ export const SequenceManagement: FC<Props> = ({
                             {!isLatestVersionRevocation(sequenceEntryHistory) && (
                                 <RevokeButton
                                     organism={organism}
+                                    clientConfig={clientConfig}
                                     accession={accession}
+                                    accessToken={accessToken}
                                     groupId={groupId}
                                     onRevokeSuccess={onRevokeSuccess}
                                 />

@@ -11,6 +11,7 @@ import type { SubmissionDataTypes } from '../../types/config.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 
 type RevisionFormProps = {
+    accessToken: string;
     instanceName: string;
     organism: string;
     clientConfig: ClientConfig;
@@ -26,6 +27,7 @@ type RevisionFormProps = {
 };
 
 export const RevisionForm: FC<RevisionFormProps> = ({
+    accessToken,
     instanceName,
     organism,
     clientConfig,
@@ -43,6 +45,7 @@ export const RevisionForm: FC<RevisionFormProps> = ({
         <div className='flex flex-col items-center'>
             {inputMode === 'form' ? (
                 <IndividualRevisionForm
+                    accessToken={accessToken}
                     organism={organism}
                     clientConfig={clientConfig}
                     group={group}
@@ -54,10 +57,12 @@ export const RevisionForm: FC<RevisionFormProps> = ({
                 />
             ) : (
                 <DataUploadForm
+                    accessToken={accessToken}
                     instanceName={instanceName}
                     organism={organism}
                     metadataTemplateFields={metadataTemplateFields}
                     authorsFields={authorsFields}
+                    clientConfig={clientConfig}
                     action='revise'
                     inputMode={inputMode}
                     onError={(message) => toast.error(message, { position: 'top-center', autoClose: false })}

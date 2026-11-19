@@ -15,18 +15,23 @@ import {
     warningsProcessingResult,
     errorsProcessingResult,
 } from '../../types/backend.ts';
+import type { ClientConfig } from '../../types/runtimeConfig.ts';
 
 export function useSubmissionOperations(
     organism: string,
     group: Group,
+    clientConfig: ClientConfig,
+    accessToken: string,
     openErrorFeedback: (message: string) => void,
     pageQuery: PageQuery,
 ) {
+    const context = { clientConfig, accessToken };
     const allRelevantStatuses = [receivedStatus, inProcessingStatus, processedStatus];
     const allProcessingResults = [noIssuesProcessingResult, warningsProcessingResult, errorsProcessingResult];
     const [includedStatuses, setIncludedStatuses] = useState(allRelevantStatuses);
     const [includedProcessingResults, setIncludedProcessingResults] = useState(allProcessingResults);
     const useGetSequences = useBackendQuery(
+        context,
         'getSequences',
         {
             organism,
@@ -51,11 +56,11 @@ export function useSubmissionOperations(
         openErrorFeedback(`Failed to query Group`);
     }
 
-    const useDeleteSequenceEntries = useBackendMutation('deleteSequenceEntryVersions', {
+    const useDeleteSequenceEntries = useBackendMutation(context, 'deleteSequenceEntryVersions', {
         onSuccess: () => useGetSequences.refetch(),
         onError: (error) => openErrorFeedback(deleteSequenceEntriesErrorMessage(error)),
     });
-    const useApproveProcessedData = useBackendMutation('approveProcessedData', {
+    const useApproveProcessedData = useBackendMutation(context, 'approveProcessedData', {
         onMutate: () => {
             const toastId = toast.loading('Approving sequences...');
             return { toastId };

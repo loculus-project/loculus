@@ -3,7 +3,7 @@ import { describe, expect, test } from 'vitest';
 
 import { SequenceManagement } from './SequenceManagement';
 import type { TableDataEntry } from './types';
-import { testGroups, testOrganism } from '../../../vitest.setup.ts';
+import { testAccessToken, testConfig, testGroups, testOrganism } from '../../../vitest.setup.ts';
 import type { DataUseTermsHistoryEntry, Group } from '../../types/backend';
 import type { SequenceEntryHistory, SequenceEntryHistoryEntry } from '../../types/lapis';
 
@@ -69,13 +69,13 @@ const restoredHistory: SequenceEntryHistory = [
 function renderSequenceManagement({
     accessionVersion,
     sequenceEntryHistory,
-    isLoggedIn,
+    accessToken,
     myGroups = testGroups,
     isRevocation = false,
 }: {
     accessionVersion: string;
     sequenceEntryHistory: SequenceEntryHistory;
-    isLoggedIn: boolean;
+    accessToken: string | undefined;
     myGroups?: Group[];
     isRevocation?: boolean;
 }) {
@@ -86,8 +86,9 @@ function renderSequenceManagement({
             accessionVersion={accessionVersion}
             dataUseTermsHistory={dataUseTermsHistory}
             sequenceEntryHistory={sequenceEntryHistory}
+            clientConfig={testConfig.public}
             myGroups={myGroups}
-            isLoggedIn={isLoggedIn}
+            accessToken={accessToken}
             isRevocation={isRevocation}
         />,
     );
@@ -98,7 +99,7 @@ describe('SequenceManagement', () => {
         renderSequenceManagement({
             accessionVersion: `${ACCESSION}.1`,
             sequenceEntryHistory: revisedHistory,
-            isLoggedIn: true,
+            accessToken: testAccessToken,
         });
         expect(screen.getByRole('link', { name: 'Revise this sequence' })).toBeVisible();
         expect(screen.getByRole('button', { name: /revoke/i })).toBeVisible();
@@ -108,7 +109,7 @@ describe('SequenceManagement', () => {
         renderSequenceManagement({
             accessionVersion: `${ACCESSION}.1`,
             sequenceEntryHistory: revokedHistory,
-            isLoggedIn: true,
+            accessToken: testAccessToken,
         });
         expect(screen.getByRole('link', { name: 'Revise this sequence' })).toBeVisible();
         expect(screen.queryByRole('button', { name: /revoke/i })).not.toBeInTheDocument();
@@ -118,7 +119,7 @@ describe('SequenceManagement', () => {
         renderSequenceManagement({
             accessionVersion: `${ACCESSION}.2`,
             sequenceEntryHistory: revokedHistory,
-            isLoggedIn: true,
+            accessToken: testAccessToken,
             isRevocation: true,
         });
         expect(screen.getByRole('link', { name: 'Restore this sequence' })).toBeVisible();
@@ -130,7 +131,7 @@ describe('SequenceManagement', () => {
         const { container } = renderSequenceManagement({
             accessionVersion: `${ACCESSION}.2`,
             sequenceEntryHistory: restoredHistory,
-            isLoggedIn: true,
+            accessToken: testAccessToken,
             isRevocation: true,
         });
         expect(container).toBeEmptyDOMElement();
@@ -141,7 +142,7 @@ describe('SequenceManagement', () => {
             accessionVersion: `${ACCESSION}.2`,
             sequenceEntryHistory: revisedHistory,
             myGroups: [],
-            isLoggedIn: true,
+            accessToken: testAccessToken,
         });
         expect(container).toBeEmptyDOMElement();
     });
@@ -150,7 +151,7 @@ describe('SequenceManagement', () => {
         const { container } = renderSequenceManagement({
             accessionVersion: `${ACCESSION}.2`,
             sequenceEntryHistory: revisedHistory,
-            isLoggedIn: false,
+            accessToken: undefined,
         });
         expect(container).toBeEmptyDOMElement();
     });
