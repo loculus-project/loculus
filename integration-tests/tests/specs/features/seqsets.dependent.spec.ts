@@ -51,4 +51,40 @@ test.describe('SeqSet management', () => {
         await expect(seqSetPage.getCreateButton()).toBeVisible();
         await expect(seqSetPage.page.getByRole('cell', { name: updatedSeqSetName })).toHaveCount(0);
     });
+
+    test('valid accessions pass validation and the seqset can be saved after it', async ({
+        page,
+        groupId,
+    }) => {
+        test.setTimeout(90_000);
+        void groupId;
+        const searchPage = new SearchPage(page);
+        await searchPage.ebolaSudan();
+        const [accession] = await collectAccessibleAccessions(searchPage);
+
+        const seqSetPage = new SeqSetPage(page);
+        const seqSetName = `SeqSet ${randomUUID().slice(0, 8)}`;
+        const seqSetDescription = 'Playwright seqset saved after record validation';
+
+        await seqSetPage.gotoList();
+        await seqSetPage.openCreateDialog();
+
+        const validation = seqSetPage.waitForRecordValidation(accession);
+        await seqSetPage.fillSeqSetForm({
+            name: seqSetName,
+            description: seqSetDescription,
+            focalAccessions: [accession],
+        });
+        const validationResponse = await validation;
+        expect(validationResponse.ok()).toBe(true);
+
+        // A successful validation must not leave an error behind that disables saving
+        await expect(page.getByText(/Unexpected response from/)).toHaveCount(0);
+        await expect(seqSetPage.getSaveButton()).toBeEnabled();
+
+        await seqSetPage.submitSeqSetForm();
+        await seqSetPage.expectDetailLayout(seqSetName, seqSetDescription, '1');
+
+        await seqSetPage.deleteSeqSet();
+    });
 });
