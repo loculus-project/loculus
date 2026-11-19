@@ -39,6 +39,11 @@ specified in the `CONFIG_DIR` environment variable:
 
 Check our tests and examples for working config files.
 
+## Calling the backend and LAPIS
+
+How to add an endpoint and call it from server-side and client-side code is described in
+[src/services/README.md](./src/services/README.md).
+
 ## Logging
 
 The website writes logs to stdout.
