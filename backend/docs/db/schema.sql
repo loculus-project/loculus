@@ -510,7 +510,9 @@ CREATE TABLE public.seqset_records (
     seqset_record_id bigint NOT NULL,
     accession text NOT NULL,
     type text NOT NULL,
-    is_focal boolean NOT NULL
+    is_focal boolean NOT NULL,
+    version bigint,
+    CONSTRAINT seqset_records_accession_has_no_version CHECK ((POSITION(('.'::text) IN (accession)) = 0))
 );
 
 
@@ -1054,31 +1056,10 @@ CREATE INDEX sepd_unprocessed_claim_idx ON public.sequence_entries_preprocessed_
 
 
 --
--- Name: seqset_records_accession_focal_idx; Type: INDEX; Schema: public; Owner: postgres
+-- Name: seqset_records_accession_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
-CREATE INDEX seqset_records_accession_focal_idx ON public.seqset_records USING btree (accession text_pattern_ops, is_focal);
-
-
---
--- Name: seqset_to_citation_source_seqset_idx; Type: INDEX; Schema: public; Owner: postgres
---
-
-CREATE INDEX seqset_to_citation_source_seqset_idx ON public.seqset_to_citation_source USING btree (seqset_id, seqset_version);
-
-
---
--- Name: seqset_to_records_seqset_idx; Type: INDEX; Schema: public; Owner: postgres
---
-
-CREATE INDEX seqset_to_records_seqset_idx ON public.seqset_to_records USING btree (seqset_id, seqset_version);
-
-
---
--- Name: seqsets_created_by_idx; Type: INDEX; Schema: public; Owner: postgres
---
-
-CREATE INDEX seqsets_created_by_idx ON public.seqsets USING btree (created_by);
+CREATE INDEX seqset_records_accession_idx ON public.seqset_records USING btree (accession);
 
 
 --
