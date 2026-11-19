@@ -41,7 +41,7 @@ async function queryLapisDetails(
 
 const fetchRecordsMetadata = async (
     records: SeqSetRecord[],
-    clientConfig: ClientConfig,
+    lapisUrls: Record<string, string>,
     fieldsToDisplay: FieldToDisplay[],
 ): Promise<Map<string, RecordMetadata>> => {
     const accessions = records.map((record) => record.accession);
@@ -61,7 +61,7 @@ const fetchRecordsMetadata = async (
     // #TODO: do this better, in a less hacky way
     // But if we do try to query something that doesn't have the field its no huge problem it will just lead to a console error
     const lapisUrlsWithoutDummies = Object.fromEntries(
-        Object.entries(clientConfig.lapisUrls).filter(([organism]) => !organism.includes('organism')),
+        Object.entries(lapisUrls).filter(([organism]) => !organism.includes('organism')),
     );
 
     const metadataMap = new Map<string, RecordMetadata>();
@@ -133,9 +133,10 @@ export const SeqSetRecordsTableWithMetadata: FC<SeqSetRecordsTableWithMetadataPr
     sortByKey = 'isFocal',
     organismDisplayNames = {},
 }) => {
+    const { lapisUrls } = clientConfig;
     const { data: metadataMap, isLoading } = useQuery({
-        queryKey: ['seqset-records-metadata', seqSetRecords, clientConfig, fieldsToDisplay],
-        queryFn: () => fetchRecordsMetadata(seqSetRecords, clientConfig, fieldsToDisplay),
+        queryKey: ['lapis', 'seqSetRecordsMetadata', { seqSetRecords, lapisUrls, fieldsToDisplay }],
+        queryFn: () => fetchRecordsMetadata(seqSetRecords, lapisUrls, fieldsToDisplay),
         staleTime: 5 * 60 * 1000, // 5 minutes
     });
 

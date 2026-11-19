@@ -57,7 +57,7 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
         isLoading,
         isError,
     } = useQuery({
-        queryKey: ['details-json', seqId],
+        queryKey: ['website', 'detailsJson', { seqId }],
         queryFn: async ({ signal }) => {
             try {
                 return await fetchDetailsJson(seqId, signal);

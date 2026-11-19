@@ -73,18 +73,22 @@ const InnerGroupPage: FC<GroupPageProps> = ({
     const userIsGroupMember = groupDetails.users?.some((user) => user.name === username) ?? false;
     const userHasEditPrivileges = userGroups.some((group) => group.groupId === prefetchedGroupDetails.group.groupId);
 
+    const { lapisUrls } = clientConfig;
+    const organismKeys = organisms.map(({ key }) => key);
+    const graphOrganismKeys = organismsWithGroupGraphField.map(({ key }) => key);
+
     const { data: sequenceCounts, isLoading: sequenceCountsLoading } = useQuery({
-        queryKey: ['group-sequence-counts', groupId, clientConfig, organisms],
-        queryFn: () => fetchSequenceCounts(groupId, clientConfig, organisms),
+        queryKey: ['lapis', 'groupSequenceCounts', { groupId, lapisUrls, organismKeys }],
+        queryFn: () => fetchSequenceCounts(groupId, lapisUrls, organismKeys),
     });
 
     const { data: timeSeriesData, isLoading: timeSeriesLoading } = useQuery({
-        queryKey: ['group-time-series', groupId, clientConfig, organismsWithGroupGraphField, dateFieldForGroupGraph],
+        queryKey: ['lapis', 'groupTimeSeries', { groupId, lapisUrls, graphOrganismKeys, dateFieldForGroupGraph }],
         queryFn: () => {
             if (dateFieldForGroupGraph === null) {
                 return Promise.resolve({});
             }
-            return fetchTimeSeriesData(groupId, clientConfig, organismsWithGroupGraphField, dateFieldForGroupGraph);
+            return fetchTimeSeriesData(groupId, lapisUrls, graphOrganismKeys, dateFieldForGroupGraph);
         },
         enabled: dateFieldForGroupGraph !== null && organismsWithGroupGraphField.length > 0,
     });
@@ -313,11 +317,11 @@ const InnerGroupPage: FC<GroupPageProps> = ({
     );
 };
 
-async function fetchSequenceCounts(groupId: number, clientConfig: ClientConfig, organisms: Organism[]) {
+async function fetchSequenceCounts(groupId: number, lapisUrls: Record<string, string>, organismKeys: string[]) {
     const counts: Record<string, number> = {};
     await Promise.all(
-        organisms.map(async ({ key }) => {
-            const url = clientConfig.lapisUrls[key];
+        organismKeys.map(async (key) => {
+            const url = lapisUrls[key];
             if (!url) {
                 counts[key] = 0;
                 return;
@@ -331,7 +335,7 @@ async function fetchSequenceCounts(groupId: number, clientConfig: ClientConfig, 
                 });
                 counts[key] = response.data[0]?.count ?? 0;
             } catch (error) {
-                void logger.error(`Failed to fetch sequence count for ${key}: ${JSON.stringify(error)}`);
+                void logger.error(`Failed to fetch sequence count for ${key}: ${getErrorMessage(error)}`);
                 counts[key] = 0;
             }
         }),
@@ -341,14 +345,14 @@ async function fetchSequenceCounts(groupId: number, clientConfig: ClientConfig, 
 
 async function fetchTimeSeriesData(
     groupId: number,
-    clientConfig: ClientConfig,
-    organisms: Organism[],
+    lapisUrls: Record<string, string>,
+    organismKeys: string[],
     metadataField: string,
 ) {
     const data: TimeSeriesData = {};
     await Promise.all(
-        organisms.map(async ({ key }) => {
-            const url = clientConfig.lapisUrls[key];
+        organismKeys.map(async (key) => {
+            const url = lapisUrls[key];
             if (!url) {
                 data[key] = [];
                 return;
@@ -368,7 +372,7 @@ async function fetchTimeSeriesData(
                     }))
                     .sort((a, b) => a.date.localeCompare(b.date));
             } catch (error) {
-                void logger.error(`Failed to fetch time series data for ${key}: ${JSON.stringify(error)}`);
+                void logger.error(`Failed to fetch time series data for ${key}: ${getErrorMessage(error)}`);
                 data[key] = [];
             }
         }),

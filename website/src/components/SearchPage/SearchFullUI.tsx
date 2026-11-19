@@ -1,5 +1,4 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { isAxiosError } from 'axios';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { Button } from '../common/Button';
@@ -21,6 +20,7 @@ import { useSearchPageState } from './useSearchPageState.ts';
 import { type QueryState } from './useStateSyncedWithUrlQueryParams.ts';
 import { getLapisUrl } from '../../config.ts';
 import { useLapisMutation } from '../../hooks/useLapis.ts';
+import { getErrorStatus } from '../../services/apiRequest.ts';
 import { lapisApi } from '../../services/lapisApi.ts';
 import { DATA_USE_TERMS_FIELD, pageSize } from '../../settings';
 import type { Group } from '../../types/backend.ts';
@@ -300,7 +300,7 @@ const InnerSearchFullUI = ({
                 <RecentSequencesBanner organism={organism} />
 
                 {(detailsHook.isError || aggregatedHook.isError) &&
-                    (isAxiosError(aggregatedHook.error) && aggregatedHook.error.response?.status === 503 ? (
+                    (getErrorStatus(aggregatedHook.error) === 503 ? (
                         <div className='p-3 rounded-lg text-lg text-gray-700 text-italic'>
                             {' '}
                             The retrieval database is currently initializing – please check back later.

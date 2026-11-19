@@ -60,7 +60,7 @@ export function useVersionComparison(accession: string, versions: SequenceEntryH
         isFetching,
         error,
     } = useQuery({
-        queryKey: ['version-diff', accession, selectedPair],
+        queryKey: ['website', 'versionDiff', { accession, selectedPair }],
         queryFn: async ({ signal }) => {
             const [v1, v2] = selectedPair!;
             const [data1, data2] = await Promise.all([

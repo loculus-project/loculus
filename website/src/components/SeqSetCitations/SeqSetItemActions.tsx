@@ -7,6 +7,7 @@ import { ExportSeqSet } from './ExportSeqSet';
 import { SeqSetForm } from './SeqSetForm';
 import { getClientLogger } from '../../clientLogger';
 import { backendQueryOptions, useBackendMutation } from '../../hooks/useBackend.ts';
+import { getErrorMessage } from '../../services/apiRequest.ts';
 import type { AuthorProfile, SeqSet } from '../../types/seqSetCitation';
 import { getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
@@ -191,7 +192,7 @@ function useDeleteSeqSetAction(seqSetId: string, seqSetVersion: number, onError:
             window.location.href = '/seqsets';
         },
         onError: async (error) => {
-            const message = `Failed to delete seqSet with error: '${JSON.stringify(error)})}'`;
+            const message = `Failed to delete seqSet: ${getErrorMessage(error)}`;
             await logger.info(message);
             onError(message);
         },

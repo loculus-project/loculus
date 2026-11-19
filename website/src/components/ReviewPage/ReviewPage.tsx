@@ -3,8 +3,9 @@ import { type ChangeEvent, type FC, useState } from 'react';
 import { toast } from 'react-toastify';
 
 import { ReviewCard } from './ReviewCard.tsx';
-import { useSubmissionOperations } from '../../hooks/useSubmissionOperations.ts';
+import { useSubmissionOperations } from './useSubmissionOperations.ts';
 import { routes } from '../../routes/routes.ts';
+import { getErrorMessage } from '../../services/apiRequest.ts';
 import {
     approveAllDataScope,
     deleteAllDataScope,
@@ -124,7 +125,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({
     const sequencesData = hooks.getSequences.data;
 
     if (hooks.getSequences.isError) {
-        return <div>Error: {hooks.getSequences.error.message}</div>;
+        return <div>Failed to load sequences: {getErrorMessage(hooks.getSequences.error)}</div>;
     }
     if (sequencesData === undefined) {
         return <div>Loading..</div>;

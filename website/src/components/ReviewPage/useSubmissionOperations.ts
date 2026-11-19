@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { toast } from 'react-toastify';
 
-import { useBackendMutation, useBackendQuery } from './useBackend.ts';
-import { getErrorMessage } from '../services/apiRequest.ts';
+import { useBackendMutation, useBackendQuery } from '../../hooks/useBackend.ts';
+import { getErrorMessage } from '../../services/apiRequest.ts';
 import {
     type AccessionVersionsFilterWithApprovalScope,
     type AccessionVersionsFilterWithDeletionScope,
@@ -14,7 +14,7 @@ import {
     noIssuesProcessingResult,
     warningsProcessingResult,
     errorsProcessingResult,
-} from '../types/backend.ts';
+} from '../../types/backend.ts';
 
 export function useSubmissionOperations(
     organism: string,

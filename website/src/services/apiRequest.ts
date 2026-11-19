@@ -1,4 +1,4 @@
-import axios, { type AxiosError, type AxiosResponse, isAxiosError, type Method } from 'axios';
+import axios, { type AxiosResponse, isAxiosError, type Method } from 'axios';
 import { z } from 'zod';
 
 import { problemDetail, type ProblemDetail } from '../types/backend.ts';
@@ -34,7 +34,20 @@ export type ApiRequest = {
     signal?: AbortSignal;
     /** Defaults to JSON. With `'blob'`, an error response body is still parsed as JSON where possible. */
     responseType?: 'json' | 'text' | 'blob';
+    /** In milliseconds; `0` means no timeout. Defaults to `defaultTimeout()`. */
+    timeout?: number;
 };
+
+/** Server-side requests block rendering the page, so they must not hang forever when a service doesn't answer. */
+export const SERVER_SIDE_TIMEOUT_MS = 30_000;
+
+/**
+ * Server-side requests time out after `SERVER_SIDE_TIMEOUT_MS`. Browser requests don't time out by default:
+ * they include large uploads and downloads, and the user (or an `AbortSignal`) can cancel them.
+ */
+export function defaultTimeout(): number {
+    return typeof window === 'undefined' ? SERVER_SIDE_TIMEOUT_MS : 0;
+}
 
 /**
  * Thrown when the server responds successfully, but the response body doesn't match the expected schema.
@@ -70,6 +83,7 @@ export async function sendRequest<T>(
         headers,
         signal,
         responseType,
+        timeout = defaultTimeout(),
         responseSchema,
     }: ApiRequest & { responseSchema?: z.ZodType<T> },
 ): Promise<T | void> {
@@ -84,6 +98,7 @@ export async function sendRequest<T>(
             headers,
             signal,
             responseType,
+            timeout,
         });
     } catch (error) {
         await parseBlobErrorBody(error);
@@ -133,15 +148,6 @@ export function toFormData(data: Record<string, unknown>): FormData {
     return formData;
 }
 
-export type ProblemDetailAxiosError = AxiosError<ProblemDetail> & { response: AxiosResponse<ProblemDetail> };
-
-/**
- * Checks whether the error is an HTTP error whose response body is a problem detail.
- */
-export function isProblemDetailError(error: unknown): error is ProblemDetailAxiosError {
-    return isAxiosError(error) && error.response !== undefined && problemDetail.safeParse(error.response.data).success;
-}
-
 /**
  * Returns the problem detail from an HTTP error response, if there is one.
  * Handles both the backend format (problem detail as the body) and the LAPIS format (wrapped in `error`).
@@ -164,6 +170,14 @@ export function extractProblemDetail(error: unknown): ProblemDetail | undefined 
         }
     }
     return undefined;
+}
+
+/**
+ * Returns the HTTP status code of an error response, or `undefined` if the error isn't an HTTP error response
+ * (e.g. a network error or a `ResponseValidationError`). Use this instead of inspecting axios errors in components.
+ */
+export function getErrorStatus(error: unknown): number | undefined {
+    return isAxiosError(error) ? error.response?.status : undefined;
 }
 
 /**

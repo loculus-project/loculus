@@ -1,4 +1,3 @@
-import type { AxiosError } from 'axios';
 import { DateTime } from 'luxon';
 import type { Result } from 'neverthrow';
 import { type FormEvent, useState, type Dispatch, type SetStateAction, useMemo } from 'react';
@@ -23,7 +22,7 @@ import DataUseTermsSelector from '../../components/DataUseTerms/DataUseTermsSele
 import { useBackendMutation } from '../../hooks/useBackend.ts';
 import { SubmissionRouteUtils } from '../../routes/SubmissionRoute.ts';
 import { routes } from '../../routes/routes.ts';
-import { getErrorMessage, isProblemDetailError } from '../../services/apiRequest.ts';
+import { extractProblemDetail, getErrorMessage, getErrorStatus } from '../../services/apiRequest.ts';
 import { FILES_HEADER_PREFIX } from '../../settings.ts';
 import {
     type DataUseTermsOption,
@@ -641,18 +640,19 @@ function useSubmitFiles(organism: string, onSuccess: () => void, onError: (messa
 }
 
 function handleError(onError: (message: string) => void) {
-    return (error: unknown | AxiosError) => {
+    return (error: unknown) => {
         void logger.error(`Received error from backend: ${getErrorMessage(error)}`);
-        if (isProblemDetailError(error)) {
-            switch (error.response.status) {
+        const problemDetail = extractProblemDetail(error);
+        if (problemDetail !== undefined) {
+            switch (getErrorStatus(error)) {
                 case 400:
-                    onError('Failed to submit sequence entries: ' + error.response.data.detail);
+                    onError('Failed to submit sequence entries: ' + problemDetail.detail);
                     return;
                 case 422:
-                    onError('The submitted file content was invalid: ' + error.response.data.detail);
+                    onError('The submitted file content was invalid: ' + problemDetail.detail);
                     return;
                 default:
-                    onError(error.response.data.title + ': ' + error.response.data.detail);
+                    onError(problemDetail.title + ': ' + problemDetail.detail);
                     return;
             }
         }

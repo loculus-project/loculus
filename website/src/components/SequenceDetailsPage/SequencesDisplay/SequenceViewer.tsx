@@ -4,7 +4,7 @@ import { type FC } from 'react';
 import { SequenceActionButtons } from './SequenceActionButtons.tsx';
 import { getLapisUrl } from '../../../config.ts';
 import { useLapisQuery } from '../../../hooks/useLapis.ts';
-import { extractProblemDetail } from '../../../services/apiRequest.ts';
+import { getErrorMessage } from '../../../services/apiRequest.ts';
 import type { SequenceEndpoint } from '../../../services/lapisApi.ts';
 import type { ClientConfig } from '../../../types/runtimeConfig.ts';
 import { fastaEntries } from '../../../utils/parseFasta.ts';
@@ -40,7 +40,7 @@ export const SequencesViewer: FC<Props> = ({
         return (
             <div className='text-error'>
                 Failed to load {noCase(sequenceType.type)} sequence {sequenceType.name.lapisName}:{' '}
-                {JSON.stringify(error)}
+                {getErrorMessage(error)}
             </div>
         );
     }
@@ -94,10 +94,6 @@ function sequenceEndpoint(sequenceType: SequenceType, isMultiSegmented: boolean)
 
 function parseSequenceResult(data: string | undefined, error: Error | null, isLoading: boolean) {
     if (data === undefined) {
-        const problem = extractProblemDetail(error);
-        if (problem !== undefined) {
-            return { data: null, error: problem, isLoading };
-        }
         return { data, error, isLoading };
     }
 
