@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
-import axios from 'axios';
 import { type FC, useMemo } from 'react';
 
-import { versionStatuses } from '../../types/lapis';
+import { lapisApi } from '../../services/lapisApi.ts';
+import { type LapisRequest, versionStatuses } from '../../types/lapis';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import type { SeqSetRecord } from '../../types/seqSetCitation';
 import { Spinner } from '../common/Spinner';
@@ -28,17 +28,12 @@ type SeqSetRecordsTableWithMetadataProps = {
 
 async function queryLapisDetails(
     lapisUrl: string,
-    filter: Record<string, unknown>,
+    filter: LapisRequest,
     fields: string[],
 ): Promise<Record<string, unknown>[]> {
     try {
-        const response = await axios.post(`${lapisUrl}/sample/details`, {
-            ...filter,
-            fields,
-            dataFormat: 'json',
-        });
-        const responseData = response.data as { data?: Record<string, unknown>[] } | undefined;
-        return responseData?.data ?? [];
+        const response = await lapisApi(lapisUrl).details({ ...filter, fields });
+        return response.data;
     } catch (_error) {
         return [];
     }
@@ -46,7 +41,7 @@ async function queryLapisDetails(
 
 const fetchRecordsMetadata = async (
     records: SeqSetRecord[],
-    clientConfig: ClientConfig,
+    lapisUrls: Record<string, string>,
     fieldsToDisplay: FieldToDisplay[],
 ): Promise<Map<string, RecordMetadata>> => {
     const accessions = records.map((record) => record.accession);
@@ -66,7 +61,7 @@ const fetchRecordsMetadata = async (
     // #TODO: do this better, in a less hacky way
     // But if we do try to query something that doesn't have the field its no huge problem it will just lead to a console error
     const lapisUrlsWithoutDummies = Object.fromEntries(
-        Object.entries(clientConfig.lapisUrls).filter(([organism]) => !organism.includes('organism')),
+        Object.entries(lapisUrls).filter(([organism]) => !organism.includes('organism')),
     );
 
     const metadataMap = new Map<string, RecordMetadata>();
@@ -138,9 +133,10 @@ export const SeqSetRecordsTableWithMetadata: FC<SeqSetRecordsTableWithMetadataPr
     sortByKey = 'isFocal',
     organismDisplayNames = {},
 }) => {
+    const { lapisUrls } = clientConfig;
     const { data: metadataMap, isLoading } = useQuery({
-        queryKey: ['seqset-records-metadata', seqSetRecords, clientConfig, fieldsToDisplay],
-        queryFn: () => fetchRecordsMetadata(seqSetRecords, clientConfig, fieldsToDisplay),
+        queryKey: ['lapis', 'seqSetRecordsMetadata', { seqSetRecords, lapisUrls, fieldsToDisplay }],
+        queryFn: () => fetchRecordsMetadata(seqSetRecords, lapisUrls, fieldsToDisplay),
         staleTime: 5 * 60 * 1000, // 5 minutes
     });
 
