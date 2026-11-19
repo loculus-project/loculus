@@ -1,11 +1,13 @@
 import { Dialog, DialogPanel, Transition } from '@headlessui/react';
-import React, { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import React from 'react';
 
 import { getClientLogger } from '../../clientLogger.ts';
 import { routes } from '../../routes/routes';
+import { getErrorMessage } from '../../services/apiRequest.ts';
+import { fetchDetailsJson } from '../../services/detailsJsonApi.ts';
 import { type Group } from '../../types/backend';
 import type { SequenceFlaggingConfig } from '../../types/config.ts';
-import { type DetailsJson, detailsJsonSchema } from '../../types/detailsJson.ts';
 import { type ReferenceGenomesInfo } from '../../types/referencesGenomes';
 import { getSegmentNames } from '../../utils/sequenceTypeHelpers.ts';
 import { SequenceDataUI } from '../SequenceDetailsPage/SequenceDataUI';
@@ -50,28 +52,22 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
     setIsHalfScreen,
     setPreviewedSeqId,
 }) => {
-    const [isLoading, setIsLoading] = useState(true);
-    const [data, setData] = useState<DetailsJson | null>(null);
-    const [isError, setIsError] = useState(false);
-
-    useEffect(() => {
-        if (seqId) {
-            setIsLoading(true);
-            void fetch(`/seq/${seqId}/details.json`)
-                .then((res) => res.json())
-                .then((json) => {
-                    try {
-                        return detailsJsonSchema.parse(json);
-                    } catch (e) {
-                        void logger.error(`Failed to parse JSON: ${e}`);
-                        throw e;
-                    }
-                })
-                .then(setData)
-                .catch(() => setIsError(true))
-                .finally(() => setIsLoading(false));
-        }
-    }, [accessToken, seqId]);
+    const {
+        data = null,
+        isLoading,
+        isError,
+    } = useQuery({
+        queryKey: ['website', 'detailsJson', { seqId }],
+        queryFn: async ({ signal }) => {
+            try {
+                return await fetchDetailsJson(seqId, signal);
+            } catch (error) {
+                void logger.error(`Failed to load details.json for ${seqId}: ${getErrorMessage(error)}`);
+                throw error;
+            }
+        },
+        enabled: seqId !== '',
+    });
 
     const content = (
         <div
