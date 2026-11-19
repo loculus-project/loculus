@@ -969,10 +969,7 @@ class ProcessingFunctions:
                             f"Invalid boolean value: {input_datum} for field {output_field}."
                         )
                 case _:
-                    if isinstance(input_datum, str):
-                        output_datum = input_datum.strip()
-                    else:
-                        output_datum = input_datum
+                    output_datum = strip_if_str(input_datum)
         else:
             output_datum = input_datum
         return RawProcessingResult(datum=output_datum, errors=errors)
