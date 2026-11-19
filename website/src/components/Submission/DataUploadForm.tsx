@@ -2,6 +2,12 @@ import { DateTime } from 'luxon';
 import type { Result } from 'neverthrow';
 import { type FormEvent, useState, type Dispatch, type SetStateAction, useMemo } from 'react';
 
+import {
+    resolveFileMappings,
+    type CategoryLinkage,
+    type FileLinkage,
+    type SubmissionFileMapping,
+} from './FileUpload/fileMapping.ts';
 import { type FileFactory, FormOrUploadWrapper, type InputMode } from './FormOrUploadWrapper.tsx';
 import {
     displaySubmissionConfirmationWizard,
@@ -11,35 +17,30 @@ import { extractAuthorLists } from './authorNames.ts';
 import { getClientLogger } from '../../clientLogger.ts';
 import { FolderUploadComponent } from './FileUpload/FolderUploadComponent.tsx';
 import { deriveFileMapping, validateFileUploadStates, type FileUploadState } from './FileUpload/fileUpload.ts';
+import { extraFilesUploadDocsUrl } from './extraFilesUploadDocsUrl.ts';
 import DataUseTermsSelector from '../../components/DataUseTerms/DataUseTermsSelector';
+import { useBackendMutation } from '../../hooks/useBackend.ts';
 import { SubmissionRouteUtils } from '../../routes/SubmissionRoute.ts';
 import { routes } from '../../routes/routes.ts';
 import { extractProblemDetail, getErrorMessage, getErrorStatus } from '../../services/apiRequest.ts';
-import { backendClientHooks } from '../../services/serviceHooks.ts';
 import { FILES_HEADER_PREFIX } from '../../settings.ts';
 import {
     type DataUseTermsOption,
     type Group,
     openDataUseTermsOption,
     restrictedDataUseTermsOption,
+    type SubmitFiles,
+    type UploadFiles,
 } from '../../types/backend.ts';
 import { type FileSharingConfig, type FileCategory, type InputField } from '../../types/config.ts';
 import type { SubmissionDataTypes } from '../../types/config.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
-import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
 import { dateTimeInMonths } from '../../utils/utcDates.ts';
 import { MAX_SUBMITTED_DATA_DOWNLOAD_ENTRIES } from '../SearchPage/DownloadDialog/DownloadSubmittedDataButton.tsx';
 import { Button } from '../common/Button';
 import { Checkbox } from '../common/Checkbox';
 import { Spinner } from '../common/Spinner';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
-import {
-    resolveFileMappings,
-    type CategoryLinkage,
-    type FileLinkage,
-    type SubmissionFileMapping,
-} from './FileUpload/fileMapping.ts';
-import { extraFilesUploadDocsUrl } from './extraFilesUploadDocsUrl.ts';
 
 export type UploadAction = 'submit' | 'revise';
 
@@ -647,19 +648,13 @@ function useSubmitFiles(
     onSuccess: () => void,
     onError: (message: string) => void,
 ) {
-    const hooks = backendClientHooks(clientConfig);
-    const submit = hooks.useSubmit(
-        { params: { organism }, headers: createAuthorizationHeader(accessToken) },
-        { onSuccess, onError: handleError(onError) },
-    );
-    const revise = hooks.useRevise(
-        { params: { organism }, headers: createAuthorizationHeader(accessToken) },
-        { onSuccess, onError: handleError(onError) },
-    );
+    const context = { clientConfig, accessToken };
+    const submit = useBackendMutation(context, 'submit', { onSuccess, onError: handleError(onError) });
+    const revise = useBackendMutation(context, 'revise', { onSuccess, onError: handleError(onError) });
 
     return {
-        submit: submit.mutate,
-        revise: revise.mutate,
+        submit: (files: SubmitFiles) => submit.mutate({ organism, ...files }),
+        revise: (files: UploadFiles) => revise.mutate({ organism, ...files }),
         isPending: submit.isPending || revise.isPending,
     };
 }

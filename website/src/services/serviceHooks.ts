@@ -2,13 +2,8 @@ import { Zodios } from '@zodios/core';
 import { ZodiosHooks } from '@zodios/react';
 
 import { seqSetCitationApi } from './seqSetCitationApi.ts';
-import { backendApi } from './zodiosBackendApi.ts';
 import type { ClientConfig } from '../types/runtimeConfig.ts';
 import type { SeqSetRecord } from '../types/seqSetCitation.ts';
-
-export function backendClientHooks(clientConfig: ClientConfig) {
-    return new ZodiosHooks('loculus', new Zodios(clientConfig.backendUrl, backendApi));
-}
 
 export function seqSetCitationClientHooks(clientConfig: ClientConfig) {
     return new ZodiosHooks('loculus', new Zodios(clientConfig.backendUrl, seqSetCitationApi));
