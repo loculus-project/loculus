@@ -1,10 +1,10 @@
 import { type FC } from 'react';
 
-import { useGetGroups, useGroupEdit } from '../../hooks/useGroupOperations.ts';
 import { routes } from '../../routes/routes.ts';
+import { backendApi } from '../../services/backendApi.ts';
 import type { GroupDetails, NewGroup } from '../../types/backend.ts';
 import { type ClientConfig } from '../../types/runtimeConfig.ts';
-import { GroupForm, type GroupSubmitError, type GroupSubmitSuccess } from '../Group/GroupForm.tsx';
+import { GroupForm } from '../Group/GroupForm.tsx';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 
 interface GroupEditFormProps {
@@ -16,29 +16,11 @@ interface GroupEditFormProps {
 const InnerGroupEditForm: FC<GroupEditFormProps> = ({ prefetchedGroupDetails, clientConfig, accessToken }) => {
     const { groupId, ...groupInfo } = prefetchedGroupDetails.group;
 
-    const { getGroups } = useGetGroups({
-        clientConfig,
-        accessToken,
-    });
-    const { editGroup } = useGroupEdit({
-        clientConfig,
-        accessToken,
-    });
+    const backend = backendApi(clientConfig.backendUrl, accessToken);
 
     const handleEditGroup = async (group: NewGroup) => {
-        const result = await editGroup(groupId, group);
-
-        if (result.succeeded) {
-            return {
-                succeeded: true,
-                nextPageHref: routes.groupOverviewPage(result.group.groupId),
-            } as GroupSubmitSuccess;
-        } else {
-            return {
-                succeeded: false,
-                errorMessage: result.errorMessage,
-            } as GroupSubmitError;
-        }
+        const editedGroup = await backend.editGroup({ groupId, ...group });
+        return routes.groupOverviewPage(editedGroup.groupId);
     };
 
     return (
@@ -48,7 +30,7 @@ const InnerGroupEditForm: FC<GroupEditFormProps> = ({ prefetchedGroupDetails, cl
             onSubmit={handleEditGroup}
             defaultGroupData={groupInfo}
             editingGroupId={groupId}
-            getGroups={getGroups}
+            getGroups={(name) => backend.getGroups({ name })}
         />
     );
 };

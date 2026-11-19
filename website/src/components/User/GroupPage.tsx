@@ -1,14 +1,14 @@
 import { useQuery } from '@tanstack/react-query';
-import axios from 'axios';
 import { type FC, type FormEvent, useMemo, useState, type ReactNode } from 'react';
 
 import { CumulativeSubmissionsChart, type TimeSeriesData } from './CumulativeSubmissionsChart.tsx';
 import { getClientLogger } from '../../clientLogger.ts';
 import type { Organism } from '../../config.ts';
-import { useGroupPageHooks } from '../../hooks/useGroupOperations.ts';
+import { type BackendContext, useBackendMutation, useBackendQuery } from '../../hooks/useBackend.ts';
 import { routes } from '../../routes/routes.ts';
 import type { ContinueSubmissionIntent } from '../../routes/routes.ts';
 import { getErrorMessage } from '../../services/apiRequest.ts';
+import { lapisApi } from '../../services/lapisApi.ts';
 import { GROUP_ID_FIELD, IS_REVOCATION_FIELD, VERSION_STATUS_FIELD } from '../../settings.ts';
 import type { Address, Group, GroupDetails } from '../../types/backend.ts';
 import { versionStatuses } from '../../types/lapis.ts';
@@ -58,12 +58,11 @@ const InnerGroupPage: FC<GroupPageProps> = ({
 
     const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
 
-    const { groupDetails, removeFromGroup, addUserToGroup } = useGroupPageHooks({
-        clientConfig,
-        accessToken,
-        setErrorMessage,
+    const { groupDetails, removeFromGroup, addUserToGroup } = useGroupMembership(
+        { clientConfig, accessToken },
         prefetchedGroupDetails,
-    });
+        setErrorMessage,
+    );
 
     const handleAddUser = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -71,21 +70,25 @@ const InnerGroupPage: FC<GroupPageProps> = ({
         setNewUserName('');
     };
 
-    const userIsGroupMember = groupDetails.data?.users?.some((user) => user.name === username) ?? false;
+    const userIsGroupMember = groupDetails.users?.some((user) => user.name === username) ?? false;
     const userHasEditPrivileges = userGroups.some((group) => group.groupId === prefetchedGroupDetails.group.groupId);
 
+    const { lapisUrls } = clientConfig;
+    const organismKeys = organisms.map(({ key }) => key);
+    const graphOrganismKeys = organismsWithGroupGraphField.map(({ key }) => key);
+
     const { data: sequenceCounts, isLoading: sequenceCountsLoading } = useQuery({
-        queryKey: ['group-sequence-counts', groupId, clientConfig, organisms],
-        queryFn: () => fetchSequenceCounts(groupId, clientConfig, organisms),
+        queryKey: ['lapis', 'groupSequenceCounts', { groupId, lapisUrls, organismKeys }],
+        queryFn: () => fetchSequenceCounts(groupId, lapisUrls, organismKeys),
     });
 
     const { data: timeSeriesData, isLoading: timeSeriesLoading } = useQuery({
-        queryKey: ['group-time-series', groupId, clientConfig, organismsWithGroupGraphField, dateFieldForGroupGraph],
+        queryKey: ['lapis', 'groupTimeSeries', { groupId, lapisUrls, graphOrganismKeys, dateFieldForGroupGraph }],
         queryFn: () => {
             if (dateFieldForGroupGraph === null) {
                 return Promise.resolve({});
             }
-            return fetchTimeSeriesData(groupId, clientConfig, organismsWithGroupGraphField, dateFieldForGroupGraph);
+            return fetchTimeSeriesData(groupId, lapisUrls, graphOrganismKeys, dateFieldForGroupGraph);
         },
         enabled: dateFieldForGroupGraph !== null && organismsWithGroupGraphField.length > 0,
     });
@@ -175,7 +178,7 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                             <Button
                                 className='object-right p-2 loculusColor text-white rounded-sm px-4'
                                 onClick={() => {
-                                    const isLastMember = (groupDetails.data?.users?.length ?? 0) <= 1;
+                                    const isLastMember = (groupDetails.users?.length ?? 0) <= 1;
                                     const lastMemberWarning =
                                         'You are the last user in this group. Leaving will leave the group without any members, meaning that nobody is able to add future members. ';
                                     const dialogText = `${isLastMember ? lastMemberWarning : ''}Are you sure you want to leave the ${groupName} group?`;
@@ -204,18 +207,18 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                 <table className='w-full'>
                     <tbody>
                         <TableRow label='Group ID' noWrapLabel>
-                            {groupDetails.data?.group.groupId}
+                            {groupDetails.group.groupId}
                         </TableRow>
                         <TableRow label='Institution' noWrapLabel>
-                            {groupDetails.data?.group.institution}
+                            {groupDetails.group.institution}
                         </TableRow>
                         {accessToken && (
                             <TableRow label='Contact email' noWrapLabel>
-                                {groupDetails.data?.group.contactEmail}
+                                {groupDetails.group.contactEmail}
                             </TableRow>
                         )}
                         <TableRow label='Address' noWrapLabel>
-                            <PostalAddress address={groupDetails.data?.group.address} />
+                            <PostalAddress address={groupDetails.group.address} />
                         </TableRow>
                     </tbody>
                 </table>
@@ -284,7 +287,7 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                     </form>
                     <div className='flex-1 overflow-y-auto'>
                         <ul>
-                            {groupDetails.data?.users?.map((user) => (
+                            {groupDetails.users?.map((user) => (
                                 <li key={user.name} className='flex items-center gap-6 bg-gray-100 p-2 mb-2 rounded-sm'>
                                     <span className='text-lg'>{user.name}</span>
                                     {user.name !== username && (
@@ -314,24 +317,23 @@ const InnerGroupPage: FC<GroupPageProps> = ({
     );
 };
 
-async function fetchSequenceCounts(groupId: number, clientConfig: ClientConfig, organisms: Organism[]) {
+async function fetchSequenceCounts(groupId: number, lapisUrls: Record<string, string>, organismKeys: string[]) {
     const counts: Record<string, number> = {};
     await Promise.all(
-        organisms.map(async ({ key }) => {
-            const url = clientConfig.lapisUrls[key];
+        organismKeys.map(async (key) => {
+            const url = lapisUrls[key];
             if (!url) {
                 counts[key] = 0;
                 return;
             }
             try {
-                const response = await axios.post(`${url}/sample/aggregated`, {
+                const response = await lapisApi(url).aggregated({
                     [GROUP_ID_FIELD]: groupId,
                     [VERSION_STATUS_FIELD]: versionStatuses.latestVersion,
                     [IS_REVOCATION_FIELD]: 'false',
                     fields: [],
                 });
-                const count = (response.data as { data?: { count?: number }[] }).data?.[0]?.count ?? 0;
-                counts[key] = count;
+                counts[key] = response.data[0]?.count ?? 0;
             } catch (error) {
                 void logger.error(`Failed to fetch sequence count for ${key}: ${getErrorMessage(error)}`);
                 counts[key] = 0;
@@ -343,31 +345,30 @@ async function fetchSequenceCounts(groupId: number, clientConfig: ClientConfig, 
 
 async function fetchTimeSeriesData(
     groupId: number,
-    clientConfig: ClientConfig,
-    organisms: Organism[],
+    lapisUrls: Record<string, string>,
+    organismKeys: string[],
     metadataField: string,
 ) {
     const data: TimeSeriesData = {};
     await Promise.all(
-        organisms.map(async ({ key }) => {
-            const url = clientConfig.lapisUrls[key];
+        organismKeys.map(async (key) => {
+            const url = lapisUrls[key];
             if (!url) {
                 data[key] = [];
                 return;
             }
             try {
-                const response = await axios.post(`${url}/sample/aggregated`, {
+                const response = await lapisApi(url).aggregated({
                     [GROUP_ID_FIELD]: groupId,
                     [VERSION_STATUS_FIELD]: versionStatuses.latestVersion,
                     [IS_REVOCATION_FIELD]: 'false',
                     fields: [metadataField],
                 });
-                const rawData = (response.data as { data?: Record<string, unknown>[] }).data ?? [];
-                data[key] = rawData
+                data[key] = response.data
                     .filter((d) => d[metadataField])
                     .map((d) => ({
                         date: String(d[metadataField]),
-                        count: typeof d.count === 'number' ? d.count : 0,
+                        count: d.count,
                     }))
                     .sort((a, b) => a.date.localeCompare(b.date));
             } catch (error) {
@@ -377,6 +378,45 @@ async function fetchTimeSeriesData(
         }),
     );
     return data;
+}
+
+/**
+ * The group details, and actions to add or remove members. Errors are reported via `setErrorMessage`.
+ */
+function useGroupMembership(
+    context: BackendContext,
+    prefetchedGroupDetails: GroupDetails,
+    setErrorMessage: (message: string) => void,
+) {
+    const { groupId, groupName } = prefetchedGroupDetails.group;
+
+    const groupDetails = useBackendQuery(
+        context,
+        'getGroupDetails',
+        { groupId },
+        {
+            enabled: false,
+            initialData: prefetchedGroupDetails,
+            onError: (error) => setErrorMessage(`Failed to query Group ${groupName}: ${getErrorMessage(error)}`),
+        },
+    );
+    const refetchGroupDetails = () => groupDetails.refetch();
+
+    const addUser = useBackendMutation(context, 'addUserToGroup', {
+        onSuccess: refetchGroupDetails,
+        onError: (error) => setErrorMessage(`Failed to add user to group: ${getErrorMessage(error)}`),
+    });
+    const removeUser = useBackendMutation(context, 'removeUserFromGroup', {
+        onSuccess: refetchGroupDetails,
+        onError: (error) => setErrorMessage(`Failed to leave group: ${getErrorMessage(error)}`),
+    });
+
+    return {
+        groupDetails: groupDetails.data ?? prefetchedGroupDetails,
+        // Errors are already reported in `onError`
+        addUserToGroup: (username: string) => addUser.mutateAsync({ groupId, username }).catch(() => undefined),
+        removeFromGroup: (username: string) => removeUser.mutateAsync({ groupId, username }).catch(() => undefined),
+    };
 }
 
 export const GroupPage = withQueryProvider(InnerGroupPage);
