@@ -6,6 +6,7 @@ import { AuthorDetails } from './AuthorDetails.tsx';
 import { ExportSeqSet } from './ExportSeqSet';
 import { SeqSetForm } from './SeqSetForm';
 import { getClientLogger } from '../../clientLogger';
+import { getErrorMessage } from '../../services/apiRequest.ts';
 import { seqSetCitationClientHooks, seqSetRecordsQueryOptions } from '../../services/serviceHooks';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import type { AuthorProfile, SeqSet } from '../../types/seqSetCitation';
@@ -207,7 +208,7 @@ function useDeleteSeqSetAction(
                 window.location.href = '/seqsets';
             },
             onError: async (error) => {
-                const message = `Failed to delete seqSet with error: '${JSON.stringify(error)})}'`;
+                const message = `Failed to delete seqSet: ${getErrorMessage(error)}`;
                 await logger.info(message);
                 onError(message);
             },

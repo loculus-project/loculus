@@ -1,5 +1,3 @@
-import { isErrorFromAlias } from '@zodios/core';
-import type { AxiosError } from 'axios';
 import { DateTime } from 'luxon';
 import type { Result } from 'neverthrow';
 import { type FormEvent, useState, type Dispatch, type SetStateAction, useMemo } from 'react';
@@ -16,7 +14,6 @@ import { deriveFileMapping, validateFileUploadStates, type FileUploadState } fro
 import DataUseTermsSelector from '../../components/DataUseTerms/DataUseTermsSelector';
 import { SubmissionRouteUtils } from '../../routes/SubmissionRoute.ts';
 import { routes } from '../../routes/routes.ts';
-import { backendApi } from '../../services/backendApi.ts';
 import { backendClientHooks } from '../../services/serviceHooks.ts';
 import { FILES_HEADER_PREFIX } from '../../settings.ts';
 import {
@@ -29,7 +26,6 @@ import { type FileSharingConfig, type FileCategory, type InputField } from '../.
 import type { SubmissionDataTypes } from '../../types/config.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
-import { stringifyMaybeAxiosError } from '../../utils/stringifyMaybeAxiosError.ts';
 import { dateTimeInMonths } from '../../utils/utcDates.ts';
 import { MAX_SUBMITTED_DATA_DOWNLOAD_ENTRIES } from '../SearchPage/DownloadDialog/DownloadSubmittedDataButton.tsx';
 import { Button } from '../common/Button';
@@ -43,6 +39,7 @@ import {
     type SubmissionFileMapping,
 } from './FileUpload/fileMapping.ts';
 import { extraFilesUploadDocsUrl } from './extraFilesUploadDocsUrl.ts';
+import { extractProblemDetail, getErrorMessage, getErrorStatus } from '../../services/apiRequest.ts';
 
 export type UploadAction = 'submit' | 'revise';
 
@@ -174,7 +171,7 @@ const InnerDataUploadForm = ({
         try {
             authorLists = await extractAuthorLists(processedMetadataFile, authorsFields);
         } catch (error) {
-            void logger.error(`Failed to read metadata file for the author check: ${stringifyMaybeAxiosError(error)}`);
+            void logger.error(`Failed to read metadata file for the author check: ${getErrorMessage(error)}`);
             onError(`Could not read the metadata file: ${error instanceof Error ? error.message : String(error)}`);
             return;
         }
@@ -653,11 +650,11 @@ function useSubmitFiles(
     const hooks = backendClientHooks(clientConfig);
     const submit = hooks.useSubmit(
         { params: { organism }, headers: createAuthorizationHeader(accessToken) },
-        { onSuccess, onError: handleError(onError, 'submit') },
+        { onSuccess, onError: handleError(onError) },
     );
     const revise = hooks.useRevise(
         { params: { organism }, headers: createAuthorizationHeader(accessToken) },
-        { onSuccess, onError: handleError(onError, 'revise') },
+        { onSuccess, onError: handleError(onError) },
     );
 
     return {
@@ -667,22 +664,23 @@ function useSubmitFiles(
     };
 }
 
-function handleError(onError: (message: string) => void, action: UploadAction) {
-    return (error: unknown | AxiosError) => {
-        void logger.error(`Received error from backend: ${stringifyMaybeAxiosError(error)}`);
-        if (isErrorFromAlias(backendApi, action, error)) {
-            switch (error.response.status) {
+function handleError(onError: (message: string) => void) {
+    return (error: unknown) => {
+        void logger.error(`Received error from backend: ${getErrorMessage(error)}`);
+        const problemDetail = extractProblemDetail(error);
+        if (problemDetail !== undefined) {
+            switch (getErrorStatus(error)) {
                 case 400:
-                    onError('Failed to submit sequence entries: ' + error.response.data.detail);
+                    onError('Failed to submit sequence entries: ' + problemDetail.detail);
                     return;
                 case 422:
-                    onError('The submitted file content was invalid: ' + error.response.data.detail);
+                    onError('The submitted file content was invalid: ' + problemDetail.detail);
                     return;
                 default:
-                    onError(error.response.data.title + ': ' + error.response.data.detail);
+                    onError(problemDetail.title + ': ' + problemDetail.detail);
                     return;
             }
         }
-        onError('Received unexpected message from backend: ' + stringifyMaybeAxiosError(error));
+        onError('Received unexpected message from backend: ' + getErrorMessage(error));
     };
 }

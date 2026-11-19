@@ -1,7 +1,6 @@
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 import { Zodios } from '@zodios/core';
 import { ZodiosHooks, type ZodiosHooksInstance } from '@zodios/react';
-import { isAxiosError } from 'axios';
 
 import { backendApi } from './backendApi.ts';
 import { lapisApi } from './lapisApi.ts';
@@ -14,7 +13,6 @@ import {
     VERSION_FIELD,
     VERSION_STATUS_FIELD,
 } from '../settings.ts';
-import { problemDetail } from '../types/backend.ts';
 import { sequenceEntryHistory, type SequenceEntryHistory, type SequenceRequest } from '../types/lapis.ts';
 import type { ClientConfig } from '../types/runtimeConfig.ts';
 import type { SeqSetRecord } from '../types/seqSetCitation.ts';
@@ -67,16 +65,6 @@ function getSequenceHook(
     const { data, error, isLoading } = rawResult;
 
     if (data === undefined) {
-        if (isAxiosError(error)) {
-            const maybeProblemDetail = error.response?.data?.error ?? error.response?.data; // eslint-disable-line @typescript-eslint/no-unsafe-member-access
-
-            const problemDetailParseResult = problemDetail.safeParse(maybeProblemDetail);
-
-            if (problemDetailParseResult.success) {
-                return { data: null, error: problemDetailParseResult.data, isLoading };
-            }
-        }
-
         return { data, error, isLoading };
     }
 
