@@ -510,7 +510,9 @@ CREATE TABLE public.seqset_records (
     seqset_record_id bigint NOT NULL,
     accession text NOT NULL,
     type text NOT NULL,
-    is_focal boolean NOT NULL
+    is_focal boolean NOT NULL,
+    version bigint,
+    CONSTRAINT seqset_records_accession_has_no_version CHECK ((POSITION(('.'::text) IN (accession)) = 0))
 );
 
 
@@ -1051,6 +1053,13 @@ CREATE INDEX sepd_stale_lease_idx ON public.sequence_entries_preprocessed_data U
 --
 
 CREATE INDEX sepd_unprocessed_claim_idx ON public.sequence_entries_preprocessed_data USING btree (organism, pipeline_version, accession, version) WHERE (processing_status = 'UNPROCESSED'::text);
+
+
+--
+-- Name: seqset_records_accession_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX seqset_records_accession_idx ON public.seqset_records USING btree (accession);
 
 
 --
