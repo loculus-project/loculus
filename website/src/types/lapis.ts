@@ -22,6 +22,19 @@ export const lapisBaseRequest = z
     .catchall(z.union([z.string(), z.number(), z.null(), z.array(z.string().nullable())]));
 export type LapisBaseRequest = z.infer<typeof lapisBaseRequest>;
 
+/**
+ * Request body for the LAPIS query endpoints, for building requests in code.
+ * The inferred `LapisBaseRequest` can't be used for that, because zod infers an index signature from `.catchall()`
+ * that conflicts with `orderBy` (https://github.com/colinhacks/zod/issues/3136).
+ */
+export type LapisRequest = {
+    limit?: number;
+    offset?: number;
+    fields?: string[];
+    orderBy?: OrderBy[];
+    [filter: string]: string | number | boolean | null | undefined | (string | null)[] | OrderBy[];
+};
+
 export const mutationsRequest = lapisBaseRequest.extend({ minProportion: z.number().optional() });
 
 export const sequenceRequest = lapisBaseRequest.extend({ dataFormat: z.enum(['FASTA', 'NDJSON', 'JSON']) });
@@ -72,6 +85,7 @@ const aggregatedItem = z
     .object({ count: z.number() })
     .catchall(z.union([z.string(), z.number(), z.boolean(), z.null()]));
 export const aggregatedResponse = makeLapisResponse(z.array(aggregatedItem));
+export type AggregatedResponse = z.infer<typeof aggregatedResponse>;
 
 const lineageDefinitionEntry = z.object({
     parents: z.array(z.string()).optional(),

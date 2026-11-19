@@ -1,7 +1,15 @@
-import { AxiosError, AxiosHeaders, type AxiosResponse } from 'axios';
-import { describe, expect, test } from 'vitest';
+import axios, { AxiosError, AxiosHeaders, type AxiosResponse } from 'axios';
+import { afterEach, describe, expect, test, vi } from 'vitest';
+import { z } from 'zod';
 
-import { extractProblemDetail, getErrorMessage, getErrorStatus } from './apiRequest.ts';
+import {
+    extractProblemDetail,
+    getErrorMessage,
+    getErrorStatus,
+    ResponseValidationError,
+    sendRequest,
+    SERVER_SIDE_TIMEOUT_MS,
+} from './apiRequest.ts';
 import type { ProblemDetail } from '../types/backend.ts';
 
 const problemDetail: ProblemDetail = {
@@ -57,6 +65,12 @@ describe('getErrorMessage', () => {
         expect(getErrorMessage(networkError)).toBe('Network Error; no response received');
     });
 
+    test('does not leak zod details for invalid responses', () => {
+        const zodError = z.object({ a: z.string() }).safeParse({}).error!;
+        const error = new ResponseValidationError('GET /foo', zodError);
+        expect(getErrorMessage(error)).toBe('Unexpected response from GET /foo');
+    });
+
     test('handles other errors and values', () => {
         expect(getErrorMessage(new Error('boom'))).toBe('boom');
         expect(getErrorMessage('plain string')).toBe('plain string');
@@ -72,5 +86,34 @@ describe('getErrorStatus', () => {
     test('returns undefined for errors without a response', () => {
         expect(getErrorStatus(new AxiosError('Network Error'))).toBeUndefined();
         expect(getErrorStatus(new Error('boom'))).toBeUndefined();
+    });
+});
+
+describe('sendRequest timeout', () => {
+    afterEach(() => {
+        vi.restoreAllMocks();
+        vi.unstubAllGlobals();
+    });
+
+    const mockAxios = () => vi.spyOn(axios, 'request').mockResolvedValue({ data: undefined });
+
+    test('does not time out in the browser by default', async () => {
+        const spy = mockAxios();
+        await sendRequest('http://service', { method: 'get', path: '/' });
+        expect(spy).toHaveBeenCalledWith(expect.objectContaining({ timeout: 0 }));
+    });
+
+    test('times out server-side by default', async () => {
+        vi.stubGlobal('window', undefined);
+        const spy = mockAxios();
+        await sendRequest('http://service', { method: 'get', path: '/' });
+        expect(spy).toHaveBeenCalledWith(expect.objectContaining({ timeout: SERVER_SIDE_TIMEOUT_MS }));
+    });
+
+    test('uses an explicit timeout', async () => {
+        vi.stubGlobal('window', undefined);
+        const spy = mockAxios();
+        await sendRequest('http://service', { method: 'get', path: '/', timeout: 0 });
+        expect(spy).toHaveBeenCalledWith(expect.objectContaining({ timeout: 0 }));
     });
 });
