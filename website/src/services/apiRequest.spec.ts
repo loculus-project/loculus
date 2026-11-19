@@ -3,6 +3,7 @@ import { afterEach, describe, expect, test, vi } from 'vitest';
 import { z } from 'zod';
 
 import {
+    apiPath,
     extractProblemDetail,
     getErrorMessage,
     getErrorStatus,
@@ -30,6 +31,26 @@ function httpError(status: number, data: unknown) {
     } as AxiosResponse;
     return new AxiosError(`Request failed with status code ${status}`, 'ERR_BAD_RESPONSE', undefined, {}, response);
 }
+
+describe('apiPath', () => {
+    test('URL-encodes the values', () => {
+        expect(apiPath`/groups/${1}/users/${'a b/c'}`).toBe('/groups/1/users/a%20b%2Fc');
+    });
+
+    test('accepts 0', () => {
+        expect(apiPath`/groups/${0}`).toBe('/groups/0');
+    });
+
+    test('throws for missing values', () => {
+        expect(() => apiPath`/groups/${undefined}`).toThrow("Missing path parameter #1 for path '/groups/{}'");
+        expect(() => apiPath`/groups/${null}`).toThrow('Missing path parameter #1');
+        expect(() => apiPath`/${'org'}/groups/${''}`).toThrow('Missing path parameter #2');
+    });
+
+    test('throws for NaN', () => {
+        expect(() => apiPath`/groups/${Number('abc')}`).toThrow("Path parameter #1 is NaN for path '/groups/{}'");
+    });
+});
 
 describe('extractProblemDetail', () => {
     test('returns a top-level problem detail (backend format)', () => {
