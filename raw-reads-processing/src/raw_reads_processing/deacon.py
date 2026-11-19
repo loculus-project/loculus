@@ -1,6 +1,7 @@
 import itertools
 import logging
 import os
+import re
 import statistics
 import subprocess
 from pathlib import Path
@@ -142,6 +143,13 @@ def run_deacon_filter(
     file_name_to_path: dict[FileName, Path], data_dir: str, config: Config
 ) -> DeaconSummary:
     summary_json_path = Path(data_dir) / "summary.json"
+    # Without -o deacon writes every matching read to stdout, which
+    # capture_output would hold in memory.
+    host_reads_path = (
+        Path(data_dir) / HOST_READS_FILE_NAME
+        if config.deacon_measure_host_breadth
+        else Path(os.devnull)
+    )
     deacon_a = _deacon_a_for_reads(file_name_to_path, config)
     args = [
         "deacon",
@@ -149,6 +157,8 @@ def run_deacon_filter(
         "filter",
         "--summary",
         summary_json_path,
+        "-o",
+        host_reads_path,
         "-a",
         str(deacon_a),
         "-r",
@@ -182,6 +192,93 @@ def run_deacon_filter(
         message = f"Deacon filter failed with exit code {error.returncode}."
         logger.error(message + f" stdout: {error.stdout} stderr: {error.stderr}")
         raise ProcessingFailure(message) from error
+
+
+HOST_READS_FILE_NAME = "host_reads.fastq.zst"
+
+_MINIMIZER_COUNT = re.compile(r"Distinct minimizer count:\s*(\d+)")
+_INDEX_PARAMETER = {
+    "k": re.compile(r"\(k\):\s*(\d+)"),
+    "w": re.compile(r"\(w\):\s*(\d+)"),
+}
+
+
+def _deacon_index_info(index_path: Path | str, timeout: int) -> str:
+    # deacon prints the index information on stderr.
+    return subprocess.run(
+        ["deacon", "index", "info", str(index_path)],
+        check=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        encoding="utf-8",
+        errors="replace",
+        timeout=timeout,
+    ).stdout
+
+
+def _parse_index_info(pattern: re.Pattern, info: str) -> int:
+    match = pattern.search(info)
+    if match is None:
+        msg = f"Could not find {pattern.pattern!r} in deacon index info: {info!r}"
+        raise ValueError(msg)
+    return int(match.group(1))
+
+
+def measure_host_breadth(data_dir: str, config: Config) -> int | None:
+    """Number of distinct host-index minimizers found in the reads deacon matched.
+
+    `bp_out` counts depth: 50 reads from one locus and 50 reads from 50 loci score
+    the same. This counts each host minimizer once, so it tracks how much of the
+    host genome the reads cover. Intersecting with the host index also drops
+    minimizers that only exist because of sequencing errors.
+
+    Diagnostic only, so any failure is logged and swallowed.
+    """
+    host_reads_path = Path(data_dir) / HOST_READS_FILE_NAME
+    reads_index_path = Path(data_dir) / "host_reads.idx"
+    intersection_path = Path(data_dir) / "host_reads_intersection.idx"
+    timeout = config.deacon_filter_timeout_seconds
+    try:
+        host_index_info = _deacon_index_info(DEACON_INDEX_PATH, timeout)
+        subprocess.run(
+            [
+                "deacon",
+                "index",
+                "build",
+                "-k",
+                str(_parse_index_info(_INDEX_PARAMETER["k"], host_index_info)),
+                "-w",
+                str(_parse_index_info(_INDEX_PARAMETER["w"], host_index_info)),
+                "-o",
+                str(reads_index_path),
+                str(host_reads_path),
+            ],
+            check=True,
+            capture_output=True,
+            timeout=timeout,
+        )
+        # Loads the host index a second time, outside the deacon server.
+        subprocess.run(
+            [
+                "deacon",
+                "index",
+                "intersect",
+                "-o",
+                str(intersection_path),
+                str(reads_index_path),
+                DEACON_INDEX_PATH,
+            ],
+            check=True,
+            capture_output=True,
+            timeout=timeout,
+        )
+        return _parse_index_info(
+            _MINIMIZER_COUNT, _deacon_index_info(intersection_path, timeout)
+        )
+    except (subprocess.SubprocessError, OSError, ValueError) as error:
+        stderr = getattr(error, "stderr", None)
+        logger.warning(f"Could not measure host breadth: {error} stderr: {stderr!r}")
+        return None
 
 
 # TODO: Add a link to the documentation for removing host reads
@@ -225,6 +322,14 @@ def validate_with_deacon(files: dict[FileName, Path], data_dir: str, config: Con
         config=config,
     )
     log_deacon_summary(deacon_summary, config)
+    if config.deacon_measure_host_breadth and deacon_summary.seqs_out > 0:
+        host_minimizers = measure_host_breadth(data_dir, config)
+        if host_minimizers is not None:
+            logger.info(
+                f"Host breadth: {host_minimizers} distinct host minimizers in "
+                f"{deacon_summary.bp_out} host bp "
+                f"({deacon_summary.bp_out / max(host_minimizers, 1):.1f} bp per minimizer)"
+            )
 
     if deacon_summary.seqs_out_proportion > cast(
         float, config.deacon_max_host_reads_proportion
