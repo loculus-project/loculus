@@ -7,7 +7,7 @@ type PathParam = string | number | undefined | null;
 
 /**
  * Tagged template for building request paths. Every interpolated value is URL-encoded.
- * Throws if a value is missing, so that we never send a request to e.g. `/undefined/submit`.
+ * Throws if a value is missing or `NaN`, so that we never send a request to e.g. `/undefined/submit` or `/groups/NaN`.
  *
  * @example apiPath`/${organism}/get-data-to-edit/${accession}/${version}`
  */
@@ -16,6 +16,9 @@ export function apiPath(strings: TemplateStringsArray, ...values: PathParam[]): 
     values.forEach((value, i) => {
         if (value === undefined || value === null || value === '') {
             throw new Error(`Missing path parameter #${i + 1} for path '${strings.join('{}')}'`);
+        }
+        if (Number.isNaN(value)) {
+            throw new Error(`Path parameter #${i + 1} is NaN for path '${strings.join('{}')}'`);
         }
         path += encodeURIComponent(String(value)) + strings[i + 1];
     });
