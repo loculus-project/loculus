@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 
+import { useLapisMutation, useLapisQuery } from '../../../hooks/useLapis.ts';
 import { getErrorMessage } from '../../../services/apiRequest.ts';
-import { lapisClientHooks } from '../../../services/serviceHooks.ts';
 import type { LineageDefinition } from '../../../types/lapis.ts';
 import { NULL_QUERY_VALUE } from '../../../utils/search.ts';
 import type { LapisSearchParameters } from '../DownloadDialog/SequenceFilters.tsx';
@@ -65,7 +65,7 @@ const createGenericOptionsHook = (
     const lapisParams = { fields: [fieldName], ...otherFields };
 
     return function hook() {
-        const { data, isPending, error, mutate } = lapisClientHooks(lapisUrl).useAggregated();
+        const { data, isPending, error, mutate } = useLapisMutation(lapisUrl, 'aggregated');
 
         const options: Option[] = (data?.data ?? [])
             .filter(
@@ -185,20 +185,13 @@ const createLineageOptionsHook = (
             isPending: aggregatedEndpointIsPending,
             error: aggregatedEndpointError,
             mutate,
-        } = lapisClientHooks(lapisUrl).useAggregated();
+        } = useLapisMutation(lapisUrl, 'aggregated');
 
         const {
             data: lineageDefinition,
             isLoading: definitionIsLoading,
             error: definitionEndpointError,
-        } = lapisClientHooks(lapisUrl).useLineageDefinition(
-            {
-                params: {
-                    column: fieldName,
-                },
-            },
-            {},
-        );
+        } = useLapisQuery(lapisUrl, 'lineageDefinition', { column: fieldName });
 
         const unaggregatedCounts = new Map<string, number>();
 

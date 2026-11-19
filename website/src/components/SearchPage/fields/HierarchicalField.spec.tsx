@@ -4,11 +4,9 @@ import { useState } from 'react';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 import { HierarchicalField } from './HierarchicalField.tsx';
-import { lapisClientHooks } from '../../../services/serviceHooks.ts';
 import type { MetadataFilter } from '../../../types/config.ts';
 import { Button } from '../../common/Button.tsx';
 
-vi.mock('../../../services/serviceHooks.ts');
 vi.mock('../../../clientLogger.ts', () => ({
     getClientLogger: () => ({
         error: vi.fn(),
@@ -17,12 +15,10 @@ vi.mock('../../../clientLogger.ts', () => ({
 
 const mockUseAggregated = vi.fn();
 const mockUseLineageDefinition = vi.fn();
-// @ts-expect-error because mockReturnValue is not defined in the type definition
-// eslint-disable-next-line @typescript-eslint/no-unsafe-call
-lapisClientHooks.mockReturnValue({
-    useAggregated: mockUseAggregated,
-    useLineageDefinition: mockUseLineageDefinition,
-});
+vi.mock('../../../hooks/useLapis.ts', () => ({
+    useLapisMutation: (): unknown => mockUseAggregated(),
+    useLapisQuery: (): unknown => mockUseLineageDefinition(),
+}));
 
 describe('HierarchicalField - lineage mode', () => {
     const field: MetadataFilter = { name: 'lineage', displayName: 'My Lineage', type: 'string' };
