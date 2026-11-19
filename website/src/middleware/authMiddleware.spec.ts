@@ -1,7 +1,4 @@
-import { generateKeyPairSync } from 'crypto';
-
 import type { APIContext, AstroCookies } from 'astro';
-import jsonwebtoken from 'jsonwebtoken';
 import type { BaseClient } from 'openid-client';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
@@ -9,20 +6,6 @@ const mocks = vi.hoisted(() => ({
     getClient: vi.fn(),
     loggerInfo: vi.fn(),
     shouldMiddlewareEnforceLogin: vi.fn(),
-    jwksClientCreated: vi.fn(),
-    getSigningKey: vi.fn(),
-}));
-
-vi.mock('jwks-rsa', () => ({
-    default: {
-        // eslint-disable-next-line @typescript-eslint/naming-convention
-        JwksClient: class {
-            constructor(options: unknown) {
-                mocks.jwksClientCreated(options);
-            }
-            getSigningKey = mocks.getSigningKey;
-        },
-    },
 }));
 
 vi.mock('../config.ts', () => ({
@@ -233,135 +216,5 @@ describe('OIDC authentication middleware', () => {
         );
         expect(callback).not.toHaveBeenCalled();
         expect(consumeAuthRequest(cookies, 'expected-state')).toBeUndefined();
-    });
-});
-
-describe('authentication from the token cookie', () => {
-    const { privateKey, publicKey } = generateKeyPairSync('rsa', { modulusLength: 2048 });
-    const publicKeyPem = publicKey.export({ type: 'spki', format: 'pem' }).toString();
-
-    /* eslint-disable @typescript-eslint/naming-convention */
-    const signToken = (claims: Record<string, unknown>, expiresIn: number) =>
-        jsonwebtoken.sign(claims, privateKey, { algorithm: 'RS256', keyid: 'key-1', expiresIn });
-    const userClaims = {
-        preferred_username: 'testuser',
-        name: 'Test User',
-        email: 'test@example.org',
-        email_verified: true,
-    };
-    /* eslint-enable @typescript-eslint/naming-convention */
-
-    const values = new Map<string, string>();
-    const setCookie = vi.fn((name: string, value: string) => values.set(name, value));
-    const cookies = {
-        get: vi.fn((name: string) => {
-            const value = values.get(name);
-            return value === undefined ? undefined : { value };
-        }),
-        set: setCookie,
-        delete: vi.fn((name: string) => values.delete(name)),
-    } as unknown as AstroCookies;
-
-    const userinfo = vi.fn();
-    const refresh = vi.fn();
-    const client = {
-        userinfo,
-        refresh,
-        issuer: {
-            metadata: {
-                issuer: 'https://auth.test/realms/loculus',
-                // eslint-disable-next-line @typescript-eslint/naming-convention
-                jwks_uri: 'https://auth.test/realms/loculus/protocol/openid-connect/certs',
-            },
-        },
-    } as unknown as BaseClient;
-
-    async function runMiddleware() {
-        const context = {
-            url: new URL('https://loculus.test/api/backend/user/groups'),
-            cookies,
-            locals: {},
-        } as unknown as APIContext;
-        await authMiddleware(context, vi.fn());
-        return context.locals.session;
-    }
-
-    beforeEach(() => {
-        values.clear();
-        vi.clearAllMocks();
-        mocks.getClient.mockResolvedValue(client);
-        mocks.shouldMiddlewareEnforceLogin.mockReturnValue(false);
-        mocks.getSigningKey.mockResolvedValue({ getPublicKey: () => publicKeyPem });
-    });
-
-    test('reads the user from the verified access token without calling Keycloak', async () => {
-        values.set('access_token', signToken(userClaims, 300));
-        values.set('refresh_token', 'refresh-token');
-
-        const session = await runMiddleware();
-
-        expect(session).toMatchObject({
-            isLoggedIn: true,
-            user: { name: 'Test User', username: 'testuser', email: 'test@example.org', emailVerified: true },
-        });
-        expect(userinfo).not.toHaveBeenCalled();
-        expect(refresh).not.toHaveBeenCalled();
-        expect(setCookie).not.toHaveBeenCalled();
-    });
-
-    test('reuses the JWKS client across requests', async () => {
-        values.set('access_token', signToken(userClaims, 300));
-        values.set('refresh_token', 'refresh-token');
-
-        await runMiddleware();
-        await runMiddleware();
-
-        // Created at most once in this file (the client is cached at module level), never per request
-        expect(mocks.jwksClientCreated.mock.calls.length).toBeLessThanOrEqual(1);
-        expect(mocks.getSigningKey).toHaveBeenCalledTimes(2);
-    });
-
-    test('refreshes an expired token and writes the refreshed token back to the cookie', async () => {
-        const refreshedAccessToken = signToken({ ...userClaims, name: 'Refreshed User' }, 300);
-        values.set('access_token', signToken(userClaims, -10));
-        values.set('refresh_token', 'old-refresh-token');
-        // eslint-disable-next-line @typescript-eslint/naming-convention
-        refresh.mockResolvedValue({ access_token: refreshedAccessToken, refresh_token: 'new-refresh-token' });
-
-        const session = await runMiddleware();
-
-        expect(refresh).toHaveBeenCalledWith('old-refresh-token');
-        expect(session).toMatchObject({ isLoggedIn: true, user: { name: 'Refreshed User' } });
-        expect(values.get('access_token')).toBe(refreshedAccessToken);
-        expect(values.get('refresh_token')).toBe('new-refresh-token');
-
-        // The next request uses the refreshed token from the cookie instead of refreshing again
-        await runMiddleware();
-        expect(refresh).toHaveBeenCalledOnce();
-    });
-
-    test('treats a token without a username as logged out and clears the cookies', async () => {
-        values.set('access_token', signToken({ name: 'No Username' }, 300));
-        values.set('refresh_token', 'refresh-token');
-
-        const session = await runMiddleware();
-
-        expect(session).toEqual({ isLoggedIn: false });
-        expect(values.has('access_token')).toBe(false);
-        expect(values.has('refresh_token')).toBe(false);
-    });
-
-    test('treats a token with an invalid signature as logged out', async () => {
-        const otherKey = generateKeyPairSync('rsa', { modulusLength: 2048 }).privateKey;
-        values.set(
-            'access_token',
-            jsonwebtoken.sign(userClaims, otherKey, { algorithm: 'RS256', keyid: 'key-1', expiresIn: 300 }),
-        );
-        values.set('refresh_token', 'refresh-token');
-
-        const session = await runMiddleware();
-
-        expect(session).toEqual({ isLoggedIn: false });
-        expect(userinfo).not.toHaveBeenCalled();
     });
 });

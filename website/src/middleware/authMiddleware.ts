@@ -4,7 +4,6 @@ import jsonwebtoken from 'jsonwebtoken';
 import JwksRsa from 'jwks-rsa';
 import { err, ok, ResultAsync } from 'neverthrow';
 import { type BaseClient, type TokenSet } from 'openid-client';
-import { z } from 'zod';
 
 import { getConfiguredOrganisms, getRuntimeConfig, getWebsiteConfig } from '../config.ts';
 import { getInstanceLogger } from '../logger.ts';
@@ -25,44 +24,24 @@ enum TokenVerificationError {
 
 const logger = getInstanceLogger('LoginMiddleware');
 
-/**
- * The user info that the website needs, read from the (verified) access token.
- * Keycloak puts these claims into the access token via the default `profile` and `email` scopes;
- * the backend reads `preferred_username` from the access token as well.
- */
-const accessTokenClaims = z.object({
-    /* eslint-disable @typescript-eslint/naming-convention */
-    preferred_username: z.string(),
-    name: z.string().optional(),
-    email: z.string().optional(),
-    email_verified: z.boolean().optional(),
-    /* eslint-enable @typescript-eslint/naming-convention */
-});
-type AccessTokenClaims = z.infer<typeof accessTokenClaims>;
-
-/**
- * Verifies the token from the cookie locally (no request to Keycloak, apart from fetching the signing keys once),
- * refreshes it if it has expired, and writes a refreshed token back to the cookie.
- */
-async function getValidTokenAndClaimsFromCookie(context: APIContext, client: BaseClient) {
+async function getValidTokenAndUserInfoFromCookie(context: APIContext, client: BaseClient) {
     logger.debug(`Trying to get token and user info from cookie`);
-    const result = await getTokenFromCookie(context, client);
-    if (result === undefined) {
-        return undefined;
-    }
+    const token = await getTokenFromCookie(context, client);
+    if (token !== undefined) {
+        const userInfo = await getUserInfo(token, client);
 
-    const claims = accessTokenClaims.safeParse(result.payload);
-    if (!claims.success) {
-        logger.info(`Access token is missing required claims: ${claims.error.message}`);
-        deleteCookie(context);
-        return undefined;
+        if (userInfo.isErr()) {
+            logger.debug(`Cookie token found but could not get user info`);
+            deleteCookie(context);
+            return undefined;
+        }
+        logger.debug(`Token and valid user info found in cookie`);
+        return {
+            token,
+            userInfo,
+        };
     }
-
-    if (result.refreshed) {
-        logger.debug(`Token was refreshed, updating token cookie`);
-        setCookie(context, result.token);
-    }
-    return { token: result.token, claims: claims.data };
+    return undefined;
 }
 
 async function getValidTokenAndUserInfoFromParams(context: APIContext, client: BaseClient) {
@@ -90,7 +69,7 @@ async function getValidTokenAndUserInfoFromParams(context: APIContext, client: B
 
 export const authMiddleware = defineMiddleware(async (context, next) => {
     let token: TokenCookie | undefined;
-    let claims: AccessTokenClaims | undefined;
+    let userInfo;
 
     if (getWebsiteConfig().readOnlyMode) {
         const enforceLogin = shouldMiddlewareEnforceLogin(
@@ -117,9 +96,9 @@ export const authMiddleware = defineMiddleware(async (context, next) => {
             }
         }
 
-        const cookieResult = await getValidTokenAndClaimsFromCookie(context, client);
+        const cookieResult = await getValidTokenAndUserInfoFromCookie(context, client);
         token = cookieResult?.token;
-        claims = cookieResult?.claims;
+        userInfo = cookieResult?.userInfo;
     } else {
         logger.warn(`Keycloak client not available, pretending user logged out`);
     }
@@ -129,7 +108,7 @@ export const authMiddleware = defineMiddleware(async (context, next) => {
         getConfiguredOrganisms().map((it) => it.key),
     );
 
-    if (enforceLogin && claims === undefined) {
+    if (enforceLogin && (userInfo === undefined || userInfo.isErr())) {
         if (client === undefined) {
             logger.error(`Keycloak client not available, cannot redirect to auth`);
             return context.redirect('/503?service=Authentication');
@@ -137,7 +116,7 @@ export const authMiddleware = defineMiddleware(async (context, next) => {
         return redirectToAuth(context);
     }
 
-    if (token === undefined || claims === undefined) {
+    if (token === undefined || userInfo === undefined) {
         context.locals.session = {
             isLoggedIn: false,
         };
@@ -145,13 +124,23 @@ export const authMiddleware = defineMiddleware(async (context, next) => {
         return next();
     }
 
+    if (userInfo.isErr()) {
+        context.locals.session = {
+            isLoggedIn: false,
+        };
+        logger.debug(`Error getting user info: ${userInfo.error}`);
+        logger.debug(`Clearing auth cookies.`);
+        deleteCookie(context);
+        return next();
+    }
+
     context.locals.session = {
         isLoggedIn: true,
         user: {
-            name: claims.name ?? 'Name not set',
-            username: claims.preferred_username,
-            email: claims.email,
-            emailVerified: claims.email_verified,
+            name: userInfo.value.name ?? 'Name not set',
+            username: userInfo.value.preferred_username,
+            email: userInfo.value.email,
+            emailVerified: userInfo.value.email_verified,
         },
         token,
     };
@@ -174,16 +163,7 @@ async function getTokenFromCookie(context: APIContext, client: BaseClient) {
     const verifiedTokenResult = await verifyToken(accessToken, client);
     if (verifiedTokenResult.isErr() && verifiedTokenResult.error.type === TokenVerificationError.EXPIRED) {
         logger.debug(`Token expired, trying to refresh`);
-        const refreshedToken = await refreshTokenViaKeycloak(tokenCookie, client);
-        if (refreshedToken === undefined) {
-            return undefined;
-        }
-        const verifiedRefreshedToken = await verifyToken(refreshedToken.accessToken, client);
-        if (verifiedRefreshedToken.isErr()) {
-            logger.info(`Error verifying refreshed token: ${verifiedRefreshedToken.error.message}`);
-            return undefined;
-        }
-        return { token: refreshedToken, payload: verifiedRefreshedToken.value, refreshed: true };
+        return refreshTokenViaKeycloak(tokenCookie, client);
     }
     if (verifiedTokenResult.isErr()) {
         logger.info(`Error verifying token: ${verifiedTokenResult.error.message}`);
@@ -191,22 +171,7 @@ async function getTokenFromCookie(context: APIContext, client: BaseClient) {
     }
     logger.debug(`Token successfully verified, returning it`);
 
-    return { token: tokenCookie, payload: verifiedTokenResult.value, refreshed: false };
-}
-
-/**
- * One JWKS client per Keycloak realm, so that its signing key cache is reused across requests.
- * Unknown key IDs (e.g. after key rotation) still trigger a (rate limited) refetch.
- */
-const jwksClients = new Map<string, JwksRsa.JwksClient>();
-
-function getJwksClient(jwksUri: string) {
-    let jwksClient = jwksClients.get(jwksUri);
-    if (jwksClient === undefined) {
-        jwksClient = new JwksRsa.JwksClient({ jwksUri, cache: true, rateLimit: true });
-        jwksClients.set(jwksUri, jwksClient);
-    }
-    return jwksClient;
+    return tokenCookie;
 }
 
 async function verifyToken(accessToken: string, client: BaseClient) {
@@ -227,7 +192,9 @@ async function verifyToken(accessToken: string, client: BaseClient) {
         });
     }
 
-    const jwksClient = getJwksClient(client.issuer.metadata.jwks_uri);
+    const jwksClient = new JwksRsa.JwksClient({
+        jwksUri: client.issuer.metadata.jwks_uri,
+    });
 
     try {
         const signingKey = await jwksClient.getSigningKey(kid);
