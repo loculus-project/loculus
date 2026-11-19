@@ -3,6 +3,7 @@ import { type FC } from 'react';
 
 import { SequenceActionButtons } from './SequenceActionButtons.tsx';
 import { getLapisUrl } from '../../../config.ts';
+import { getErrorMessage } from '../../../services/apiRequest.ts';
 import { lapisClientHooks } from '../../../services/serviceHooks.ts';
 import type { ClientConfig } from '../../../types/runtimeConfig.ts';
 import { type SequenceType } from '../../../utils/sequenceTypeHelpers.ts';
@@ -36,7 +37,7 @@ export const SequencesViewer: FC<Props> = ({
         return (
             <div className='text-error'>
                 Failed to load {noCase(sequenceType.type)} sequence {sequenceType.name.lapisName}:{' '}
-                {JSON.stringify(error)}
+                {getErrorMessage(error)}
             </div>
         );
     }

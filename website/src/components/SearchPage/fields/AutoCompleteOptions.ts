@@ -1,9 +1,9 @@
 import { useCallback } from 'react';
 
+import { getErrorMessage } from '../../../services/apiRequest.ts';
 import { lapisClientHooks } from '../../../services/serviceHooks.ts';
 import type { LineageDefinition } from '../../../types/lapis.ts';
 import { NULL_QUERY_VALUE } from '../../../utils/search.ts';
-import { stringifyMaybeAxiosError } from '../../../utils/stringifyMaybeAxiosError.ts';
 import type { LapisSearchParameters } from '../DownloadDialog/SequenceFilters.tsx';
 
 export type Option = {
@@ -90,9 +90,7 @@ const createGenericOptionsHook = (
         return {
             options,
             isPending,
-            error: error
-                ? `Error while loading options for field "${fieldName}": ${stringifyMaybeAxiosError(error)}`
-                : null,
+            error: error ? `Error while loading options for field "${fieldName}": ${getErrorMessage(error)}` : null,
             load: () => mutate(lapisParams),
         };
     };
@@ -237,9 +235,8 @@ const createLineageOptionsHook = (
         options.sort((a, b) => (a.option.toLowerCase() < b.option.toLowerCase() ? -1 : 1));
 
         const errors = [
-            aggregatedEndpointError && `aggregated endpoint: ${stringifyMaybeAxiosError(aggregatedEndpointError)}`,
-            definitionEndpointError &&
-                `lineage definition endpoint: ${stringifyMaybeAxiosError(definitionEndpointError)}`,
+            aggregatedEndpointError && `aggregated endpoint: ${getErrorMessage(aggregatedEndpointError)}`,
+            definitionEndpointError && `lineage definition endpoint: ${getErrorMessage(definitionEndpointError)}`,
         ].filter(Boolean);
 
         return {

@@ -1,4 +1,3 @@
-import { AxiosError } from 'axios';
 import { type FC, useState } from 'react';
 import { toast } from 'react-toastify';
 
@@ -7,8 +6,8 @@ import { DatePlot, CategoryPlot } from './SeqSetPlots.tsx';
 import { SeqSetRecordsTableWithMetadata } from './SeqSetRecordsTableWithMetadata';
 import type { AggregateRow } from './getSeqSetStatistics.ts';
 import { getClientLogger } from '../../clientLogger';
+import { getErrorMessage } from '../../services/apiRequest.ts';
 import { seqSetCitationClientHooks } from '../../services/serviceHooks';
-import type { ProblemDetail } from '../../types/backend.ts';
 import type { SeqSetGraph } from '../../types/config.ts';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import { type SeqSet, type SeqSetCitation, type SeqSetRecord } from '../../types/seqSetCitation';
@@ -243,13 +242,9 @@ function useCreateSeqSetDOIAction(
                 location.reload();
             },
             onError: async (error) => {
-                await logger.info(`Failed to create seqSet DOI with error: '${JSON.stringify(error)})}'`);
-                if (error instanceof AxiosError) {
-                    const responseData = error.response?.data as ProblemDetail | undefined;
-                    if (error.response?.data !== undefined) {
-                        onError(`Failed to update seqSet. ${responseData?.title}. ${responseData?.detail}`);
-                    }
-                }
+                const message = `Failed to create seqSet DOI: ${getErrorMessage(error)}`;
+                await logger.info(message);
+                onError(message);
             },
         },
     );
