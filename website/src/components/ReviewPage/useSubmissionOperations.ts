@@ -52,10 +52,6 @@ export function useSubmissionOperations(
         },
     );
 
-    if (useGetSequences.error) {
-        openErrorFeedback(`Failed to query Group`);
-    }
-
     const useDeleteSequenceEntries = useBackendMutation(context, 'deleteSequenceEntryVersions', {
         onSuccess: () => useGetSequences.refetch(),
         onError: (error) => openErrorFeedback(deleteSequenceEntriesErrorMessage(error)),
