@@ -271,7 +271,6 @@ class SeqSetCitationsDatabaseService(
             }
             .map {
                 SeqSetRecord(
-                    seqSetRecordId = it[SeqSetRecordsTable.seqSetRecordId],
                     // The API returns "accession" or "accession.version", in the same format as submitted
                     accession = SeqSetRecordAccession(
                         it[SeqSetRecordsTable.accession],
