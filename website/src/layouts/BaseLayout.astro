@@ -9,8 +9,8 @@ import AppToastContainer from '../components/common/AppToastContainer';
 import { Banner } from '../components/common/Banner';
 import { getWebsiteConfig } from '../config';
 import { navigationItems } from '../routes/navigationItems';
-import { createBackendClient } from '../services/backendClientFactory';
 import { getRemoteBannerMessage } from '../services/bannerMessageService';
+import { serverBackendApi } from '../services/serverApi.ts';
 
 const websiteConfig = getWebsiteConfig();
 const {
@@ -44,7 +44,10 @@ const currentOrganism = currentOrganismObject?.key;
 
 const currentPath = Astro.url.pathname;
 
-const backendIsInDebugMode = await createBackendClient().isInDebugMode();
+const backendIsInDebugMode = (await serverBackendApi().getInfo()).match(
+    (info) => info.isInDebugMode,
+    () => false,
+);
 
 const lastTimeBannerWasClosed = Astro.cookies.get('lastTimeBannerWasClosed')?.value;
 ---
