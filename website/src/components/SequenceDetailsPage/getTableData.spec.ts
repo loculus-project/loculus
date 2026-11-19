@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, test } from 'vitest';
 import { getTableData, type GetTableDataResult } from './getTableData.ts';
 import { type TableDataEntry } from './types.ts';
 import { mockRequest, testConfig, testOrganism } from '../../../vitest.setup.ts';
-import { lapisApiWithResult } from '../../services/serverApi.ts';
+import { serverLapisApi } from '../../services/serverApi.ts';
 import type { ProblemDetail } from '../../types/backend.ts';
 import {
     DEFAULT_AA_MUTATION_DETAILS_HEADER,
@@ -56,7 +56,7 @@ const info = {
 
 const accessionVersion = 'accession';
 
-const lapisApi = lapisApiWithResult(testConfig.serverSide.lapisUrls[testOrganism], schema.primaryKey);
+const lapisApi = serverLapisApi(testOrganism, testConfig.serverSide.lapisUrls[testOrganism]);
 
 describe('getTableData', () => {
     beforeEach(() => {

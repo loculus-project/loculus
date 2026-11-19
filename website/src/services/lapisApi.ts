@@ -48,25 +48,26 @@ function lapisProblem(title: string, detail: string, instance: string) {
     return new ProblemDetailError({ type: 'about:blank', title, status: 500, detail, instance });
 }
 
+/** Filter for a single sequence entry version. Loculus's LAPIS primary key is always `accessionVersion`. */
+const byAccessionVersion = (accessionVersion: string) => ({ [ACCESSION_VERSION_FIELD]: accessionVersion });
+
 /**
- * All LAPIS endpoints (and a few helpers on top of them) that don't depend on the organism's schema.
+ * All LAPIS endpoints, and a few helpers built on top of them.
  *
  * Every function takes a single params object and an optional `RequestOptions` object, and throws on errors.
  * - In React components, use `useLapisQuery` / `useLapisMutation` from `hooks/useLapis.ts`.
  * - Server-side, use `serverLapisApi(organism)` from `serverApi.ts`, which returns neverthrow `Result`s.
  */
 export function lapisApi(lapisUrl: string) {
-    const details = (request: LapisRequest, { signal }: RequestOptions = {}) =>
-        sendRequest(lapisUrl, {
-            method: 'post',
-            path: '/sample/details',
-            data: request,
-            signal,
-            responseSchema: detailsResponse,
-        });
-
-    return {
-        details,
+    const endpoints = {
+        details: (request: LapisRequest, { signal }: RequestOptions = {}) =>
+            sendRequest(lapisUrl, {
+                method: 'post',
+                path: '/sample/details',
+                data: request,
+                signal,
+                responseSchema: detailsResponse,
+            }),
 
         aggregated: (request: LapisRequest, { signal }: RequestOptions = {}) =>
             sendRequest(lapisUrl, {
@@ -128,9 +129,13 @@ export function lapisApi(lapisUrl: string) {
                 signal,
                 responseSchema: lineageDefinition,
             }),
+    };
+
+    return {
+        ...endpoints,
 
         getLatestAccessionVersion: async ({ accession }: { accession: string }, options: RequestOptions = {}) => {
-            const { data } = await details(
+            const { data } = await endpoints.details(
                 { accession, versionStatus: versionStatuses.latestVersion, fields: [ACCESSION_FIELD, VERSION_FIELD] },
                 options,
             );
@@ -147,7 +152,7 @@ export function lapisApi(lapisUrl: string) {
 
         /** All versions of the accession, oldest first */
         getSequenceEntryHistory: async ({ accession }: { accession: string }, options: RequestOptions = {}) => {
-            const { data } = await details(
+            const { data } = await endpoints.details(
                 {
                     accession,
                     fields: [
@@ -172,52 +177,29 @@ export function lapisApi(lapisUrl: string) {
             }
             return parsed.data;
         },
-    };
-}
-
-export type LapisApi = ReturnType<typeof lapisApi>;
-
-/**
- * `lapisApi` plus helpers for a single sequence entry version, which need the organism's primary key.
- */
-export function sequenceEntryLapisApi(lapisUrl: string, primaryKey: string) {
-    const api = lapisApi(lapisUrl);
-    const byKey = (accessionVersion: string) => ({ [primaryKey]: accessionVersion });
-
-    const getSequenceFasta = (
-        { accessionVersion, fastaHeaderTemplate }: { accessionVersion: string; fastaHeaderTemplate?: string },
-        options: RequestOptions = {},
-    ) =>
-        api.sequencesFasta(
-            { request: byKey(accessionVersion), endpoint: { kind: 'unalignedNucleotide' }, fastaHeaderTemplate },
-            options,
-        );
-
-    return {
-        ...api,
 
         getSequenceEntryVersionDetails: (
             { accessionVersion }: { accessionVersion: string },
             options?: RequestOptions,
-        ) => api.details(byKey(accessionVersion), options),
+        ) => endpoints.details(byAccessionVersion(accessionVersion), options),
 
         getSequenceEntryVersionDetailsTsv: (
             { accessionVersion }: { accessionVersion: string },
             options?: RequestOptions,
-        ) => api.detailsTsv(byKey(accessionVersion), options),
+        ) => endpoints.detailsTsv(byAccessionVersion(accessionVersion), options),
 
         getSequenceMutations: (
             { accessionVersion, type }: { accessionVersion: string; type: BaseType },
             options?: RequestOptions,
-        ) => api.mutations({ ...byKey(accessionVersion), type }, options),
+        ) => endpoints.mutations({ ...byAccessionVersion(accessionVersion), type }, options),
 
         getSequenceInsertions: (
             { accessionVersion, type }: { accessionVersion: string; type: BaseType },
             options?: RequestOptions,
         ) =>
-            api.insertions(
+            endpoints.insertions(
                 {
-                    ...byKey(accessionVersion),
+                    ...byAccessionVersion(accessionVersion),
                     type,
                     orderBy: [
                         { field: 'sequenceName', type: 'ascending' },
@@ -227,7 +209,18 @@ export function sequenceEntryLapisApi(lapisUrl: string, primaryKey: string) {
                 options,
             ),
 
-        getSequenceFasta,
+        getSequenceFasta: (
+            { accessionVersion, fastaHeaderTemplate }: { accessionVersion: string; fastaHeaderTemplate?: string },
+            options?: RequestOptions,
+        ) =>
+            endpoints.sequencesFasta(
+                {
+                    request: byAccessionVersion(accessionVersion),
+                    endpoint: { kind: 'unalignedNucleotide' },
+                    fastaHeaderTemplate,
+                },
+                options,
+            ),
 
         /** One FASTA with all segments; each header gets the segment (or its reference name) as suffix */
         getMultiSegmentSequenceFasta: async (
@@ -236,12 +229,15 @@ export function sequenceEntryLapisApi(lapisUrl: string, primaryKey: string) {
                 segmentNames,
                 referenceNameMap,
             }: { accessionVersion: string; segmentNames: string[]; referenceNameMap?: Record<string, string> },
-            options: RequestOptions = {},
+            options?: RequestOptions,
         ) => {
             const segmentFastas = await Promise.all(
                 segmentNames.map((name) =>
-                    api.sequencesFasta(
-                        { request: byKey(accessionVersion), endpoint: { kind: 'unalignedNucleotide', name } },
+                    endpoints.sequencesFasta(
+                        {
+                            request: byAccessionVersion(accessionVersion),
+                            endpoint: { kind: 'unalignedNucleotide', name },
+                        },
                         options,
                     ),
                 ),
@@ -264,3 +260,5 @@ export function sequenceEntryLapisApi(lapisUrl: string, primaryKey: string) {
         },
     };
 }
+
+export type LapisApi = ReturnType<typeof lapisApi>;

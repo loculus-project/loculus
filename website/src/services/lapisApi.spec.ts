@@ -1,11 +1,11 @@
 import axios from 'axios';
 import { describe, expect, test, vi } from 'vitest';
 
-import { sequenceEntryLapisApi } from './lapisApi.ts';
+import { lapisApi } from './lapisApi.ts';
 
-describe('sequenceEntryLapisApi', () => {
+describe('lapisApi', () => {
     test('getSequenceInsertions should order by sequence and position', async () => {
-        const api = sequenceEntryLapisApi('http://lapis.example', 'pk');
+        const api = lapisApi('http://lapis.example');
         const spy = vi.spyOn(axios, 'request').mockResolvedValue({ data: { data: [], info: { dataVersion: '' } } });
 
         await api.getSequenceInsertions({ accessionVersion: 'LOC_123', type: 'nucleotide' });
@@ -16,7 +16,7 @@ describe('sequenceEntryLapisApi', () => {
                 url: '/sample/nucleotideInsertions',
                 method: 'post',
                 data: {
-                    pk: 'LOC_123',
+                    accessionVersion: 'LOC_123',
                     orderBy: [
                         { field: 'sequenceName', type: 'ascending' },
                         { field: 'position', type: 'ascending' },
