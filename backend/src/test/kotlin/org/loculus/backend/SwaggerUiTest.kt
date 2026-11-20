@@ -42,6 +42,11 @@ class SwaggerUiTest(@Autowired val mockMvc: MockMvc) {
             .andExpect(content().contentType("application/json"))
             .andExpect(jsonPath("\$.openapi").exists())
             .andExpect(jsonPath("\$.paths./{organism}/submit").exists())
+            .andExpect(jsonPath("\$.info.title").value("Loculus API Documentation"))
+            .andExpect(jsonPath("\$.info.version").value("v0"))
+            .andExpect(
+                jsonPath("\$.paths./{organism}/submit.post.parameters[?(@.name == 'x-request-id')]").exists(),
+            )
     }
 
     @Test
@@ -63,5 +68,8 @@ class SwaggerUiTest(@Autowired val mockMvc: MockMvc) {
             .andExpect(status().isOk)
             .andExpect(jsonPath("\$.paths./v1/groups").exists())
             .andExpect(jsonPath("\$.paths./{organism}/submit").doesNotExist())
+            .andExpect(jsonPath("\$.info.title").value("Loculus API Documentation"))
+            .andExpect(jsonPath("\$.info.version").value("v1"))
+            .andExpect(jsonPath("\$.paths./v1/groups.get.parameters[?(@.name == 'x-request-id')]").exists())
     }
 }

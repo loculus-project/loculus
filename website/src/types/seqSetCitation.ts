@@ -6,7 +6,6 @@ export enum SeqSetRecordType {
 
 export const seqSetRecord = z.object({
     accession: z.string(),
-    type: z.nativeEnum(SeqSetRecordType),
     isFocal: z.boolean(),
 });
 export type SeqSetRecord = z.infer<typeof seqSetRecord>;
