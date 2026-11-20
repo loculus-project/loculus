@@ -12,41 +12,41 @@ robotsNoindexHeader: false
 seqSets:
   enabled: true
   fieldsToDisplay:
-    - field: geoLocCountry
-      displayName: "Country"
+    - displayName: "Country"
+      field: geoLocCountry
       fieldOverrides:
         dummy-organism: country
         dummy-organism-with-files: country
         not-aligned-organism: country
-    - field: sampleCollectionDate
-      displayName: "Collection Date"
+    - displayName: "Collection Date"
+      field: sampleCollectionDate
       fieldOverrides:
         dummy-organism: date
         dummy-organism-with-files: date
         not-aligned-organism: date
-    - field: authors
-      displayName: "Authors"
+    - displayName: "Authors"
+      field: authors
       fieldOverrides:
         dummy-organism: null
         dummy-organism-with-files: null
         not-aligned-organism: null
   graphs:
-    - field: sampleCollectionDate
-      displayName: Sample collection dates
+    - displayName: Sample collection dates
+      field: sampleCollectionDate
       type: date
       fieldOverrides:
         dummy-organism: date
         dummy-organism-with-files: date
         not-aligned-organism: date
-    - field: geoLocCountry
-      displayName: Sample collection countries
+    - displayName: Sample collection countries
+      field: geoLocCountry
       type: category
       fieldOverrides:
         dummy-organism: country
         dummy-organism-with-files: country
         not-aligned-organism: country
-    - field: dataUseTerms
-      displayName: Data use terms
+    - displayName: Data use terms
+      field: dataUseTerms
       type: category
 disableWebsite: false
 disableBackend: false

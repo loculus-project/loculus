@@ -5,20 +5,20 @@ import { getSeqSetStatistics } from './getSeqSetStatistics';
 import { ACCESSION_FIELD, ACCESSION_VERSION_FIELD } from '../../settings';
 import type { SeqSetGraph } from '../../types/config';
 
-const DATE_GRAPH: SeqSetGraph = { field: 'sampleCollectionDate', displayName: 'Dates', type: 'date' };
+const DATE_GRAPH: SeqSetGraph = { displayName: 'Dates', field: 'sampleCollectionDate', type: 'date' };
 const COUNTRY_GRAPH: SeqSetGraph = {
-    field: 'geoLocCountry',
     displayName: 'Countries',
+    field: 'geoLocCountry',
     type: 'category',
     // eslint-disable-next-line @typescript-eslint/naming-convention
     fieldOverrides: { 'test-organism-2': 'country' },
 };
 const ORGANISM_SPECIFIC_GRAPH: SeqSetGraph = {
-    field: 'organismSpecificField',
     displayName: 'Organism specific',
+    field: 'organismSpecificField',
     type: 'category',
 };
-const NON_EXISTENT_GRAPH: SeqSetGraph = { field: 'nonExistentField', displayName: 'Non-existent', type: 'category' };
+const NON_EXISTENT_GRAPH: SeqSetGraph = { displayName: 'Non-existent', field: 'nonExistentField', type: 'category' };
 
 const ORGANISM_1_ACCESSIONS = ['LOC_123456', 'LOC_789012', 'LOC_345678.1', 'LOC_901234.2'];
 const ORGANISM_2_ACCESSIONS = ['LOC_345678', 'LOC_901234', 'LOC_567890.1', 'LOC_123456.2'];
