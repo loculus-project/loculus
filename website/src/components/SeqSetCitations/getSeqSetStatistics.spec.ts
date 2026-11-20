@@ -3,22 +3,16 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { getSeqSetStatistics } from './getSeqSetStatistics';
 import { ACCESSION_FIELD, ACCESSION_VERSION_FIELD } from '../../settings';
-import type { SeqSetGraph } from '../../types/config';
+import type { SeqSetField } from '../../types/config';
 
-const DATE_GRAPH: SeqSetGraph = { displayName: 'Dates', field: 'sampleCollectionDate', type: 'date' };
-const COUNTRY_GRAPH: SeqSetGraph = {
-    displayName: 'Countries',
+const DATE_FIELD: SeqSetField = { field: 'sampleCollectionDate' };
+const COUNTRY_FIELD: SeqSetField = {
     field: 'geoLocCountry',
-    type: 'category',
     // eslint-disable-next-line @typescript-eslint/naming-convention
     fieldOverrides: { 'test-organism-2': 'country' },
 };
-const ORGANISM_SPECIFIC_GRAPH: SeqSetGraph = {
-    displayName: 'Organism specific',
-    field: 'organismSpecificField',
-    type: 'category',
-};
-const NON_EXISTENT_GRAPH: SeqSetGraph = { displayName: 'Non-existent', field: 'nonExistentField', type: 'category' };
+const ORGANISM_SPECIFIC_FIELD: SeqSetField = { field: 'organismSpecificField' };
+const NON_EXISTENT_FIELD: SeqSetField = { field: 'nonExistentField' };
 
 const ORGANISM_1_ACCESSIONS = ['LOC_123456', 'LOC_789012', 'LOC_345678.1', 'LOC_901234.2'];
 const ORGANISM_2_ACCESSIONS = ['LOC_345678', 'LOC_901234', 'LOC_567890.1', 'LOC_123456.2'];
@@ -130,26 +124,26 @@ vi.mock('../../services/lapisClient.ts', () => ({
 
 describe('getSeqSetStatistics', () => {
     it('returns empty array without calling LAPIS when accessions list is empty', async () => {
-        const result = await getSeqSetStatistics([], DATE_GRAPH);
+        const result = await getSeqSetStatistics([], DATE_FIELD);
         expect(result.isOk()).toBe(true);
         expect(result.unwrapOr(undefined)).toEqual([]);
     });
 
     it('returns empty array when the field does not match the organism schemas', async () => {
-        const result = await getSeqSetStatistics(ORGANISM_1_ACCESSIONS, NON_EXISTENT_GRAPH);
+        const result = await getSeqSetStatistics(ORGANISM_1_ACCESSIONS, NON_EXISTENT_FIELD);
         expect(result.isOk()).toBe(true);
         expect(result.unwrapOr(undefined)).toEqual([]);
     });
 
     it('returns aggregated rows for a single organism', async () => {
-        const resultDate = await getSeqSetStatistics(ORGANISM_1_ACCESSIONS, DATE_GRAPH);
+        const resultDate = await getSeqSetStatistics(ORGANISM_1_ACCESSIONS, DATE_FIELD);
         expect(resultDate.isOk()).toBe(true);
         expect(resultDate.unwrapOr(undefined)).toEqual([
             { value: '2024-01-01', count: 3 },
             { value: '2024-06-15', count: 5 },
         ]);
 
-        const resultCountry = await getSeqSetStatistics(ORGANISM_2_ACCESSIONS, COUNTRY_GRAPH);
+        const resultCountry = await getSeqSetStatistics(ORGANISM_2_ACCESSIONS, COUNTRY_FIELD);
         expect(resultCountry.isOk()).toBe(true);
         expect(resultCountry.unwrapOr(undefined)).toEqual([
             { value: 'USA', count: 10 },
@@ -160,7 +154,7 @@ describe('getSeqSetStatistics', () => {
     it('returns results only from organism 2 when field only exists in organism 2 schema', async () => {
         const result = await getSeqSetStatistics(
             ORGANISM_1_ACCESSIONS.concat(ORGANISM_2_ACCESSIONS),
-            ORGANISM_SPECIFIC_GRAPH,
+            ORGANISM_SPECIFIC_FIELD,
         );
         expect(result.isOk()).toBe(true);
         expect(result.unwrapOr(undefined)).toEqual([
@@ -171,7 +165,7 @@ describe('getSeqSetStatistics', () => {
 
     it('returns aggregated rows across multiple organisms', async () => {
         // Organisms have the same field name
-        const resultDate = await getSeqSetStatistics(ORGANISM_1_ACCESSIONS.concat(ORGANISM_2_ACCESSIONS), DATE_GRAPH);
+        const resultDate = await getSeqSetStatistics(ORGANISM_1_ACCESSIONS.concat(ORGANISM_2_ACCESSIONS), DATE_FIELD);
         expect(resultDate.isOk()).toBe(true);
         expect(resultDate.unwrapOr(undefined)).toEqual([
             { value: '2024-01-01', count: 103 },
@@ -181,7 +175,7 @@ describe('getSeqSetStatistics', () => {
         // Organisms have different field names which are aggregated together
         const resultCountry = await getSeqSetStatistics(
             ORGANISM_1_ACCESSIONS.concat(ORGANISM_2_ACCESSIONS),
-            COUNTRY_GRAPH,
+            COUNTRY_FIELD,
         );
         expect(resultCountry.isOk()).toBe(true);
         expect(resultCountry.unwrapOr(undefined)).toEqual([

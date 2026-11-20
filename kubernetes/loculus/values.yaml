@@ -11,43 +11,38 @@ localHost: localhost
 robotsNoindexHeader: false
 seqSets:
   enabled: true
-  fieldsToDisplay:
-    - displayName: Country
-      field: geoLocCountry
+  fields:
+    - field: geoLocCountry
       fieldOverrides:
         dummy-organism: country
         dummy-organism-with-files: country
         not-aligned-organism: country
-    - displayName: Collection Date
-      field: sampleCollectionDate
+      column:
+        displayName: Country
+      graph:
+        displayName: Sample collection countries
+        type: category
+    - field: sampleCollectionDate
       fieldOverrides:
         dummy-organism: date
         dummy-organism-with-files: date
         not-aligned-organism: date
-    - displayName: Authors
-      field: authors
+      column:
+        displayName: Collection Date
+      graph:
+        displayName: Sample collection dates
+        type: date
+    - field: authors
       fieldOverrides:
         dummy-organism: null
         dummy-organism-with-files: null
         not-aligned-organism: null
-  graphs:
-    - displayName: Sample collection dates
-      field: sampleCollectionDate
-      type: date
-      fieldOverrides:
-        dummy-organism: date
-        dummy-organism-with-files: date
-        not-aligned-organism: date
-    - displayName: Sample collection countries
-      field: geoLocCountry
-      type: category
-      fieldOverrides:
-        dummy-organism: country
-        dummy-organism-with-files: country
-        not-aligned-organism: country
-    - displayName: Data use terms
-      field: dataUseTerms
-      type: category
+      column:
+        displayName: Authors
+    - field: dataUseTerms
+      graph:
+        displayName: Data use terms
+        type: category
 disableWebsite: false
 disableBackend: false
 disablePreprocessing: false

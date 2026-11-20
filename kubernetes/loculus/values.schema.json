@@ -1402,62 +1402,55 @@
             }
           }
         },
-        "fieldsToDisplay": {
+        "fields": {
           "groups": ["general"],
           "type": "array",
-          "description": "Fields to display in the SeqSets table",
+          "description": "Fields to display on the SeqSet page",
           "items": {
             "type": "object",
             "additionalProperties": false,
             "properties": {
               "field": {
                 "type": "string",
-                "description": "The metadata field name to display"
-              },
-              "displayName": {
-                "type": "string",
-                "description": "The display name for the field"
+                "description": "The metadata field name"
               },
               "fieldOverrides": {
                 "type": "object",
-                "description": "Per-organism replacements for `field`, for organisms where the metadata field is named differently. Set an organism to null to not show this field for that organism.",
+                "description": "Per-organism replacements for `field`, for organisms where the metadata field is named differently. Set an organism to null to leave that organism out for this field.",
                 "additionalProperties": {
                   "type": ["string", "null"]
                 }
-              }
-            },
-            "required": ["field", "displayName"]
-          }
-        },
-        "graphs": {
-          "groups": ["general"],
-          "type": "array",
-          "description": "Graphs to display in the SeqSets statistics section",
-          "items": {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "field": {
-                "type": "string",
-                "description": "The metadata field to graph"
               },
-              "displayName": {
-                "type": "string",
-                "description": "The display name for the graph"
-              },
-              "type": {
-                "type": "string",
-                "description": "The type of data the graph is displaying (date, category)"
-              },
-              "fieldOverrides": {
+              "column": {
                 "type": "object",
-                "description": "Per-organism replacements for `field`, for organisms where the metadata field is named differently. Set an organism to null to leave that organism out of this graph.",
-                "additionalProperties": {
-                  "type": ["string", "null"]
-                }
+                "description": "Show the field as a column in the SeqSet sequences table",
+                "additionalProperties": false,
+                "properties": {
+                  "displayName": {
+                    "type": "string",
+                    "description": "The column header"
+                  }
+                },
+                "required": ["displayName"]
+              },
+              "graph": {
+                "type": "object",
+                "description": "Show the field as a graph in the SeqSet statistics section",
+                "additionalProperties": false,
+                "properties": {
+                  "displayName": {
+                    "type": "string",
+                    "description": "The display name for the graph"
+                  },
+                  "type": {
+                    "type": "string",
+                    "description": "The type of data the graph is displaying (date, category)"
+                  }
+                },
+                "required": ["displayName", "type"]
               }
             },
-            "required": ["field", "displayName", "type"]
+            "required": ["field"]
           }
         }
       }

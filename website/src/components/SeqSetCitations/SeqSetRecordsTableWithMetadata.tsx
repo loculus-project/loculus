@@ -17,7 +17,7 @@ type RecordMetadata = {
 type SeqSetRecordsTableWithMetadataProps = {
     seqSetRecords: SeqSetRecord[];
     clientConfig: ClientConfig;
-    fieldsToDisplay?: SeqSetField[];
+    seqSetFields: SeqSetField[];
     sortByKey?: keyof SeqSetRecord;
     organismDisplayNames?: Record<string, string>;
 };
@@ -43,7 +43,7 @@ async function queryLapisDetails(
 const fetchRecordsMetadata = async (
     records: SeqSetRecord[],
     clientConfig: ClientConfig,
-    fieldsToDisplay: SeqSetField[],
+    seqSetFields: SeqSetField[],
 ): Promise<Map<string, RecordMetadata>> => {
     const accessions = records.map((record) => record.accession);
 
@@ -60,9 +60,9 @@ const fetchRecordsMetadata = async (
     // Query all LAPIS instances in parallel
     const lapisPromises = Object.entries(clientConfig.lapisUrls).map(async ([organism, lapisUrl]) => {
         // Map each displayed field to this organism's field name, skipping fields the organism doesn't have
-        const organismFields = fieldsToDisplay.flatMap((fieldConfig) => {
-            const organismField = getSeqSetOrganismField(fieldConfig, organism);
-            return organismField === null ? [] : [{ field: fieldConfig.field, organismField }];
+        const organismFields = seqSetFields.flatMap((seqSetField) => {
+            const organismField = getSeqSetOrganismField(seqSetField, organism);
+            return organismField === null ? [] : [{ field: seqSetField.field, organismField }];
         });
         const fields = organismFields.map((f) => f.organismField);
 
@@ -123,17 +123,18 @@ const SeqSetRecordsTableCell: FC<{ title: string; children: React.ReactNode }> =
 export const SeqSetRecordsTableWithMetadata: FC<SeqSetRecordsTableWithMetadataProps> = ({
     seqSetRecords,
     clientConfig,
-    fieldsToDisplay = [
-        { field: 'geoLocCountry', displayName: 'Country' },
-        { field: 'sampleCollectionDate', displayName: 'Collection date' },
-        { field: 'authors', displayName: 'Authors' },
-    ],
+    seqSetFields,
     sortByKey = 'isFocal',
     organismDisplayNames = {},
 }) => {
     const { data: metadataMap, isLoading } = useQuery({
-        queryKey: ['seqset-records-metadata', seqSetRecords, clientConfig, fieldsToDisplay],
-        queryFn: () => fetchRecordsMetadata(seqSetRecords, clientConfig, fieldsToDisplay),
+        queryKey: ['seqset-records-metadata', seqSetRecords, clientConfig, seqSetFields],
+        queryFn: () =>
+            fetchRecordsMetadata(
+                seqSetRecords,
+                clientConfig,
+                seqSetFields.filter((seqSetField) => seqSetField.column !== undefined),
+            ),
         staleTime: 5 * 60 * 1000, // 5 minutes
     });
 
@@ -156,9 +157,11 @@ export const SeqSetRecordsTableWithMetadata: FC<SeqSetRecordsTableWithMetadataPr
                     <SeqSetRecordsTableHeader title='Accession' />
                     <SeqSetRecordsTableHeader title='Organism' />
                     <SeqSetRecordsTableHeader title='Context' />
-                    {fieldsToDisplay.map((fieldConfig, fieldIndex) => (
-                        <SeqSetRecordsTableHeader key={fieldIndex} title={fieldConfig.displayName} />
-                    ))}
+                    {seqSetFields.map((seqSetField, columnIndex) =>
+                        seqSetField.column === undefined ? null : (
+                            <SeqSetRecordsTableHeader key={columnIndex} title={seqSetField.column.displayName} />
+                        ),
+                    )}
                 </tr>
             </thead>
             <tbody className='bg-white'>
@@ -194,22 +197,24 @@ export const SeqSetRecordsTableWithMetadata: FC<SeqSetRecordsTableWithMetadataPr
                             <SeqSetRecordsTableCell title={seqSetRecord.isFocal ? 'Focal' : 'Background'}>
                                 {seqSetRecord.isFocal ? 'Focal' : 'Background'}
                             </SeqSetRecordsTableCell>
-                            {fieldsToDisplay.map((fieldConfig, fieldIndex) => (
-                                <SeqSetRecordsTableCell
-                                    key={fieldIndex}
-                                    title={
-                                        // eslint-disable-next-line @typescript-eslint/no-base-to-string
-                                        String(metadata?.[fieldConfig.field] ?? '')
-                                    }
-                                >
-                                    {isLoading ? (
-                                        <Spinner size='xs' />
-                                    ) : (
-                                        // eslint-disable-next-line @typescript-eslint/no-base-to-string
-                                        String(metadata?.[fieldConfig.field] ?? '')
-                                    )}
-                                </SeqSetRecordsTableCell>
-                            ))}
+                            {seqSetFields.map((seqSetField, columnIndex) =>
+                                seqSetField.column === undefined ? null : (
+                                    <SeqSetRecordsTableCell
+                                        key={columnIndex}
+                                        title={
+                                            // eslint-disable-next-line @typescript-eslint/no-base-to-string
+                                            String(metadata?.[seqSetField.field] ?? '')
+                                        }
+                                    >
+                                        {isLoading ? (
+                                            <Spinner size='xs' />
+                                        ) : (
+                                            // eslint-disable-next-line @typescript-eslint/no-base-to-string
+                                            String(metadata?.[seqSetField.field] ?? '')
+                                        )}
+                                    </SeqSetRecordsTableCell>
+                                ),
+                            )}
                         </tr>
                     );
                 })}

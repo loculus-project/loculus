@@ -5,7 +5,7 @@ import { getConfiguredOrganisms, getSchema } from '../../config.ts';
 import { LapisClient } from '../../services/lapisClient.ts';
 import { ACCESSION_FIELD, ACCESSION_VERSION_FIELD, VERSION_STATUS_FIELD } from '../../settings.ts';
 import type { ProblemDetail } from '../../types/backend.ts';
-import { getSeqSetOrganismField, type SeqSetGraph } from '../../types/config.ts';
+import { getSeqSetOrganismField, type SeqSetField } from '../../types/config.ts';
 import { versionStatuses } from '../../types/lapis.ts';
 
 type AggregateValue = string | number | boolean | null | undefined;
@@ -30,7 +30,7 @@ const getAggregate = async (
  */
 export const getSeqSetStatistics = async (
     accessions: string[],
-    graph: SeqSetGraph,
+    seqSetField: SeqSetField,
 ): Promise<Result<AggregateRow[], ProblemDetail>> => {
     if (accessions.length === 0) {
         return ok([]);
@@ -47,7 +47,7 @@ export const getSeqSetStatistics = async (
             const schema = getSchema(organism.key);
 
             // Skip the organism if it has no field configured, or the field is not in its schema metadata
-            const field = getSeqSetOrganismField(graph, organism.key);
+            const field = getSeqSetOrganismField(seqSetField, organism.key);
             if (field === null || !schema.metadata.some((f) => f.name === field)) return [];
 
             // Fetch aggregates for both versioned and unversioned accessions
