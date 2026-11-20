@@ -197,6 +197,72 @@ class CrossRefServiceTest(
         )
     }
 
+    private val postedContentXML = """
+        <crossref_result>
+            <forward_link doi="10.1234/seqset-1">
+                <postedcontent_cite>
+                    <title>A bioRxiv preprint</title>
+                    <year>2024</year>
+                    <doi>10.1101/2024.01.01.123456</doi>
+                </postedcontent_cite>
+            </forward_link>
+            <forward_link doi="10.1234/seqset-2">
+                <postedcontent_cite>
+                    <title>A medRxiv preprint</title>
+                    <year>2025</year>
+                    <doi>10.1101/2025.01.01.123456</doi>
+                </postedcontent_cite>
+            </forward_link>
+        </crossref_result>
+    """.trimIndent()
+
+    @Test
+    fun `parseCrossRefCitedByXML uses the resolved preprint server as journal for posted content`() {
+        val servers = mapOf(
+            "10.1101/2024.01.01.123456" to "bioRxiv",
+            "10.1101/2025.01.01.123456" to "medRxiv",
+        )
+
+        val result = crossRefService.parseCrossRefCitedByXML(postedContentXML) { doi -> servers[doi] }
+
+        assertEquals(listOf("bioRxiv", "medRxiv"), result.sources.map { it.source.journal })
+        assertTrue(result.validationErrors.isEmpty())
+    }
+
+    @Test
+    fun `parseCrossRefCitedByXML keeps posted content citations when the preprint server is unknown`() {
+        val result = crossRefService.parseCrossRefCitedByXML(postedContentXML) { null }
+
+        assertEquals(listOf(null, null), result.sources.map { it.source.journal })
+        assertEquals(listOf("A bioRxiv preprint", "A medRxiv preprint"), result.sources.map { it.source.title })
+        assertTrue(result.validationErrors.isEmpty())
+    }
+
+    @Test
+    fun `parseCrossRefCitedByXML only resolves preprint servers for posted content citations`() {
+        val xml = """
+            <crossref_result>
+                <forward_link doi="10.1234/seqset-1">
+                    <journal_cite>
+                        <journal_title>Journal of Citations</journal_title>
+                        <article_title>A citing paper</article_title>
+                        <year>2024</year>
+                        <doi>10.5678/paper-1</doi>
+                    </journal_cite>
+                </forward_link>
+            </crossref_result>
+        """.trimIndent()
+        val resolvedDOIs = mutableListOf<String>()
+
+        val result = crossRefService.parseCrossRefCitedByXML(xml) { doi ->
+            resolvedDOIs.add(doi)
+            "should not be used"
+        }
+
+        assertEquals(listOf("Journal of Citations"), result.sources.map { it.source.journal })
+        assertTrue(resolvedDOIs.isEmpty())
+    }
+
     @Test
     fun `parseCrossRefCitedByXML returns valid sources and records errors for invalid ones in a mixed batch`() {
         val xml = """
