@@ -261,17 +261,20 @@ export const fileSharingConfig = z.object({
 });
 export type FileSharingConfig = z.infer<typeof fileSharingConfig>;
 
+const fieldOverrides = z.record(z.string(), z.string().nullable());
+
 const fieldToDisplay = z.object({
     field: z.string(),
     displayName: z.string(),
+    fieldOverrides: fieldOverrides.optional(),
 });
 
 const seqSetGraphTypes = z.enum(['date', 'category']);
 export const seqSetGraph = z.object({
-    name: z.string(),
+    field: z.string(),
     displayName: z.string(),
     type: seqSetGraphTypes,
-    fields: z.array(z.string()),
+    fieldOverrides: fieldOverrides.optional(),
 });
 export type SeqSetGraph = z.infer<typeof seqSetGraph>;
 
