@@ -17,5 +17,5 @@ const middlewareChain = sequence(...middlewares);
 
 // Astro middleware
 export const onRequest = defineMiddleware((context, next) =>
-    context.url.pathname === routes.health() ? next() : middlewareChain(context, next),
+    context.routePattern === routes.health() ? next() : middlewareChain(context, next),
 );
