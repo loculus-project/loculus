@@ -12,19 +12,19 @@ robotsNoindexHeader: false
 seqSets:
   enabled: true
   fieldsToDisplay:
-    - displayName: "Country"
+    - displayName: Country
       field: geoLocCountry
       fieldOverrides:
         dummy-organism: country
         dummy-organism-with-files: country
         not-aligned-organism: country
-    - displayName: "Collection Date"
+    - displayName: Collection Date
       field: sampleCollectionDate
       fieldOverrides:
         dummy-organism: date
         dummy-organism-with-files: date
         not-aligned-organism: date
-    - displayName: "Authors"
+    - displayName: Authors
       field: authors
       fieldOverrides:
         dummy-organism: null
