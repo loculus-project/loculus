@@ -20,7 +20,7 @@ describe('ZodiosWrapperClient response validation', () => {
             params,
         );
 
-        expect(result._unsafeUnwrap()).toEqual([{ accession: 'LOC_1.1', type: 'Loculus', isFocal: true }]);
+        expect(result._unsafeUnwrap()).toEqual([{ accession: 'LOC_1.1', isFocal: true }]);
     });
 
     test('returns an error when the response does not match the endpoint schema', async () => {
