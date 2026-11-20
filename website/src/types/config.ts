@@ -263,22 +263,16 @@ export type FileSharingConfig = z.infer<typeof fileSharingConfig>;
 
 const fieldOverrides = z.record(z.string(), z.string().nullable());
 
-const fieldToDisplay = z.object({
+const seqSetField = z.object({
     field: z.string(),
     displayName: z.string(),
     fieldOverrides: fieldOverrides.optional(),
 });
-export type FieldToDisplay = z.infer<typeof fieldToDisplay>;
+export type SeqSetField = z.infer<typeof seqSetField>;
 
-/**
- * Returns the metadata field to use for the organism, or null if the organism should be skipped.
- */
-export const getFieldForOrganism = (
-    config: { field: string; fieldOverrides?: Record<string, string | null> },
-    organism: string,
-): string | null => {
-    const override = config.fieldOverrides?.[organism];
-    return override === undefined ? config.field : override;
+export const getSeqSetOrganismField = (seqSetField: SeqSetField, organism: string): string | null => {
+    const override = seqSetField.fieldOverrides?.[organism];
+    return override === undefined ? seqSetField.field : override;
 };
 
 const seqSetGraphTypes = z.enum(['date', 'category']);
@@ -306,7 +300,7 @@ export const websiteConfig = z.object({
     gitHubIssuesUrl: z.string().optional(),
     issuesEmail: z.string().optional(),
     enableSeqSets: z.boolean(),
-    seqSetsFieldsToDisplay: z.array(fieldToDisplay).optional(),
+    seqSetsFieldsToDisplay: z.array(seqSetField).optional(),
     seqSetsGraphs: z.array(seqSetGraph).optional(),
     enableLoginNavigationItem: z.boolean(),
     enableSubmissionNavigationItem: z.boolean(),

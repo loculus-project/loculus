@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import { type FC, useMemo } from 'react';
 
-import { type FieldToDisplay, getFieldForOrganism } from '../../types/config';
+import { type SeqSetField, getSeqSetOrganismField } from '../../types/config';
 import { versionStatuses } from '../../types/lapis';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import type { SeqSetRecord } from '../../types/seqSetCitation';
@@ -17,7 +17,7 @@ type RecordMetadata = {
 type SeqSetRecordsTableWithMetadataProps = {
     seqSetRecords: SeqSetRecord[];
     clientConfig: ClientConfig;
-    fieldsToDisplay?: FieldToDisplay[];
+    fieldsToDisplay?: SeqSetField[];
     sortByKey?: keyof SeqSetRecord;
     organismDisplayNames?: Record<string, string>;
 };
@@ -43,7 +43,7 @@ async function queryLapisDetails(
 const fetchRecordsMetadata = async (
     records: SeqSetRecord[],
     clientConfig: ClientConfig,
-    fieldsToDisplay: FieldToDisplay[],
+    fieldsToDisplay: SeqSetField[],
 ): Promise<Map<string, RecordMetadata>> => {
     const accessions = records.map((record) => record.accession);
 
@@ -61,7 +61,7 @@ const fetchRecordsMetadata = async (
     const lapisPromises = Object.entries(clientConfig.lapisUrls).map(async ([organism, lapisUrl]) => {
         // Map each displayed field to this organism's field name, skipping fields the organism doesn't have
         const organismFields = fieldsToDisplay.flatMap((fieldConfig) => {
-            const organismField = getFieldForOrganism(fieldConfig, organism);
+            const organismField = getSeqSetOrganismField(fieldConfig, organism);
             return organismField === null ? [] : [{ field: fieldConfig.field, organismField }];
         });
         const fields = organismFields.map((f) => f.organismField);
