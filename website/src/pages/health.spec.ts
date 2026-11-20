@@ -53,21 +53,6 @@ describe('health endpoint', () => {
         expect(mocks.loggerError).toHaveBeenCalledWith(expect.stringContaining('secret detail'));
     });
 
-    test('logs each nested validation error', () => {
-        mocks.getWebsiteConfig.mockImplementation(() => {
-            throw new AggregateError(
-                [new Error('first problem'), new Error('second problem')],
-                'There were validation errors in the website_config.json',
-            );
-        });
-
-        expect(GET().status).toBe(503);
-        const logged = mocks.loggerError.mock.calls[0][0] as string;
-        expect(logged).toContain('There were validation errors');
-        expect(logged).toContain('first problem');
-        expect(logged).toContain('second problem');
-    });
-
     test('returns 503 when the runtime config is invalid', () => {
         mocks.getRuntimeConfig.mockImplementation(() => {
             throw new Error('bad runtime config');

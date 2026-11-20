@@ -10,17 +10,10 @@ export function GET() {
         getRuntimeConfig();
     } catch (error) {
         if (!loggedConfigError) {
-            logger.error(`Health check failed, config is invalid: ${describeError(error)}`);
+            logger.error(`Health check failed, config is invalid: ${error}`);
             loggedConfigError = true;
         }
         return new Response('config error', { status: 503 });
     }
     return new Response('ok');
-}
-
-function describeError(error: unknown): string {
-    if (error instanceof AggregateError) {
-        return [error.message, ...error.errors.map(describeError)].join('\n  ');
-    }
-    return error instanceof Error ? error.message : String(error);
 }
