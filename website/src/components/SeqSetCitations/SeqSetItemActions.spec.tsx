@@ -6,7 +6,7 @@ import { describe, expect, test, vi } from 'vitest';
 
 import { SeqSetItemActions } from './SeqSetItemActions';
 import { testConfig, testServer } from '../../../vitest.setup.ts';
-import { SeqSetRecordType, type SeqSet } from '../../types/seqSetCitation';
+import type { SeqSet } from '../../types/seqSetCitation';
 
 const seqSet: SeqSet = {
     seqSetId: 'LOC_SS_1',
@@ -17,8 +17,8 @@ const seqSet: SeqSet = {
 };
 
 const records = [
-    { accession: 'LOC_000001.1', type: SeqSetRecordType.loculus, isFocal: true },
-    { accession: 'LOC_000002.1', type: SeqSetRecordType.loculus, isFocal: false },
+    { accession: 'LOC_000001.1', isFocal: true },
+    { accession: 'LOC_000002.1', isFocal: false },
 ];
 
 function mockRecords(response: () => Response) {
