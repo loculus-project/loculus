@@ -3,8 +3,6 @@ import { getInstanceLogger } from '../logger.ts';
 
 const logger = getInstanceLogger('health');
 
-// Target of the Kubernetes probes. Checks only the pod's static config, so a pod with a broken config never
-// becomes ready and crash-loops. Must stay independent of LAPIS, the backend and Keycloak.
 export function GET() {
     try {
         getWebsiteConfig();
