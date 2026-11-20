@@ -34,12 +34,7 @@ data class SubmittedSeqSetUpdate(
     val records: List<SubmittedSeqSetRecord>,
 )
 
-data class SeqSetRecord(
-    val seqSetRecordId: Long,
-    val accession: Accession,
-    val type: String,
-    val isFocal: Boolean = true,
-)
+data class SeqSetRecord(val accession: Accession, val isFocal: Boolean = true)
 
 data class SeqSet(
     val seqSetId: String,

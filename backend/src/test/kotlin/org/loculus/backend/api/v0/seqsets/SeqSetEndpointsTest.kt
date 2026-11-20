@@ -96,7 +96,7 @@ class SeqSetEndpointsTest(@Autowired private val client: SeqSetCitationsControll
             .andExpect(jsonPath("\$").isArray)
             .andExpect(jsonPath("\$").isNotEmpty)
             .andExpect(jsonPath("\$[0].accession").value("mock-sequence-accession.1"))
-            .andExpect(jsonPath("\$[0].type").value("loculus"))
+            .andExpect(jsonPath("\$[0].isFocal").value(true))
 
         client.deleteSeqSet(seqSetId)
             .andExpect(status().isOk)

@@ -229,8 +229,8 @@ test_case_definitions = [
                     ["sequenced_timestamp"],
                     ["sequenced_timestamp"],
                     (
-                        "Timestamp is  2022-11-01Europe which is not in parseable YYYY-MM-DD. "
-                        "Parsing error: Unknown string format:  2022-11-01Europe"
+                        "Timestamp is 2022-11-01Europe which is not in parseable YYYY-MM-DD. "
+                        "Parsing error: Unknown string format: 2022-11-01Europe"
                     ),
                 ),
             ]
@@ -1425,10 +1425,11 @@ date_range_cases = [
         submitted_at=ts_from_ymd(2021, 12, 16),
     ),
     DateRangeCase(
-        name="dateRangeString: invalid date should be returned as None.",
+        name="dateRangeString: invalid date is reported as an error.",
         date="not.date",
         field_type="dateRangeString",
         submitted_at=ts_from_ymd(2021, 12, 16),
+        expected_error="Metadata field field_name: Date not.date could not be parsed.",
     ),
     DateRangeCase(
         name="dateRangeLower: empty date should be returned as None.",
@@ -1563,6 +1564,26 @@ date_range_cases = [
         submitted_at=ts_from_ymd(2021, 6, 15),
         expected_datum="2021-06-15",
     ),
+    DateRangeCase(
+        name="dateRangeString: leading and trailing whitespace is ignored.",
+        date="  2021-05-03 ",
+        field_type="dateRangeString",
+        submitted_at=ts_from_ymd(2022, 1, 1),
+        expected_datum="2021-05-03",
+    ),
+    DateRangeCase(
+        name="dateRangeLower: leading whitespace is ignored for partial dates.",
+        date=" 2021-05",
+        field_type="dateRangeLower",
+        submitted_at=ts_from_ymd(2022, 1, 1),
+        expected_datum="2021-05-01",
+    ),
+    DateRangeCase(
+        name="dateRangeString: whitespace-only date is treated as empty.",
+        date="   ",
+        field_type="dateRangeString",
+        submitted_at=ts_from_ymd(2022, 1, 1),
+    ),
 ]
 
 
@@ -1584,7 +1605,37 @@ def test_parse_date_into_range(case: DateRangeCase) -> None:
     if case.expected_error is not None:
         assert result.errors[0] == case.expected_error, case.name
     else:
+        assert result.errors == [], case.name
         assert result.datum == case.expected_datum, case.name
+
+
+@pytest.mark.parametrize(
+    ("function_name", "input_key", "raw_value", "expected_datum"),
+    [
+        ("check_date", "date", " 2021-05-03", "2021-05-03"),
+        ("check_date", "date", "2021-05-03\t", "2021-05-03"),
+        ("check_date", "date", "   ", None),
+        ("parse_and_assert_past_date", "date", " 2021-05-03 ", "2021-05-03"),
+        ("parse_and_assert_past_date", "date", " 2021-05", "2021-05-01"),
+        ("parse_and_assert_past_date", "date", "   ", None),
+        ("parse_timestamp", "timestamp", " 2022-11-01T00:00:00Z ", "2022-11-01"),
+        ("parse_timestamp", "timestamp", "   ", None),
+    ],
+)
+def test_date_functions_ignore_surrounding_whitespace(
+    function_name: str, input_key: str, raw_value: str, expected_datum: str | None
+) -> None:
+    result = getattr(ProcessingFunctions, function_name)(
+        {input_key: raw_value},
+        "field_name",
+        ["field_name"],
+        {},
+        DEFAULT_TEST_CONTEXT,
+        DEFAULT_EXTERNAL_SERVICES,
+    )
+
+    assert result.errors == []
+    assert result.datum == expected_datum
 
 
 @dataclass
