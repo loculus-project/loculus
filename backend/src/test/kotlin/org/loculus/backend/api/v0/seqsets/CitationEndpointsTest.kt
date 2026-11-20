@@ -500,6 +500,13 @@ class CitationEndpointsTest(
                     expectedCitingSourceDOIs = listOf("10.5678/paper-citing-${MOCK_SEQ_ACCESSION}.1"),
                 ),
                 SequenceCitationVersionCase(
+                    description = "other accession sharing a prefix THEN does not return citations for the prefix",
+                    citationsMap = citationsMap,
+                    accession = "$MOCK_SEQ_ACCESSION-other",
+                    version = null,
+                    expectedCitingSourceDOIs = listOf("10.5678/paper-citing-${MOCK_SEQ_ACCESSION}-other.1"),
+                ),
+                SequenceCitationVersionCase(
                     description = "accession only THEN returns citations for all accession versions + unversioned",
                     citationsMap = citationsMap,
                     accession = MOCK_SEQ_ACCESSION,

@@ -510,7 +510,11 @@ CREATE TABLE public.seqset_records (
     seqset_record_id bigint NOT NULL,
     accession text NOT NULL,
     type text NOT NULL,
-    is_focal boolean NOT NULL
+    is_focal boolean NOT NULL,
+    version bigint,
+    seqset_id text NOT NULL,
+    seqset_version bigint NOT NULL,
+    CONSTRAINT seqset_records_accession_has_no_version CHECK ((POSITION(('.'::text) IN (accession)) = 0))
 );
 
 
@@ -549,40 +553,6 @@ CREATE TABLE public.seqset_to_citation_source (
 
 
 ALTER TABLE public.seqset_to_citation_source OWNER TO postgres;
-
---
--- Name: seqset_to_records; Type: TABLE; Schema: public; Owner: postgres
---
-
-CREATE TABLE public.seqset_to_records (
-    seqset_record_id bigint NOT NULL,
-    seqset_id text NOT NULL,
-    seqset_version bigint NOT NULL
-);
-
-
-ALTER TABLE public.seqset_to_records OWNER TO postgres;
-
---
--- Name: seqset_to_records_seqset_record_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
---
-
-CREATE SEQUENCE public.seqset_to_records_seqset_record_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
-ALTER SEQUENCE public.seqset_to_records_seqset_record_id_seq OWNER TO postgres;
-
---
--- Name: seqset_to_records_seqset_record_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
---
-
-ALTER SEQUENCE public.seqset_to_records_seqset_record_id_seq OWNED BY public.seqset_to_records.seqset_record_id;
-
 
 --
 -- Name: seqsets; Type: TABLE; Schema: public; Owner: postgres
@@ -806,13 +776,6 @@ ALTER TABLE ONLY public.seqset_records ALTER COLUMN seqset_record_id SET DEFAULT
 
 
 --
--- Name: seqset_to_records seqset_record_id; Type: DEFAULT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.seqset_to_records ALTER COLUMN seqset_record_id SET DEFAULT nextval('public.seqset_to_records_seqset_record_id_seq'::regclass);
-
-
---
 -- Name: user_groups_table id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -940,14 +903,6 @@ ALTER TABLE ONLY public.seqset_to_citation_source
 
 
 --
--- Name: seqset_to_records seqset_to_records_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.seqset_to_records
-    ADD CONSTRAINT seqset_to_records_pkey PRIMARY KEY (seqset_record_id, seqset_id, seqset_version);
-
-
---
 -- Name: seqsets seqsets_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1051,6 +1006,20 @@ CREATE INDEX sepd_stale_lease_idx ON public.sequence_entries_preprocessed_data U
 --
 
 CREATE INDEX sepd_unprocessed_claim_idx ON public.sequence_entries_preprocessed_data USING btree (organism, pipeline_version, accession, version) WHERE (processing_status = 'UNPROCESSED'::text);
+
+
+--
+-- Name: seqset_records_accession_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX seqset_records_accession_idx ON public.seqset_records USING btree (accession);
+
+
+--
+-- Name: seqset_records_seqset_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX seqset_records_seqset_idx ON public.seqset_records USING btree (seqset_id, seqset_version);
 
 
 --
@@ -1253,19 +1222,11 @@ ALTER TABLE ONLY public.seqset_to_citation_source
 
 
 --
--- Name: seqset_to_records foreign_key_seqset_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: seqset_records seqset_records_seqset_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.seqset_to_records
-    ADD CONSTRAINT foreign_key_seqset_id FOREIGN KEY (seqset_id, seqset_version) REFERENCES public.seqsets(seqset_id, seqset_version) ON DELETE CASCADE;
-
-
---
--- Name: seqset_to_records foreign_key_seqset_record_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.seqset_to_records
-    ADD CONSTRAINT foreign_key_seqset_record_id FOREIGN KEY (seqset_record_id) REFERENCES public.seqset_records(seqset_record_id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.seqset_records
+    ADD CONSTRAINT seqset_records_seqset_fkey FOREIGN KEY (seqset_id, seqset_version) REFERENCES public.seqsets(seqset_id, seqset_version) ON DELETE CASCADE;
 
 
 --
