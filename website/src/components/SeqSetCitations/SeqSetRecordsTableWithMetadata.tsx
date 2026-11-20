@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import { type FC, useMemo } from 'react';
 
+import { type FieldToDisplay, getFieldForOrganism } from '../../types/config';
 import { versionStatuses } from '../../types/lapis';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import type { SeqSetRecord } from '../../types/seqSetCitation';
@@ -11,11 +12,6 @@ type RecordMetadata = {
     accession: string;
     organism?: string;
     [key: string]: unknown;
-};
-
-type FieldToDisplay = {
-    field: string;
-    displayName: string;
 };
 
 type SeqSetRecordsTableWithMetadataProps = {
@@ -59,20 +55,17 @@ const fetchRecordsMetadata = async (
     const versionedAccessions = accessions.filter((acc) => acc.includes('.'));
     const bareAccessions = accessions.filter((acc) => !acc.includes('.'));
 
-    // Extract just the field names for the API request
-    const fields = fieldsToDisplay.map((f) => f.field);
-
-    // filter out "organism" as substring in lapisUrls as a hack to remove the dummy organisms
-    // #TODO: do this better, in a less hacky way
-    // But if we do try to query something that doesn't have the field its no huge problem it will just lead to a console error
-    const lapisUrlsWithoutDummies = Object.fromEntries(
-        Object.entries(clientConfig.lapisUrls).filter(([organism]) => !organism.includes('organism')),
-    );
-
     const metadataMap = new Map<string, RecordMetadata>();
 
     // Query all LAPIS instances in parallel
-    const lapisPromises = Object.entries(lapisUrlsWithoutDummies).map(async ([organism, lapisUrl]) => {
+    const lapisPromises = Object.entries(clientConfig.lapisUrls).map(async ([organism, lapisUrl]) => {
+        // Map each displayed field to this organism's field name, skipping fields the organism doesn't have
+        const organismFields = fieldsToDisplay.flatMap((fieldConfig) => {
+            const organismField = getFieldForOrganism(fieldConfig, organism);
+            return organismField === null ? [] : [{ field: fieldConfig.field, organismField }];
+        });
+        const fields = organismFields.map((f) => f.organismField);
+
         const queries: Promise<{ data: Record<string, unknown>[]; keyField: string }>[] = [];
 
         // Query versioned accessions by accessionVersion
@@ -104,8 +97,8 @@ const fetchRecordsMetadata = async (
                     accession: key,
                     organism,
                 };
-                for (const field of fields) {
-                    metadata[field] = record[field];
+                for (const { field, organismField } of organismFields) {
+                    metadata[field] = record[organismField];
                 }
                 metadataMap.set(key, metadata);
             }
@@ -163,8 +156,8 @@ export const SeqSetRecordsTableWithMetadata: FC<SeqSetRecordsTableWithMetadataPr
                     <SeqSetRecordsTableHeader title='Accession' />
                     <SeqSetRecordsTableHeader title='Organism' />
                     <SeqSetRecordsTableHeader title='Context' />
-                    {fieldsToDisplay.map((fieldConfig) => (
-                        <SeqSetRecordsTableHeader key={fieldConfig.field} title={fieldConfig.displayName} />
+                    {fieldsToDisplay.map((fieldConfig, fieldIndex) => (
+                        <SeqSetRecordsTableHeader key={fieldIndex} title={fieldConfig.displayName} />
                     ))}
                 </tr>
             </thead>
@@ -201,9 +194,9 @@ export const SeqSetRecordsTableWithMetadata: FC<SeqSetRecordsTableWithMetadataPr
                             <SeqSetRecordsTableCell title={seqSetRecord.isFocal ? 'Focal' : 'Background'}>
                                 {seqSetRecord.isFocal ? 'Focal' : 'Background'}
                             </SeqSetRecordsTableCell>
-                            {fieldsToDisplay.map((fieldConfig) => (
+                            {fieldsToDisplay.map((fieldConfig, fieldIndex) => (
                                 <SeqSetRecordsTableCell
-                                    key={fieldConfig.field}
+                                    key={fieldIndex}
                                     title={
                                         // eslint-disable-next-line @typescript-eslint/no-base-to-string
                                         String(metadata?.[fieldConfig.field] ?? '')

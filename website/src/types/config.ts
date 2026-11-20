@@ -268,6 +268,18 @@ const fieldToDisplay = z.object({
     displayName: z.string(),
     fieldOverrides: fieldOverrides.optional(),
 });
+export type FieldToDisplay = z.infer<typeof fieldToDisplay>;
+
+/**
+ * Returns the metadata field to use for the organism, or null if the organism should be skipped.
+ */
+export const getFieldForOrganism = (
+    config: { field: string; fieldOverrides?: Record<string, string | null> },
+    organism: string,
+): string | null => {
+    const override = config.fieldOverrides?.[organism];
+    return override === undefined ? config.field : override;
+};
 
 const seqSetGraphTypes = z.enum(['date', 'category']);
 export const seqSetGraph = z.object({

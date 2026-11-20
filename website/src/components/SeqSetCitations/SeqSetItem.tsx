@@ -9,7 +9,7 @@ import type { AggregateRow } from './getSeqSetStatistics.ts';
 import { getClientLogger } from '../../clientLogger';
 import { seqSetCitationClientHooks } from '../../services/serviceHooks';
 import type { ProblemDetail } from '../../types/backend.ts';
-import type { SeqSetGraph } from '../../types/config.ts';
+import type { FieldToDisplay, SeqSetGraph } from '../../types/config.ts';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import { type SeqSet, type SeqSetCitation, type SeqSetRecord } from '../../types/seqSetCitation';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
@@ -54,10 +54,9 @@ type SeqSetItemProps = {
     seqSet: SeqSet;
     seqSetRecords: SeqSetRecord[];
     seqSetCitations: SeqSetCitation[];
-    seqSetGraphs: SeqSetGraph[];
-    seqSetGraphsData: Record<string, AggregateRow[]>;
+    seqSetGraphs: { graph: SeqSetGraph; data: AggregateRow[] }[];
     isAdminView?: boolean;
-    fieldsToDisplay?: { field: string; displayName: string }[];
+    fieldsToDisplay?: FieldToDisplay[];
     organismDisplayNames?: Record<string, string>;
 };
 
@@ -69,7 +68,6 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
     seqSetRecords,
     seqSetCitations,
     seqSetGraphs,
-    seqSetGraphsData,
     isAdminView = false,
     fieldsToDisplay,
     organismDisplayNames,
@@ -186,18 +184,18 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
                 }
             >
                 <div className={`grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6 ${!wideGraphs ? 'lg:grid-cols-3' : ''}`}>
-                    {seqSetGraphs.map((graph) =>
+                    {seqSetGraphs.map(({ graph, data }, index) =>
                         graph.type === 'date' ? (
                             <DatePlot
-                                key={graph.name}
-                                data={seqSetGraphsData[graph.name] ?? []}
+                                key={index}
+                                data={data}
                                 description={`${graph.displayName} for ${seqSetAccessionVersion} sequences`}
                                 barColor={barPlotColor}
                             />
                         ) : (
                             <CategoryPlot
-                                key={graph.name}
-                                data={seqSetGraphsData[graph.name] ?? []}
+                                key={index}
+                                data={data}
                                 description={`${graph.displayName} for ${seqSetAccessionVersion} sequences`}
                                 barColor={barPlotColor}
                             />

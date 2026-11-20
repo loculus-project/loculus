@@ -5,6 +5,7 @@ import { getConfiguredOrganisms, getSchema } from '../../config.ts';
 import { LapisClient } from '../../services/lapisClient.ts';
 import { ACCESSION_FIELD, ACCESSION_VERSION_FIELD, VERSION_STATUS_FIELD } from '../../settings.ts';
 import type { ProblemDetail } from '../../types/backend.ts';
+import { getFieldForOrganism, type SeqSetGraph } from '../../types/config.ts';
 import { versionStatuses } from '../../types/lapis.ts';
 
 type AggregateValue = string | number | boolean | null | undefined;
@@ -25,11 +26,11 @@ const getAggregate = async (
 };
 
 /**
- * Fetches aggregates for the accessions and field options across all organisms, and combines them into a single aggregate result.
+ * Fetches aggregates for the accessions and field across all organisms, and combines them into a single aggregate result.
  */
 export const getSeqSetStatistics = async (
     accessions: string[],
-    fieldOptions: string[],
+    fieldConfig: Pick<SeqSetGraph, 'field' | 'fieldOverrides'>,
 ): Promise<Result<AggregateRow[], ProblemDetail>> => {
     if (accessions.length === 0) {
         return ok([]);
@@ -45,9 +46,9 @@ export const getSeqSetStatistics = async (
             const client = LapisClient.createForOrganism(organism.key);
             const schema = getSchema(organism.key);
 
-            // Find the first field option that exists in the schema metadata, and skip if none are found
-            const field = fieldOptions.find((option) => schema.metadata.some((f) => f.name === option));
-            if (!field) return [];
+            // Skip the organism if it has no field configured, or the field is not in its schema metadata
+            const field = getFieldForOrganism(fieldConfig, organism.key);
+            if (field === null || !schema.metadata.some((f) => f.name === field)) return [];
 
             // Fetch aggregates for both versioned and unversioned accessions
             const aggregates = [];
