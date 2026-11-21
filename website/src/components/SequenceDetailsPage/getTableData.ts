@@ -1,7 +1,8 @@
 import { err, ok, Result } from 'neverthrow';
 
 import { getMetadataTableData } from './getMetadataTableData.ts';
-import type { TableDataEntry } from './types.js';
+import { getNextcladeDatasets } from './getNextcladeDatasets.ts';
+import type { NextcladeDatasetInfo, TableDataEntry } from './types.js';
 import { type LapisClient } from '../../services/lapisClient.ts';
 import type { ProblemDetail } from '../../types/backend.ts';
 import {
@@ -30,6 +31,7 @@ export type GetTableDataResult = {
     data: TableDataEntry[];
     isRevocation: boolean;
     segmentReferences?: SegmentReferenceSelections;
+    nextcladeDatasets: NextcladeDatasetInfo[];
 };
 
 export async function getTableData(
@@ -89,6 +91,7 @@ export async function getTableData(
                         data: toTableData(schema, referenceGenomesInfo, data),
                         isRevocation: isRevocationEntry(data.details),
                         segmentReferences,
+                        nextcladeDatasets: getNextcladeDatasets(referenceGenomesInfo, data.details),
                     });
                 }),
         );

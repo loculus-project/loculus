@@ -70,7 +70,8 @@ export const SequenceDataUI: FC<Props> = ({
     sequenceCitations,
     onRevokeSuccess,
 }: Props) => {
-    const { tableData, dataUseTermsHistory, segmentReferences, sequenceEntryHistory, isRevocation } = sequenceData;
+    const { tableData, dataUseTermsHistory, segmentReferences, nextcladeDatasets, sequenceEntryHistory, isRevocation } =
+        sequenceData;
 
     const dataUseTerms = tableData.find((entry) => entry.name === DATA_USE_TERMS_FIELD);
     const isRestricted = dataUseTerms?.value.toString().toUpperCase() === 'RESTRICTED';
@@ -87,6 +88,7 @@ export const SequenceDataUI: FC<Props> = ({
             <DataTable
                 dataTableData={dataTableData}
                 segmentReferences={segmentReferences}
+                nextcladeDatasets={isRevocation ? undefined : nextcladeDatasets}
                 dataUseTermsHistory={dataUseTermsHistory}
                 referenceGenomesInfo={referenceGenomesInfo}
                 sequenceCitations={isRevocation ? undefined : sequenceCitations}
