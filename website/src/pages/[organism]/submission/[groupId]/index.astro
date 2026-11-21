@@ -1,7 +1,7 @@
 ---
 import SubmissionPageWrapper from '../../../../components/Submission/SubmissionPageWrapper.astro';
 import { routes } from '../../../../routes/routes';
-import { createBackendClient } from '../../../../services/backendClientFactory';
+import { serverBackendApi } from '../../../../services/serverApi.ts';
 import { getAccessToken } from '../../../../utils/getAccessToken';
 import { getGroupsAndCurrentGroup } from '../../../../utils/submissionPages';
 import F7Arrow2Circlepath from '~icons/f7/arrow-2-circlepath';
@@ -16,9 +16,9 @@ const accessToken = getAccessToken(session)!;
 const groupsResult = await getGroupsAndCurrentGroup(Astro.params, Astro.locals.session);
 
 async function getSequenceCounts(organism: string, groupId: number) {
-    const backendClient = createBackendClient();
     try {
-        const response = await backendClient.getSequences(accessToken, organism, {
+        const response = await serverBackendApi(accessToken).getSequences({
+            organism,
             groupIdsFilter: groupId.toString(),
             // We only need the counts, so we can set the page and size to 0
             // to avoid fetching the actual sequences (slow part of the endpoint)

@@ -4,7 +4,7 @@ import { findOrganismAndData } from './findOrganismAndData';
 import { SequenceDetailsTableResultType } from './getSequenceDetailsTableData';
 import { getRuntimeConfig, getSchema, seqSetsAreEnabled } from '../../../config';
 import { getInstanceLogger } from '../../../logger.ts';
-import { SeqSetCitationClient } from '../../../services/seqSetCitationClient.ts';
+import { serverBackendApi } from '../../../services/serverApi.ts';
 import type { DetailsJson } from '../../../types/detailsJson';
 import { parseAccessionVersionFromString } from '../../../utils/extractAccessionVersion.ts';
 
@@ -16,9 +16,7 @@ export const GET: APIRoute = async (req) => {
     const { accession } = parseAccessionVersionFromString(accessionVersion);
 
     const sequenceCitationsPromise = seqSetsAreEnabled()
-        ? SeqSetCitationClient.create().call('getSequenceCitations', {
-              params: { accession }, // Display citations across all accession versions
-          })
+        ? serverBackendApi().getSequenceCitations({ accession }) // Display citations across all accession versions
         : undefined;
 
     const sequenceDetailsTableData = await findOrganismAndData(accessionVersion);
