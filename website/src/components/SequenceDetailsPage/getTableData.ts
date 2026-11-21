@@ -2,7 +2,7 @@ import { err, ok, Result } from 'neverthrow';
 
 import { getMetadataTableData } from './getMetadataTableData.ts';
 import type { TableDataEntry } from './types.js';
-import { type LapisClient } from '../../services/lapisClient.ts';
+import { type ServerLapisApi } from '../../services/serverApi.ts';
 import type { ProblemDetail } from '../../types/backend.ts';
 import {
     DEFAULT_AA_MUTATION_DETAILS_HEADER,
@@ -36,14 +36,14 @@ export async function getTableData(
     accessionVersion: string,
     schema: Schema,
     referenceGenomesInfo: ReferenceGenomesInfo,
-    lapisClient: LapisClient,
+    lapisApi: ServerLapisApi,
 ): Promise<Result<GetTableDataResult, ProblemDetail>> {
     return Promise.all([
-        lapisClient.getSequenceEntryVersionDetails(accessionVersion),
-        lapisClient.getSequenceMutations(accessionVersion, 'nucleotide'),
-        lapisClient.getSequenceMutations(accessionVersion, 'aminoAcid'),
-        lapisClient.getSequenceInsertions(accessionVersion, 'nucleotide'),
-        lapisClient.getSequenceInsertions(accessionVersion, 'aminoAcid'),
+        lapisApi.getSequenceEntryVersionDetails({ accessionVersion }),
+        lapisApi.getSequenceMutations({ accessionVersion, type: 'nucleotide' }),
+        lapisApi.getSequenceMutations({ accessionVersion, type: 'aminoAcid' }),
+        lapisApi.getSequenceInsertions({ accessionVersion, type: 'nucleotide' }),
+        lapisApi.getSequenceInsertions({ accessionVersion, type: 'aminoAcid' }),
     ])
         .then((results) => Result.combine(results))
         .then(validateDetailsAreNotEmpty(accessionVersion))
