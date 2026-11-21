@@ -1,5 +1,6 @@
 package org.loculus.backend.config
 
+import org.loculus.backend.api.v0.postEndpointsThatArePublic
 import org.loculus.backend.api.v0.v0AccessRules
 import org.loculus.backend.api.v1.v1AccessRules
 import org.loculus.backend.auth.KeycloakAuthenticationConverter
@@ -52,6 +53,7 @@ class SecurityConfig {
             auth.requestMatchers(*debugEndpoints).hasAuthority(SUPER_USER)
             auth.anyRequest().authenticated()
         }
+        .csrf { it.ignoringRequestMatchers(*postEndpointsThatArePublic) }
         .oauth2ResourceServer { oauth2 ->
             oauth2.jwt { jwt ->
                 jwt.jwtAuthenticationConverter(keycloakAuthoritiesConverter)

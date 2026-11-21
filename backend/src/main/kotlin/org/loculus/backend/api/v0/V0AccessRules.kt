@@ -30,6 +30,11 @@ private val getEndpointsThatArePublic = arrayOf(
 
 private val headEndpointsThatArePublic = arrayOf(
     "/files/get/**",
+    "/*/get-released-data-changes",
+)
+
+val postEndpointsThatArePublic = arrayOf(
+    "/*/get-released-data-changes",
 )
 
 private val adminEndpoints = arrayOf(
@@ -39,6 +44,7 @@ private val adminEndpoints = arrayOf(
 fun v0AccessRules(auth: AuthorizeHttpRequestsConfigurer<HttpSecurity>.AuthorizationManagerRequestMatcherRegistry) {
     auth.requestMatchers(HttpMethod.GET, *getEndpointsThatArePublic).permitAll()
     auth.requestMatchers(HttpMethod.HEAD, *headEndpointsThatArePublic).permitAll()
+    auth.requestMatchers(HttpMethod.POST, *postEndpointsThatArePublic).permitAll()
     auth.requestMatchers(*endpointsForPreprocessingPipeline).hasAuthority(PREPROCESSING_PIPELINE)
     auth.requestMatchers(
         *endpointsForExternalMetadataUpdater,

@@ -21,6 +21,7 @@ class WebConfig(private val backendConfig: BackendConfig) : WebMvcConfigurer {
 
     override fun addInterceptors(registry: InterceptorRegistry) {
         registry.addInterceptor(ReadOnlyModeInterceptor(backendConfig))
+            .excludePathPatterns("/*/get-released-data-changes")
         registry.addInterceptor(OrganismMdcInterceptor())
     }
 
