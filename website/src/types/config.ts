@@ -162,6 +162,13 @@ export type GroupedMetadataFilter = {
     orderInSearchDisplay?: number;
 };
 
+export const nextcladeDataset = z.object({
+    name: z.string(),
+    tag: z.string().optional(),
+    server: z.string().optional(),
+});
+export type NextcladeDataset = z.infer<typeof nextcladeDataset>;
+
 export const linkOut = z.object({
     name: z.string(),
     url: z.string(),
@@ -228,6 +235,8 @@ export const schema = z.object({
     richFastaHeaderFields: z.array(z.string()).optional(),
     linkOuts: z.array(linkOut).optional(),
     referenceIdentifierField: z.string().optional(),
+    /** Nextclade dataset used by each preprocessing pipeline version, keyed by pipeline version, segment and reference. */
+    nextcladeDatasets: z.record(z.string(), z.record(z.string(), z.record(z.string(), nextcladeDataset))).optional(),
     multiFieldSearches: z.array(multiFieldSearch).optional(),
 });
 export type Schema = z.infer<typeof schema>;

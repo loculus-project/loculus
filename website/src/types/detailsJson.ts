@@ -17,6 +17,7 @@ export const detailsJsonSchema = z.object({
     // Segment-first mode: map of segment names to reference names
     segmentReferences: z.record(z.string(), z.string().nullable()).optional(),
     isRevocation: z.boolean(),
+    pipelineVersion: z.number().optional(),
     sequenceEntryHistory: z.array(parsedSequenceEntryHistoryEntrySchema),
     sequenceCitations: sequenceCitations.optional(),
 });

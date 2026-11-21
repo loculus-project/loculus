@@ -55,6 +55,7 @@ export const GET: APIRoute = async (req) => {
         clientConfig,
         segmentReferences: result.segmentReferences,
         isRevocation: result.isRevocation,
+        pipelineVersion: result.pipelineVersion,
         sequenceEntryHistory: result.sequenceEntryHistory,
         sequenceCitations,
     };
