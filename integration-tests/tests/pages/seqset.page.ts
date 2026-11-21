@@ -137,7 +137,10 @@ export class SeqSetPage {
         const descriptionField = this.page.locator('#seqSet-description');
         await descriptionField.waitFor({ state: 'visible' });
         await descriptionField.fill(newDescription);
+        const urlBeforeSave = this.page.url();
         await this.page.getByRole('button', { name: 'Save' }).click();
+        // Saving redirects to the new version with a full page load that can exceed the 5 s expect timeout
+        await this.page.waitForURL((url) => url.href !== urlBeforeSave);
         await expect(this.page.getByText(newName, { exact: true })).toBeVisible();
     }
 }
