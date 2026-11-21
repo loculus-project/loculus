@@ -5,7 +5,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { SearchForm } from './SearchForm';
 import { testConfig, testOrganism } from '../../../vitest.setup.ts';
-import { lapisClientHooks } from '../../services/serviceHooks.ts';
 import type { MetadataFilter } from '../../types/config.ts';
 import {
     SINGLE_SEG_MULTI_REF_REFERENCEGENOMES,
@@ -15,7 +14,6 @@ import { type ReferenceGenomesInfo } from '../../types/referencesGenomes.ts';
 import type { ReferenceSelection } from '../../utils/referenceSelection.ts';
 import { MetadataFilterSchema, MetadataVisibility } from '../../utils/search.ts';
 
-vi.mock('../../services/serviceHooks.ts');
 vi.mock('../../clientLogger.ts', () => ({
     getClientLogger: () => ({
         error: vi.fn(),
@@ -28,11 +26,9 @@ const mockUseAggregated = vi.fn().mockReturnValue({
     error: null,
     mutate: vi.fn(),
 });
-// @ts-expect-error mock implementation for test double
-// eslint-disable-next-line @typescript-eslint/no-unsafe-call
-lapisClientHooks.mockReturnValue({
-    useAggregated: mockUseAggregated,
-});
+vi.mock('../../hooks/useLapis.ts', () => ({
+    useLapisMutation: (): unknown => mockUseAggregated(),
+}));
 
 global.ResizeObserver = class FakeResizeObserver implements ResizeObserver {
     observe() {}
