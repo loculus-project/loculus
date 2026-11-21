@@ -239,7 +239,6 @@ def validate_compression(
         # Only these three mean the submitter's file is bad; anything else (a missing
         # temp file, a disk error) is ours and must not be blamed on them.
         except (gzip.BadGzipFile, EOFError, zlib.error) as error:
-            logger.exception("Could not decompress '%s'", file_name)
             reason = DECOMPRESSION_ERRORS.get(type(error), "could not be decompressed.")
             raise InvalidSubmission(
                 error=Annotation(
@@ -289,14 +288,12 @@ def validate_with_readtools(
             f"Validation of files '{','.join(file_names)}' "
             f"timed out after {timeout_seconds} seconds."
         )
-        logger.error(message)
         raise ProcessingFailure(message) from None
     except subprocess.CalledProcessError as error:
         validation_error = _parse_validation_error(
             stdout=error.stdout,
             stderr=error.stderr,
         )
-        logger.error(validation_error)
         raise InvalidSubmission(
             error=Annotation(
                 fileNames=file_names,
