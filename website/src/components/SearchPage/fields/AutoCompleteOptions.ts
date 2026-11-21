@@ -1,9 +1,9 @@
 import { useCallback } from 'react';
 
-import { lapisClientHooks } from '../../../services/serviceHooks.ts';
+import { useLapisMutation, useLapisQuery } from '../../../hooks/useLapis.ts';
+import { getErrorMessage } from '../../../services/apiRequest.ts';
 import type { LineageDefinition } from '../../../types/lapis.ts';
 import { NULL_QUERY_VALUE } from '../../../utils/search.ts';
-import { stringifyMaybeAxiosError } from '../../../utils/stringifyMaybeAxiosError.ts';
 import type { LapisSearchParameters } from '../DownloadDialog/SequenceFilters.tsx';
 
 export type Option = {
@@ -65,7 +65,7 @@ const createGenericOptionsHook = (
     const lapisParams = { fields: [fieldName], ...otherFields };
 
     return function hook() {
-        const { data, isPending, error, mutate } = lapisClientHooks(lapisUrl).useAggregated();
+        const { data, isPending, error, mutate } = useLapisMutation(lapisUrl, 'aggregated');
 
         const options: Option[] = (data?.data ?? [])
             .filter(
@@ -90,9 +90,7 @@ const createGenericOptionsHook = (
         return {
             options,
             isPending,
-            error: error
-                ? `Error while loading options for field "${fieldName}": ${stringifyMaybeAxiosError(error)}`
-                : null,
+            error: error ? `Error while loading options for field "${fieldName}": ${getErrorMessage(error)}` : null,
             load: () => mutate(lapisParams),
         };
     };
@@ -187,20 +185,13 @@ const createLineageOptionsHook = (
             isPending: aggregatedEndpointIsPending,
             error: aggregatedEndpointError,
             mutate,
-        } = lapisClientHooks(lapisUrl).useAggregated();
+        } = useLapisMutation(lapisUrl, 'aggregated');
 
         const {
             data: lineageDefinition,
             isLoading: definitionIsLoading,
             error: definitionEndpointError,
-        } = lapisClientHooks(lapisUrl).useLineageDefinition(
-            {
-                params: {
-                    column: fieldName,
-                },
-            },
-            {},
-        );
+        } = useLapisQuery(lapisUrl, 'lineageDefinition', { column: fieldName });
 
         const unaggregatedCounts = new Map<string, number>();
 
@@ -237,9 +228,8 @@ const createLineageOptionsHook = (
         options.sort((a, b) => (a.option.toLowerCase() < b.option.toLowerCase() ? -1 : 1));
 
         const errors = [
-            aggregatedEndpointError && `aggregated endpoint: ${stringifyMaybeAxiosError(aggregatedEndpointError)}`,
-            definitionEndpointError &&
-                `lineage definition endpoint: ${stringifyMaybeAxiosError(definitionEndpointError)}`,
+            aggregatedEndpointError && `aggregated endpoint: ${getErrorMessage(aggregatedEndpointError)}`,
+            definitionEndpointError && `lineage definition endpoint: ${getErrorMessage(definitionEndpointError)}`,
         ].filter(Boolean);
 
         return {

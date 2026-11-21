@@ -1,15 +1,13 @@
-import { AxiosError } from 'axios';
 import { capitalCase } from 'change-case';
 import { type FC, type FormEvent, useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 
 import { getClientLogger } from '../../clientLogger';
+import { useBackendMutation } from '../../hooks/useBackend.ts';
 import { routes } from '../../routes/routes.ts';
-import { seqSetCitationClientHooks } from '../../services/serviceHooks';
-import type { ProblemDetail } from '../../types/backend.ts';
+import { getErrorMessage } from '../../services/apiRequest.ts';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import { type SeqSet, type SeqSetRecord } from '../../types/seqSetCitation';
-import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
 import { deserializeAccessionInput, serializeSeqSetRecords } from '../../utils/parseAccessionInput';
 import { Button } from '../common/Button';
 import { Spinner } from '../common/Spinner';
@@ -220,61 +218,41 @@ function useActionHooks(
     openErrorFeedback: (message: string) => void,
     setSeqSetRecordValidation: (message: string) => void,
 ) {
-    const hooks = seqSetCitationClientHooks(clientConfig);
-    const create = hooks.useCreateSeqSet(
-        { headers: createAuthorizationHeader(accessToken) },
-        {
-            onSuccess: async (response) => {
-                await logger.info(`Successfully created seqSet with seqSetId: ${response.seqSetId}`);
-                const redirectUrl = `/seqsets/${response.seqSetId}.${response.seqSetVersion}`;
-                location.href = redirectUrl;
-            },
-            onError: async (error: unknown) => {
-                await logger.info(`Failed to create seqSet. Error: '${JSON.stringify(error)})}'`);
-                if (error instanceof AxiosError) {
-                    const responseData = error.response?.data as ProblemDetail | undefined;
-                    if (responseData !== undefined) {
-                        openErrorFeedback(`Failed to create seqSet. ${responseData.title}. ${responseData.detail}`);
-                    }
-                }
-            },
+    const context = { clientConfig, accessToken };
+    const create = useBackendMutation(context, 'createSeqSet', {
+        onSuccess: async (response) => {
+            await logger.info(`Successfully created seqSet with seqSetId: ${response.seqSetId}`);
+            const redirectUrl = `/seqsets/${response.seqSetId}.${response.seqSetVersion}`;
+            location.href = redirectUrl;
         },
-    );
-    const update = hooks.useUpdateSeqSet(
-        { headers: createAuthorizationHeader(accessToken) },
-        {
-            onSuccess: async (response) => {
-                await logger.info(`Successfully updated seqSet with seqSetId: ${response.seqSetId}`);
-                const redirectUrl = `/seqsets/${response.seqSetId}.${response.seqSetVersion}`;
-                location.href = redirectUrl;
-            },
-            onError: async (error) => {
-                await logger.info(`Failed to update seqSet. Error: '${JSON.stringify(error)})}'`);
-                if (error instanceof AxiosError) {
-                    const responseData = error.response?.data as ProblemDetail | undefined;
-                    if (responseData !== undefined) {
-                        openErrorFeedback(`Failed to update seqSet. ${responseData.title}. ${responseData.detail}`);
-                    }
-                }
-            },
+        onError: async (error: unknown) => {
+            const message = `Failed to create seqSet: ${getErrorMessage(error)}`;
+            await logger.info(message);
+            openErrorFeedback(message);
         },
-    );
-    const validateRecords = hooks.useValidateSeqSetRecords(
-        { headers: createAuthorizationHeader(accessToken) },
-        {
-            onSuccess: () => {
-                setSeqSetRecordValidation('');
-            },
-            onError: async (error) => {
-                await logger.info(`Failed to validate seqSet records. Error: '${JSON.stringify(error)})}'`);
-                if (error instanceof AxiosError && error.response?.data !== undefined) {
-                    const responseData = error.response.data as ProblemDetail;
-                    const message = `${responseData.title}. ${responseData.detail}`;
-                    setSeqSetRecordValidation(message);
-                }
-            },
+    });
+    const update = useBackendMutation(context, 'updateSeqSet', {
+        onSuccess: async (response) => {
+            await logger.info(`Successfully updated seqSet with seqSetId: ${response.seqSetId}`);
+            const redirectUrl = `/seqsets/${response.seqSetId}.${response.seqSetVersion}`;
+            location.href = redirectUrl;
         },
-    );
+        onError: async (error) => {
+            const message = `Failed to update seqSet: ${getErrorMessage(error)}`;
+            await logger.info(message);
+            openErrorFeedback(message);
+        },
+    });
+    const validateRecords = useBackendMutation(context, 'validateSeqSetRecords', {
+        onSuccess: () => {
+            setSeqSetRecordValidation('');
+        },
+        onError: async (error) => {
+            const message = getErrorMessage(error);
+            await logger.info(`Failed to validate seqSet records: ${message}`);
+            setSeqSetRecordValidation(message);
+        },
+    });
     return {
         createSeqSet: create.mutate,
         updateSeqSet: update.mutate,

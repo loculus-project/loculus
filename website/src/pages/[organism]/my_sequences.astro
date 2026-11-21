@@ -2,12 +2,12 @@
 import { cleanOrganism } from '../../components/Navigation/cleanOrganism';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { routes } from '../../routes/routes';
-import { GroupManagementClient } from '../../services/groupManagementClient';
+import { serverBackendApi } from '../../services/serverApi.ts';
 import { getAccessToken } from '../../utils/getAccessToken';
 
 const accessToken = getAccessToken(Astro.locals.session)!;
 
-const groupsResult = await GroupManagementClient.create().getGroupsOfUser(accessToken);
+const groupsResult = await serverBackendApi(accessToken).getGroupsOfUser();
 const { organism: _organism } = cleanOrganism(Astro.params.organism);
 let noGroups = false;
 let errorMessage = '';

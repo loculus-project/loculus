@@ -3,8 +3,9 @@ import { useEffect, useState, type FC } from 'react';
 
 import DataUseTermsSelector from './DataUseTermsSelector';
 import { errorToast, successToast } from './EditDataUseTermsToasts';
+import { useBackendMutation } from '../../hooks/useBackend.ts';
+import { useLapisMutation } from '../../hooks/useLapis.ts';
 import { routes } from '../../routes/routes';
-import { backendClientHooks, lapisClientHooks } from '../../services/serviceHooks';
 import { DATA_USE_TERMS_FIELD, DATA_USE_TERMS_RESTRICTED_UNTIL_FIELD } from '../../settings';
 import {
     openDataUseTermsOption,
@@ -14,7 +15,6 @@ import {
 } from '../../types/backend';
 import type { Details } from '../../types/lapis';
 import type { ClientConfig } from '../../types/runtimeConfig';
-import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
 import { formatNumberWithDefaultLocale } from '../../utils/formatNumber';
 import type { SequenceFilter } from '../SearchPage/DownloadDialog/SequenceFilters';
 import { ActiveFilters } from '../common/ActiveFilters';
@@ -101,7 +101,7 @@ export const EditDataUseTermsModal: FC<EditDataUseTermsModalProps> = ({
     const openDialog = () => setIsOpen(true);
     const closeDialog = () => setIsOpen(false);
 
-    const detailsHook = lapisClientHooks(lapisUrl).useDetails();
+    const detailsHook = useLapisMutation(lapisUrl, 'details');
 
     useEffect(() => {
         detailsHook.mutate({
@@ -266,10 +266,10 @@ const CancelSubmitButtons: FC<CancelSubmitButtonProps> = ({
     newTerms,
     affectedAccessions,
 }) => {
-    const setDataUseTermsHook = backendClientHooks(clientConfig).useSetDataUseTerms(
-        { headers: createAuthorizationHeader(accessToken) },
-        { onError: errorToast, onSuccess: successToast },
-    );
+    const setDataUseTermsHook = useBackendMutation({ clientConfig, accessToken }, 'setDataUseTerms', {
+        onError: errorToast,
+        onSuccess: successToast,
+    });
 
     const updatePossible = newTerms !== null && affectedAccessions.length !== 0;
 

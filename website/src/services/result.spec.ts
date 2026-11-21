@@ -1,7 +1,8 @@
 import { http } from 'msw';
 import { describe, expect, test } from 'vitest';
 
-import { BackendClient } from './backendClient.ts';
+import { backendApi } from './backendApi.ts';
+import { withResult } from './result.ts';
 import { testConfig, testServer } from '../../vitest.setup.ts';
 import type { ProblemDetail } from '../types/backend.ts';
 import type { AddSeqSetCitationRequest } from '../types/seqSetCitation.ts';
@@ -18,7 +19,14 @@ const addCitationRequest: AddSeqSetCitationRequest = {
 
 const addCitationUrl = `${testConfig.serverSide.backendUrl}/admin/add-seqset-citation`;
 
-describe('BackendClient', () => {
+const noopLogger = { error: () => undefined, info: () => undefined };
+const createApi = () =>
+    withResult(backendApi(testConfig.serverSide.backendUrl, 'access-token'), {
+        logger: noopLogger,
+        serviceName: 'backend',
+    });
+
+describe('withResult', () => {
     test('returns a ProblemDetail received from the backend', async () => {
         const problemDetail: ProblemDetail = {
             title: 'Unprocessable Content',
@@ -37,10 +45,7 @@ describe('BackendClient', () => {
             ),
         );
 
-        const result = await new BackendClient(testConfig.serverSide.backendUrl).addSeqSetCitation(
-            'access-token',
-            addCitationRequest,
-        );
+        const result = await createApi().addSeqSetCitation(addCitationRequest);
 
         expect(result._unsafeUnwrapErr()).toEqual(problemDetail);
     });
@@ -57,16 +62,24 @@ describe('BackendClient', () => {
             ),
         );
 
-        const result = await new BackendClient(testConfig.serverSide.backendUrl).addSeqSetCitation(
-            'access-token',
-            addCitationRequest,
-        );
+        const result = await createApi().addSeqSetCitation(addCitationRequest);
 
         expect(result._unsafeUnwrapErr()).toEqual({
             type: 'about:blank',
-            title: 'bad response',
+            title: 'Request failed with status code 503',
             status: 503,
-            detail: 'Failed to make request: Request failed with status code 503',
+            detail: 'Unknown error from backend',
+            instance: '/admin/add-seqset-citation',
+        });
+    });
+
+    test('returns an error instead of throwing when a path parameter is missing', async () => {
+        const result = await createApi().getDataUseTermsHistory({ accession: '' });
+
+        expect(result._unsafeUnwrapErr()).toMatchObject({
+            status: 0,
+            title: "Missing path parameter #1 for path '/data-use-terms/{}'",
+            instance: 'unknown path',
         });
     });
 });

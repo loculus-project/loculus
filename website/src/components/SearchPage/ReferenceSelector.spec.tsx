@@ -3,7 +3,6 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ReferenceSelector } from './ReferenceSelector.tsx';
-import { lapisClientHooks } from '../../services/serviceHooks.ts';
 import {
     MULTI_SEG_MULTI_REF_REFERENCEGENOMES,
     SINGLE_SEG_MULTI_REF_REFERENCEGENOMES,
@@ -11,7 +10,6 @@ import {
 } from '../../types/referenceGenomes.spec.ts';
 import { MetadataFilterSchema } from '../../utils/search.ts';
 
-vi.mock('../../services/serviceHooks.ts');
 vi.mock('../../clientLogger.ts', () => ({
     getClientLogger: () => ({
         error: vi.fn(),
@@ -19,11 +17,9 @@ vi.mock('../../clientLogger.ts', () => ({
 }));
 
 const mockUseAggregated = vi.fn();
-// @ts-expect-error mock implementation for test double
-// eslint-disable-next-line @typescript-eslint/no-unsafe-call
-lapisClientHooks.mockReturnValue({
-    useAggregated: mockUseAggregated,
-});
+vi.mock('../../hooks/useLapis.ts', () => ({
+    useLapisMutation: (): unknown => mockUseAggregated(),
+}));
 
 const referenceIdentifierField = 'genotype';
 const lapisUrl = 'http://lapis.dummy.url';

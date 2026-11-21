@@ -1,6 +1,7 @@
 import { type FC, useState } from 'react';
 import { toast } from 'react-toastify';
 
+import { getErrorMessage } from '../../services/apiRequest.ts';
 import type { SeqSet, SeqSetRecord } from '../../types/seqSetCitation';
 import { serializeSeqSetRecords } from '../../utils/parseAccessionInput';
 import { Button } from '../common/Button';
@@ -65,7 +66,7 @@ export const ExportSeqSet: FC<ExportSeqSetProps> = ({ seqSet, getSeqSetRecords, 
                 downloadTSVSeqSet(seqSetRecords);
             }
         } catch (error) {
-            toast.error(`Failed to load SeqSet records: ${error instanceof Error ? error.message : String(error)}`, {
+            toast.error(`Failed to load SeqSet records: ${getErrorMessage(error)}`, {
                 position: 'top-center',
                 autoClose: false,
             });

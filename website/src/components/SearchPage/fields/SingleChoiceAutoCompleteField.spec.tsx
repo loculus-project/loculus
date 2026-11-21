@@ -3,10 +3,8 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { SingleChoiceAutoCompleteField } from './SingleChoiceAutoCompleteField';
-import { lapisClientHooks } from '../../../services/serviceHooks.ts';
 import type { MetadataFilter } from '../../../types/config.ts';
 
-vi.mock('../../../services/serviceHooks.ts');
 vi.mock('../../../clientLogger.ts', () => ({
     getClientLogger: () => ({
         error: vi.fn(),
@@ -14,11 +12,9 @@ vi.mock('../../../clientLogger.ts', () => ({
 }));
 
 const mockUseAggregated = vi.fn();
-// @ts-expect-error mock implementation for test double
-// eslint-disable-next-line @typescript-eslint/no-unsafe-call
-lapisClientHooks.mockReturnValue({
-    useAggregated: mockUseAggregated,
-});
+vi.mock('../../../hooks/useLapis.ts', () => ({
+    useLapisMutation: (): unknown => mockUseAggregated(),
+}));
 
 describe('SingleChoiceAutoCompleteField', () => {
     const field: MetadataFilter = {

@@ -1,202 +1,264 @@
-// Used by ZodiosWrapperClient with validate: false, which skips zod transforms, defaults and coercion:
-// schemas in this API must not rely on them.
-
-import { makeApi, makeEndpoint } from '@zodios/core';
 import z from 'zod';
 
+import { apiPath, sendRequest } from './apiRequest.ts';
+import { type RequestOptions } from './backendApi.ts';
+import { ProblemDetailError } from './result.ts';
+import {
+    ACCESSION_FIELD,
+    ACCESSION_VERSION_FIELD,
+    IS_REVOCATION_FIELD,
+    SUBMITTED_AT_FIELD,
+    VERSION_FIELD,
+    VERSION_STATUS_FIELD,
+} from '../settings.ts';
+import { accessionVersion } from '../types/backend.ts';
 import {
     aggregatedResponse,
     detailsResponse,
     insertionsResponse,
-    lapisBaseRequest,
+    type LapisRequest,
     lineageDefinition,
-    mutationsRequest,
     mutationsResponse,
-    sequenceRequest,
+    sequenceEntryHistory,
+    versionStatuses,
 } from '../types/lapis.ts';
+import { fastaEntryToString, parseFasta } from '../utils/parseFasta.ts';
+import type { BaseType } from '../utils/sequenceTypeHelpers.ts';
 
-function withSample<Path extends `/${string}`>(path: Path) {
-    return `/sample${path}` as const;
+/** Which LAPIS sequence endpoint to query. `name` is the segment (nucleotide) or gene (amino acid) */
+export type SequenceEndpoint =
+    { kind: 'unalignedNucleotide' | 'alignedNucleotide'; name?: string } | { kind: 'alignedAminoAcid'; name: string };
+
+function sequencesPath(endpoint: SequenceEndpoint) {
+    switch (endpoint.kind) {
+        case 'unalignedNucleotide':
+            return endpoint.name === undefined
+                ? '/sample/unalignedNucleotideSequences'
+                : apiPath`/sample/unalignedNucleotideSequences/${endpoint.name}`;
+        case 'alignedNucleotide':
+            return endpoint.name === undefined
+                ? '/sample/alignedNucleotideSequences'
+                : apiPath`/sample/alignedNucleotideSequences/${endpoint.name}`;
+        case 'alignedAminoAcid':
+            return apiPath`/sample/alignedAminoAcidSequences/${endpoint.name}`;
+    }
 }
 
-const detailsEndpoint = makeEndpoint({
-    method: 'post',
-    path: withSample('/details'),
-    alias: 'details',
-    parameters: [
-        {
-            name: 'request',
-            type: 'Body',
-            schema: lapisBaseRequest,
+function lapisProblem(title: string, detail: string, instance: string) {
+    return new ProblemDetailError({ type: 'about:blank', title, status: 500, detail, instance });
+}
+
+/** Filter for a single sequence entry version. Loculus's LAPIS primary key is always `accessionVersion`. */
+const byAccessionVersion = (accessionVersion: string) => ({ [ACCESSION_VERSION_FIELD]: accessionVersion });
+
+/**
+ * All LAPIS endpoints, and a few helpers built on top of them.
+ *
+ * Every function takes a single params object and an optional `RequestOptions` object, and throws on errors.
+ * - In React components, use `useLapisQuery` / `useLapisMutation` from `hooks/useLapis.ts`.
+ * - Server-side, use `serverLapisApi(organism)` from `serverApi.ts`, which returns neverthrow `Result`s.
+ */
+export function lapisApi(lapisUrl: string) {
+    const endpoints = {
+        details: (request: LapisRequest, { signal }: RequestOptions = {}) =>
+            sendRequest(lapisUrl, {
+                method: 'post',
+                path: '/sample/details',
+                data: request,
+                signal,
+                responseSchema: detailsResponse,
+            }),
+
+        aggregated: (request: LapisRequest, { signal }: RequestOptions = {}) =>
+            sendRequest(lapisUrl, {
+                method: 'post',
+                path: '/sample/aggregated',
+                data: request,
+                signal,
+                responseSchema: aggregatedResponse,
+            }),
+
+        detailsTsv: (request: LapisRequest, { signal }: RequestOptions = {}) =>
+            sendRequest(lapisUrl, {
+                method: 'post',
+                path: '/sample/details',
+                data: { ...request, dataFormat: 'TSV' },
+                signal,
+                responseSchema: z.string(),
+            }),
+
+        mutations: ({ type, ...request }: LapisRequest & { type: BaseType }, { signal }: RequestOptions = {}) =>
+            sendRequest(lapisUrl, {
+                method: 'post',
+                path: type === 'nucleotide' ? '/sample/nucleotideMutations' : '/sample/aminoAcidMutations',
+                data: request,
+                signal,
+                responseSchema: mutationsResponse,
+            }),
+
+        insertions: ({ type, ...request }: LapisRequest & { type: BaseType }, { signal }: RequestOptions = {}) =>
+            sendRequest(lapisUrl, {
+                method: 'post',
+                path: type === 'nucleotide' ? '/sample/nucleotideInsertions' : '/sample/aminoAcidInsertions',
+                data: request,
+                signal,
+                responseSchema: insertionsResponse,
+            }),
+
+        /** Returns the sequences as FASTA */
+        sequencesFasta: (
+            {
+                endpoint,
+                request,
+                fastaHeaderTemplate,
+            }: { endpoint: SequenceEndpoint; request: LapisRequest; fastaHeaderTemplate?: string },
+            { signal }: RequestOptions = {},
+        ) =>
+            sendRequest(lapisUrl, {
+                method: 'post',
+                path: sequencesPath(endpoint),
+                data: { ...request, dataFormat: 'FASTA', fastaHeaderTemplate },
+                signal,
+                responseSchema: z.string(),
+            }),
+
+        lineageDefinition: ({ column }: { column: string }, { signal }: RequestOptions = {}) =>
+            sendRequest(lapisUrl, {
+                method: 'get',
+                path: apiPath`/sample/lineageDefinition/${column}`,
+                signal,
+                responseSchema: lineageDefinition,
+            }),
+    };
+
+    return {
+        ...endpoints,
+
+        getLatestAccessionVersion: async ({ accession }: { accession: string }, options: RequestOptions = {}) => {
+            const { data } = await endpoints.details(
+                { accession, versionStatus: versionStatuses.latestVersion, fields: [ACCESSION_FIELD, VERSION_FIELD] },
+                options,
+            );
+            const instance = 'lapisApi/getLatestAccessionVersion';
+            if (data.length !== 1) {
+                throw lapisProblem('Unexpected number of results', `Expected 1 result, got ${data.length}`, instance);
+            }
+            const parsed = accessionVersion.safeParse(data[0]);
+            if (!parsed.success) {
+                throw lapisProblem('Could not parse accession version', parsed.error.toString(), instance);
+            }
+            return parsed.data;
         },
-    ],
-    response: detailsResponse,
-});
 
-const aggregatedEndpoint = makeEndpoint({
-    method: 'post',
-    path: withSample('/aggregated'),
-    alias: 'aggregated',
-    parameters: [
-        {
-            name: 'request',
-            type: 'Body',
-            schema: lapisBaseRequest,
+        /** All versions of the accession, oldest first */
+        getSequenceEntryHistory: async ({ accession }: { accession: string }, options: RequestOptions = {}) => {
+            const { data } = await endpoints.details(
+                {
+                    accession,
+                    fields: [
+                        ACCESSION_VERSION_FIELD,
+                        ACCESSION_FIELD,
+                        VERSION_FIELD,
+                        VERSION_STATUS_FIELD,
+                        IS_REVOCATION_FIELD,
+                        SUBMITTED_AT_FIELD,
+                    ],
+                    orderBy: [{ field: VERSION_FIELD, type: 'ascending' }],
+                },
+                options,
+            );
+            const parsed = sequenceEntryHistory.safeParse(data);
+            if (!parsed.success) {
+                throw lapisProblem(
+                    'Could not get sequence entry history',
+                    `Validation error for ${accession}: ${parsed.error.toString()}`,
+                    'lapisApi/getSequenceEntryHistory',
+                );
+            }
+            return parsed.data;
         },
-    ],
-    response: aggregatedResponse,
-});
 
-const nucleotideMutationsEndpoint = makeEndpoint({
-    method: 'post',
-    path: withSample('/nucleotideMutations'),
-    alias: 'nucleotideMutations',
-    parameters: [
-        {
-            name: 'request',
-            type: 'Body',
-            schema: mutationsRequest,
+        getSequenceEntryVersionDetails: (
+            { accessionVersion }: { accessionVersion: string },
+            options?: RequestOptions,
+        ) => endpoints.details(byAccessionVersion(accessionVersion), options),
+
+        getSequenceEntryVersionDetailsTsv: (
+            { accessionVersion }: { accessionVersion: string },
+            options?: RequestOptions,
+        ) => endpoints.detailsTsv(byAccessionVersion(accessionVersion), options),
+
+        getSequenceMutations: (
+            { accessionVersion, type }: { accessionVersion: string; type: BaseType },
+            options?: RequestOptions,
+        ) => endpoints.mutations({ ...byAccessionVersion(accessionVersion), type }, options),
+
+        getSequenceInsertions: (
+            { accessionVersion, type }: { accessionVersion: string; type: BaseType },
+            options?: RequestOptions,
+        ) =>
+            endpoints.insertions(
+                {
+                    ...byAccessionVersion(accessionVersion),
+                    type,
+                    orderBy: [
+                        { field: 'sequenceName', type: 'ascending' },
+                        { field: 'position', type: 'ascending' },
+                    ],
+                },
+                options,
+            ),
+
+        getSequenceFasta: (
+            { accessionVersion, fastaHeaderTemplate }: { accessionVersion: string; fastaHeaderTemplate?: string },
+            options?: RequestOptions,
+        ) =>
+            endpoints.sequencesFasta(
+                {
+                    request: byAccessionVersion(accessionVersion),
+                    endpoint: { kind: 'unalignedNucleotide' },
+                    fastaHeaderTemplate,
+                },
+                options,
+            ),
+
+        /** One FASTA with all segments; each header gets the segment (or its reference name) as suffix */
+        getMultiSegmentSequenceFasta: async (
+            {
+                accessionVersion,
+                segmentNames,
+                referenceNameMap,
+            }: { accessionVersion: string; segmentNames: string[]; referenceNameMap?: Record<string, string> },
+            options?: RequestOptions,
+        ) => {
+            const segmentFastas = await Promise.all(
+                segmentNames.map((name) =>
+                    endpoints.sequencesFasta(
+                        {
+                            request: byAccessionVersion(accessionVersion),
+                            endpoint: { kind: 'unalignedNucleotide', name },
+                        },
+                        options,
+                    ),
+                ),
+            );
+            return segmentFastas
+                .map((fasta, i) => {
+                    const parsed = parseFasta(fasta);
+                    if (parsed.length === 0) {
+                        return '';
+                    }
+                    const segment = segmentNames[i];
+                    return fastaEntryToString([
+                        {
+                            name: `${parsed[0].name}_${referenceNameMap?.[segment] ?? segment}`,
+                            sequence: parsed[0].sequence,
+                        },
+                    ]);
+                })
+                .join('');
         },
-    ],
-    response: mutationsResponse,
-});
+    };
+}
 
-const aminoAcidMutationsEndpoint = makeEndpoint({
-    method: 'post',
-    path: withSample('/aminoAcidMutations'),
-    alias: 'aminoAcidMutations',
-    parameters: [
-        {
-            name: 'request',
-            type: 'Body',
-            schema: mutationsRequest,
-        },
-    ],
-    response: mutationsResponse,
-});
-
-const nucleotideInsertionsEndpoint = makeEndpoint({
-    method: 'post',
-    path: withSample('/nucleotideInsertions'),
-    alias: 'nucleotideInsertions',
-    parameters: [
-        {
-            name: 'request',
-            type: 'Body',
-            schema: lapisBaseRequest,
-        },
-    ],
-    response: insertionsResponse,
-});
-
-const aminoAcidInsertionsEndpoint = makeEndpoint({
-    method: 'post',
-    path: withSample('/aminoAcidInsertions'),
-    alias: 'aminoAcidInsertions',
-    parameters: [
-        {
-            name: 'request',
-            type: 'Body',
-            schema: lapisBaseRequest,
-        },
-    ],
-    response: insertionsResponse,
-});
-
-const alignedNucleotideSequencesEndpoint = makeEndpoint({
-    method: 'post',
-    path: withSample('/alignedNucleotideSequences'),
-    alias: 'alignedNucleotideSequences',
-    immutable: true,
-    parameters: [
-        {
-            name: 'request',
-            type: 'Body',
-            schema: sequenceRequest,
-        },
-    ],
-    response: z.string(),
-});
-
-const alignedNucleotideSequencesMultiSegmentEndpoint = makeEndpoint({
-    method: 'post',
-    path: withSample('/alignedNucleotideSequences/:segment'),
-    alias: 'alignedNucleotideSequencesMultiSegment',
-    immutable: true,
-    parameters: [
-        {
-            name: 'request',
-            type: 'Body',
-            schema: sequenceRequest,
-        },
-    ],
-    response: z.string(),
-});
-
-const unalignedNucleotideSequencesMultiSegmentEndpoint = makeEndpoint({
-    method: 'post',
-    path: withSample('/unalignedNucleotideSequences/:segment'),
-    alias: 'unalignedNucleotideSequencesMultiSegment',
-    immutable: true,
-    parameters: [
-        {
-            name: 'request',
-            type: 'Body',
-            schema: sequenceRequest,
-        },
-    ],
-    response: z.string(),
-});
-
-const unalignedNucleotideSequencesEndpoint = makeEndpoint({
-    method: 'post',
-    path: withSample('/unalignedNucleotideSequences'),
-    alias: 'unalignedNucleotideSequences',
-    immutable: true,
-    parameters: [
-        {
-            name: 'request',
-            type: 'Body',
-            schema: sequenceRequest,
-        },
-    ],
-    response: z.string(),
-});
-
-const alignedAminoAcidSequencesEndpoint = makeEndpoint({
-    method: 'post',
-    path: withSample('/alignedAminoAcidSequences/:gene'),
-    alias: 'alignedAminoAcidSequences',
-    immutable: true,
-    parameters: [
-        {
-            name: 'request',
-            type: 'Body',
-            schema: sequenceRequest,
-        },
-    ],
-    response: z.string(),
-});
-
-const lineageDefinitionEndpoint = makeEndpoint({
-    method: 'get',
-    path: withSample('/lineageDefinition/:column'),
-    alias: 'lineageDefinition',
-    immutable: true,
-    response: lineageDefinition,
-});
-
-export const lapisApi = makeApi([
-    detailsEndpoint,
-    aggregatedEndpoint,
-    nucleotideMutationsEndpoint,
-    aminoAcidMutationsEndpoint,
-    nucleotideInsertionsEndpoint,
-    aminoAcidInsertionsEndpoint,
-    alignedNucleotideSequencesEndpoint,
-    alignedNucleotideSequencesMultiSegmentEndpoint,
-    unalignedNucleotideSequencesEndpoint,
-    unalignedNucleotideSequencesMultiSegmentEndpoint,
-    alignedAminoAcidSequencesEndpoint,
-    lineageDefinitionEndpoint,
-]);
+export type LapisApi = ReturnType<typeof lapisApi>;
