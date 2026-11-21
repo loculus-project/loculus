@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import ExcelJS from 'exceljs';
+import ExcelJS from 'devextreme-exceljs-fork';
 
 import { cleanOrganism } from '../../../../components/Navigation/cleanOrganism';
 import type { UploadAction } from '../../../../components/Submission/DataUploadForm.tsx';

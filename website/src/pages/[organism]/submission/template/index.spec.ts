@@ -1,5 +1,5 @@
 import type { APIContext } from 'astro';
-import ExcelJS from 'exceljs';
+import ExcelJS from 'devextreme-exceljs-fork';
 import JSZip from 'jszip';
 import { describe, expect, test, vi } from 'vitest';
 
