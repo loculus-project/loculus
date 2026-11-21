@@ -269,3 +269,63 @@ def test_median_read_length_reports_a_truncated_gzip_as_a_submission_error(tmp_p
         deacon_module.median_read_length(reads, "reads.fastq.gz")
     assert "truncated" in exc_info.value.error.message
     assert FALSE_POSITIVE_HINT in exc_info.value.error.message
+
+
+def _breadth_config() -> Config:
+    return _config().model_copy(update={"deacon_measure_host_breadth": True})
+
+
+@pytest.mark.usefixtures("deacon_index")
+def test_host_breadth_counts_each_host_locus_once(tmp_path):
+    """bp_out grows with every copy of a host read; the breadth does not."""
+    host_reads = _parse_fastq_records(FIXTURES_DIR / "test_small_1.fastq")
+    breadths = {}
+    bp_out = {}
+    for name, records in {
+        "one_locus": [host_reads[0]] * 3,
+        "three_loci": host_reads[:3],
+    }.items():
+        data_dir = tmp_path / name
+        data_dir.mkdir()
+        reads = data_dir / "reads.fastq.gz"
+        _write_fastq_gz(reads, records)
+        summary = deacon_module.run_deacon_filter(
+            {"reads.fastq.gz": reads}, str(data_dir), _breadth_config()
+        )
+        bp_out[name] = summary.bp_out
+        breadths[name] = deacon_module.measure_host_breadth(
+            str(data_dir), _breadth_config()
+        )
+
+    single = tmp_path / "single"
+    single.mkdir()
+    reads = single / "reads.fastq.gz"
+    _write_fastq_gz(reads, [host_reads[0]])
+    deacon_module.run_deacon_filter(
+        {"reads.fastq.gz": reads}, str(single), _breadth_config()
+    )
+    single_breadth = deacon_module.measure_host_breadth(str(single), _breadth_config())
+
+    assert single_breadth is not None
+    assert single_breadth > 0
+    assert breadths["one_locus"] == single_breadth
+    assert breadths["three_loci"] > single_breadth
+    assert bp_out["one_locus"] == 3 * len(host_reads[0][0])
+
+
+@pytest.mark.usefixtures("deacon_index")
+def test_host_breadth_failure_does_not_fail_the_submission(tmp_path):
+    # No host reads file was written, so `deacon index build` fails.
+    assert deacon_module.measure_host_breadth(str(tmp_path), _breadth_config()) is None
+
+
+@pytest.mark.usefixtures("deacon_index")
+def test_host_reads_are_not_written_unless_breadth_is_measured(tmp_path):
+    host_reads = _parse_fastq_records(FIXTURES_DIR / "test_small_1.fastq")[:3]
+    reads = tmp_path / "reads.fastq.gz"
+    _write_fastq_gz(reads, host_reads)
+    summary = deacon_module.run_deacon_filter(
+        {"reads.fastq.gz": reads}, str(tmp_path), _config()
+    )
+    assert summary.seqs_out == 3
+    assert not (tmp_path / deacon_module.HOST_READS_FILE_NAME).exists()

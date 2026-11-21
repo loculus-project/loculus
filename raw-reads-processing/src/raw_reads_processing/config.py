@@ -29,6 +29,10 @@ class Config(BaseModel):
         0.05  # relative proportion of k-mers in a read that need to map to index
     )
 
+    # Log how many distinct host minimizers the matched reads contain. Diagnostic
+    # only. Loads the host index a second time, so needs memory headroom for it.
+    deacon_measure_host_breadth: bool = False
+
 
 def get_config(config_file: str | Path) -> Config:
     with open("config/defaults.yaml", encoding="utf-8") as f:
