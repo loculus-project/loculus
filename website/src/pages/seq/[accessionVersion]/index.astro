@@ -4,6 +4,7 @@ import { SequenceDetailsTableResultType } from './getSequenceDetailsTableData';
 import { SequenceDataUI } from '../../../components/SequenceDetailsPage/SequenceDataUI.tsx';
 import SequencesBanner from '../../../components/SequenceDetailsPage/SequencesBanner.tsx';
 import SequencesDataTableTitle from '../../../components/SequenceDetailsPage/SequencesDataTableTitle.astro';
+import { isRestrictedUse } from '../../../components/SequenceDetailsPage/isRestrictedUse';
 import ErrorBox from '../../../components/common/ErrorBox.tsx';
 import { getSchema, getRuntimeConfig, getWebsiteConfig, getReferenceGenomes, seqSetsAreEnabled } from '../../../config';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
@@ -82,6 +83,10 @@ const sequenceFlaggingConfig = getWebsiteConfig().sequenceFlagging;
                         showDownload={showDownload}
                         showFastaDownloadButton={
                             showDownload && getSegmentNames(getReferenceGenomes(organism)).length > 0
+                        }
+                        isRestricted={
+                            result.type === SequenceDetailsTableResultType.TABLE_DATA &&
+                            isRestrictedUse(result.tableData)
                         }
                     />
                     {result.type === SequenceDetailsTableResultType.TABLE_DATA && (

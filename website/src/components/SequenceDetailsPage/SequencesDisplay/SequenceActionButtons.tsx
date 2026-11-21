@@ -1,16 +1,19 @@
 import { type FC, useState } from 'react';
 
 import { Button } from '../../common/Button';
+import { useRestrictedUseDownloadConfirmation } from '../../common/RestrictedUseDownloadDialog';
 import IcBaselineDownload from '~icons/ic/baseline-download';
 import MaterialSymbolsContentCopyOutline from '~icons/material-symbols/content-copy-outline';
 
 type Props = {
     sequenceName: string;
     sequence: string;
+    isRestricted?: boolean;
 };
 
-export const SequenceActionButtons: FC<Props> = ({ sequenceName, sequence }) => {
+export const SequenceActionButtons: FC<Props> = ({ sequenceName, sequence, isRestricted = false }) => {
     const [copied, setCopied] = useState(false);
+    const { requestDownload, confirmationDialog } = useRestrictedUseDownloadConfirmation(isRestricted);
 
     const fastaContent = `>${sequenceName}\n${sequence}`;
 
@@ -53,13 +56,14 @@ export const SequenceActionButtons: FC<Props> = ({ sequenceName, sequence }) => 
                 size='sm'
                 variant='ghost'
                 className='text-gray-600 hover:text-primary-600 hover:bg-gray-100 bg-white/80'
-                onClick={handleDownload}
+                onClick={() => requestDownload(handleDownload)}
                 title='Download sequence as FASTA'
                 data-testid='download-sequence-button'
             >
                 <IcBaselineDownload className='h-4 w-4' />
                 <span className='ml-1'>Download</span>
             </Button>
+            {confirmationDialog}
         </div>
     );
 };
