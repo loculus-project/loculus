@@ -91,6 +91,12 @@ stateDiagram-v2
 
 For how revisions are handled, see [Revisions](#revisions).
 
+## Raw reads formats
+
+Raw reads accept one BAM or one/two gzip-compressed FASTQ files. Webin receives the
+original files through a `BAM` or `FASTQ` manifest entry. See
+[BAM limitations](../raw-reads-processing/README.md#bam-limitations).
+
 ## Cronjob
 
 ### get_ena_submission_list

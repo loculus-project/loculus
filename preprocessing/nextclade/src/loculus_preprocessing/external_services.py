@@ -256,7 +256,7 @@ class FileProcessingService:
     def __init__(
         self,
         raw_reads_processing_service_url: str | None,
-        timeout_seconds: int = 300,
+        timeout_seconds: int = 600,
     ):
         self.raw_reads_processing_service_url = raw_reads_processing_service_url
         self.timeout_seconds = timeout_seconds

@@ -12,6 +12,7 @@ import requests
 
 from .config import Config
 from .loculus_models import Group, GroupDetails
+from .raw_reads_files import canonical_raw_reads_extension, raw_reads_format
 
 logger = logging.getLogger(__name__)
 
@@ -216,29 +217,6 @@ def fetch_released_entries(config: Config, organism: str) -> Iterator[dict[str, 
             }
 
 
-# Kept in sync with ACCEPTED_FASTQ_EXTENSIONS in
-# raw-reads-processing/src/raw_reads_processing/file_format_validation.py, which rejects
-# anything else at submission time. Separate deployables, hence the duplication.
-ACCEPTED_FASTQ_EXTENSIONS = (".fastq.gz", ".fq.gz")
-
-
-def canonical_fastq_extension(file_name: str) -> str:
-    """Return the accepted FASTQ extension of `file_name`, lower-cased.
-
-    Names are accepted case-insensitively upstream, but webin-cli compares suffixes with
-    String.endsWith, so what we hand it must be lower-cased.
-    """
-    lowered = file_name.lower()
-    for extension in ACCEPTED_FASTQ_EXTENSIONS:
-        if lowered.endswith(extension):
-            return extension
-    msg = (
-        f"Raw read file '{file_name}' does not end in an accepted FASTQ extension "
-        f"({', '.join(ACCEPTED_FASTQ_EXTENSIONS)})"
-    )
-    raise RuntimeError(msg)
-
-
 def download_file(url: str, path: str, timeout: float) -> None:
     """
     Stream the contents of `url` into `path`.
@@ -258,11 +236,11 @@ def download_file(url: str, path: str, timeout: float) -> None:
             f.writelines(response.iter_content(chunk_size=chunk_size))
 
 
-def download_fastq_files(
+def download_raw_reads_files(
     config: Config, metadata: dict[str, Any], accession: str, dir: str
 ) -> list[str]:
     """
-    Download the fastq files listed under the `rawreads` metadata field to local disk
+    Download the raw read files listed under the `rawreads` metadata field to local disk
     and return their paths.
 
     `rawreads` is a JSON-encoded string of the form
@@ -274,22 +252,27 @@ def download_fastq_files(
         raise RuntimeError(msg)
     files = json.loads(raw_reads)
 
-    os.makedirs(dir, exist_ok=True)
-
-    # Validate every name to prevent unnecessary downloads.
-    extensions = [canonical_fastq_extension(entry["name"]) for entry in files]
-
-    fastq_files = []
-    for file_entry, file_extension in zip(files, extensions, strict=True):
+    try:
+        raw_reads_format([entry["name"] for entry in files])
+    except ValueError as e:
+        raise RuntimeError(str(e)) from e
+    paths = []
+    for file_entry in files:
         # Use the fileId to avoid any potential security issues as name is supplied by the user
         file_name = os.path.basename(file_entry["fileId"])
+        if file_name in {"", ".", ".."} or any(c in file_name for c in "\t\r\n\0"):
+            msg = f"Invalid raw read fileId for accession {accession}"
+            raise RuntimeError(msg)
+        file_extension = canonical_raw_reads_extension(file_entry["name"])
+        paths.append(os.path.join(dir, file_name + file_extension))
+    if len(set(paths)) != len(paths):
+        msg = f"Raw read files for accession {accession} resolve to duplicate local paths"
+        raise RuntimeError(msg)
+
+    os.makedirs(dir, exist_ok=True)
+    for file_entry, file_path in zip(files, paths, strict=True):
         logger.info(
-            f"Starting download of {file_entry['name']} to {file_name} for accession {accession}"
+            f"Starting download of {file_entry['name']} to {file_path} for accession {accession}"
         )
-        file_path = os.path.join(dir, file_name + file_extension)
-
         download_file(file_entry["url"], file_path, config.s3_request_timeout_seconds)
-
-        fastq_files.append(file_path)
-
-    return fastq_files
+    return paths

@@ -23,9 +23,11 @@ from raw_reads_processing.errors import (
 def _config() -> Config:
     return Config(
         log_level="DEBUG",
+        processing_timeout_seconds=30,
         s3_request_timeout_seconds=10,
         read_validation_timeout_seconds=10,
         deacon_filter_timeout_seconds=10,
+        bam_preparation_timeout_seconds=10,
         deacon_max_host_reads_proportion=0.05,
         deacon_max_host_bp=1000,
     )
@@ -72,7 +74,7 @@ def mock_downstream(monkeypatch):
     monkeypatch.setattr(
         process_files,
         "download_file",
-        lambda config, file, save_path: save_path.write_bytes(
+        lambda config, file, save_path, deadline: save_path.write_bytes(
             Path(file.url).read_bytes()
         ),
     )

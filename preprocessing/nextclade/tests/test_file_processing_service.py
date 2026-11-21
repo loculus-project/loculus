@@ -2,8 +2,10 @@
 
 from unittest.mock import MagicMock, patch
 
+import pytest
 import requests
 
+from loculus_preprocessing.config import Config
 from loculus_preprocessing.datatypes import (
     AnnotationSource,
     AnnotationSourceType,
@@ -13,6 +15,18 @@ from loculus_preprocessing.datatypes import (
 from loculus_preprocessing.external_services import FileProcessingService
 
 SERVICE_URL = "http://raw-reads-processing.example"
+
+
+@pytest.mark.parametrize("service_url, batch_size", [(None, 100), (SERVICE_URL, 1)])
+def test_raw_reads_use_single_entry_batches(service_url: str | None, batch_size: int) -> None:
+    config = Config(
+        batch_size=100,
+        raw_reads_processing_service_url=service_url,
+        raw_reads_processing_service_timeout_seconds=45,
+    )
+
+    assert config.batch_size == batch_size
+    assert config._file_processing_service.timeout_seconds == 45  # noqa: PLR2004
 
 
 def make_response(status_code: int, json_data: dict) -> MagicMock:

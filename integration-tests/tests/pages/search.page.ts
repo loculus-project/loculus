@@ -264,7 +264,7 @@ export class SearchPage {
         await this.openModalByRoleAndName(role, name);
     }
 
-    async checkAllFileContents(fileData: Record<string, string>) {
+    async checkAllFileContents(fileData: Record<string, string | Buffer>) {
         for (const [fileName, fileContent] of Object.entries(fileData)) {
             await getFromLinkTargetAndAssertContent(
                 this.page.getByRole('link', { name: fileName }),
@@ -277,7 +277,7 @@ export class SearchPage {
     async checkFileContentInModal(
         role: 'link' | 'cell',
         name: string | RegExp,
-        fileData: Record<string, string>,
+        fileData: Record<string, string | Buffer>,
     ) {
         await this.waitForAndOpenModalByRoleAndName(role, name);
         await this.checkAllFileContents(fileData);

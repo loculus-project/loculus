@@ -36,6 +36,7 @@ from .ena_types import (
     RawReadsManifest,
 )
 from .notifications import SlackConfig, notify, send_slack_notification, slack_conn_init
+from .raw_reads_files import RawReadsFormat, raw_reads_format
 from .submission_db_helper import (
     RawReadsTableEntry,
     SubmissionTableEntry,
@@ -109,21 +110,22 @@ def create_manifest_object(
     sample_accession: str,
     study_accession: str,
     submission_row: SubmissionTableEntry,
-    fastq_files: list[str],
+    raw_read_files: list[str],
     random_alias: bool = False,
 ) -> RawReadsManifest:
     """
     Create an RawReadsManifest object for an entry in the raw reads table using:
     - the corresponding ena_sample_accession and bioproject_accession
     - the organism metadata from the config file
-    - the already-downloaded fastq files passed in as `fastq_files`
+    - the already-downloaded files passed in as `raw_read_files`
 
     If random_alias=True add a timestamp to the alias suffix to allow for multiple
     submissions of the same manifest for testing.
     """
-    if len(fastq_files) == 0:
-        msg = f"No fastq files found for accession {submission_row.accession}"
+    if not raw_read_files:
+        msg = f"No raw read files found for accession {submission_row.accession}"
         raise RuntimeError(msg)
+    file_format = raw_reads_format(raw_read_files)
 
     # We must create a new run read accession for each revision that changes the files
     alias = get_alias(
@@ -143,7 +145,12 @@ def create_manifest_object(
     insert_size_ = resolve_manifest_field(
         raw_reads_manifest_fields_mapping["insert_size"], metadata
     )
-    insert_size = int(insert_size_) if len(fastq_files) > 1 and insert_size_ else None
+    # One BAM can contain paired reads.
+    insert_size = (
+        int(insert_size_)
+        if insert_size_ and (file_format == RawReadsFormat.BAM or len(raw_read_files) > 1)
+        else None
+    )
     library_source = LibrarySource.from_value(
         resolve_manifest_field(raw_reads_manifest_fields_mapping["library_source"], metadata),
         required=True,
@@ -169,7 +176,8 @@ def create_manifest_object(
             library_selection=library_selection,
             library_strategy=library_strategy,
             insert_size=insert_size,
-            fastq=fastq_files,
+            fastq=raw_read_files if file_format == RawReadsFormat.FASTQ else None,
+            bam=raw_read_files[0] if file_format == RawReadsFormat.BAM else None,
         )
     except Exception as e:
         # log traceback for better debugging
@@ -430,7 +438,7 @@ def update_with_existing_runrecord(db_engine: Engine, row: SubmissionTableEntry,
 def raw_reads_table_create(db_engine: Engine, config: Config, slack_config: SlackConfig):  # noqa: PLR0915
     """
     1. Find all entries in raw_reads_table in state READY
-    2. Create temporary files: download fastq files, manifest_file
+    2. Create temporary files: download raw read files, manifest_file
     3. Update raw_reads_table to state SUBMITTING (only proceed if update succeeds)
     4. If (create_ena_assembly succeeds): update state to SUBMITTED with results
     5. Else update state to HAS_ERRORS with error messages
@@ -481,11 +489,11 @@ def raw_reads_table_create(db_engine: Engine, config: Config, slack_config: Slac
                 else None
             )
 
-        # Downloaded fastq files and the manifest are written under tmp_dir, which is removed
+        # Downloaded raw read files and the manifest are written under tmp_dir, which is removed
         # on every exit from this block
         with tempfile.TemporaryDirectory() as tmp_dir:
             try:
-                fastq_files = call_loculus.download_fastq_files(
+                raw_read_files = call_loculus.download_raw_reads_files(
                     config, submission_row.seq_metadata, submission_row.accession, tmp_dir
                 )
                 manifest_object = create_manifest_object(
@@ -493,7 +501,7 @@ def raw_reads_table_create(db_engine: Engine, config: Config, slack_config: Slac
                     sample_accession,
                     study_accession,
                     submission_row,
-                    fastq_files,
+                    raw_read_files,
                     random_alias=config.random_alias,
                 )
                 manifest_file = create_manifest(

@@ -167,6 +167,10 @@ class Config(BaseModel):
         if not self.backend_host:  # Set here so we can use organism
             self.backend_host = f"http://127.0.0.1:8079/{self.organism}"
 
+        if self.raw_reads_processing_service_url:
+            # Avoid queuing entries while their presigned file URLs expire.
+            self.batch_size = 1
+
         self._file_processing_service = FileProcessingService(
             self.raw_reads_processing_service_url, self.raw_reads_processing_service_timeout_seconds
         )
