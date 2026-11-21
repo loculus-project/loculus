@@ -61,10 +61,15 @@ jobs:
             uv pip install --system .
         shell: micromamba-shell {0}
         working-directory: ena-submission
+      - name: Verify ENA development routing without submissions
+        run: pytest test/test_ena_test_mode.py
+        shell: micromamba-shell {0}
+        working-directory: ena-submission
       - name: Run tests
         run: |
             # The unit tests are run in ena-submission-unit-tests.yaml
             pytest \
+              --ignore=./test/test_ena_test_mode.py \
               --ignore=./test/test_ena_submission.py \
               --ignore=./test/test_get_ena_submission_list.py
         shell: micromamba-shell {0}
