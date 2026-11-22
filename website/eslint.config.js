@@ -29,31 +29,34 @@ const importRulesAstro = {
     'import/no-deprecated': 'off',
 };
 
+const headlessUiImports = [
+    {
+        name: '@headlessui/react',
+        importNames: ['Combobox'],
+        message:
+            'Import Combobox from "src/components/common/headlessui/Combobox" instead. ' +
+            'The wrapped version automatically disables the component until hydration completes, ' +
+            'preventing race conditions in Playwright tests.',
+    },
+    {
+        name: '@headlessui/react',
+        importNames: ['Input'],
+        message:
+            'Import Input from "src/components/common/headlessui/Input" instead. ' +
+            'The wrapped version automatically disables the component until hydration completes, ' +
+            'preventing race conditions in Playwright tests.',
+    },
+];
+
+const axiosImport = {
+    name: 'axios',
+    message:
+        'Send requests with sendRequest from src/services/apiRequest.ts, which validates responses and throws ApiError.',
+};
+
 const enableFromEslint = {
     'no-console': 'error',
-    'no-restricted-imports': [
-        'error',
-        {
-            paths: [
-                {
-                    name: '@headlessui/react',
-                    importNames: ['Combobox'],
-                    message:
-                        'Import Combobox from "src/components/common/headlessui/Combobox" instead. ' +
-                        'The wrapped version automatically disables the component until hydration completes, ' +
-                        'preventing race conditions in Playwright tests.',
-                },
-                {
-                    name: '@headlessui/react',
-                    importNames: ['Input'],
-                    message:
-                        'Import Input from "src/components/common/headlessui/Input" instead. ' +
-                        'The wrapped version automatically disables the component until hydration completes, ' +
-                        'preventing race conditions in Playwright tests.',
-                },
-            ],
-        },
-    ],
+    'no-restricted-imports': ['error', { paths: [...headlessUiImports, axiosImport] }],
     'no-restricted-syntax': [
         'error',
         {
@@ -189,6 +192,12 @@ export default defineConfig(
             react: {
                 version: 'detect',
             },
+        },
+    },
+    {
+        files: ['src/services/**', 'src/clientLogger.ts', '**/*.spec.ts', '**/*.spec.tsx', 'vitest.setup.ts'],
+        rules: {
+            'no-restricted-imports': ['error', { paths: headlessUiImports }],
         },
     },
     {

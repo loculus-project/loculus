@@ -16,7 +16,7 @@ export const seqSet = z.object({
     seqSetDOI: z.string().nullish(),
     seqSetVersion: z.number(),
     name: z.string(),
-    description: z.string().optional(),
+    description: z.string().nullish(),
     createdAt: z.string(),
     createdBy: z.string(),
 });
