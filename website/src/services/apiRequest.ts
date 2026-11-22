@@ -52,24 +52,55 @@ export function defaultTimeout(): number {
     return typeof window === 'undefined' ? SERVER_SIDE_TIMEOUT_MS : 0;
 }
 
+export type ApiErrorKind = 'http' | 'network' | 'timeout' | 'aborted' | 'validation';
+
 /**
- * Thrown when the server responds successfully, but the response body doesn't match the expected schema.
+ * The only error `sendRequest` throws. It holds no headers, URLs, query strings or request bodies, so it is safe to log.
+ * Its `message` is meant for users: the problem detail if there is one, else a short description.
  */
-export class ResponseValidationError extends Error {
+export class ApiError extends Error {
+    override readonly name = 'ApiError';
+    declare readonly status?: number;
+    declare readonly problem?: ProblemDetail;
+    declare readonly requestId?: string;
+    declare readonly cause?: z.ZodError;
+
     constructor(
-        public readonly request: string,
-        public readonly zodError: z.ZodError,
+        readonly kind: ApiErrorKind,
+        /** Method and path, e.g. `GET /groups/1` */
+        readonly request: string,
+        details: Pick<ApiError, 'status' | 'problem' | 'requestId' | 'cause'> = {},
     ) {
-        super(`Unexpected response from ${request}: ${zodError.message}`);
-        this.name = 'ResponseValidationError';
+        const { problem, status } = details;
+        super(problem !== undefined ? problem.detail || problem.title : kindMessage(kind, status));
+        Object.assign(this, details);
+    }
+
+    get retryable(): boolean {
+        if (this.kind === 'http') {
+            return this.status === 429 || (this.status ?? 0) >= 500;
+        }
+        return this.kind === 'network' || this.kind === 'timeout';
     }
 }
+
+const kindMessages: Record<Exclude<ApiErrorKind, 'http'>, string> = {
+    network: 'Network error, no response received',
+    timeout: 'The request timed out',
+    aborted: 'The request was cancelled',
+    validation: 'Unexpected response from the server',
+};
+
+const kindMessage = (kind: ApiErrorKind, status?: number) =>
+    kind === 'http' ? `Request failed with status code ${status}` : kindMessages[kind];
+
+export const isApiError = (error: unknown): error is ApiError => error instanceof ApiError;
 
 /**
  * Sends a request and validates the response body against `responseSchema`.
  * Without a `responseSchema` the response body is ignored.
  *
- * Throws an `AxiosError` on HTTP/network errors and a `ResponseValidationError` if the response doesn't match.
+ * Throws an `ApiError` for every failure, including a response that doesn't match.
  */
 export async function sendRequest<T>(
     baseUrl: string,
@@ -90,6 +121,7 @@ export async function sendRequest<T>(
         responseSchema,
     }: ApiRequest & { responseSchema?: z.ZodType<T> },
 ): Promise<T | void> {
+    const requestName = `${method.toUpperCase()} ${path.split('?')[0]}`;
     let response: AxiosResponse<unknown>;
     try {
         response = await axios.request<unknown>({
@@ -104,8 +136,7 @@ export async function sendRequest<T>(
             timeout,
         });
     } catch (error) {
-        await parseBlobErrorBody(error);
-        throw error;
+        throw await toApiError(error, requestName);
     }
 
     if (responseSchema === undefined) {
@@ -113,25 +144,56 @@ export async function sendRequest<T>(
     }
     const parsed = responseSchema.safeParse(response.data);
     if (!parsed.success) {
-        throw new ResponseValidationError(`${method.toUpperCase()} ${path}`, parsed.error);
+        throw new ApiError('validation', requestName, { cause: parsed.error });
     }
     return parsed.data;
 }
 
-/**
- * With `responseType: 'blob'`, axios also returns error bodies as a `Blob`.
- * Turn them back into JSON (or text) so that `getErrorMessage` can read the problem detail.
- */
-async function parseBlobErrorBody(error: unknown) {
-    if (!isAxiosError(error) || !(error.response?.data instanceof Blob)) {
-        return;
+async function toApiError(error: unknown, request: string): Promise<ApiError> {
+    if (axios.isCancel(error)) {
+        return new ApiError('aborted', request);
     }
-    const text = await error.response.data.text();
+    if (!isAxiosError(error)) {
+        throw error;
+    }
+    if (error.response === undefined) {
+        const timedOut = error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT';
+        return new ApiError(timedOut ? 'timeout' : 'network', request);
+    }
+    const { status, headers } = error.response;
+    const data = await readBody(error.response.data);
+    const header = (name: string) => (typeof headers[name] === 'string' ? headers[name] : undefined);
+    const isText = typeof data === 'string' && !(header('content-type') ?? '').includes('html');
+    const fallbackDetail = header('www-authenticate') ?? (isText ? data.trim().slice(0, 500) : '');
+    const problem =
+        parseProblem(data) ??
+        (fallbackDetail !== ''
+            ? { type: 'about:blank', title: kindMessage('http', status), status, detail: fallbackDetail }
+            : undefined);
+    return new ApiError('http', request, { status, problem, requestId: header('x-request-id') });
+}
+
+/** With `responseType: 'blob'`, axios also returns error bodies as a `Blob`. */
+async function readBody(data: unknown): Promise<unknown> {
+    if (!(data instanceof Blob)) {
+        return data;
+    }
+    const text = await data.text();
     try {
-        error.response.data = JSON.parse(text);
+        return JSON.parse(text) as unknown;
     } catch {
-        error.response.data = text;
+        return text;
     }
+}
+
+/** Handles both the backend format (problem detail as the body) and the LAPIS format (wrapped in `error`). */
+function parseProblem(data: unknown): ProblemDetail | undefined {
+    const topLevel = problemDetail.safeParse(data);
+    if (topLevel.success) {
+        return topLevel.data;
+    }
+    const hasError = typeof data === 'object' && data !== null && 'error' in data;
+    return hasError ? problemDetail.safeParse(data.error).data : undefined;
 }
 
 /**
@@ -141,46 +203,25 @@ async function parseBlobErrorBody(error: unknown) {
 export const unvalidated = <T>(): z.ZodType<T> => z.custom<T>();
 
 /**
- * Converts an object to multipart/form-data. Values that aren't files are converted to strings.
+ * Converts an object to multipart/form-data. Values that aren't files are converted to strings;
+ * `undefined` and `null` values are skipped.
  */
 export function toFormData(data: Record<string, unknown>): FormData {
     const formData = new FormData();
-    for (const [key, value] of Object.entries(data)) {
-        formData.append(key, value instanceof Blob ? value : String(value));
-    }
+    Object.entries(data)
+        .filter(([, value]) => value !== undefined && value !== null)
+        .forEach(([key, value]) => formData.append(key, value instanceof Blob ? value : String(value)));
     return formData;
 }
 
-/**
- * Returns the problem detail from an HTTP error response, if there is one.
- * Handles both the backend format (problem detail as the body) and the LAPIS format (wrapped in `error`).
- */
-export function extractProblemDetail(error: unknown): ProblemDetail | undefined {
-    if (!isAxiosError(error) || error.response === undefined) {
-        return undefined;
-    }
-    const data: unknown = error.response.data;
-
-    const topLevel = problemDetail.safeParse(data);
-    if (topLevel.success) {
-        return topLevel.data;
-    }
-
-    if (typeof data === 'object' && data !== null && 'error' in data) {
-        const nested = problemDetail.safeParse(data.error);
-        if (nested.success) {
-            return nested.data;
-        }
-    }
-    return undefined;
+/** The HTTP status of a failed request, or `undefined` if there was no response. */
+export function getErrorStatus(error: unknown): number | undefined {
+    return isApiError(error) ? error.status : undefined;
 }
 
-/**
- * Returns the HTTP status code of an error response, or `undefined` if the error isn't an HTTP error response
- * (e.g. a network error or a `ResponseValidationError`). Use this instead of inspecting axios errors in components.
- */
-export function getErrorStatus(error: unknown): number | undefined {
-    return isAxiosError(error) ? error.response?.status : undefined;
+/** Whether a failed request may succeed when retried: network errors, timeouts, HTTP 5xx and 429. */
+export function isRetryable(error: unknown): boolean {
+    return isApiError(error) && error.retryable;
 }
 
 /**
@@ -188,21 +229,8 @@ export function getErrorStatus(error: unknown): number | undefined {
  * Use it as `Failed to do X: ${getErrorMessage(error)}`.
  */
 export function getErrorMessage(error: unknown): string {
-    const problem = extractProblemDetail(error);
-    if (problem !== undefined) {
-        return problem.detail !== '' ? problem.detail : problem.title;
-    }
-    if (isAxiosError(error)) {
-        return error.response === undefined ? `${error.message}; no response received` : error.message;
-    }
-    if (error instanceof ResponseValidationError) {
-        return `Unexpected response from ${error.request}`;
-    }
     if (error instanceof Error) {
         return error.message;
     }
-    if (typeof error === 'string') {
-        return error;
-    }
-    return 'Unknown error';
+    return typeof error === 'string' ? error : 'Unknown error';
 }

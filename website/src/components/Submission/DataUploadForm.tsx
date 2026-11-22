@@ -22,7 +22,7 @@ import DataUseTermsSelector from '../../components/DataUseTerms/DataUseTermsSele
 import { useBackendMutation } from '../../hooks/useBackend.ts';
 import { SubmissionRouteUtils } from '../../routes/SubmissionRoute.ts';
 import { routes } from '../../routes/routes.ts';
-import { extractProblemDetail, getErrorMessage, getErrorStatus } from '../../services/apiRequest.ts';
+import { getErrorMessage, getErrorStatus, isApiError } from '../../services/apiRequest.ts';
 import { FILES_HEADER_PREFIX } from '../../settings.ts';
 import {
     type DataUseTermsOption,
@@ -662,7 +662,7 @@ function useSubmitFiles(
 function handleError(onError: (message: string) => void) {
     return (error: unknown) => {
         void logger.error(`Received error from backend: ${getErrorMessage(error)}`);
-        const problemDetail = extractProblemDetail(error);
+        const problemDetail = isApiError(error) ? error.problem : undefined;
         if (problemDetail !== undefined) {
             switch (getErrorStatus(error)) {
                 case 400:

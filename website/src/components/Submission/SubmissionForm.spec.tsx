@@ -289,7 +289,9 @@ describe('SubmitForm', () => {
         mockRequest.backend.submit(500, 'a weird, unexpected test error');
         mockRequest.backend.getGroupsOfUser();
 
-        await submitAndExpectErrorMessageContains('Received unexpected message from backend');
+        await submitAndExpectErrorMessageContains(
+            'Request failed with status code 500: a weird, unexpected test error',
+        );
     });
 
     test('should handle unprocessable entity error with proper error message', async () => {

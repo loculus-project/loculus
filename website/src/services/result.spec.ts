@@ -68,8 +68,8 @@ describe('withResult', () => {
             type: 'about:blank',
             title: 'Request failed with status code 503',
             status: 503,
-            detail: 'Unknown error from backend',
-            instance: '/admin/add-seqset-citation',
+            detail: 'Request failed with status code 503 (backend: POST /admin/add-seqset-citation)',
+            instance: 'POST /admin/add-seqset-citation',
         });
     });
 

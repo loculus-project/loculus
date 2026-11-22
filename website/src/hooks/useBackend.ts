@@ -12,7 +12,7 @@ export type BackendEndpoint = keyof BackendApi;
 export type BackendParams<K extends BackendEndpoint> = Parameters<BackendApi[K]>[0];
 export type BackendData<K extends BackendEndpoint> = Awaited<ReturnType<BackendApi[K]>>;
 
-/** Errors are `AxiosError`s for HTTP/network errors and `ResponseValidationError`s for unexpected response bodies */
+/** Request failures are `ApiError`s */
 export type BackendQueryOptions<K extends BackendEndpoint> = Omit<
     UseQueryOptions<BackendData<K>, Error>,
     'queryKey' | 'queryFn'

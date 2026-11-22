@@ -1,7 +1,6 @@
-import { type AxiosError, isAxiosError } from 'axios';
 import { err, ok, type Result } from 'neverthrow';
 
-import { extractProblemDetail, ResponseValidationError } from './apiRequest.ts';
+import { isApiError } from './apiRequest.ts';
 import type { ProblemDetail } from '../types/backend.ts';
 
 /**
@@ -68,18 +67,23 @@ export function toProblemDetail(
     if (error instanceof ProblemDetailError) {
         return error.problemDetail;
     }
-    if (error instanceof ResponseValidationError) {
-        logger.error(error.message);
-        return {
-            type: 'about:blank',
-            title: 'bad response',
-            status: 0,
-            detail: `Failed to parse ${serviceName} response: ${error.zodError.toString()}`,
-            instance: error.request,
-        };
-    }
-    if (isAxiosError(error)) {
-        return axiosErrorToProblemDetail(error, { logger, serviceName });
+    if (isApiError(error)) {
+        const { request, kind, status, requestId, problem } = error;
+        const message = `${serviceName} ${request} ${kind} ${status ?? '-'} ${requestId ?? '-'}: ${error.message}`;
+        if (kind === 'http' && !error.retryable) {
+            logger.info(message);
+        } else {
+            logger.error(error.cause ? `${message}: ${error.cause.message}` : message);
+        }
+        return (
+            problem ?? {
+                type: 'about:blank',
+                title: error.message,
+                status: status ?? 0,
+                detail: `${error.message} (${serviceName}: ${request})`,
+                instance: request,
+            }
+        );
     }
     logger.error(`Unknown error when calling ${serviceName}: ${String(error)}`);
     return {
@@ -89,50 +93,4 @@ export function toProblemDetail(
         detail: `Unknown error from ${serviceName}`,
         instance: 'unknown path',
     };
-}
-
-function axiosErrorToProblemDetail(
-    error: AxiosError,
-    { logger, serviceName }: { logger: ApiLogger; serviceName: string },
-): ProblemDetail {
-    const path = error.config?.url ?? 'unknown path';
-
-    if (error.response === undefined) {
-        logger.error(`Unknown error from ${serviceName}: ${JSON.stringify(error)}`);
-        return {
-            type: 'about:blank',
-            title: error.message,
-            status: 0,
-            detail: `Unknown error from ${serviceName}`,
-            instance: path,
-        };
-    }
-
-    if (error.response.status === 401) {
-        return {
-            type: 'about:blank',
-            title: 'Not authorized',
-            status: 401,
-            detail: (error.response.headers['www-authenticate'] as string | undefined) ?? 'Not authorized',
-            instance: path,
-        };
-    }
-
-    const requestIdHeader = error.response.headers['x-request-id'] as string | undefined;
-    const requestId = requestIdHeader !== undefined ? `(request id ${requestIdHeader}) ` : '';
-
-    const problemDetail = extractProblemDetail(error);
-    if (problemDetail === undefined) {
-        logger.error(`Unknown error from ${serviceName} ${requestId}: ${JSON.stringify(error.response.data)}`);
-        return {
-            type: 'about:blank',
-            title: error.message,
-            status: error.response.status,
-            detail: `Unknown error from ${serviceName}`,
-            instance: path,
-        };
-    }
-
-    logger.info(`${requestId}${error.message}: ${problemDetail.detail}`);
-    return problemDetail;
 }

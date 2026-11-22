@@ -1,7 +1,6 @@
 import { http } from 'msw';
 import { describe, expect, test } from 'vitest';
 
-import { extractProblemDetail } from './apiRequest.ts';
 import { backendApi } from './backendApi.ts';
 import { testConfig, testServer } from '../../vitest.setup.ts';
 import type { ProblemDetail } from '../types/backend.ts';
@@ -37,10 +36,6 @@ describe('validateSeqSetRecords', () => {
             ),
         );
 
-        const error = await createApi()
-            .validateSeqSetRecords(records)
-            .catch((error: unknown) => error);
-
-        expect(extractProblemDetail(error)).toEqual(problemDetail);
+        await expect(createApi().validateSeqSetRecords(records)).rejects.toMatchObject({ problem: problemDetail });
     });
 });

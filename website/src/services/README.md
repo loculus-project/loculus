@@ -8,7 +8,7 @@ server-side code (Astro pages, API routes) and from client-side code (React comp
 
 | Layer               | File                                             | What it does                                                                                                  |
 | ------------------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------- |
-| Request core        | `services/apiRequest.ts`                         | `sendRequest` (axios), `apiPath`, `getErrorMessage`, `getErrorStatus`                                         |
+| Request core        | `services/apiRequest.ts`                         | `sendRequest` (axios), `apiPath`, `ApiError`, `getErrorMessage`, `getErrorStatus`                             |
 | Endpoint catalogues | `services/backendApi.ts`, `services/lapisApi.ts` | Every endpoint, defined once, as a function that **throws** on errors                                         |
 | Server-side         | `services/serverApi.ts`, `services/result.ts`    | `serverBackendApi(token)`, `serverLapisApi(organism)`: the same endpoints, returning neverthrow **`Result`s** |
 | Client-side hooks   | `hooks/useBackend.ts`, `hooks/useLapis.ts`       | `useBackendQuery`, `useBackendMutation`, `useLapisQuery`, `useLapisMutation` on React Query                   |
@@ -145,10 +145,13 @@ try {
 
 ### Errors
 
+- `sendRequest` throws an `ApiError` for every failure: `kind` (`http`, `network`, `timeout`, `aborted` or
+  `validation`), `request` (e.g. `GET /groups/1`), `status`, `problem` (the backend or LAPIS problem detail) and
+  `requestId`. It holds no headers, query strings or bodies, so it is safe to log. `retryable` (or
+  `isRetryable(error)`) is true for network errors, timeouts, HTTP 5xx and 429.
 - Show errors to users with `getErrorMessage(error)`, usually as `` `Failed to do X: ${getErrorMessage(error)}` ``.
-  It understands backend and LAPIS problem details, axios errors, `ResponseValidationError`s and plain `Error`s.
-- Use `getErrorStatus(error)` if you need the HTTP status (e.g. `=== 503`). Don't import axios in components.
-- Never show `JSON.stringify(error)` to users.
+- Use `getErrorStatus(error)` if you need the HTTP status (e.g. `=== 503`), and `isApiError(error)` to read the
+  other fields. Don't import axios in components.
 
 ### Where to put hooks
 
