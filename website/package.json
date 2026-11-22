@@ -19,7 +19,7 @@
     },
     "dependencies": {
         "@astrojs/mdx": "^8.1.2",
-        "@astrojs/node": "^11.1.9",
+        "@astrojs/node": "^11.1.12",
         "@emotion/react": "^11.14.0",
         "@headlessui/react": "^2.2.10",
         "@lokalise/xlsx": "^0.20.3",
