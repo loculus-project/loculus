@@ -71,7 +71,7 @@ dependencies {
     implementation "org.jetbrains.kotlinx:kotlinx-datetime:0.8.0-0.6.x-compat"
     implementation "org.keycloak:keycloak-admin-client:26.0.13"
     implementation("io.minio:minio:9.0.4")
-    implementation("software.amazon.awssdk:s3:2.57.8")
+    implementation("software.amazon.awssdk:s3:2.59.4")
 
     implementation "org.springframework.boot:spring-boot-starter-security-oauth2-resource-server"
     implementation "org.springframework.boot:spring-boot-starter-security"
@@ -81,7 +81,7 @@ dependencies {
     implementation 'org.tukaani:xz:1.12'
 
     implementation("org.redundent:kotlin-xml-builder:1.9.3")
-    implementation("org.jsoup:jsoup:1.23.2")
+    implementation("org.jsoup:jsoup:1.24.1")
 
     testImplementation "org.springframework.boot:spring-boot-starter-webmvc-test"
     testImplementation platform("io.jsonwebtoken:jjwt-bom:0.13.0")
