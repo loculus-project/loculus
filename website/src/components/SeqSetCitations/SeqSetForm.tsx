@@ -6,7 +6,6 @@ import { getClientLogger } from '../../clientLogger';
 import { useBackendMutation } from '../../hooks/useBackend.ts';
 import { routes } from '../../routes/routes.ts';
 import { getErrorMessage } from '../../services/apiRequest.ts';
-import type { ClientConfig } from '../../types/runtimeConfig';
 import { type SeqSet, type SeqSetRecord } from '../../types/seqSetCitation';
 import { deserializeAccessionInput, serializeSeqSetRecords } from '../../utils/parseAccessionInput';
 import { Button } from '../common/Button';
@@ -15,13 +14,11 @@ import { Spinner } from '../common/Spinner';
 const logger = getClientLogger('SeqSetForm');
 
 type SeqSetFormProps = {
-    clientConfig: ClientConfig;
-    accessToken: string;
     editSeqSet?: SeqSet;
     editSeqSetRecords?: SeqSetRecord[];
 };
 
-export const SeqSetForm: FC<SeqSetFormProps> = ({ clientConfig, accessToken, editSeqSet, editSeqSetRecords }) => {
+export const SeqSetForm: FC<SeqSetFormProps> = ({ editSeqSet, editSeqSetRecords }) => {
     const [seqSetName, setSeqSetName] = useState(editSeqSet?.name ?? '');
     const [seqSetNameValidation, setSeqSetNameValidation] = useState('');
     const [seqSetDescription, setSeqSetDescription] = useState(editSeqSet?.description ?? '');
@@ -32,8 +29,6 @@ export const SeqSetForm: FC<SeqSetFormProps> = ({ clientConfig, accessToken, edi
     const [seqSetRecordValidation, setSeqSetRecordValidation] = useState('');
 
     const { createSeqSet, updateSeqSet, validateSeqSetRecords, isPending } = useActionHooks(
-        clientConfig,
-        accessToken,
         (message) => toast.error(message, { position: 'top-center', autoClose: false }),
         setSeqSetRecordValidation,
     );
@@ -213,13 +208,10 @@ export const SeqSetForm: FC<SeqSetFormProps> = ({ clientConfig, accessToken, edi
 };
 
 function useActionHooks(
-    clientConfig: ClientConfig,
-    accessToken: string,
     openErrorFeedback: (message: string) => void,
     setSeqSetRecordValidation: (message: string) => void,
 ) {
-    const context = { clientConfig, accessToken };
-    const create = useBackendMutation(context, 'createSeqSet', {
+    const create = useBackendMutation('createSeqSet', {
         onSuccess: async (response) => {
             await logger.info(`Successfully created seqSet with seqSetId: ${response.seqSetId}`);
             const redirectUrl = `/seqsets/${response.seqSetId}.${response.seqSetVersion}`;
@@ -231,7 +223,7 @@ function useActionHooks(
             openErrorFeedback(message);
         },
     });
-    const update = useBackendMutation(context, 'updateSeqSet', {
+    const update = useBackendMutation('updateSeqSet', {
         onSuccess: async (response) => {
             await logger.info(`Successfully updated seqSet with seqSetId: ${response.seqSetId}`);
             const redirectUrl = `/seqsets/${response.seqSetId}.${response.seqSetVersion}`;
@@ -243,7 +235,7 @@ function useActionHooks(
             openErrorFeedback(message);
         },
     });
-    const validateRecords = useBackendMutation(context, 'validateSeqSetRecords', {
+    const validateRecords = useBackendMutation('validateSeqSetRecords', {
         onSuccess: () => {
             setSeqSetRecordValidation('');
         },

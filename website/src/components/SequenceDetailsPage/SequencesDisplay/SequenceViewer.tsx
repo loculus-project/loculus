@@ -2,11 +2,9 @@ import { noCase } from 'change-case';
 import { type FC } from 'react';
 
 import { SequenceActionButtons } from './SequenceActionButtons.tsx';
-import { getLapisUrl } from '../../../config.ts';
 import { useLapisQuery } from '../../../hooks/useLapis.ts';
 import { getErrorMessage } from '../../../services/apiRequest.ts';
 import type { SequenceEndpoint } from '../../../services/lapisApi.ts';
-import type { ClientConfig } from '../../../types/runtimeConfig.ts';
 import { fastaEntries } from '../../../utils/parseFasta.ts';
 import { isAlignedSequence, isUnalignedSequence, type SequenceType } from '../../../utils/sequenceTypeHelpers.ts';
 import { FixedLengthTextViewer } from '../../common/FixedLengthTextViewer.tsx';
@@ -17,7 +15,6 @@ const LINE_LENGTH = 100;
 type Props = {
     organism: string;
     accessionVersion: string;
-    clientConfig: ClientConfig;
     sequenceType: SequenceType;
     useLapisMultiSegmentedEndpoint: boolean;
 };
@@ -25,12 +22,11 @@ type Props = {
 export const SequencesViewer: FC<Props> = ({
     organism,
     accessionVersion,
-    clientConfig,
     sequenceType,
     useLapisMultiSegmentedEndpoint,
 }) => {
     const { data, error, isLoading } = useSequence(
-        getLapisUrl(clientConfig, organism),
+        organism,
         accessionVersion,
         sequenceType,
         useLapisMultiSegmentedEndpoint,
@@ -69,12 +65,12 @@ export const SequencesViewer: FC<Props> = ({
 };
 
 function useSequence(
-    lapisUrl: string,
+    organism: string,
     accessionVersion: string,
     sequenceType: SequenceType,
     useLapisMultiSegmentedEndpoint: boolean,
 ) {
-    const { data, error, isLoading } = useLapisQuery(lapisUrl, 'sequencesFasta', {
+    const { data, error, isLoading } = useLapisQuery(organism, 'sequencesFasta', {
         request: { accessionVersion },
         endpoint: sequenceEndpoint(sequenceType, useLapisMultiSegmentedEndpoint),
     });

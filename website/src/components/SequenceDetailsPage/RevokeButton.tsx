@@ -21,17 +21,8 @@ type RevokeSequenceEntryProps = {
 
 const REVOCATION_TOAST_ID = 'revocation-toast';
 
-const InnerRevokeButton: FC<RevokeSequenceEntryProps> = ({
-    organism,
-    accessToken,
-    clientConfig,
-    accession,
-    groupId,
-    onRevokeSuccess,
-}) => {
-    const context = { clientConfig, accessToken };
-
-    const useApproveProcessedData = useBackendMutation(context, 'approveProcessedData', {
+const InnerRevokeButton: FC<RevokeSequenceEntryProps> = ({ organism, accession, groupId, onRevokeSuccess }) => {
+    const useApproveProcessedData = useBackendMutation('approveProcessedData', {
         onSuccess: () => {
             toast.update(REVOCATION_TOAST_ID, {
                 render: 'Sequence revoked successfully. This may take several minutes to become visible on the website.',
@@ -51,7 +42,7 @@ const InnerRevokeButton: FC<RevokeSequenceEntryProps> = ({
         },
     });
 
-    const useRevokeSequenceEntries = useBackendMutation(context, 'revoke', {
+    const useRevokeSequenceEntries = useBackendMutation('revoke', {
         onSuccess: (data) => {
             useApproveProcessedData.mutate({
                 organism,

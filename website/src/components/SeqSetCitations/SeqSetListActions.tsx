@@ -12,7 +12,7 @@ type SeqSetListActionsProps = {
     accessToken: string;
 };
 
-const SeqSetListActionsInner: FC<SeqSetListActionsProps> = ({ clientConfig, accessToken }) => {
+const SeqSetListActionsInner: FC<SeqSetListActionsProps> = () => {
     const [createModalVisible, setCreateModalVisible] = useState(false);
 
     return (
@@ -30,7 +30,7 @@ const SeqSetListActionsInner: FC<SeqSetListActionsProps> = ({ clientConfig, acce
                 </Button>
             </div>
             <Modal isModalVisible={createModalVisible} setModalVisible={setCreateModalVisible}>
-                <SeqSetForm clientConfig={clientConfig} accessToken={accessToken} />
+                <SeqSetForm />
             </Modal>
         </>
     );

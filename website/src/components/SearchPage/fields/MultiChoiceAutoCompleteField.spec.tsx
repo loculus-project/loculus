@@ -24,7 +24,7 @@ describe('MultiChoiceAutoCompleteField', () => {
         autocomplete: true,
     };
     const setSomeFieldValues = vi.fn();
-    const lapisUrl = 'https://example.com/api';
+    const organism = 'dummy-organism';
     const lapisSearchParameters = { param1: 'value1' };
 
     beforeEach(() => {
@@ -51,7 +51,7 @@ describe('MultiChoiceAutoCompleteField', () => {
                 field={field}
                 optionsProvider={{
                     type: 'generic',
-                    lapisUrl,
+                    organism,
                     lapisSearchParameters,
                     fieldName: field.name,
                 }}
@@ -120,7 +120,7 @@ describe('MultiChoiceAutoCompleteField', () => {
                 field={field}
                 optionsProvider={{
                     type: 'generic',
-                    lapisUrl,
+                    organism,
                     lapisSearchParameters,
                     fieldName: field.name,
                 }}

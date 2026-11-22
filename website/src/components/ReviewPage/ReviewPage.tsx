@@ -78,17 +78,15 @@ const NumberAndVisibility = ({
 };
 
 const InnerReviewPage: FC<ReviewPageProps> = ({
-    clientConfig,
     organism,
     group,
-    accessToken,
     metadataSchema,
     outputFileCategories,
     referenceGenomesInfo,
 }) => {
     const [pageQuery, setPageQuery] = useState<PageQuery>({ pageOneIndexed: 1, size: pageSizeOptions[2] });
 
-    const hooks = useSubmissionOperations(organism, group, clientConfig, accessToken, toast.error, pageQuery);
+    const hooks = useSubmissionOperations(organism, group, toast.error, pageQuery);
 
     const showNoIssues = hooks.includedProcessingResults.includes(noIssuesProcessingResult);
     const showWarnings = hooks.includedProcessingResults.includes(warningsProcessingResult);
@@ -364,9 +362,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({
                             editAccessionVersion={() => {
                                 window.location.href = routes.editPage(organism, sequence);
                             }}
-                            clientConfig={clientConfig}
                             organism={organism}
-                            accessToken={accessToken}
                             outputFileCategories={outputFileCategories}
                             referenceGenomesInfo={referenceGenomesInfo}
                         />

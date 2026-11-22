@@ -22,7 +22,7 @@ vi.mock('../../hooks/useLapis.ts', () => ({
 }));
 
 const referenceIdentifierField = 'genotype';
-const lapisUrl = 'http://lapis.dummy.url';
+const organism = 'dummy-organism';
 const lapisSearchParameters = {};
 
 const filterSchema = new MetadataFilterSchema([
@@ -70,7 +70,7 @@ describe('ReferenceSelector', () => {
                 referenceIdentifierField={referenceIdentifierField}
                 fieldValues={{}}
                 setSomeFieldValues={vi.fn()}
-                lapisUrl={lapisUrl}
+                organism={organism}
                 lapisSearchParameters={lapisSearchParameters}
                 segmentName='main'
             />,
@@ -87,7 +87,7 @@ describe('ReferenceSelector', () => {
                 referenceIdentifierField={referenceIdentifierField}
                 fieldValues={{}}
                 setSomeFieldValues={vi.fn()}
-                lapisUrl={lapisUrl}
+                organism={organism}
                 lapisSearchParameters={lapisSearchParameters}
                 segmentName='main'
             />,
@@ -124,7 +124,7 @@ describe('ReferenceSelector', () => {
                 referenceIdentifierField={referenceIdentifierField}
                 fieldValues={{}}
                 setSomeFieldValues={vi.fn()}
-                lapisUrl={lapisUrl}
+                organism={organism}
                 lapisSearchParameters={lapisSearchParameters}
                 segmentName='L'
             />,
@@ -148,7 +148,7 @@ describe('ReferenceSelector', () => {
                 referenceIdentifierField={referenceIdentifierField}
                 fieldValues={{}}
                 setSomeFieldValues={setSomeFieldValues}
-                lapisUrl={lapisUrl}
+                organism={organism}
                 lapisSearchParameters={lapisSearchParameters}
                 segmentName='main'
             />,
@@ -172,7 +172,7 @@ describe('ReferenceSelector', () => {
                 referenceIdentifierField={referenceIdentifierField}
                 fieldValues={{ genotype: 'ref1' }}
                 setSomeFieldValues={setSomeFieldValues}
-                lapisUrl={lapisUrl}
+                organism={organism}
                 lapisSearchParameters={lapisSearchParameters}
                 segmentName='main'
             />,

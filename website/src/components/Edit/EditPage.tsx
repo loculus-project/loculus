@@ -76,18 +76,12 @@ const InnerEditPage: FC<EditPageProps> = ({
 
     const { mutate: submitRevision, isPending: isRevisionPending } = useSubmitRevision(
         organism,
-        clientConfig,
-        accessToken,
         dataToEdit,
         (message) => toast.error(message, { position: 'top-center', autoClose: false }),
     );
 
-    const { mutate: submitEdit, isPending: isEditPending } = useSubmitEdit(
-        organism,
-        clientConfig,
-        accessToken,
-        dataToEdit,
-        (message) => toast.error(message, { position: 'top-center', autoClose: false }),
+    const { mutate: submitEdit, isPending: isEditPending } = useSubmitEdit(organism, dataToEdit, (message) =>
+        toast.error(message, { position: 'top-center', autoClose: false }),
     );
 
     const submitEditedDataForAccessionVersion = async () => {
@@ -293,12 +287,10 @@ export const EditPage = withQueryProvider(InnerEditPage);
 
 function useSubmitRevision(
     organism: string,
-    clientConfig: ClientConfig,
-    accessToken: string,
     reviewData: SequenceEntryToEdit,
     openErrorFeedback: (message: string) => void,
 ) {
-    return useBackendMutation({ clientConfig, accessToken }, 'revise', {
+    return useBackendMutation('revise', {
         onSuccess: async () => {
             await logger.info('Successfully submitted revision for ' + getAccessionVersionString(reviewData));
             location.href = routes.userSequenceReviewPage(organism, reviewData.groupId);
@@ -314,12 +306,10 @@ function useSubmitRevision(
 
 function useSubmitEdit(
     organism: string,
-    clientConfig: ClientConfig,
-    accessToken: string,
     reviewData: SequenceEntryToEdit,
     openErrorFeedback: (message: string) => void,
 ) {
-    return useBackendMutation({ clientConfig, accessToken }, 'submitEditedData', {
+    return useBackendMutation('submitEditedData', {
         onSuccess: async () => {
             await logger.info('Successfully submitted edited data ' + getAccessionVersionString(reviewData));
             location.href = routes.userSequenceReviewPage(organism, reviewData.groupId);

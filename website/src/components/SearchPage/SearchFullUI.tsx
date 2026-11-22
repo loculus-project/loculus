@@ -1,4 +1,3 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { Button } from '../common/Button';
@@ -41,6 +40,7 @@ import { ActiveFilters } from '../common/ActiveFilters.tsx';
 import ErrorBox from '../common/ErrorBox.tsx';
 import ErrorContactMessage from '../common/ErrorContactMessage.tsx';
 import { Spinner } from '../common/Spinner';
+import { withQueryProvider } from '../common/withQueryProvider.tsx';
 
 export interface InnerSearchFullUIProps {
     accessToken?: string;
@@ -164,8 +164,8 @@ const InnerSearchFullUI = ({
         schema.richFastaHeaderFields,
     );
 
-    const aggregatedHook = useLapisMutation(lapisUrl, 'aggregated');
-    const detailsHook = useLapisMutation(lapisUrl, 'details');
+    const aggregatedHook = useLapisMutation(organism, 'aggregated');
+    const detailsHook = useLapisMutation(organism, 'details');
 
     const [selectedSeqs, setSelectedSeqs] = useState(new Set<string>());
     const sequencesSelected = selectedSeqs.size > 0;
@@ -284,7 +284,6 @@ const InnerSearchFullUI = ({
                     fieldValues={fieldValues}
                     setSomeFieldValues={setSomeFieldValues}
                     filterSchema={filterSchema}
-                    lapisUrl={lapisUrl}
                     searchVisibilities={searchVisibilities}
                     setASearchVisibility={setASearchVisibility}
                     lapisSearchParameters={lapisSearchParameters}
@@ -359,12 +358,7 @@ const InnerSearchFullUI = ({
                         </div>
                         <div className='flex flex-wrap justify-start gap-2'>
                             {showEditDataUseTermsControls && dataUseTermsEnabled && (
-                                <EditDataUseTermsModal
-                                    lapisUrl={lapisUrl}
-                                    clientConfig={clientConfig}
-                                    accessToken={accessToken}
-                                    sequenceFilter={downloadFilter}
-                                />
+                                <EditDataUseTermsModal organism={organism} sequenceFilter={downloadFilter} />
                             )}
                             <Button
                                 className='mr-2 underline text-primary-700 hover:text-primary-500'
@@ -450,12 +444,4 @@ const InnerSearchFullUI = ({
     );
 };
 
-export const SearchFullUI = (props: InnerSearchFullUIProps) => {
-    const queryClient = new QueryClient();
-
-    return (
-        <QueryClientProvider client={queryClient}>
-            <InnerSearchFullUI {...props} />
-        </QueryClientProvider>
-    );
-};
+export const SearchFullUI = withQueryProvider(InnerSearchFullUI);

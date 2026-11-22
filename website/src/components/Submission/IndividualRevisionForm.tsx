@@ -1,7 +1,6 @@
 import { type FC, type FormEvent, useMemo, useState } from 'react';
 
 import { InputModeTabs } from './DataUploadForm.tsx';
-import { getLapisUrl } from '../../config.ts';
 import { useBackendQuery } from '../../hooks/useBackend.ts';
 import { useLapisQuery } from '../../hooks/useLapis.ts';
 import { routes } from '../../routes/routes.ts';
@@ -117,7 +116,7 @@ const InnerIndividualRevisionForm: FC<IndividualRevisionFormProps> = ({
         error: sequenceEntryHistoryError,
         isFetching: isSequenceEntryHistoryFetching,
     } = useLapisQuery(
-        getLapisUrl(clientConfig, organism),
+        organism,
         'getSequenceEntryHistory',
         { accession: accessionVersion?.accession ?? '' },
         { enabled: accessionVersion !== undefined },
@@ -158,7 +157,6 @@ const InnerIndividualRevisionForm: FC<IndividualRevisionFormProps> = ({
         error: dataToEditError,
         isFetching: isDataToEditFetching,
     } = useBackendQuery(
-        { clientConfig, accessToken },
         'getDataToEdit',
         {
             organism,

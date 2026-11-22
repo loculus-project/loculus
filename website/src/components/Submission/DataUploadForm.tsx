@@ -82,7 +82,7 @@ const InnerDataUploadForm = ({
 }: DataUploadFormProps) => {
     const extraFilesEnabled = submissionDataTypes.files?.enabled ?? false;
 
-    const { submit, revise, isPending } = useSubmitFiles(accessToken, organism, clientConfig, onSuccess, onError);
+    const { submit, revise, isPending } = useSubmitFiles(organism, onSuccess, onError);
     const [fileFactory, setFileFactory] = useState<FileFactory | undefined>(undefined);
     const [fileUploadStates, setFileUploadStates] = useState<Map<string, FileUploadState>>(new Map());
     const fileMapping = useMemo(() => deriveFileMapping(fileUploadStates), [fileUploadStates]);
@@ -641,16 +641,9 @@ const Acknowledgement = ({
     );
 };
 
-function useSubmitFiles(
-    accessToken: string,
-    organism: string,
-    clientConfig: ClientConfig,
-    onSuccess: () => void,
-    onError: (message: string) => void,
-) {
-    const context = { clientConfig, accessToken };
-    const submit = useBackendMutation(context, 'submit', { onSuccess, onError: handleError(onError) });
-    const revise = useBackendMutation(context, 'revise', { onSuccess, onError: handleError(onError) });
+function useSubmitFiles(organism: string, onSuccess: () => void, onError: (message: string) => void) {
+    const submit = useBackendMutation('submit', { onSuccess, onError: handleError(onError) });
+    const revise = useBackendMutation('revise', { onSuccess, onError: handleError(onError) });
 
     return {
         submit: (files: SubmitFiles) => submit.mutate({ organism, ...files }),

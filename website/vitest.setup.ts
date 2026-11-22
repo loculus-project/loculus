@@ -5,11 +5,13 @@ import { HttpStatusCode } from 'axios';
 import { mockAnimationsApi } from 'jsdom-testing-mocks';
 import { http } from 'msw';
 import { setupServer } from 'msw/node';
+import type { ReactNode } from 'react';
 import ResizeObserver from 'resize-observer-polyfill';
 import { afterAll, afterEach, beforeAll, beforeEach, vi } from 'vitest';
 
 mockAnimationsApi();
 
+import { withQueryProvider } from './src/components/common/withQueryProvider.tsx';
 import {
     type GetSequencesResponse,
     type Group,
@@ -136,6 +138,9 @@ export const defaultReviewData: SequenceEntryToEdit = {
 
 export const testSiteName = 'Loculus';
 export const testAccessToken = 'someTestToken';
+
+/** Like an island root: wrap components that use the API hooks in `<TestIsland clientConfig={...}>` */
+export const TestIsland = withQueryProvider(({ children }: { children: ReactNode }) => children);
 
 export const testServer = setupServer(
     http.options(

@@ -17,12 +17,7 @@ type EditDataUseTermsButtonProps = {
     dataUseTerms: RestrictedDataUseTerms;
 };
 
-const InnerEditDataUseTermsButton: FC<EditDataUseTermsButtonProps> = ({
-    accessToken,
-    clientConfig,
-    accession,
-    dataUseTerms,
-}) => {
+const InnerEditDataUseTermsButton: FC<EditDataUseTermsButtonProps> = ({ accession, dataUseTerms }) => {
     const restrictedUntil = DateTime.fromISO(dataUseTerms.restrictedUntil);
     const [selectedDataUseTerms, setDataUseTerms] = useState<DataUseTerms>(dataUseTerms);
 
@@ -40,7 +35,7 @@ const InnerEditDataUseTermsButton: FC<EditDataUseTermsButtonProps> = ({
         }
     };
 
-    const useSetDataUseTerms = useBackendMutation({ clientConfig, accessToken }, 'setDataUseTerms', {
+    const useSetDataUseTerms = useBackendMutation('setDataUseTerms', {
         onError: errorToast,
         onSuccess: successToast,
     });

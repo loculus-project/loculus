@@ -103,25 +103,29 @@ forever. `serverApi.ts` reads the server-side runtime config, so never import it
 
 ```ts
 const { data, error, isLoading } = useBackendQuery(
-    { clientConfig, accessToken },
     'getDataToEdit',
     { organism, accession, version },
     { enabled: isOpen },
 );
 ```
 
-The arguments are the context (where to send the request and with which token), the endpoint name, its params object,
-and optional React Query options. The params and the return type are inferred from the catalogue.
+The arguments are the endpoint name, its params object and optional React Query options. The params and the return
+type are inferred from the catalogue. `useBackendQueryOptions` returns the same options, e.g. for
+`queryClient.fetchQuery`.
 
-The query key is `['backend', endpoint, params]`. The access token is deliberately not part of it: it's a secret, and
-it doesn't change during a page's lifetime.
+The hooks take the backend URL and the access token from the island: `withQueryProvider` provides the island's
+`clientConfig` and `accessToken` props as context, so components below it don't need these props just to call the API.
+In tests, render the island, or wrap the component in `<TestIsland clientConfig={...}>` from `vitest.setup.ts`.
+
+The query key is `['backend', endpoint, params]`. The access token is never part of it: it's a secret, and it doesn't
+change during a page's lifetime.
 
 ### Changing data: `useBackendMutation`
 
 The mutation variables are the endpoint's params object:
 
 ```ts
-const approve = useBackendMutation({ clientConfig, accessToken }, 'approveProcessedData', {
+const approve = useBackendMutation('approveProcessedData', {
     onSuccess: () => refetchSequences(),
     onError: (error) => toast.error(`Failed to approve sequences: ${getErrorMessage(error)}`),
 });
@@ -149,6 +153,8 @@ try {
   `validation`), `request` (e.g. `GET /groups/1`), `status`, `problem` (the backend or LAPIS problem detail) and
   `requestId`. It holds no headers, query strings or bodies, so it is safe to log. `retryable` (or
   `isRetryable(error)`) is true for network errors, timeouts, HTTP 5xx and 429.
+- Queries retry retryable errors up to 3 times (the `QueryClient` defaults in `withQueryProvider`); backend mutations
+  never retry. Don't set `retry` per call unless the UI needs something else (e.g. a manual retry button).
 - Show errors to users with `getErrorMessage(error)`, usually as `` `Failed to do X: ${getErrorMessage(error)}` ``.
 - Use `getErrorStatus(error)` if you need the HTTP status (e.g. `=== 503`), and `isApiError(error)` to read the
   other fields. Don't import axios in components.
@@ -181,9 +187,10 @@ LAPIS works the same way:
   request plus extra validation, go in the same object (e.g. `getLatestAccessionVersion`). To return a specific
   error from a helper, throw a `ProblemDetailError`.
 - Server-side: `serverLapisApi(organism).details({ ... })` returns a `Result`.
-- Client-side: `useLapisQuery(lapisUrl, 'lineageDefinition', { column })` or
-  `useLapisMutation(lapisUrl, 'aggregated')`. LAPIS hooks retry failed requests automatically, because LAPIS
-  requests only read data, even when they use POST.
+- Client-side: `useLapisQuery(organism, 'lineageDefinition', { column })` or
+  `useLapisMutation(organism, 'aggregated')`. The URL comes from `clientConfig`; the query key is
+  `['lapis', organism, endpoint, params]`, without the URL, because it differs between server and browser.
+  `useLapisMutation` is retried like a query, because LAPIS requests only read data, even when they use POST.
 - Imperative: `await lapisApi(lapisUrl).aggregated({ ... })`.
 
 LAPIS doesn't need an access token.
