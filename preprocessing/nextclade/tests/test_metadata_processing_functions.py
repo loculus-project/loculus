@@ -3,6 +3,7 @@ from dataclasses import dataclass, field, replace
 from unittest import mock
 
 import pytest
+import requests
 from factory_methods import (
     DEFAULT_EXTERNAL_SERVICES,
     DEFAULT_TEST_CONTEXT,
@@ -16,6 +17,7 @@ from factory_methods import (
     verify_processed_entry,
 )
 
+from loculus_preprocessing import external_services
 from loculus_preprocessing.config import Config, ProcessingSpec, get_config, get_processing_order
 from loculus_preprocessing.datatypes import (
     AnnotationSource,
@@ -99,6 +101,21 @@ test_case_definitions = [
             "concatenated_string": "LOC_23.1",
             "required_collection_date": None,
             "authors": "O`Brien9, Anna; Müller (Jr) & Co, Anna_Maria?",
+        },
+        group_id=1,
+    ),
+    Case(
+        name="insdc_ingest group can submit names starting or ending with a hyphen",
+        input_metadata={
+            "name_required": "name",
+            "authors": "Smith-, Anna; Perez, -Tom",
+        },
+        accession_id="24",
+        expected_metadata={
+            "name_required": "name",
+            "concatenated_string": "LOC_24.1",
+            "required_collection_date": None,
+            "authors": "Smith-, Anna; Perez, -Tom",
         },
         group_id=1,
     ),
@@ -212,8 +229,8 @@ test_case_definitions = [
                     ["sequenced_timestamp"],
                     ["sequenced_timestamp"],
                     (
-                        "Timestamp is  2022-11-01Europe which is not in parseable YYYY-MM-DD. "
-                        "Parsing error: Unknown string format:  2022-11-01Europe"
+                        "Timestamp is 2022-11-01Europe which is not in parseable YYYY-MM-DD. "
+                        "Parsing error: Unknown string format: 2022-11-01Europe"
                     ),
                 ),
             ]
@@ -489,6 +506,61 @@ test_case_definitions = [
         ),
     ),
     Case(
+        name="warn_spaced_hyphen_in_authors",
+        input_metadata={
+            "name_required": "name",
+            "ncbi_required_collection_date": "2022-11-01",
+            "authors": "Smith- Jones, Anna; Perez, Tom -Juan; Xu - Li, X.; Lee, Tom - J",
+        },
+        accession_id="12",
+        expected_metadata={
+            "name_required": "name",
+            "required_collection_date": "2022-11-01",
+            "concatenated_string": "LOC_12.1/2022-11-01",
+            "authors": "Smith-Jones, Anna; Perez, Tom-Juan; Xu-Li, X.; Lee, Tom-J.",
+        },
+        expected_errors=[],
+        expected_warnings=build_processing_annotations(
+            [
+                ProcessingAnnotationHelper(
+                    ["authors"],
+                    ["authors"],
+                    (
+                        "Authors list contains spaces around hyphens: "
+                        "'Smith- Jones', 'Tom -Juan', 'Xu - Li', 'Tom - J'. Hyphenated names "
+                        "should not "
+                        "contain spaces around the hyphen, e.g. `Smith-Jones, Anna-Maria`. "
+                        "Spaces around these hyphens have been removed automatically."
+                    ),
+                ),
+            ]
+        ),
+    ),
+    Case(
+        name="error_name_starting_or_ending_with_hyphen_in_authors",
+        input_metadata={
+            "name_required": "name",
+            "ncbi_required_collection_date": "2022-11-01",
+            "authors": "Smith-, Anna; Perez, - Tom; Xu, X.",
+        },
+        accession_id="12",
+        expected_metadata={
+            "name_required": "name",
+            "required_collection_date": "2022-11-01",
+            "concatenated_string": "LOC_12.1/2022-11-01",
+        },
+        expected_errors=build_processing_annotations(
+            [
+                ProcessingAnnotationHelper(
+                    ["authors"],
+                    ["authors"],
+                    "Invalid name(s): 'Smith-', '-Tom'. Names must not start or end with a hyphen.",
+                ),
+            ]
+        ),
+        expected_warnings=[],
+    ),
+    Case(
         name="non_latin_characters_authors",
         input_metadata={
             "name_required": "name",
@@ -688,6 +760,10 @@ accepted_authors = {
     "McGregor, Ewan": "McGregor, Ewan",
     "'t Hooft, Gerard": "'t Hooft, Gerard",
     "Tandoc, A. 3rd": "Tandoc, A. 3rd",
+    "Perez, J-P": "Perez, J.-P.",
+    "Perez, J.-P.": "Perez, J.-P.",
+    "Perez, Anna-Maria": "Perez, Anna-Maria",
+    "Perez, Tom-J": "Perez, Tom-J.",
 }
 # Only accepted for the INSDC ingest group
 accepted_authors_all_ascii = [
@@ -1349,10 +1425,11 @@ date_range_cases = [
         submitted_at=ts_from_ymd(2021, 12, 16),
     ),
     DateRangeCase(
-        name="dateRangeString: invalid date should be returned as None.",
+        name="dateRangeString: invalid date is reported as an error.",
         date="not.date",
         field_type="dateRangeString",
         submitted_at=ts_from_ymd(2021, 12, 16),
+        expected_error="Metadata field field_name: Date not.date could not be parsed.",
     ),
     DateRangeCase(
         name="dateRangeLower: empty date should be returned as None.",
@@ -1487,6 +1564,26 @@ date_range_cases = [
         submitted_at=ts_from_ymd(2021, 6, 15),
         expected_datum="2021-06-15",
     ),
+    DateRangeCase(
+        name="dateRangeString: leading and trailing whitespace is ignored.",
+        date="  2021-05-03 ",
+        field_type="dateRangeString",
+        submitted_at=ts_from_ymd(2022, 1, 1),
+        expected_datum="2021-05-03",
+    ),
+    DateRangeCase(
+        name="dateRangeLower: leading whitespace is ignored for partial dates.",
+        date=" 2021-05",
+        field_type="dateRangeLower",
+        submitted_at=ts_from_ymd(2022, 1, 1),
+        expected_datum="2021-05-01",
+    ),
+    DateRangeCase(
+        name="dateRangeString: whitespace-only date is treated as empty.",
+        date="   ",
+        field_type="dateRangeString",
+        submitted_at=ts_from_ymd(2022, 1, 1),
+    ),
 ]
 
 
@@ -1508,7 +1605,37 @@ def test_parse_date_into_range(case: DateRangeCase) -> None:
     if case.expected_error is not None:
         assert result.errors[0] == case.expected_error, case.name
     else:
+        assert result.errors == [], case.name
         assert result.datum == case.expected_datum, case.name
+
+
+@pytest.mark.parametrize(
+    ("function_name", "input_key", "raw_value", "expected_datum"),
+    [
+        ("check_date", "date", " 2021-05-03", "2021-05-03"),
+        ("check_date", "date", "2021-05-03\t", "2021-05-03"),
+        ("check_date", "date", "   ", None),
+        ("parse_and_assert_past_date", "date", " 2021-05-03 ", "2021-05-03"),
+        ("parse_and_assert_past_date", "date", " 2021-05", "2021-05-01"),
+        ("parse_and_assert_past_date", "date", "   ", None),
+        ("parse_timestamp", "timestamp", " 2022-11-01T00:00:00Z ", "2022-11-01"),
+        ("parse_timestamp", "timestamp", "   ", None),
+    ],
+)
+def test_date_functions_ignore_surrounding_whitespace(
+    function_name: str, input_key: str, raw_value: str, expected_datum: str | None
+) -> None:
+    result = getattr(ProcessingFunctions, function_name)(
+        {input_key: raw_value},
+        "field_name",
+        ["field_name"],
+        {},
+        DEFAULT_TEST_CONTEXT,
+        DEFAULT_EXTERNAL_SERVICES,
+    )
+
+    assert result.errors == []
+    assert result.datum == expected_datum
 
 
 @dataclass
@@ -1803,6 +1930,237 @@ def test_call_function_converts_raw_errors_to_annotations() -> None:
     assert annotation.unprocessedFields == (
         AnnotationSource(name="myField", type=AnnotationSourceType.METADATA),
     )
+
+
+SUBMISSION_PROJECT_XML = b"""<PROJECT_SET>
+  <PROJECT accession="PRJEB12345">
+    <TITLE>A submission project</TITLE>
+    <SUBMISSION_PROJECT><SEQUENCING_PROJECT/></SUBMISSION_PROJECT>
+  </PROJECT>
+</PROJECT_SET>"""
+
+UMBRELLA_PROJECT_XML = b"""<PROJECT_SET>
+  <PROJECT accession="PRJEB106529">
+    <TITLE>An umbrella project</TITLE>
+    <UMBRELLA_PROJECT/>
+    <RELATED_PROJECTS>
+      <RELATED_PROJECT><PARENT_PROJECT accession="PRJEB94357"/></RELATED_PROJECT>
+    </RELATED_PROJECTS>
+  </PROJECT>
+</PROJECT_SET>"""
+
+BIOSAMPLE_XML = b"""<SAMPLE_SET><SAMPLE accession="SAMEA123456"/></SAMPLE_SET>"""
+
+
+@dataclass
+class EnaAccessionCase:
+    name: str
+    accession: str
+    accession_type: str | None = "bioproject"
+    # How ENA responds: an HTTP status code, or an exception raised by the session.
+    # A list gives one status code per request, in order.
+    ena_response: int | list[int] | Exception | None = None
+    ena_xml: bytes = b""
+    is_insdc_ingest_group: bool = False
+    expected_datum: str | None = None
+    expected_error: str | None = None
+    expected_warning: str | None = None
+    # None means ENA must not be contacted at all.
+    expected_url: str | list[str] | None = None
+
+
+ena_accession_cases = [
+    EnaAccessionCase(
+        name="public_bioproject_is_accepted",
+        accession="PRJEB12345",
+        ena_response=200,
+        ena_xml=SUBMISSION_PROJECT_XML,
+        expected_datum="PRJEB12345",
+        expected_url="https://www.ebi.ac.uk/ena/browser/api/xml/PRJEB12345",
+    ),
+    EnaAccessionCase(
+        name="umbrella_bioproject_is_rejected",
+        accession="PRJEB106529",
+        ena_response=200,
+        ena_xml=UMBRELLA_PROJECT_XML,
+        expected_error="is an umbrella project",
+        expected_url="https://www.ebi.ac.uk/ena/browser/api/xml/PRJEB106529",
+    ),
+    EnaAccessionCase(
+        name="public_biosample_is_accepted",
+        accession="SAMEA123456",
+        accession_type="biosample",
+        ena_response=200,
+        ena_xml=BIOSAMPLE_XML,
+        expected_datum="SAMEA123456",
+        expected_url="https://www.ebi.ac.uk/ena/browser/api/xml/SAMEA123456",
+    ),
+    EnaAccessionCase(
+        name="public_sra_run_is_accepted",
+        accession="SRR27477368",
+        accession_type="raw_reads",
+        ena_response=200,
+        expected_datum="SRR27477368",
+        expected_url="https://www.ebi.ac.uk/ena/browser/api/xml/SRR27477368",
+    ),
+    EnaAccessionCase(
+        name="sra_experiment_in_raw_reads_field_is_rejected",
+        accession="SRX23184375",
+        accession_type="raw_reads",
+        expected_error="'SRX23184375' is/are malformatted, raw reads accessions",
+    ),
+    EnaAccessionCase(
+        name="insdc_ingested_raw_reads_list_with_sra_sample_is_accepted_unchecked",
+        accession="SRR27477368, srs12345678",
+        accession_type="raw_reads",
+        is_insdc_ingest_group=True,
+        expected_datum="SRR27477368,SRS12345678",
+    ),
+    EnaAccessionCase(
+        name="each_raw_reads_accession_in_list_is_checked",
+        accession="SRR27477368,SRR27477369",
+        accession_type="raw_reads",
+        ena_response=[200, 404],
+        expected_datum="SRR27477368,SRR27477369",
+        expected_warning="Accession 'SRR27477369' is not visible on ENA",
+        expected_url=[
+            "https://www.ebi.ac.uk/ena/browser/api/xml/SRR27477368",
+            "https://www.ebi.ac.uk/ena/browser/api/xml/SRR27477369",
+        ],
+    ),
+    EnaAccessionCase(
+        name="sra_sample_in_raw_reads_field_is_rejected",
+        accession="SRS12345678",
+        accession_type="raw_reads",
+        expected_error="'SRS12345678' is/are malformatted, raw reads accessions",
+    ),
+    EnaAccessionCase(
+        name="biosample_in_bioproject_field_is_rejected",
+        accession="SAMN12345678",
+        expected_error="'SAMN12345678' is/are malformatted, bioproject accessions",
+    ),
+    EnaAccessionCase(
+        name="bioproject_in_biosample_field_is_rejected",
+        accession="PRJEB12345",
+        accession_type="biosample",
+        expected_error="'PRJEB12345' is/are malformatted, biosample accessions",
+    ),
+    EnaAccessionCase(
+        name="comma_separated_bioprojects_are_rejected",
+        accession="PRJNA591860,PRJEB106529",
+        expected_error="'PRJNA591860,PRJEB106529' is/are malformatted, bioproject accessions",
+    ),
+    EnaAccessionCase(
+        name="lowercase_accession_is_uppercased",
+        accession="prjeb12345",
+        ena_response=200,
+        ena_xml=SUBMISSION_PROJECT_XML,
+        expected_datum="PRJEB12345",
+        expected_url="https://www.ebi.ac.uk/ena/browser/api/xml/PRJEB12345",
+    ),
+    EnaAccessionCase(
+        name="surrounding_whitespace_is_stripped",
+        accession=" PRJEB12345 ",
+        ena_response=200,
+        ena_xml=SUBMISSION_PROJECT_XML,
+        expected_datum="PRJEB12345",
+        expected_url="https://www.ebi.ac.uk/ena/browser/api/xml/PRJEB12345",
+    ),
+    EnaAccessionCase(
+        name="invalid_accession_type_is_internal_error",
+        accession="PRJEB12345",
+        accession_type="nucleotide",
+        expected_error="got args {'accession_type': 'nucleotide'}",
+    ),
+    EnaAccessionCase(
+        name="missing_accession_type_is_internal_error",
+        accession="PRJEB12345",
+        accession_type=None,
+        expected_error="requires accession_type to be one of",
+    ),
+    EnaAccessionCase(
+        name="not_visible_accession_is_warned_about",
+        accession="PRJEB99999",
+        ena_response=404,
+        expected_datum="PRJEB99999",
+        expected_warning="is not visible on ENA",
+        expected_url="https://www.ebi.ac.uk/ena/browser/api/xml/PRJEB99999",
+    ),
+    EnaAccessionCase(
+        name="server_error_is_warned_about",
+        accession="PRJEB12345",
+        ena_response=501,
+        expected_datum="PRJEB12345",
+        expected_warning="could not reach ENA",
+        expected_url="https://www.ebi.ac.uk/ena/browser/api/xml/PRJEB12345",
+    ),
+    EnaAccessionCase(
+        name="exhausted_retries_are_warned_about",
+        accession="PRJEB12345",
+        ena_response=requests.exceptions.RetryError(),
+        expected_datum="PRJEB12345",
+        expected_warning="could not reach ENA",
+        expected_url="https://www.ebi.ac.uk/ena/browser/api/xml/PRJEB12345",
+    ),
+    EnaAccessionCase(
+        name="missing_accession_is_not_checked",
+        accession="",
+    ),
+    EnaAccessionCase(
+        name="insdc_ingested_accession_format_is_checked",
+        accession="PRJNA123,PRJNA456",
+        is_insdc_ingest_group=True,
+        expected_error="'PRJNA123,PRJNA456' is/are malformatted, bioproject accessions",
+    ),
+]
+
+
+@pytest.mark.parametrize("case", ena_accession_cases, ids=lambda c: c.name)
+def test_check_ena_accession(case: EnaAccessionCase) -> None:
+    external_services.ena_cache.clear()
+    with mock.patch.object(external_services.ena_cache, "session") as mock_session:
+        if isinstance(case.ena_response, Exception):
+            mock_session.get.side_effect = case.ena_response
+        elif isinstance(case.ena_response, list):
+            mock_session.get.side_effect = [
+                mock.MagicMock(status_code=status, content=case.ena_xml)
+                for status in case.ena_response
+            ]
+        else:
+            mock_session.get.return_value = mock.MagicMock(
+                status_code=case.ena_response, content=case.ena_xml
+            )
+
+        ingest_group_id = DEFAULT_TEST_CONTEXT.insdc_ingest_group_id
+        result = ProcessingFunctions.check_ena_accession(
+            input_data={"accession": case.accession},
+            output_field="externalAccession",
+            input_fields=["externalAccession"],
+            args={"accession_type": case.accession_type},
+            context=replace(
+                DEFAULT_TEST_CONTEXT,
+                group_id=ingest_group_id if case.is_insdc_ingest_group else ingest_group_id + 1,
+            ),
+            external_services=DEFAULT_EXTERNAL_SERVICES,
+        )
+
+        assert result.datum == case.expected_datum
+        if case.expected_error is None:
+            assert result.errors == []
+        else:
+            assert len(result.errors) == 1
+            assert case.expected_error in result.errors[0]
+        if case.expected_warning is None:
+            assert result.warnings == []
+        else:
+            assert len(result.warnings) == 1
+            assert case.expected_warning in result.warnings[0]
+
+        if isinstance(case.expected_url, str):
+            expected_urls = [case.expected_url]
+        else:
+            expected_urls = case.expected_url or []
+        assert [call.args[0] for call in mock_session.get.call_args_list] == expected_urls
 
 
 if __name__ == "__main__":

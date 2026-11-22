@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, within } from '@testing-library/react';
 import React from 'react';
 import { describe, expect, test } from 'vitest';
 
@@ -7,8 +7,15 @@ import type { Schema } from '../../types/config';
 
 const schema: Schema = {
     organismName: '',
-    metadata: [{ name: 'id', type: 'string', displayName: 'ID' }],
-    tableColumns: ['id'],
+    metadata: [
+        { name: 'id', type: 'string', displayName: 'ID' },
+        { name: 'country', type: 'string' },
+        { name: 'host', type: 'string' },
+        { name: 'length', type: 'int' },
+        { name: 'coverage', type: 'float' },
+        { name: 'isRevocation', type: 'boolean' },
+    ],
+    tableColumns: ['id', 'country', 'host', 'length', 'coverage', 'isRevocation'],
     primaryKey: 'id',
     defaultOrderBy: 'id',
     defaultOrder: 'ascending',
@@ -17,7 +24,11 @@ const schema: Schema = {
     submissionDataTypes: { consensusSequences: true },
 };
 
-const data: TableSequenceData[] = [{ id: '1' }, { id: '2' }, { id: '3' }];
+const data: TableSequenceData[] = [
+    { id: '1', country: 'Switzerland', length: 29903, coverage: 0.5, isRevocation: true },
+    { id: '2', country: null, isRevocation: false },
+    { id: '3' },
+];
 
 const TestWrapper = () => {
     const [selectedSeqs, setSelectedSeqs] = React.useState(new Set<string>());
@@ -32,7 +43,7 @@ const TestWrapper = () => {
             orderBy={{ field: 'id', type: 'ascending' }}
             setOrderByField={() => {}}
             setOrderDirection={() => {}}
-            columnsToShow={['id']}
+            columnsToShow={['country', 'host', 'length', 'coverage', 'isRevocation']}
         />
     );
 };
@@ -52,5 +63,21 @@ describe('Table', () => {
         checkboxes.forEach((cb) => {
             expect(cb).toBeChecked();
         });
+    });
+
+    test('formats cell values by type', () => {
+        render(<TestWrapper />);
+        const rows = screen.getAllByTestId('sequence-row').map((row) =>
+            within(row)
+                .getAllByRole('cell')
+                .slice(2)
+                .map((cell) => cell.textContent),
+        );
+
+        expect(rows).toEqual([
+            ['Switzerland', '', '29,903', '0.5', 'True'],
+            ['', '', '', '', 'False'],
+            ['', '', '', '', ''],
+        ]);
     });
 });

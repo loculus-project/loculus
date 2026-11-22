@@ -1,4 +1,5 @@
 ---
+import { buttonClasses } from '../components/common/buttonStyles';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { ACCESS_TOKEN_COOKIE, REFRESH_TOKEN_COOKIE } from '../middleware/authMiddleware';
 
@@ -7,5 +8,30 @@ Astro.cookies.delete(REFRESH_TOKEN_COOKIE, { path: '/' });
 ---
 
 <BaseLayout title='Logout' activeTopNavigationItem='account'>
-    <div>You have been logged out</div>
+    <div class='bc'>
+        <h1 class='title'>You have been logged out</h1>
+        <p id='logout-countdown' hidden>
+            Redirecting to the homepage in 5 seconds…
+        </p>
+        <a href='/' class={buttonClasses({ variant: 'primary', className: 'mt-4' })}>
+            Go to homepage
+        </a>
+    </div>
 </BaseLayout>
+
+<script>
+    const countdown = document.getElementById('logout-countdown');
+    if (countdown !== null) {
+        countdown.hidden = false;
+        let secondsRemaining = 5;
+        const timer = window.setInterval(() => {
+            secondsRemaining -= 1;
+            if (secondsRemaining === 0) {
+                window.clearInterval(timer);
+                window.location.replace('/');
+                return;
+            }
+            countdown.textContent = `Redirecting to the homepage in ${secondsRemaining} ${secondsRemaining === 1 ? 'second' : 'seconds'}…`;
+        }, 1000);
+    }
+</script>

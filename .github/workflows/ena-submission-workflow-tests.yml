@@ -14,7 +14,7 @@ jobs:
       ENA_PASSWORD: ${{ secrets.ENA_SUBMISSION_PASSWORD }}
     services:
       postgres:
-        image: postgres:15
+        image: ghcr.io/loculus-project/mirror/postgres:15.19
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: unsecure

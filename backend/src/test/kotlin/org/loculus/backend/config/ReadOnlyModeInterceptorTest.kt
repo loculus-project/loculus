@@ -9,7 +9,7 @@ import org.hamcrest.MatcherAssert.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
-import org.loculus.backend.controller.ServiceUnavailableException
+import org.loculus.backend.errors.ServiceUnavailableException
 
 class ReadOnlyModeInterceptorTest {
     private val response: HttpServletResponse = mockk(relaxed = true)

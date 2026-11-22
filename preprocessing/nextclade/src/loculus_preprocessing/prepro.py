@@ -196,23 +196,18 @@ def add_nextclade_metadata(
 
     match nextclade_path:
         case "frameShifts":
-            result = None if raw is None else str(raw)
-            return process_frameshifts(result)
+            return process_frameshifts(raw)
         case "qc.stopCodons.stopCodons":
-            result = None if raw is None else str(raw)
-            return process_stop_codons(result)
+            return process_stop_codons(raw)
         case "phenotypeValues":
-            result = None if raw is None else str(raw)
-            return process_phenotype_values(result, spec.args)
-        case "cladeFounderInfo.aaMutations.*.privateSubstitutions":
-            result = None if raw is None else str(raw)
-            return process_mutations_from_clade_founder(result, spec.args)
-        case "cladeNodeAttrFounderInfo.outbreak.aaMutations.*.privateSubstitutions":
-            result = None if raw is None else str(raw)
-            return process_mutations_from_clade_founder(result, spec.args)
+            return process_phenotype_values(raw, spec.args)
+        case (
+            "cladeFounderInfo.aaMutations.*.privateSubstitutions"
+            | "cladeNodeAttrFounderInfo.outbreak.aaMutations.*.privateSubstitutions"
+        ):
+            return process_mutations_from_clade_founder(raw, spec.args)
         case "privateAaMutations.*.labeledSubstitutions.substitution":
-            result = None if raw is None else str(raw)
-            return process_labeled_mutations(result, spec.args)
+            return process_labeled_mutations(raw, spec.args)
         case _:
             return InputData(datum=str(raw))
 
@@ -302,6 +297,7 @@ def processed_entry_no_alignment(
         processed_entry=ProcessedEntry(
             accession=accession_from_str(accession_version),
             version=version_from_str(accession_version),
+            processingAttemptId=unprocessed.context.processing_attempt_id,
             data=ProcessedData(
                 metadata=output_metadata,
                 files=unprocessed.files,
@@ -674,6 +670,7 @@ def process_single(
     processed_entry = ProcessedEntry(
         accession=accession_from_str(accession_version),
         version=version_from_str(accession_version),
+        processingAttemptId=unprocessed.context.processing_attempt_id,
         data=ProcessedData(
             metadata=output_metadata,
             files=unprocessed.files,
@@ -743,6 +740,7 @@ def processed_entry_with_errors(context: ProcessingContext) -> SubmissionData:
         processed_entry=ProcessedEntry(
             accession=accession_from_str(accession_version),
             version=version_from_str(accession_version),
+            processingAttemptId=context.processing_attempt_id,
             data=ProcessedData(
                 metadata=dict[str, ProcessedMetadataValue](),
                 files=None,

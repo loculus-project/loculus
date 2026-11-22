@@ -6,11 +6,11 @@ import org.hamcrest.Matchers.not
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.loculus.backend.SpringBootTestWithoutDatabase
-import org.loculus.backend.api.Insertion
-import org.loculus.backend.api.Organism
-import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.service.submission.ProcessedSequencesPostprocessor
+import org.loculus.backend.types.Insertion
+import org.loculus.backend.types.Organism
+import org.loculus.backend.types.ProcessedData
 import org.springframework.beans.factory.annotation.Autowired
 
 fun <K, V> assertMapStorage(actual: Map<K, V>, expected: Map<K, V>, presentSeg: K, absentSegs: List<K>) {

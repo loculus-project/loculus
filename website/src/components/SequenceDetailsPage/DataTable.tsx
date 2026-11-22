@@ -87,7 +87,7 @@ const DataTableComponent: React.FC<Props> = ({
             {(generalSections.length > 0 || hasSequenceCitations) && (
                 <div
                     className='grid gap-x-6'
-                    style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100vw, 32rem), 1fr))' }}
+                    style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 32rem), 1fr))' }}
                 >
                     {generalSections.map(({ header, rows }) => (
                         <div key={header} className='p-4 pl-0'>
@@ -137,7 +137,7 @@ const DataTableComponent: React.FC<Props> = ({
                     style={
                         alignmentSections.length === 1
                             ? undefined
-                            : { gridTemplateColumns: 'repeat(auto-fill, minmax(min(100vw, 20rem), 1fr))' }
+                            : { gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 20rem), 1fr))' }
                     }
                 >
                     {alignmentSections.map(({ header, rows }) => (
@@ -163,7 +163,7 @@ const DataTableComponent: React.FC<Props> = ({
             {mutationSections.length > 0 && (
                 <div
                     className='grid gap-x-6'
-                    style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100vw, 32rem), 1fr))' }}
+                    style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 32rem), 1fr))' }}
                 >
                     {mutationSections.map(({ header, rows }) => (
                         <div key={header} className='p-4 pl-0'>

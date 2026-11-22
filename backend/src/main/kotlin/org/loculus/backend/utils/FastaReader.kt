@@ -1,6 +1,6 @@
 package org.loculus.backend.utils
 
-import org.loculus.backend.controller.UnprocessableEntityException
+import org.loculus.backend.errors.UnprocessableEntityException
 import java.io.BufferedReader
 import java.io.InputStream
 import java.io.InputStreamReader

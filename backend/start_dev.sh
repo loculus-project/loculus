@@ -8,6 +8,7 @@ args=$(printf "%s " \
   "--loculus.debug-mode=true" \
   "--loculus.enable-seqsets=true" \
   "--spring.security.oauth2.resourceserver.jwt.jwk-set-uri=http://localhost:8083/realms/loculus/protocol/openid-connect/certs" \
+  "--spring.security.oauth2.resourceserver.jwt.issuer-uri=${OIDC_ISSUER_URI:-http://localhost:8083/realms/loculus}" \
   "--keycloak.user=backend" \
   "--keycloak.password=backend" \
   "--keycloak.realm=loculus" \

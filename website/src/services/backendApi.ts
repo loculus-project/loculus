@@ -111,6 +111,11 @@ const getSequencesEndpoint = makeEndpoint({
     parameters: [
         authorizationHeader,
         {
+            name: 'includeReviewData',
+            type: 'Query',
+            schema: z.boolean().optional(),
+        },
+        {
             name: 'groupIdsFilter',
             type: 'Query',
             schema: z.string().optional(), // comma separated list of group ids (numbers)

@@ -5,7 +5,6 @@ import io.swagger.v3.oas.models.OpenAPI
 import io.swagger.v3.oas.models.media.Schema
 import io.swagger.v3.oas.models.security.SecurityRequirement
 import io.swagger.v3.oas.models.security.SecurityScheme
-import org.loculus.backend.controller.PROJECT_NAME
 
 const val ORGANISM_SCHEMA_NAME = "Organism"
 

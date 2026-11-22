@@ -2,8 +2,8 @@ package org.loculus.backend.service.submission
 
 import org.jetbrains.exposed.v1.core.Table
 import org.jetbrains.exposed.v1.datetime.datetime
-import org.loculus.backend.api.FileCategoryFilesMap
 import org.loculus.backend.service.jacksonSerializableJsonb
+import org.loculus.backend.types.FileCategoryFilesMap
 
 const val METADATA_UPLOAD_AUX_TABLE_NAME = "metadata_upload_aux_table"
 

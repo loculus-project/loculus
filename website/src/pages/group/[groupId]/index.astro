@@ -1,12 +1,12 @@
 ---
 import { GroupPage } from '../../../components/User/GroupPage';
 import ErrorBox from '../../../components/common/ErrorBox.tsx';
-import { getConfiguredOrganisms, getRuntimeConfig, getWebsiteConfig } from '../../../config';
+import { getConfiguredOrganisms, getRuntimeConfig, getSchema, getWebsiteConfig } from '../../../config';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import type { ContinueSubmissionIntent } from '../../../routes/routes';
 import { GroupManagementClient } from '../../../services/groupManagementClient';
 import { getAccessToken } from '../../../utils/getAccessToken';
-import { getAuthUrl } from '../../../utils/getAuthUrl';
+import { getLoginUrl } from '../../../utils/getLoginUrl';
 
 const session = Astro.locals.session;
 const accessToken = getAccessToken(session);
@@ -17,7 +17,11 @@ const organisms = getConfiguredOrganisms();
 const websiteConfig = getWebsiteConfig();
 const databaseName = websiteConfig.name;
 const dateFieldForGroupGraph = websiteConfig.dateFieldForGroupGraph;
-const loginUrl = await getAuthUrl(Astro.url.toString());
+// Querying LAPIS for a field an organism doesn't have fails with 400
+const organismsWithGroupGraphField = organisms.filter(({ key }) =>
+    getSchema(key).metadata.some(({ name }) => name === dateFieldForGroupGraph),
+);
+const loginUrl = getLoginUrl(Astro.url.toString(), Astro.url.origin);
 
 const continueSubmissionOrganism = Astro.url.searchParams.get('continueSubmissionOrganism');
 
@@ -59,6 +63,7 @@ const userGroups = userGroupsResponse.match(
                 continueSubmissionIntent={continueSubmissionIntent}
                 loginUrl={loginUrl}
                 dateFieldForGroupGraph={dateFieldForGroupGraph}
+                organismsWithGroupGraphField={organismsWithGroupGraphField}
                 client:load
             />
         ),

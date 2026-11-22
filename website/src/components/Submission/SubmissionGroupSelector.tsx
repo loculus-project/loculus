@@ -32,9 +32,9 @@ export const SubmissionGroupSelector: FC<GroupSelectorProps> = ({ groups, select
     }
 
     return (
-        <div className='mb-2'>
+        <div className='flex mb-2'>
             <DropdownMenu
-                panelClassName='top-full left-0 w-52 text-gray-700'
+                panelClassName='w-52 text-gray-700'
                 trigger={
                     <div tabIndex={0} role='button' className='cursor-pointer'>
                         {groupNameElement} <IwwaArrowDown className='inline-block -mt-1 h-5 w-5' />

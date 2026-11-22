@@ -3,9 +3,7 @@ Each function takes input data and returns output data, warnings and errors
 This makes it easy to test and reason about the code
 """
 
-import ast
 import calendar
-import json
 import logging
 import math
 import re
@@ -17,7 +15,11 @@ from typing import Any
 import dateutil.parser as dateutil
 import pytz
 
-from loculus_preprocessing.external_services import ExternalServices
+from loculus_preprocessing.external_services import (
+    EnaAccessionType,
+    ExternalServices,
+    validate_accession_format,
+)
 
 from .datatypes import (
     AnnotationSourceType,
@@ -110,6 +112,22 @@ def warn_potentially_invalid_authors(authors: str) -> bool:
     return bool(";" not in authors and len(authors_split) > 3)  # noqa: PLR2004
 
 
+def get_spaced_hyphenated_words(authors: str) -> list[str]:
+    """Hyphenated words with whitespace around the hyphen, e.g. "Smith - Jones" or "Anna -Maria" """
+    return re.findall(r"[^\s,;]+(?:\s+-\s*|-\s+)[^\s,;]+", authors)
+
+
+def remove_hyphen_spacing(authors: str) -> str:
+    """Remove whitespace around hyphens, e.g. "Smith - Jones" -> "Smith-Jones" """
+    return re.sub(r"\s*-\s*", "-", authors)
+
+
+def get_names_with_leading_or_trailing_hyphen(authors: str) -> list[str]:
+    """Names that start or end with a hyphen, e.g. "-Jones" or "Smith-" """
+    words = re.split(r"[,;\s]+", authors)
+    return [word for word in words if word.startswith("-") or word.endswith("-")]
+
+
 def reformat_authors_from_latin_to_ascii(authors: str) -> str:
     return unicodedata.normalize("NFKD", authors).encode("ascii", "ignore").decode("ascii")
 
@@ -130,6 +148,19 @@ def check_latin_characters(authors: str) -> tuple[list[str], list[str]]:
     return (errors, warnings)
 
 
+def format_first_name(name: str, last_name: str) -> str:
+    if len(name) == 1:
+        return f"{name.upper()}."
+    if len(name) == 2 and name[1] == ".":
+        return name.upper()
+    if len(name) <= 4 and name.isupper() and "." not in name and not last_name.isupper():
+        return " ".join(f"{char}." for char in name)
+    if re.fullmatch(r"(?:[A-Za-z]\.)+[A-Za-z]+\.?", name):
+        letters = [ch.upper() for ch in re.findall(r"[A-Za-z]", name)]
+        return " ".join(f"{ch}." for ch in letters)
+    return name
+
+
 def format_authors(authors: str) -> str:
     authors_list = [author for author in authors.split(";") if author]
     loculus_authors = []
@@ -146,19 +177,10 @@ def format_authors(authors: str) -> str:
             first_name = re.sub(r"[ .](II|III|IV|V|VI)$", "", first_name, flags=re.IGNORECASE)
         first_names = []
         for name in first_name.split():
-            if len(name) == 1:
-                first_names.append(f"{name.upper()}.")
-            elif len(name) == 2 and name[1] == ".":
-                first_names.append(f"{name.upper()}")
-            elif len(name) <= 4 and name.isupper() and "." not in name and not last_name.isupper():
-                initials = " ".join(f"{char}." for char in name)
-                first_names.append(initials)
-            elif re.fullmatch(r"(?:[A-Za-z]\.)+[A-Za-z]+\.?", name):
-                letters = [ch.upper() for ch in re.findall(r"[A-Za-z]", name)]
-                initials = " ".join(f"{ch}." for ch in letters)
-                first_names.append(initials)
-            else:
-                first_names.append(name)
+            # Format each part of a hyphenated name separately, e.g. "J-P" -> "J.-P."
+            first_names.append(
+                "-".join(format_first_name(part, last_name) for part in name.split("-"))
+            )
         formated_first_name = " ".join(first_names)
         if suffix:
             formated_first_name = f"{formated_first_name} {suffix}"
@@ -172,6 +194,11 @@ def regex_error(
     return raw_internal_error(
         f"{function_name} did not receive a valid {function_arg}, with input {input_data} and args {args}."
     )
+
+
+def strip_if_str(value: str | None) -> str | None:
+    """Strip leading/trailing whitespace from strings, leave None unchanged."""
+    return value.strip() if isinstance(value, str) else value
 
 
 @dataclass
@@ -348,7 +375,7 @@ class ProcessingFunctions:
         If in future, return warning
         Expects input_data to be an ordered dictionary with a single key "date"
         """
-        date = input_data["date"]
+        date = strip_if_str(input_data["date"])
 
         if not date:
             return RawProcessingResult()
@@ -390,7 +417,7 @@ class ProcessingFunctions:
         if not args:
             args = {"fieldType": "dateRangeString"}
 
-        input_date_str = input_data["date"]
+        input_date_str = strip_if_str(input_data["date"])
         release_date_str = input_data.get("releaseDate", "") or ""
         try:
             release_date = dateutil.parse(release_date_str).replace(tzinfo=pytz.utc)
@@ -536,7 +563,7 @@ class ProcessingFunctions:
             date: str, date string to parse
             release_date: str, optional release date to compare against if None use today
         """
-        date_str = input_data["date"]
+        date_str = strip_if_str(input_data["date"])
 
         if not date_str:
             return RawProcessingResult()
@@ -598,7 +625,7 @@ class ProcessingFunctions:
         external_services: ExternalServices,
     ) -> RawProcessingResult:
         """Parse a timestamp string, e.g. 2022-11-01T00:00:00Z and return a YYYY-MM-DD string"""
-        timestamp = input_data["timestamp"]
+        timestamp = strip_if_str(input_data["timestamp"])
 
         if not timestamp:
             return RawProcessingResult()
@@ -771,7 +798,7 @@ class ProcessingFunctions:
             return RawProcessingResult(warnings=warnings, errors=errors)
 
         if valid_authors(authors, allow_all_ascii):
-            formatted_authors = format_authors(authors)
+            formatted_authors = format_authors(remove_hyphen_spacing(authors))
             if warn_potentially_invalid_authors(authors):
                 warnings.append(
                     "The authors list might not be using the Loculus format. "
@@ -782,6 +809,29 @@ class ProcessingFunctions:
                     "Authors list contains 'and'. This may indicate a misformatted "
                     "authors list. Authors should always be separated by semi-colons only e.g. "
                     "`Smith, Anna; Perez, Tom J.; Xu, X.L.`."
+                )
+            dangling_hyphen_names = get_names_with_leading_or_trailing_hyphen(
+                remove_hyphen_spacing(authors)
+            )
+            if dangling_hyphen_names and not allow_all_ascii:
+                names_to_show = ", ".join(f"'{name}'" for name in dangling_hyphen_names)
+                return RawProcessingResult(
+                    errors=[
+                        (
+                            f"Invalid name(s): {names_to_show}. "
+                            "Names must not start or end with a hyphen."
+                        )
+                    ],
+                    warnings=warnings,
+                )
+            hyphenated_words = get_spaced_hyphenated_words(authors)
+            if hyphenated_words:
+                words_to_show = ", ".join(f"'{word}'" for word in hyphenated_words)
+                warnings.append(
+                    f"Authors list contains spaces around hyphens: {words_to_show}. "
+                    "Hyphenated names should not contain spaces around the hyphen, "
+                    "e.g. `Smith-Jones, Anna-Maria`. "
+                    "Spaces around these hyphens have been removed automatically."
                 )
             return RawProcessingResult(datum=formatted_authors, warnings=warnings)
         invalid_names = get_invalid_author_names(authors, allow_all_ascii)
@@ -919,10 +969,7 @@ class ProcessingFunctions:
                             f"Invalid boolean value: {input_datum} for field {output_field}."
                         )
                 case _:
-                    if isinstance(input_datum, str):
-                        output_datum = input_datum.strip()
-                    else:
-                        output_datum = input_datum
+                    output_datum = strip_if_str(input_datum)
         else:
             output_datum = input_datum
         return RawProcessingResult(datum=output_datum, errors=errors)
@@ -1297,6 +1344,46 @@ class ProcessingFunctions:
 
         return external_services.taxonomy_service.get_common_name(tax_id)
 
+    @staticmethod
+    def check_ena_accession(  # noqa: PLR0913, PLR0917
+        input_data: InputMetadata,
+        output_field: str,
+        input_fields: list[str],
+        args: FunctionArgs,
+        context: ProcessingContext,
+        external_services: ExternalServices,
+    ) -> RawProcessingResult:
+        try:
+            ena_accession_type = EnaAccessionType(str(args.get("accession_type")))
+        except ValueError:
+            return raw_internal_error(
+                "check_ena_accession requires accession_type to be one of "
+                f"{[t.value for t in EnaAccessionType]}, got args {args}."
+            )
+        accession: str | None = input_data.get("accession")
+        if not accession:
+            return RawProcessingResult()
+        accessions, error = validate_accession_format(
+            accession, ena_accession_type, context.is_insdc_ingest_group
+        )
+        if error:
+            return error
+        if not accessions:
+            return RawProcessingResult()
+        if context.is_insdc_ingest_group:
+            return RawProcessingResult(datum=",".join(accessions))
+        warnings: list[str] = []
+        errors: list[str] = []
+        for acc in accessions:
+            result = external_services.ena_visibility_checker.check_visibility(
+                acc, ena_accession_type
+            )
+            warnings.extend(result.warnings)
+            errors.extend(result.errors)
+        return RawProcessingResult(
+            datum=None if errors else ",".join(accessions), warnings=warnings, errors=errors
+        )
+
 
 def single_metadata_annotation(
     source_name: str,
@@ -1311,8 +1398,8 @@ def single_metadata_annotation(
     ]
 
 
-def process_frameshifts(input: str | None) -> InputData:
-    """Converts frameshift string to InputData for processing"""
+def process_frameshifts(input: list[dict[str, Any]] | None) -> InputData:
+    """Converts nextclade frameshifts to InputData for processing"""
     try:
         return InputData(datum=format_frameshift(input))
     except Exception as e:
@@ -1325,7 +1412,7 @@ def process_frameshifts(input: str | None) -> InputData:
         )
 
 
-def format_frameshift(input: str | None) -> str | None:
+def format_frameshift(input: list[dict[str, Any]] | None) -> str | None:
     """
     In nextclade frameshifts have the json format:
     [{
@@ -1366,8 +1453,6 @@ def format_frameshift(input: str | None) -> str | None:
     """
     if input is None:
         return None
-    if input == "[]":
-        return ""
 
     def range_string(_start: str | int, _end: str | int) -> str:
         """Converts 0-indexed exclusive range to 1-indexed inclusive range string"""
@@ -1377,11 +1462,8 @@ def format_frameshift(input: str | None) -> str | None:
             return f"{start}-{end}"
         return str(start)
 
-    frame_shifts = json.loads(
-        input.replace("'", '"')
-    )  # Required for json.loads to recognize input as json string and convert to dict
     frame_shift_strings = []
-    for frame_shift in frame_shifts:
+    for frame_shift in input:
         nuc_range_list = [range_string(nuc["begin"], nuc["end"]) for nuc in frame_shift["nucAbs"]]
         codon_range = range_string(frame_shift["codon"]["begin"], frame_shift["codon"]["end"])
         frame_shift_strings.append(
@@ -1390,8 +1472,8 @@ def format_frameshift(input: str | None) -> str | None:
     return ",".join(frame_shift_strings)
 
 
-def process_stop_codons(input: str | None) -> InputData:
-    """Converts stop codon string to InputData for processing"""
+def process_stop_codons(input: list[dict[str, Any]] | None) -> InputData:
+    """Converts nextclade stop codons to InputData for processing"""
     try:
         return InputData(datum=format_stop_codon(input))
     except Exception as e:
@@ -1404,7 +1486,7 @@ def process_stop_codons(input: str | None) -> InputData:
         )
 
 
-def format_stop_codon(result: str | None) -> str | None:
+def format_stop_codon(result: list[dict[str, Any]] | None) -> str | None:
     """
     In nextclade stop codons have the json format:
     [   {
@@ -1419,12 +1501,8 @@ def format_stop_codon(result: str | None) -> str | None:
     """
     if result is None:
         return None
-    if result == "[]":
-        return ""
-    result = result.replace("'", '"')
-    stop_codons = json.loads(result)
     stop_codon_strings = []
-    for stop_codon in stop_codons:
+    for stop_codon in result:
         stop_codon_string = f"{stop_codon['cdsName']}:{stop_codon['codon'] + 1}"
         stop_codon_strings.append(stop_codon_string)
     return ",".join(stop_codon_strings)
@@ -1434,14 +1512,15 @@ def _format_aa_substitution(mutation: dict) -> str:
     return f"{mutation['cdsName']}:{mutation['refAa']}{int(mutation['pos']) + 1}{mutation['qryAa']}"
 
 
-def process_mutations_from_clade_founder(input: str | None, args: FunctionArgs | None) -> InputData:
+def process_mutations_from_clade_founder(
+    input: dict[str, Any] | None, args: FunctionArgs | None
+) -> InputData:
     """Processes substitutions from clade founder InputData for processing"""
     if input is None:
         return InputData(datum=None)
     try:
-        data = ast.literal_eval(input)
         mutations = []
-        for value in data.values():
+        for value in input.values():
             if not value.get("privateSubstitutions"):
                 continue
             for mutation in value["privateSubstitutions"]:
@@ -1460,14 +1539,13 @@ def process_mutations_from_clade_founder(input: str | None, args: FunctionArgs |
     return InputData(datum=None)
 
 
-def process_labeled_mutations(input: str | None, args: FunctionArgs | None) -> InputData:
+def process_labeled_mutations(input: dict[str, Any] | None, args: FunctionArgs | None) -> InputData:
     """Processes labeledMutations from privateMutations list for processing"""
     if input is None:
         return InputData(datum=None)
     try:
-        data = ast.literal_eval(input)
         mutations = []
-        for value in data.values():
+        for value in input.values():
             if not value.get("labeledSubstitutions"):
                 continue
             for labeled_mutation in value["labeledSubstitutions"]:
@@ -1490,14 +1568,15 @@ def process_labeled_mutations(input: str | None, args: FunctionArgs | None) -> I
     return InputData(datum=None)
 
 
-def process_phenotype_values(input: str | None, args: FunctionArgs | None) -> InputData:
-    """Processes phenotype values string to InputData for processing"""
+def process_phenotype_values(
+    input: list[dict[str, Any]] | None, args: FunctionArgs | None
+) -> InputData:
+    """Processes nextclade phenotype values to InputData for processing"""
     if input is None:
         return InputData(datum=None)
     name = args.get("name", "") if args else ""
     try:
-        data = ast.literal_eval(input)
-        for entry in data:
+        for entry in input:
             if entry.get("name") == name:
                 value = entry.get("value")
                 return InputData(datum=str(value) if value is not None else None)

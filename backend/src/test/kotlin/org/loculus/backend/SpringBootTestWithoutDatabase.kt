@@ -2,7 +2,7 @@ package org.loculus.backend
 
 import io.mockk.every
 import io.mockk.mockk
-import org.loculus.backend.controller.PublicJwtKeyConfig
+import org.loculus.backend.testutil.PublicJwtKeyConfig
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.context.TestConfiguration
 import org.springframework.context.annotation.Bean

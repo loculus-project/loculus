@@ -44,6 +44,7 @@ export const testConfig = {
     },
     insecureCookies: true,
     backendKeycloakClientSecret: 'dummy',
+    oidcTransactionCookieSecret: 'test-oidc-transaction-cookie-secret',
 } as RuntimeConfig;
 
 // Stubbing necessary since headlessui v2
@@ -136,7 +137,19 @@ export const defaultReviewData: SequenceEntryToEdit = {
 export const testSiteName = 'Loculus';
 export const testAccessToken = 'someTestToken';
 
-export const testServer = setupServer();
+export const testServer = setupServer(
+    http.options(
+        '*',
+        () =>
+            new Response(null, {
+                status: 204,
+                headers: {
+                    // eslint-disable-next-line @typescript-eslint/naming-convention
+                    'Access-Control-Allow-Origin': '*',
+                },
+            }),
+    ),
+);
 
 const backendRequestMocks = {
     submit: (statusCode: number = 200, response: SubmissionIdMapping[] | unknown = []) => {
@@ -349,7 +362,7 @@ export const mockRequest = {
     lapis: lapisRequestMocks,
 };
 
-beforeAll(() => testServer.listen({ onUnhandledRequest: 'error' }));
+beforeAll(() => testServer.listen({ onUnhandledFrame: 'error' }));
 
 beforeEach(() => {
     testServer.use(

@@ -2,9 +2,12 @@ package org.loculus.backend.config
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.commons.lang3.StringUtils.lowerCase
-import org.loculus.backend.api.Organism
+import org.loculus.backend.types.Organism
+
+const val PROJECT_NAME = "Loculus"
 
 data class BackendConfig(
+    val name: String = PROJECT_NAME,
     val websiteUrl: String,
     val backendUrl: String,
     val organisms: Map<String, InstanceConfig>,

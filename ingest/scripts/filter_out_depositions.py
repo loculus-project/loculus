@@ -1,7 +1,7 @@
 import csv
 import json
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import click
 import pandas as pd
@@ -19,7 +19,7 @@ logging.basicConfig(
 @dataclass
 class Config:
     segmented: bool
-    db_password: str
+    db_password: str = field(repr=False)
     db_username: str
     db_host: str
 

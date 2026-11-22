@@ -18,19 +18,20 @@ from .config import (
     EnaOrganismDetails,
     EnaResultField,
 )
-from .ena_submission_helper import (
-    CreationResult,
+from .ena_builders import (
     create_chromosome_list,
-    create_ena_assembly,
     create_flatfile,
     create_manifest,
     get_description,
-    get_ena_analysis_process,
     linked_accession_diff,
     manifest_fields_diff,
     resolve_manifest_field,
     resolve_required_manifest_field,
-    retry_failed_submissions_for_matching_errors,
+)
+from .ena_client import (
+    CreationResult,
+    create_ena_assembly,
+    get_ena_analysis_process,
 )
 from .ena_types import (
     DEFAULT_EMBL_PROPERTY_FIELDS,
@@ -41,11 +42,8 @@ from .ena_types import (
 )
 from .notifications import SlackConfig, send_slack_notification, slack_conn_init
 from .submission_db_helper import (
-    AccessionVersion,
     AssemblyTableEntry,
     RawReadsTableEntry,
-    Status,
-    StatusAll,
     SubmissionTableEntry,
     add_to_db,
     db_init,
@@ -57,8 +55,14 @@ from .submission_db_helper import (
     is_latest_revision,
     is_revision,
     previous_version,
+    retry_failed_submissions_for_matching_errors,
     update_db_where_conditions,
     update_with_retry,
+)
+from .submission_types import (
+    AccessionVersion,
+    Status,
+    StatusAll,
 )
 
 logger = logging.getLogger(__name__)
@@ -523,7 +527,8 @@ def update_assembly_results_with_latest_version(db_engine: Engine, seq_key: Acce
             "version": version_to_revise,
         },
     )
-    if len(last_version_rows) == 0:
+    last_version_row = last_version_rows[0] if last_version_rows else None
+    if not last_version_row:
         error_msg = f"Last version {version_to_revise} not found in assembly_table"
         raise RuntimeError(error_msg)
     logger.info(
@@ -535,8 +540,10 @@ def update_assembly_results_with_latest_version(db_engine: Engine, seq_key: Acce
         db_engine=db_engine,
         conditions=asdict(seq_key),
         update_values={
-            "status": Status.SUBMITTED,
-            "result": last_version_rows[0].result,
+            "status": last_version_row.status,
+            "result": last_version_row.result,
+            "errors": last_version_row.errors,
+            "finished_at": datetime.now(tz=pytz.utc),
         },
         model_class=AssemblyTableEntry,
         reraise=False,

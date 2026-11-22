@@ -4,16 +4,11 @@ import mu.KotlinLogging
 import org.apache.commons.compress.archivers.zip.ZipFile
 import org.apache.commons.compress.compressors.CompressorStreamFactory
 import org.jetbrains.exposed.v1.exceptions.ExposedSQLException
-import org.loculus.backend.api.DataUseTerms
-import org.loculus.backend.api.Organism
-import org.loculus.backend.api.SubmissionIdFilesMap
-import org.loculus.backend.api.SubmissionIdMapping
-import org.loculus.backend.api.getAllFileIds
 import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.config.BackendConfig
-import org.loculus.backend.controller.BadRequestException
-import org.loculus.backend.controller.DuplicateKeyException
-import org.loculus.backend.controller.UnprocessableEntityException
+import org.loculus.backend.errors.BadRequestException
+import org.loculus.backend.errors.DuplicateKeyException
+import org.loculus.backend.errors.UnprocessableEntityException
 import org.loculus.backend.metrics.ASSOCIATE_REVISED_DATA_PHASE
 import org.loculus.backend.metrics.CLEANUP_UPLOAD_DATA_PHASE
 import org.loculus.backend.metrics.COPY_TO_AUX_TABLE_PHASE
@@ -28,8 +23,14 @@ import org.loculus.backend.service.files.FilesDatabaseService
 import org.loculus.backend.service.submission.CompressionAlgorithm
 import org.loculus.backend.service.submission.SubmissionIdFilesMappingPreconditionValidator
 import org.loculus.backend.service.submission.UploadDatabaseService
+import org.loculus.backend.types.DataUseTerms
+import org.loculus.backend.types.Organism
+import org.loculus.backend.types.SubmissionIdFilesMap
+import org.loculus.backend.types.SubmissionIdMapping
+import org.loculus.backend.types.getAllFileIds
 import org.loculus.backend.utils.DateProvider
 import org.loculus.backend.utils.FastaReader
+import org.loculus.backend.utils.extractDuplicateRecordId
 import org.loculus.backend.utils.metadataEntryStreamAsSequence
 import org.loculus.backend.utils.revisionEntryStreamAsSequence
 import org.springframework.stereotype.Service
@@ -334,7 +335,7 @@ class SubmitModel(
         } catch (e: ExposedSQLException) {
             if (e.sqlState == UNIQUE_CONSTRAINT_VIOLATION_SQL_STATE) {
                 throw DuplicateKeyException(
-                    "Metadata file contains at least one duplicate submissionId: ${e.cause?.cause}",
+                    "Metadata file contains at least one duplicate submissionId" + e.duplicateIdSuffix(uploadId),
                 )
             }
             throw e
@@ -355,12 +356,23 @@ class SubmitModel(
             } catch (e: ExposedSQLException) {
                 if (e.sqlState == UNIQUE_CONSTRAINT_VIOLATION_SQL_STATE) {
                     throw DuplicateKeyException(
-                        "Sequence file contains at least one duplicate submissionId: ${e.cause?.cause}",
+                        "Sequence file contains at least one duplicate FASTA ID" + e.duplicateIdSuffix(uploadId),
                     )
                 }
                 throw e
             }
         }
+    }
+
+    private fun ExposedSQLException.duplicateIdSuffix(uploadId: String): String {
+        val duplicateId = extractDuplicateRecordId(uploadId)
+        if (duplicateId == null) {
+            log.error(this) {
+                "Could not extract the duplicate ID from unique constraint violation for upload $uploadId"
+            }
+            return ""
+        }
+        return ": ${duplicateId.value}"
     }
 
     private fun getFileType(file: MultipartFile, expectedFileType: ValidExtension): CompressionAlgorithm {

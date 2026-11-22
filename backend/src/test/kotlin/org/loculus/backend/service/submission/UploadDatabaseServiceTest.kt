@@ -4,7 +4,6 @@ import io.mockk.every
 import io.mockk.mockk
 import kotlinx.datetime.LocalDate
 import org.jetbrains.exposed.v1.core.eq
-import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -12,19 +11,19 @@ import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
-import org.loculus.backend.api.DataUseTerms
-import org.loculus.backend.api.DataUseTermsType
-import org.loculus.backend.api.Organism
 import org.loculus.backend.auth.AuthenticatedUser
-import org.loculus.backend.controller.DEFAULT_GROUP
-import org.loculus.backend.controller.DEFAULT_ORGANISM
-import org.loculus.backend.controller.EndpointTest
-import org.loculus.backend.controller.dateMonthsFromNow
 import org.loculus.backend.model.SubmissionParams
 import org.loculus.backend.service.datauseterms.DATA_USE_TERMS_TABLE_NAME
 import org.loculus.backend.service.datauseterms.DataUseTermsDatabaseService
 import org.loculus.backend.service.datauseterms.DataUseTermsTable
 import org.loculus.backend.service.groupmanagement.GroupManagementDatabaseService
+import org.loculus.backend.testutil.DEFAULT_GROUP
+import org.loculus.backend.testutil.DEFAULT_ORGANISM
+import org.loculus.backend.testutil.EndpointTest
+import org.loculus.backend.testutil.dateMonthsFromNow
+import org.loculus.backend.types.DataUseTerms
+import org.loculus.backend.types.DataUseTermsType
+import org.loculus.backend.types.Organism
 import org.loculus.backend.utils.DateProvider
 import org.loculus.backend.utils.MetadataEntry
 import org.springframework.beans.factory.annotation.Autowired
@@ -40,7 +39,7 @@ class UploadDatabaseServiceTest(
     @Test
     fun `WHEN mapping an original upload THEN inserts its initial data use terms in one set`() {
         val authenticatedUser = testUser()
-        val groupId = groupManagementDatabaseService.createNewGroup(DEFAULT_GROUP, authenticatedUser).groupId
+        val groupId = groupManagementDatabaseService.createGroup(DEFAULT_GROUP, authenticatedUser).groupId
         val targetUploadId = "target-terms-upload"
         val otherUploadId = "other-terms-upload"
         val restrictedUntil = dateMonthsFromNow(6)
@@ -72,7 +71,7 @@ class UploadDatabaseServiceTest(
     @Test
     fun `WHEN initial data use terms count does not match THEN rolls back terms and tracker`() {
         val authenticatedUser = testUser()
-        val groupId = groupManagementDatabaseService.createNewGroup(DEFAULT_GROUP, authenticatedUser).groupId
+        val groupId = groupManagementDatabaseService.createGroup(DEFAULT_GROUP, authenticatedUser).groupId
         val uploadId = "mismatched-terms-upload"
 
         insertMetadata(uploadId, listOf("target-1", "target-2"), authenticatedUser, groupId)

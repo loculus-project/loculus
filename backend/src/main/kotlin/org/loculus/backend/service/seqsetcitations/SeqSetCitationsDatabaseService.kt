@@ -28,30 +28,30 @@ import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
 import org.keycloak.representations.idm.UserRepresentation
-import org.loculus.backend.api.AccessionVersion
-import org.loculus.backend.api.AddSeqSetCitationRequest
-import org.loculus.backend.api.AdminSeqSetCitation
-import org.loculus.backend.api.AuthorProfile
-import org.loculus.backend.api.CitationOrigin
-import org.loculus.backend.api.CitationSource
-import org.loculus.backend.api.ResponseSeqSet
-import org.loculus.backend.api.SeqSet
-import org.loculus.backend.api.SeqSetCitation
-import org.loculus.backend.api.SeqSetCitationSource
-import org.loculus.backend.api.SeqSetCitationsConstants
-import org.loculus.backend.api.SeqSetCitingSequence
-import org.loculus.backend.api.SeqSetRecord
-import org.loculus.backend.api.SequenceCitation
-import org.loculus.backend.api.Status.APPROVED_FOR_RELEASE
-import org.loculus.backend.api.SubmittedSeqSetRecord
 import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.config.BackendConfig
-import org.loculus.backend.controller.ForbiddenException
-import org.loculus.backend.controller.NotFoundException
-import org.loculus.backend.controller.UnprocessableEntityException
+import org.loculus.backend.errors.ForbiddenException
+import org.loculus.backend.errors.NotFoundException
+import org.loculus.backend.errors.UnprocessableEntityException
 import org.loculus.backend.service.crossref.CrossRefService
 import org.loculus.backend.service.crossref.DoiEntry
 import org.loculus.backend.service.submission.AccessionPreconditionValidator
+import org.loculus.backend.types.AccessionVersion
+import org.loculus.backend.types.AddSeqSetCitationRequest
+import org.loculus.backend.types.AdminSeqSetCitation
+import org.loculus.backend.types.AuthorProfile
+import org.loculus.backend.types.CitationOrigin
+import org.loculus.backend.types.CitationSource
+import org.loculus.backend.types.ResponseSeqSet
+import org.loculus.backend.types.SeqSet
+import org.loculus.backend.types.SeqSetCitation
+import org.loculus.backend.types.SeqSetCitationSource
+import org.loculus.backend.types.SeqSetCitationsConstants
+import org.loculus.backend.types.SeqSetCitingSequence
+import org.loculus.backend.types.SeqSetRecord
+import org.loculus.backend.types.SequenceCitation
+import org.loculus.backend.types.Status.APPROVED_FOR_RELEASE
+import org.loculus.backend.types.SubmittedSeqSetRecord
 import org.loculus.backend.utils.DateProvider
 import org.loculus.backend.utils.getNextSequenceNumber
 import org.springframework.stereotype.Service
@@ -263,12 +263,7 @@ class SeqSetCitationsDatabaseService(
                     (SeqSetToRecordsTable.seqSetVersion eq selectedVersion)
             }
             .map {
-                SeqSetRecord(
-                    it[SeqSetRecordsTable.seqSetRecordId],
-                    it[SeqSetRecordsTable.accession],
-                    it[SeqSetRecordsTable.type],
-                    it[SeqSetRecordsTable.isFocal],
-                )
+                SeqSetRecord(it[SeqSetRecordsTable.accession], it[SeqSetRecordsTable.isFocal])
             }
 
         return selectedSeqSetRecords
@@ -690,17 +685,11 @@ class SeqSetCitationsDatabaseService(
         newSeqSetRecords: List<SubmittedSeqSetRecord>,
         newSeqSetDescription: String?,
     ) {
-        val oldSubmittedSeqSetRecords = oldSeqSetRecords.map {
-            SubmittedSeqSetRecord(
-                it.accession,
-                it.type,
-                it.isFocal,
-            )
-        }
+        val newRecords = newSeqSetRecords.map { SeqSetRecord(it.accession, it.isFocal) }
 
         if (oldSeqSet.name == newSeqSetName &&
             oldSeqSet.description.orEmpty() == newSeqSetDescription.orEmpty() &&
-            oldSubmittedSeqSetRecords == newSeqSetRecords
+            oldSeqSetRecords.toSet() == newRecords.toSet()
         ) {
             throw UnprocessableEntityException("SeqSet update must contain at least one change")
         }

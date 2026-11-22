@@ -3,7 +3,7 @@ package org.loculus.backend.service.files
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.loculus.backend.config.BackendSpringProperty
-import org.loculus.backend.controller.EndpointTest
+import org.loculus.backend.testutil.EndpointTest
 import org.springframework.beans.factory.annotation.Autowired
 
 @EndpointTest(

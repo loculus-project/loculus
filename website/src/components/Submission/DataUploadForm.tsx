@@ -5,6 +5,11 @@ import type { Result } from 'neverthrow';
 import { type FormEvent, useState, type Dispatch, type SetStateAction, useMemo } from 'react';
 
 import { type FileFactory, FormOrUploadWrapper, type InputMode } from './FormOrUploadWrapper.tsx';
+import {
+    displaySubmissionConfirmationWizard,
+    type SubmissionConfirmationStep,
+} from './SubmissionConfirmationWizard.tsx';
+import { extractAuthorLists } from './authorNames.ts';
 import { getClientLogger } from '../../clientLogger.ts';
 import { FolderUploadComponent } from './FileUpload/FolderUploadComponent.tsx';
 import { deriveFileMapping, validateFileUploadStates, type FileUploadState } from './FileUpload/fileUpload.ts';
@@ -26,7 +31,6 @@ import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
 import { stringifyMaybeAxiosError } from '../../utils/stringifyMaybeAxiosError.ts';
 import { dateTimeInMonths } from '../../utils/utcDates.ts';
-import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { MAX_SUBMITTED_DATA_DOWNLOAD_ENTRIES } from '../SearchPage/DownloadDialog/DownloadSubmittedDataButton.tsx';
 import { Button } from '../common/Button';
 import { Checkbox } from '../common/Checkbox';
@@ -51,6 +55,8 @@ type DataUploadFormProps = {
     inputMode: InputMode;
     group: Group;
     metadataTemplateFields: Map<string, InputField[]>;
+    /** Names of metadata fields of type 'authors', whose name splitting the user is asked to confirm on submit */
+    authorsFields: string[];
     onSuccess: () => void;
     onError: (message: string) => void;
     submissionDataTypes: SubmissionDataTypes;
@@ -71,6 +77,7 @@ const InnerDataUploadForm = ({
     onError,
     group,
     metadataTemplateFields,
+    authorsFields,
     submissionDataTypes,
     dataUseTermsEnabled,
     fileSharingConfig,
@@ -115,7 +122,7 @@ const InnerDataUploadForm = ({
             return;
         }
 
-        const { metadataFile, sequenceFile, submissionId } = sequenceDataResult.value;
+        const { metadataFile, processedMetadataFile, sequenceFile, submissionId } = sequenceDataResult.value;
 
         if (submissionId === undefined && inputMode === 'form') {
             onError('No ID specified.');
@@ -159,17 +166,24 @@ const InnerDataUploadForm = ({
             }
         };
 
+        const confirmationSteps: SubmissionConfirmationStep[] = [];
         if (action === 'submit' && dataUseTermsEnabled && dataUseTermsType === openDataUseTermsOption) {
-            displayConfirmationDialog({
-                dialogText:
-                    'You have selected the Open Data Use Terms. Once released under the Open Data Use Terms sequences will be deposited to INSDC and cannot be changed to the Restricted-Use Data Use Terms.',
-                confirmButtonText: 'Continue under Open terms',
-                closeButtonText: 'Cancel',
-                onConfirmation: submitSequenceData,
-            });
-        } else {
-            submitSequenceData();
+            confirmationSteps.push({ type: 'openDataUseTerms' });
         }
+        let authorLists;
+        try {
+            authorLists = await extractAuthorLists(processedMetadataFile, authorsFields);
+        } catch (error) {
+            void logger.error(`Failed to read metadata file for the author check: ${stringifyMaybeAxiosError(error)}`);
+            onError(`Could not read the metadata file: ${error instanceof Error ? error.message : String(error)}`);
+            return;
+        }
+        if (authorLists.length > 0) {
+            confirmationSteps.push({ type: 'authorNames', authorLists });
+        }
+        confirmationSteps.push({ type: 'nextSteps' });
+
+        displaySubmissionConfirmationWizard({ steps: confirmationSteps, onConfirmation: submitSequenceData });
     };
 
     return (
@@ -254,7 +268,7 @@ const InnerDataUploadForm = ({
                         <div className={`absolute ml-1.5 inline-flex ${isPending ? 'visible' : 'invisible'}`}>
                             <Spinner size='sm' />
                         </div>
-                        <span className='flex-1 text-center mx-8'>Upload and proceed to Approval</span>
+                        <span className='flex-1 text-center mx-8'>Upload</span>
                     </Button>
                 </div>
             </div>
@@ -573,7 +587,7 @@ const Acknowledgement = ({
                         databases (ENA, DDBJ, NCBI).
                     </p>
                     <div className='mt-2 py-5'>
-                        <label className='flex items-center'>
+                        <label className='flex items-start'>
                             <Checkbox
                                 size='sm'
                                 name='confirmation-no-pii'
@@ -581,16 +595,25 @@ const Acknowledgement = ({
                                 checked={confirmedNoPII}
                                 onChange={() => setConfirmedNoPII(!confirmedNoPII)}
                             />
-                            <div>
+                            <div className='space-y-2 leading-5'>
                                 <p className='text-xs pl-4 text-gray-500'>
-                                    I confirm that I have the legal right to submit this data, and that the data
-                                    submitted is not sensitive or human-identifiable.
+                                    I confirm that I have the legal right to submit this data, that the data submitted
+                                    is not sensitive or human-identifiable, and that the data is submitted in compliance
+                                    with applicable national and international{' '}
+                                    <a
+                                        href='https://www.ebi.ac.uk/abs-dsi/'
+                                        target='_blank'
+                                        className='text-primary-600 hover:underline'
+                                    >
+                                        access and benefit-sharing
+                                    </a>{' '}
+                                    obligations.
                                 </p>
                             </div>
                         </label>
                     </div>
                     <div className='mb-4 py-3'>
-                        <label className='flex items-center'>
+                        <label className='flex items-start'>
                             <Checkbox
                                 size='sm'
                                 name='confirmation-INSDC-upload-terms'
@@ -598,7 +621,7 @@ const Acknowledgement = ({
                                 checked={agreedToINSDCUploadTerms}
                                 onChange={() => setAgreedToINSDCUploadTerms(!agreedToINSDCUploadTerms)}
                             />
-                            <div>
+                            <div className='leading-5'>
                                 <p className='text-xs pl-4 text-gray-500'>
                                     I confirm I have not and will not submit this data independently to INSDC, to avoid
                                     data duplication. I agree to {instanceName} handling the submission of this data to

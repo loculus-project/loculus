@@ -1,7 +1,7 @@
 package org.loculus.backend.service.files
 
 import org.loculus.backend.auth.AuthenticatedUser
-import org.loculus.backend.controller.BadRequestException
+import org.loculus.backend.errors.BadRequestException
 import org.loculus.backend.service.groupmanagement.GroupManagementPreconditionValidator
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional

@@ -2,7 +2,7 @@ package org.loculus.backend.config
 
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
-import org.loculus.backend.controller.ServiceUnavailableException
+import org.loculus.backend.errors.ServiceUnavailableException
 import org.springframework.web.servlet.HandlerInterceptor
 
 class ReadOnlyModeInterceptor(private val backendConfig: BackendConfig) : HandlerInterceptor {

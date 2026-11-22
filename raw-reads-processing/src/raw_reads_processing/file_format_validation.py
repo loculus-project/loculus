@@ -2,7 +2,7 @@ import gzip
 import logging
 import os
 import re
-import subprocess  # noqa: S404
+import subprocess
 import zlib
 from enum import StrEnum
 from pathlib import Path
@@ -181,7 +181,7 @@ def validate_file_extensions(
 def validate_file_numbers(file_format: FileFormat, file_names: list[FileName]) -> None:
     """Validate the number of files submitted conforms to
     the expected number for the given file format."""
-    if file_format == FileFormat.FASTQ and len(file_names) > 2:  # noqa: PLR2004
+    if file_format == FileFormat.FASTQ and len(file_names) > 2:
         # ENA's readtools.jar actually allows more than 2 FASTQ files,
         # but it treats every 1+i file as a paired read of the first file.
         # ENA documents that multi-FASTQs should be submitted using a JSON manifest,
@@ -276,7 +276,7 @@ def validate_with_readtools(
     logger.debug(f"Running validation on '{file_names}': {args}")
 
     try:
-        subprocess.run(  # noqa: S603
+        subprocess.run(
             args,
             check=True,
             capture_output=True,

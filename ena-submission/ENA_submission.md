@@ -35,14 +35,7 @@ We require the following components:
 
 - Analysis: An analysis contains secondary analysis results derived from sequence reads (e.g. a genome assembly).
 
-In contrast to ENA, Pathoplexus has no hierarchy of study/sample/sequence. Therefore we have decided to create _one_ study per Loculus submission group and organism. For each Loculus sample we will create one sample (with metadata) and one sequence (with the sequence).
-
-### Mapping sequences and studies
-
-The following could be implement as post-MVP features:
-
-- Let submitters decide whether each sequence should be its own study or whether all sequences should be one study.
-- Allow submitters to group their sequences into studies.
+In contrast to ENA, Pathoplexus has no hierarchy of study/sample/sequence. Therefore the pipeline creates _one_ default study per Pathoplexus submission group and organism (we also accept user supplied studies/bioprojects). For each Pathoplexus sequence entry it creates one sample (with metadata) and one assembly (with the sequence), plus a run and experiment if raw reads are attached. (We will also link assemblies to user supplied biosamples and runs where applicable).
 
 ### URLs
 
@@ -51,29 +44,29 @@ The following could be implement as post-MVP features:
 
 ## Submission process
 
-## 1. Registering a study programmatically
+### 1. Registering a study programmatically
 
-1. Create the study XML ([schema](https://ftp.ebi.ac.uk/pub/databases/ena/doc/xsd/sra_1_5/ENA.project.xsd)):
+1. Create the study XML ([schema](https://ftp.ebi.ac.uk/pub/databases/ena/doc/xsd/sra_1_5/ENA.project.xsd)). This is what `create_project.py` generates, with values filled in from the organism's `enaDeposition` config (`scientific_name`, `taxon_id`) and the Pathoplexus group (`group_name`, `institution`, `address`):
 
    ```xml
    <!--filename: project.xml-->
    <PROJECT_SET>
-   <PROJECT alias={group_accession}:{organism}>
-        <NAME>{ncbiVirusName}</NAME>
-        <TITLE>{ncbiVirusName} Genome sequencing</TITLE>
-        <DESCRIPTION>Automated upload of {ncbiVirusName} sequences submitted by {Institution} from {db}.</DESCRIPTION>
+   <PROJECT alias="{group_id}:{organism}:{unique_project_suffix}" center_name="{institution}">
+        <NAME>{scientific_name}: Genome sequencing by {group_name}, {institution}</NAME>
+        <TITLE>{scientific_name}: Genome sequencing by {group_name}, {institution}, {city}, {country}</TITLE>
+        <DESCRIPTION>Automated upload of {scientific_name} sequences submitted by {group_name}, {institution}, {city}, {country} to {db_name}</DESCRIPTION>
         <SUBMISSION_PROJECT>
             <SEQUENCING_PROJECT/>
             <ORGANISM>
             <TAXON_ID>{taxon_id}</TAXON_ID>
-            <SCIENTIFIC_NAME>{ncbiVirusName}</SCIENTIFIC_NAME>
+            <SCIENTIFIC_NAME>{scientific_name}</SCIENTIFIC_NAME>
             </ORGANISM>
         </SUBMISSION_PROJECT>
         <PROJECT_LINKS>
             <PROJECT_LINK>
                 <XREF_LINK>
-                <DB>{db}</DB>
-                <ID>{group_accession}</ID>
+                <DB>{db_name}</DB>
+                <ID>{group_id}</ID>
                 </XREF_LINK>
             </PROJECT_LINK>
         </PROJECT_LINKS>
@@ -96,6 +89,8 @@ The following could be implement as post-MVP features:
    </ACTIONS>
    </SUBMISSION>
    ```
+
+   `HoldUntilDate` controls when the study (and all data associated with it) becomes public. The pipeline sets it to the current date (`get_submission_dict` in `ena_submission_helper.py`), so data is released immediately.
 
 3. Submit with e.g. `curl`:
 
@@ -123,12 +118,12 @@ The following could be implement as post-MVP features:
 
    This is where one gets the accession from.
 
-## 2. Registering a sample programmatically
+### 2. Registering a sample programmatically
 
 [Docs](https://ena-docs.readthedocs.io/en/latest/submit/samples.html)
 
-1. Find correct "minimal metadata" set defined by an appropriate [checklist](https://www.ebi.ac.uk/ena/browser/checklists). In our case, probably the [ENA virus pathogen reporting standard checklist](https://www.ebi.ac.uk/ena/browser/view/ERC000033). There's a more specific one for [Influenza](https://www.ebi.ac.uk/ena/browser/view/ERC000032) and a general [default](https://www.ebi.ac.uk/ena/browser/view/ERC000011) one. This in fact should be reflected in the Pathoplexus metadata model.
-2. Create the sample XML (multiple samples can be in one sample set):
+1. Samples are validated against a [checklist](https://www.ebi.ac.uk/ena/browser/checklists) that defines the "minimal metadata" fields. The checklist is configured per organism via `ena_checklist` in the `enaDeposition` config, e.g. the [ENA virus pathogen reporting standard checklist](https://www.ebi.ac.uk/ena/browser/view/ERC000033) or the more specific one for [Influenza](https://www.ebi.ac.uk/ena/browser/view/ERC000032). If none is set, no `ENA-CHECKLIST` attribute is sent and ENA uses its [default checklist](https://www.ebi.ac.uk/ena/browser/view/ERC000011).
+2. Create the sample XML (multiple samples can be in one sample set). The example below is taken from the ENA docs:
 
    ```xml
    <!--filename: sample.xml-->
@@ -217,23 +212,29 @@ The following could be implement as post-MVP features:
 
    and contains the sample accession number(s).
 
-## 3. Submitting sequences (assembly)
+### 3. Submitting sequences (assembly)
 
 [Docs](https://ena-docs.readthedocs.io/en/latest/submit/assembly/genome.html)
 
-1. Create [manifest file](https://ena-docs.readthedocs.io/en/latest/submit/assembly/genome.html#manifest-files) for assembly metadata and file specification (manifest.tsv). The metadata rows are (relevant ones for us):
+1. Create [manifest file](https://ena-docs.readthedocs.io/en/latest/submit/assembly/genome.html#manifest-files) for assembly metadata and file specification (manifest.tsv). The pipeline (`create_manifest_object` in `create_assembly.py`) sets the following metadata rows:
 
    - STUDY: Study accession - mandatory
    - SAMPLE: Sample accession - mandatory
-   - ASSEMBLYNAME: Unique assembly name, user-provided - mandatory
-   - ASSEMBLY_TYPE: ‘clone or isolate’ - mandatory
+   - ASSEMBLYNAME: Unique assembly name - mandatory. Generated as `{accession}.{version}_{timestamp}_{random}`, as every revision needs a new name
+   - ASSEMBLY_TYPE: always `isolate` - mandatory
    - COVERAGE: The estimated depth of sequencing coverage - mandatory
    - PROGRAM: The assembly program - mandatory
    - PLATFORM: The sequencing platform, or comma-separated list of platforms - mandatory
+   - MOLECULETYPE: from the organism config (`genomic RNA`, `viral cRNA` or `genomic DNA`)
+   - DESCRIPTION: `Original sequence submitted to {db_name} with accession: {accession}, version: {version}`
+   - RUN_REF: run accession from the `raw_reads_table`, only if raw reads were submitted for this sequence
+   - AUTHORS and ADDRESS: only when submitting as a broker (`is_broker`), see [authorship](https://ena-docs.readthedocs.io/en/latest/faq/data_brokering.html#authorship). ADDRESS is built from the Pathoplexus group's institution and address
+
+   COVERAGE, PROGRAM, PLATFORM and AUTHORS are taken from the sequence metadata as configured in `assembly_manifest_fields_mapping`.
 
    The file specification rows are:
 
-   - FLATFILE: sequences in embl flatfile format (alternatively use FASTA)
+   - FLATFILE: sequences in EMBL flatfile format (the pipeline always uses this; ENA also accepts FASTA)
    - CHROMOSOME_LIST: list of chromosomes
 
    An example manifest.tsv:
@@ -241,35 +242,36 @@ The following could be implement as post-MVP features:
    ```tsv
    STUDY	PRJEBxxxxxx
    SAMPLE	SAMEAxxxxxx
-   ASSEMBLYNAME	Standard assembly
+   ASSEMBLYNAME	PP_000001.1_20250101_120000_aB3x
    ASSEMBLY_TYPE	isolate
    COVERAGE	100
    PROGRAM	iVar
    PLATFORM	Illumina
+   MOLECULETYPE	genomic RNA
+   DESCRIPTION	Original sequence submitted to Pathoplexus with accession: PP_000001, version: 1
    FLATFILE	genome.embl.gz
-   CHROMOSOME_LIST	chromosome_list.tsv
+   CHROMOSOME_LIST	chromosome_list.gz
    ```
 
-2. Create chromosome list file (chromosome_list.tsv)
+2. Create the chromosome list file. Columns are object name (must match the sequence ID in the flatfile), chromosome name and `{topology}-{chromosome_type}`. For multi-segment organisms each segment is listed as `segmented`:
 
    ```tsv
-   sequence_id	chromosome_name	chromosome_type
-   ha	ha	segmented
-   na	na	segmented
+   PP_000001_L	L	linear-segmented
+   PP_000001_M	M	linear-segmented
+   PP_000001_S	S	linear-segmented
    ```
 
-3. Create the assembly
+   For single-segment organisms there is one `monopartite` entry named `genome`:
 
-a. Create fasta file (genome.fasta) containing all the sequences in fasta format:
+   ```tsv
+   PP_000001	genome	linear-monopartite
+   ```
 
-```fasta
->ha
-ACGT
->na
-ACGT
-```
+   Topology (`linear` or `circular`) comes from the organism config.
 
-b. Or create flatfiles: https://ena-docs.readthedocs.io/en/latest/submit/fileprep/flat-file-example.html, which can include annotations: https://www.ebi.ac.uk/ena/WebFeat/ (see section 4 for more details). As we are submitting as a broker it is important that we add the AUTHORS and ADDRESS to the assembly manifest file: https://ena-docs.readthedocs.io/en/latest/faq/data_brokering.html#authorship.
+3. Create the EMBL flatfile (`create_flatfile` in `ena_submission_helper.py`), see the [flatfile example](https://ena-docs.readthedocs.io/en/latest/submit/fileprep/flat-file-example.html). Each sequence gets a `source` feature with `mol_type`, `organism`, `geo_loc_name` (country), `collection_date`, and `authors` (reformatted as the INSDC expects) as a reference. The flatfile does not yet contain gene or CDS annotations, see section 4 and [#3739](https://github.com/loculus-project/loculus/issues/3739).
+
+   ENA also accepts a plain FASTA file instead.
 
 4. Submit the files using the webin-cli:
 
@@ -282,7 +284,7 @@ b. Or create flatfiles: https://ena-docs.readthedocs.io/en/latest/submit/filepre
    ```
 
 5. Save ERZ accession numbers (these will be returned by the webin-cli)
-6. Wait to receive GCA accession numbers (returned later after assignment by NCBI). This can be retrieved via https://wwwdev.ebi.ac.uk/ena/submit/report/swagger-ui/index.html
+6. Wait to receive GCA accession numbers (assigned later, once the assembly has been processed). This can be retrieved via https://wwwdev.ebi.ac.uk/ena/submit/report/swagger-ui/index.html
 
 ```
 curl -X 'GET' \
@@ -310,139 +312,16 @@ When processing is finished the response should look like:
 ]
 ```
 
-## 4 Submitting annotated assemblies to ENA
+### 4. Submitting annotated assemblies to ENA
 
-ENA docs say they require pre-registration of a [locus_tag_prefix](https://ena-docs.readthedocs.io/en/latest/faq/locus_tags.html) in order to submit annotated assemblies - however we have succeeded in submitted annotated embl files without these tags.
+ENA docs say they require pre-registration of a [locus_tag_prefix](https://ena-docs.readthedocs.io/en/latest/faq/locus_tags.html) in order to submit annotated assemblies - however we have succeeded in submitting annotated EMBL files without these tags.
 
-Given a nextclade dataset and a sequence, nextclade can be used to generate GFF3 files and/or tab-separated feature tables (tbl) files, these must still be converted into the required embl-annotation format.
+The flatfiles submitted by the pipeline currently do not contain gene or CDS annotations. Adding annotations from Nextclade is tracked in [#3739](https://github.com/loculus-project/loculus/issues/3739). Options considered:
 
-```
-nextclade run {sequence.fasta}  --output-all annotations --server {server} --output-annotation-tbl annotations.embl --dataset-name {dataset}
-```
+- Use the `annotation` object in the `nextclade.json` output (genes with their CDS segments, ranges and qualifiers such as `product` and `protein_id`) to add features to the EMBL flatfile (already done in preprocessing just needs to be used for ENA deposition).
+- [EMBLmyGFF3](https://github.com/NBISweden/EMBLmyGFF3) converts a GFF3 file into an EMBL flatfile, but on Nextclade's GFF3 output it produces errors and warnings caused by non-standard annotations (e.g. `region` and `seq_index`), and it cannot add the `country` and `collection_date` qualifiers we need. We decided against using it.
 
-The nextclade.json that is produced also contains annotations - we are [working](https://github.com/loculus-project/loculus/issues/3739) on using this annotation object to add annotations to the .embl flat files we submit:
-
-```json
-"annotation": {
-        "genes": [
-          {
-            "index": 0,
-            "id": "NS1",
-            "name": "NS1",
-            "range": {
-              "begin": 56,
-              "end": 476
-            },
-            "cdses": [
-              {
-                "id": "NS1",
-                "name": "NS1",
-                "product": "nonstructural protein 1",
-                "segments": [
-                  {
-                    "index": 1,
-                    "id": "NS1",
-                    "name": "NS1",
-                    "range": {
-                      "begin": 56,
-                      "end": 476
-                    },
-                    "rangeLocal": {
-                      "begin": 0,
-                      "end": 420
-                    },
-                    "landmark": null,
-                    "wrappingPart": "non-wrapping",
-                    "strand": "+",
-                    "frame": 2,
-                    "phase": 0,
-                    "truncation": "none",
-                    "exceptions": [],
-                    "attributes": {
-                      "locus_tag": [
-                        "NS1"
-                      ],
-                      "seq_index": [
-                        "0"
-                      ],
-                      "product": [
-                        "nonstructural protein 1"
-                      ],
-                      "protein_id": [
-                        "QPB74302.1"
-                      ],
-                      "Name": [
-                        "NS1"
-                      ],
-                      "ID": [
-                        "CDS-0-NS1"
-                      ],
-                      "Parent": [
-                        "Gene-0-NS1"
-                      ]
-                    },
-                    "compatIsGene": false,
-                    "color": null,
-                    "gffSeqid": "LOC_0011LRU.1",
-                    "gffSource": "feature",
-                    "gffFeatureType": "CDS"
-                  }
-                ],
-                "proteins": [],
-                "exceptions": [],
-                "attributes": {
-                  "locus_tag": [
-                    "NS1"
-                  ],
-                  "codon_start": [
-                    "1"
-                  ],
-                  "product": [
-                    "nonstructural protein 1"
-                  ],
-                  "protein_id": [
-                    "QPB74302.1"
-                  ],
-                  "Name": [
-                    "NS1"
-                  ],
-                  "seq_index": [
-                    "0"
-                  ]
-                },
-                "compatIsGene": false,
-                "color": null
-              }
-            ],
-            "exceptions": [],
-            "attributes": {
-              "seq_index": [
-                "0"
-              ],
-              "ID": [
-                "Gene-0-NS1"
-              ],
-              "Name": [
-                "NS1"
-              ],
-              "product": [
-                "NS1"
-              ]
-            },
-            "compatIsCds": true,
-            "color": null,
-            "gffSeqid": "LOC_0011LRU.1",
-            "gffSource": "feature",
-            "gffFeatureType": "CDS"
-          },
-          ...
-        ]
-      }
-```
-
-Another way to add annotations to the .embl flat file is to reformat the .tbl file produced by nextclade (using the python Bio.SeqFeatures class for this is quite useful). Alternatively, https://github.com/NBISweden/EMBLmyGFF3 will generate an .embl flat file given a sequence's gff3 file. However, when used on the GFF3 file produced by nextclade it adds ERRORS and WARNINGS (to the resulting output .embl flat file) making the files un-submittable without further processing. This is due to the gff3 files containing non-standard annotations (e.g. `region` and `seq_index`). A work around would be removing them from the GFF3 file before using the package. The package also does not give an option to add additional `country` and `collection_date` qualifiers to the .embl flat files which we typically add when submitting to ENA. So I decided against using it.
-
-## Submitting raw reads to ENA
+### 5. Submitting raw reads to ENA
 
 In order to submit raw reads you must:
 
@@ -453,7 +332,7 @@ In order to submit raw reads you must:
 
 Webin will report two unique accession numbers for each read submission. The first starts with ERR and is called the Run accession. The other starts with ERX and is called the Experiment accession.
 
-### Submission via webin-cli
+#### Submission via webin-cli
 
 1. Create a [manifest.tsv](https://ena-docs.readthedocs.io/en/latest/submit/reads/webin-cli.html#manifest-file) file.
 
@@ -507,26 +386,26 @@ INFO : The submission has been completed successfully. The following experiment 
 INFO : The submission has been completed successfully. The following run accession was assigned to the submission: ERR17408527
 ```
 
-### Programmatic submission
+#### Programmatic submission
 
 There is also a way to submit using XMLs and curl (see https://ena-docs.readthedocs.io/en/latest/submit/reads/programmatic.html), however this requires registering each run and experiment object individually via curl and additionally pre-uploading the files to our webin account, so it seems easier to use the webin-cli.
 
-# Revising Submissions to ENA
+## Revising Submissions to ENA
 
-## 1. [Revising Studies (Projects) and Samples](https://ena-docs.readthedocs.io/en/latest/update/metadata/programmatic-study.html)
+### 1. [Revising Studies (Projects) and Samples](https://ena-docs.readthedocs.io/en/latest/update/metadata/programmatic-study.html)
 
 Revisions to a study or sample should be submitted the same way as original sequences were submitted, with the `ADD` action in the submission request should be changed to a `MODIFY`. However, the alias must BE THE SAME as the previous version or the assigned accession number must be added for the correct sample/study to be updated.
 
-## 2. [Revising Assemblies](https://ena-docs.readthedocs.io/en/latest/update/assembly.html)
+### 2. [Revising Assemblies](https://ena-docs.readthedocs.io/en/latest/update/assembly.html)
 
 Study and sample accessions must stay the same in a revision and chromosome names cannot be changed (but new ones can be added). In the past, all metadata fields that were set via the manifest had to be revised via an email. ENA has now informed us we can revise these fields in a normal automated revision but we have had issues with it, so we have a `allow_revision_with_manifest_changes` flag which can enable/disable automated manifest revisions.
 However, unlike the alias a NEW `ASSEMBLYNAME` is required (cannot be the same as the assemblyname of the previous version).
 
-Currently we automate revision of studies and assemblies, if a manifest update is required the pipeline will not update the assembly but set the state of assembly submission to `HAS_ERRORS` and document the reason for the errors in the database. We will then receive a slack notification and will have to manually send an email to ENA to update the manifest.
+The pipeline automates revisions of samples (using `MODIFY`) and assemblies. Projects are never revised: there is one per group and organism and it is reused by all sequences. If an assembly revision requires a manifest update and `allow_revision_with_manifest_changes` is disabled, the pipeline does not update the assembly but sets the assembly submission to `HAS_ERRORS` and stores the reason in the database. We then receive a slack notification and have to email ENA to update the manifest.
 
 The `RUN_REF` in the assembly manifest is taken from the `raw_reads_table` (the run accession deposited for the same accession version), not from the sequence metadata. If a revision replaces or adds raw read files, a new run accession is created and the `RUN_REF` changes even if the consensus sequence and all other metadata are unchanged. This is treated like any other manifest change: with `allow_revision_with_manifest_changes` enabled the assembly is resubmitted with the new `RUN_REF`, otherwise the assembly is set to `HAS_ERRORS` for manual revision. The previous assembly result is only reused if the `RUN_REF` is unchanged as well.
 
-## 3. [Revising Raw Reads](https://ena-docs.readthedocs.io/en/latest/update/metadata/programmatic-read.html)
+### 3. [Revising Raw Reads](https://ena-docs.readthedocs.io/en/latest/update/metadata/programmatic-read.html)
 
 It is not possible to revise run files after they have been submitted, see [docs](https://ena-docs.readthedocs.io/en/latest/update/metadata/interactive.html#common-run-updates). 
 ENA allows the automated revision of run and experiment metadata submitted as XMLs - [docs](https://ena-docs.readthedocs.io/en/latest/update/metadata/programmatic-read.html), we opted to submit raw reads using the webin-cli which creates these XMLs for us - thus we cannot yet revise raw reads metadata fields. Revision requirements for the alias are: `Please note that the new experiment or run XML must either contain the original alias or the assigned accession number for the correct object to be updated.`
@@ -539,11 +418,27 @@ ENA allows the automated revision of run and experiment metadata submitted as XM
 
 ### What's the difference between `assemblies` and `annotated sequences`?
 
-In ENA aligned fasta files are considered assemblies of chromosomes, these are in the Analysis field of the metadata model. I further believe this should be submitted as part of Genome Assemblies (`-context genome` flag in webin CLI)
+In ENA, sequences submitted with their chromosome structure are considered genome assemblies, which are Analysis objects in the metadata model. The pipeline submits them as genome assemblies (`-context genome` in the webin-cli), see [the docs](https://ena-docs.readthedocs.io/en/latest/submit/assembly/genome.html).
 
-I believe this doc should cover all the steps: https://ena-docs.readthedocs.io/en/latest/submit/assembly/genome.html I am still not quite sure if we use chromosome assembly or just contig assembly - here is the information on the submission CLI: https://ena-docs.readthedocs.io/en/latest/submit/general-guide/webin-cli.html.
+### Why isnt the EMBL flat file I see on the INSDC the same as the one we submitted?
 
-To make a sequence public I believe we will need to update which study/project the analysis is associated with: https://ena-docs.readthedocs.io/en/latest/update/metadata/programmatic-read.html.
+In our current understanding ENA only keeps the sequence and annotations from the submitted flat file and rebuilds everything else from the 
+- biosample (source feature with qualifiers like `geo_loc_name` and `collection_date`). From Cornelius' research a total of 12 metadata fields that can be mapped to an assembly qualifier, they are: 
+   - collection_date (mapped)
+   - geo_loc_name (mapped)
+   - isolate (mapped)
+   - isolation_source
+   - strain
+   - serotype
+   - serovar
+   - sub_species
+   - sub_strain
+   - cell_line
+   - environmental_sample
+   - metagenome_source
+As well as 3 plant related metadata fields we will never use (variety, cultivar, ecotype).
+- manifest.tsv (authors, description, molecule type...)
+- chromosome_list.gz (segment, topology)
 
 ### What is the centre name?
 
@@ -562,22 +457,13 @@ Every Project in ENA has a secondary Study accession. Before ENA was combined as
 
 ### Why can't I search for ERZ accessions?
 
-Note ERZ accessions for genome assembles are not searchable and they are "private" (however this same type of accession is used for other objects e.g. covid specific files, AMR etc. and these can go public), this is also why on the analysis report one column always showed as private because it was the state of the ERZ accession.
+Note ERZ accessions for genome assemblies are not searchable and they are "private" (however this same type of accession is used for other objects e.g. covid specific files, AMR etc. and these can go public), this is also why on the analysis report one column always showed as private because it was the state of the ERZ accession.
 
-Instead you should use the GCA accession. These are distributed by NCBI (this is now changing as ENA has now gotten permission to assign these programmatically) and are only assigned when the assembly goes live and is processed by NCBI. There are some delays here still in the display as ENA is changing to using their own assignment.
-
-### What would the end-to-end flow of submitting sequences for pathoplexus look like?
-
-1. [Register study programmatically](https://ena-docs.readthedocs.io/en/latest/submit/study/programmatic.html)
-2. Upload sequences using what route? Which files are needed?
-
-### What information do we give to the original submitter?
-
-- There are "Webin Portal Reports" that we could share with original submitters?
+Instead you should use the GCA accession. GCA accessions are only assigned once the assembly goes live and has been processed; historically they were assigned by NCBI, but ENA can now assign them itself. NCBI has actually stopped publicly publishing GCAs, so now these can only be found on ENA.
 
 ### Can we move sequences from one project to another?
 
-It is not possible to more samples from one study to another once public. As soon as a assembly goes public the tuple (projectId, sampleId, submitterId, assemblyId) MUST stay unique (this is required for versioning to work). Because of this it is not possible to change the projectId an assembly is in if it is public. Even when the sequences are not public there is a placeholder GCA for the assembly.
+It is not possible to move samples from one study to another once public. As soon as an assembly goes public the tuple (projectId, sampleId, submitterId, assemblyId) MUST stay unique (this is required for versioning to work). Because of this it is not possible to change the projectId an assembly is in if it is public. Even when the sequences are not public there is a placeholder GCA for the assembly.
 
 ### How long does it take for a sequence to become public?
 

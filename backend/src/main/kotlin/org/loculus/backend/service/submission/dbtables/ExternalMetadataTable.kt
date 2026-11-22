@@ -2,8 +2,8 @@ package org.loculus.backend.service.submission.dbtables
 
 import org.jetbrains.exposed.v1.core.Table
 import org.jetbrains.exposed.v1.datetime.datetime
-import org.loculus.backend.api.MetadataMap
 import org.loculus.backend.service.jacksonSerializableJsonb
+import org.loculus.backend.types.MetadataMap
 
 const val EXTERNAL_METADATA_TABLE_NAME = "external_metadata"
 

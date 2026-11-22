@@ -4,9 +4,7 @@ import org.apache.commons.csv.CSVException
 import org.apache.commons.csv.CSVFormat
 import org.apache.commons.csv.CSVParser
 import org.apache.commons.csv.CSVRecord
-import org.loculus.backend.api.FileCategoryFilesMap
-import org.loculus.backend.api.FileIdAndName
-import org.loculus.backend.controller.UnprocessableEntityException
+import org.loculus.backend.errors.UnprocessableEntityException
 import org.loculus.backend.model.ACCESSION_HEADER
 import org.loculus.backend.model.FASTA_IDS_HEADER
 import org.loculus.backend.model.FASTA_IDS_SEPARATOR
@@ -17,6 +15,8 @@ import org.loculus.backend.model.FastaId
 import org.loculus.backend.model.METADATA_ID_HEADER
 import org.loculus.backend.model.METADATA_ID_HEADER_ALTERNATE_FOR_BACKCOMPAT
 import org.loculus.backend.model.SubmissionId
+import org.loculus.backend.types.FileCategoryFilesMap
+import org.loculus.backend.types.FileIdAndName
 import java.io.InputStream
 import java.io.InputStreamReader
 

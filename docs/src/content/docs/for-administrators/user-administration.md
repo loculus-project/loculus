@@ -28,6 +28,14 @@ Use the Keycloak admin password that you have configured previously
 
 The Loculus-specific users are stored in the `loculus` realm which can be selected in the selection box in the left navigation bar.
 
+<a id="update-browser-authentication-settings-on-an-existing-realm"></a>
+
+:::caution[One-time upgrade: browser authentication settings]
+
+Existing deployments upgrading to the browser authentication changes in PR #6994 need a one-time Keycloak client update. Follow the [browser authentication upgrade guide](../../reference/upgrade-guides/browser-authentication/) for rollout, verification and rollback instructions.
+
+:::
+
 ## How to create users
 
 1. Go to 'Users' on the left-hand menu

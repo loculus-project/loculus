@@ -35,6 +35,7 @@ type GroupPageProps = {
     continueSubmissionIntent?: ContinueSubmissionIntent;
     loginUrl: string;
     dateFieldForGroupGraph: string | null;
+    organismsWithGroupGraphField: Organism[];
 };
 
 const InnerGroupPage: FC<GroupPageProps> = ({
@@ -48,6 +49,7 @@ const InnerGroupPage: FC<GroupPageProps> = ({
     continueSubmissionIntent,
     loginUrl,
     dateFieldForGroupGraph,
+    organismsWithGroupGraphField,
 }) => {
     const groupName = prefetchedGroupDetails.group.groupName;
     const groupId = prefetchedGroupDetails.group.groupId;
@@ -77,14 +79,14 @@ const InnerGroupPage: FC<GroupPageProps> = ({
     });
 
     const { data: timeSeriesData, isLoading: timeSeriesLoading } = useQuery({
-        queryKey: ['group-time-series', groupId, clientConfig, organisms, dateFieldForGroupGraph],
+        queryKey: ['group-time-series', groupId, clientConfig, organismsWithGroupGraphField, dateFieldForGroupGraph],
         queryFn: () => {
             if (dateFieldForGroupGraph === null) {
                 return Promise.resolve({});
             }
-            return fetchTimeSeriesData(groupId, clientConfig, organisms, dateFieldForGroupGraph);
+            return fetchTimeSeriesData(groupId, clientConfig, organismsWithGroupGraphField, dateFieldForGroupGraph);
         },
-        enabled: dateFieldForGroupGraph !== null,
+        enabled: dateFieldForGroupGraph !== null && organismsWithGroupGraphField.length > 0,
     });
 
     const continueSubmissionCta = useMemo(() => {
@@ -133,7 +135,7 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                         </label>
                         <DropdownMenu
                             className='hidden sm:flex'
-                            panelClassName='top-full -left-4 min-w-60'
+                            panelClassName='-ml-4 min-w-60'
                             trigger={
                                 <label tabIndex={0} className='py-1 block cursor-pointer title'>
                                     {groupName}
@@ -250,12 +252,12 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                 </table>
             </div>
 
-            {dateFieldForGroupGraph !== null && (
+            {dateFieldForGroupGraph !== null && organismsWithGroupGraphField.length > 0 && (
                 <div className=' max-w-2xl mx-auto px-10 py-4 bg-gray-100 rounded-md my-4'>
                     <h2 className='text-lg font-bold mb-2'>Cumulative submissions over time</h2>
                     <CumulativeSubmissionsChart
                         timeSeriesData={timeSeriesData ?? {}}
-                        organisms={organisms}
+                        organisms={organismsWithGroupGraphField}
                         isLoading={timeSeriesLoading}
                     />
                 </div>

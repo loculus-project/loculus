@@ -9,6 +9,6 @@ if [ -n "$JVM_OPTS" ]; then
 else
     CMD="java $NATIVE_ACCESS_FLAG -jar app.jar --spring.profiles.active=docker $ARGS"
 fi
-echo Running:
-echo "$CMD"
+# Don't echo $ARGS: it contains secrets (passwords, keys) injected from Kubernetes secrets
+echo "Starting backend with JVM_OPTS: ${JVM_OPTS:-<none>}"
 $CMD

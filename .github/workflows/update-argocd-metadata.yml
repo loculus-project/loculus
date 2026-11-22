@@ -117,7 +117,8 @@ jobs:
           echo '{
             "branch" : "main",
             "number" : 999,
-            "head_short_sha_7": "${{ steps.get_sha.outputs.sha }}"
+            "head_short_sha_7": "${{ steps.get_sha.outputs.sha }}",
+            "head_sha": "${{ github.sha }}"
           }' > config.json
       - name: Commit and Push Changes
         run: |

@@ -3,10 +3,10 @@ package org.loculus.backend.service.submission
 import mu.KotlinLogging
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
-import org.loculus.backend.api.Organism
 import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.service.submission.dbtables.CompressionDictionariesTable
 import org.loculus.backend.service.submission.dbtables.CompressionDictionaryEntity
+import org.loculus.backend.types.Organism
 import org.loculus.backend.utils.DateProvider
 import org.springframework.stereotype.Service
 import java.security.MessageDigest
