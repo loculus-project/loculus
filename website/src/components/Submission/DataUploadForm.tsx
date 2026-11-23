@@ -14,6 +14,7 @@ import { deriveFileMapping, validateFileUploadStates, type FileUploadState } fro
 import DataUseTermsSelector from '../../components/DataUseTerms/DataUseTermsSelector';
 import { SubmissionRouteUtils } from '../../routes/SubmissionRoute.ts';
 import { routes } from '../../routes/routes.ts';
+import { extractProblemDetail, getErrorMessage, getErrorStatus } from '../../services/apiRequest.ts';
 import { backendClientHooks } from '../../services/serviceHooks.ts';
 import { FILES_HEADER_PREFIX } from '../../settings.ts';
 import {
@@ -39,7 +40,6 @@ import {
     type SubmissionFileMapping,
 } from './FileUpload/fileMapping.ts';
 import { extraFilesUploadDocsUrl } from './extraFilesUploadDocsUrl.ts';
-import { extractProblemDetail, getErrorMessage, getErrorStatus } from '../../services/apiRequest.ts';
 
 export type UploadAction = 'submit' | 'revise';
 
@@ -172,7 +172,7 @@ const InnerDataUploadForm = ({
             authorLists = await extractAuthorLists(processedMetadataFile, authorsFields);
         } catch (error) {
             void logger.error(`Failed to read metadata file for the author check: ${getErrorMessage(error)}`);
-            onError(`Could not read the metadata file: ${error instanceof Error ? error.message : String(error)}`);
+            onError(`Could not read the metadata file: ${getErrorMessage(error)}`);
             return;
         }
         if (authorLists.length > 0) {
@@ -666,21 +666,22 @@ function useSubmitFiles(
 
 function handleError(onError: (message: string) => void) {
     return (error: unknown) => {
-        void logger.error(`Received error from backend: ${getErrorMessage(error)}`);
+        const message = getErrorMessage(error);
+        void logger.error(`Received error from backend: ${message}`);
         const problemDetail = extractProblemDetail(error);
         if (problemDetail !== undefined) {
             switch (getErrorStatus(error)) {
                 case 400:
-                    onError('Failed to submit sequence entries: ' + problemDetail.detail);
+                    onError('Failed to submit sequence entries: ' + message);
                     return;
                 case 422:
-                    onError('The submitted file content was invalid: ' + problemDetail.detail);
+                    onError('The submitted file content was invalid: ' + message);
                     return;
                 default:
-                    onError(problemDetail.title + ': ' + problemDetail.detail);
+                    onError(problemDetail.detail !== '' ? `${problemDetail.title}: ${message}` : message);
                     return;
             }
         }
-        onError('Received unexpected message from backend: ' + getErrorMessage(error));
+        onError('Received unexpected message from backend: ' + message);
     };
 }

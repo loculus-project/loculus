@@ -34,6 +34,7 @@ describe('extractProblemDetail', () => {
 
     test('returns undefined for other response bodies and errors', () => {
         expect(extractProblemDetail(httpError(503, { message: 'unavailable' }))).toBeUndefined();
+        expect(extractProblemDetail(httpError(400, { error: { message: 'not a problem detail' } }))).toBeUndefined();
         expect(extractProblemDetail(new Error('boom'))).toBeUndefined();
     });
 });
