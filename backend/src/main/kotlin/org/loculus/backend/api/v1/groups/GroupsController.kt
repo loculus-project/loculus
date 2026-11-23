@@ -9,6 +9,7 @@ import jakarta.servlet.http.HttpServletResponse
 import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.auth.HiddenParam
 import org.loculus.backend.auth.User
+import org.loculus.backend.config.V1_API_VERSION
 import org.loculus.backend.service.groupmanagement.GroupManagementDatabaseService
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
@@ -40,7 +41,7 @@ private const val GROUP_ID_DESCRIPTION = "The ID of the group."
 
 @Tag(name = "Groups", description = "Create, update, get and list groups, and add and remove group users.")
 @RestController
-@RequestMapping("/v1")
+@RequestMapping("/$V1_API_VERSION")
 @SecurityRequirement(name = "bearerAuth")
 class GroupsController(private val groupManagementDatabaseService: GroupManagementDatabaseService) {
 
