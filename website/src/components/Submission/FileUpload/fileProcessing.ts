@@ -112,7 +112,7 @@ export const PLAIN_SEGMENT_KIND: FileKind<ProcessedPlainSegmentFile> = {
     supportedExtensions: ['sequence'],
     processRawFile: async (file: File) => {
         const text = await file.text();
-        const lines = text.split('\n');
+        const lines = text.split(/\r?\n/);
         const firstUntrimmedLine = lines.findIndex((l) => l.trim() !== l);
         if (firstUntrimmedLine >= 0) {
             return err(
