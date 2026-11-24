@@ -2,6 +2,7 @@ package org.loculus.backend.types
 
 import io.swagger.v3.oas.annotations.media.Schema
 import org.loculus.backend.utils.Accession
+import org.loculus.backend.utils.Version
 import java.sql.Timestamp
 
 data class SubmittedSeqSetRecord(
@@ -24,6 +25,23 @@ data class SubmittedSeqSetRecord(
     )
     val isFocal: Boolean = true,
 )
+
+/**
+ * The sequence a SeqSet record points to. A null [version] means "the latest version of [accession]".
+ * Submitted records use a single string, either "accession" or "accession.version", which [parse] splits.
+ */
+data class SeqSetRecordAccession(val accession: Accession, val version: Version?) {
+    fun display(): String = version?.let { "$accession.$it" } ?: accession
+
+    companion object {
+        fun parse(value: String): SeqSetRecordAccession = if ('.' in value) {
+            val accessionVersion = AccessionVersion.fromString(value)
+            SeqSetRecordAccession(accessionVersion.accession, accessionVersion.version)
+        } else {
+            SeqSetRecordAccession(value, null)
+        }
+    }
+}
 
 data class SubmittedSeqSet(val name: String, val description: String?, val records: List<SubmittedSeqSetRecord>)
 

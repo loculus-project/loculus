@@ -17,19 +17,18 @@ object SeqSetsTable : Table("seqsets") {
     override val primaryKey = PrimaryKey(seqSetId, seqSetVersion)
 }
 
+/** Each row belongs to exactly one seqset version; rows are not shared between seqset versions. */
 object SeqSetRecordsTable : Table("seqset_records") {
     val seqSetRecordId = long("seqset_record_id").autoIncrement()
+    val seqSetId = varchar("seqset_id", 255) references SeqSetsTable.seqSetId
+    val seqSetVersion = long("seqset_version") references SeqSetsTable.seqSetVersion
     val accession = varchar("accession", 255)
+
+    /** null means the record refers to the latest version of the accession */
+    val version = long("version").nullable()
     val type = varchar("type", 255)
     val isFocal = bool("is_focal").default(true)
     override val primaryKey = PrimaryKey(seqSetRecordId)
-}
-
-object SeqSetToRecordsTable : Table("seqset_to_records") {
-    val seqSetRecordId = long("seqset_record_id") references SeqSetRecordsTable.seqSetRecordId
-    val seqSetId = varchar("seqset_id", 255) references SeqSetsTable.seqSetId
-    val seqSetVersion = long("seqset_version") references SeqSetsTable.seqSetVersion
-    override val primaryKey = PrimaryKey(seqSetRecordId, seqSetId, seqSetVersion)
 }
 
 object SeqSetCitationSourceTable : Table("seqset_citation_source") {
