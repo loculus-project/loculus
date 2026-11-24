@@ -8,6 +8,7 @@ import org.loculus.backend.auth.User
 import org.loculus.backend.config.V1_API_VERSION
 import org.loculus.backend.service.query.QueryParams
 import org.loculus.backend.service.query.QueryService
+import org.loculus.backend.service.query.Sort
 import org.loculus.backend.types.Organism
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
@@ -19,14 +20,14 @@ import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody
 
-@Tag(name = "Query", description = "Query sequence entries.")
+@Tag(name = "Query", description = "Query sequences and metadata of entries.")
 @RestController
 @RequestMapping("/$V1_API_VERSION")
 @SecurityRequirement(name = "bearerAuth")
 class QueryController(private val queryService: QueryService) {
     @Operation(
         summary = "Query metadata",
-        description = "Query metadata of sequence entries.",
+        description = "Query metadata of entries.",
     )
     @ResponseStatus(HttpStatus.OK)
     @GetMapping("/query/metadata", produces = [MediaType.APPLICATION_JSON_VALUE])
@@ -36,6 +37,6 @@ class QueryController(private val queryService: QueryService) {
         @RequestParam(required = false) q: String?,
         @RequestParam(required = false) limit: Int?,
         @RequestParam(required = false) offset: Int?,
-        @RequestParam(required = false) sort: String?,
+        @RequestParam(required = false) sort: Sort?,
     ): ResponseEntity<StreamingResponseBody> = queryService.metadata(QueryParams(organism, q, limit, offset, sort))
 }

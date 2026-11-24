@@ -8,6 +8,8 @@ import org.springframework.security.config.annotation.web.configurers.AuthorizeH
 private val getEndpointsThatArePublic = arrayOf(
     // Enables 'GET /$V1_API_VERSION/groups/{groupId}' endpoint to be public
     "/$V1_API_VERSION/groups/*",
+    // Enables 'GET /$V1_API_VERSION/query/metadata' endpoint to be public
+    "/$V1_API_VERSION/query/metadata",
 )
 
 fun v1AccessRules(auth: AuthorizeHttpRequestsConfigurer<HttpSecurity>.AuthorizationManagerRequestMatcherRegistry) {
