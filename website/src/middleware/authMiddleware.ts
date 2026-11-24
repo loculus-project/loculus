@@ -25,7 +25,6 @@ enum TokenVerificationError {
 const logger = getInstanceLogger('LoginMiddleware');
 
 async function getValidTokenAndUserInfoFromCookie(context: APIContext, client: BaseClient) {
-    logger.debug(`Trying to get token and user info from cookie`);
     const token = await getTokenFromCookie(context, client);
     if (token !== undefined) {
         const userInfo = await getUserInfo(token, client);
