@@ -5,6 +5,8 @@ import java.io.BufferedReader
 import java.io.InputStream
 import java.io.InputStreamReader
 
+const val MAX_FASTA_ID_LENGTH = 255
+
 data class FastaEntry(val fastaId: String, val sequence: String)
 
 class FastaReader(inputStream: InputStream) :
@@ -43,6 +45,7 @@ class FastaReader(inputStream: InputStream) :
                     break
                 }
                 fastaId = nextLine!!.substring(1).split("\\s+".toRegex())[0]
+                validateFastaId(fastaId)
             } else {
                 sequence.append(nextLine)
             }
@@ -58,6 +61,25 @@ class FastaReader(inputStream: InputStream) :
             }
             validateSequenceCharacters(fastaId, sequence)
             FastaEntry(fastaId, sequence.toString())
+        }
+    }
+
+    /**
+     * The FASTA id is stored in a `varchar(255)` column, which can neither hold NUL characters nor more than
+     * 255 characters. Other characters are allowed, as the id is matched against the metadata as-is.
+     */
+    private fun validateFastaId(fastaId: String) {
+        if (fastaId.containsNulCharacter()) {
+            throw UnprocessableEntityException(
+                "FASTA header `${fastaId.withVisibleNulCharacters()}` contains a NUL character, which is not " +
+                    "allowed. This can happen if a binary file was uploaded instead of a FASTA file.",
+            )
+        }
+        if (fastaId.length > MAX_FASTA_ID_LENGTH) {
+            throw UnprocessableEntityException(
+                "FASTA id `${fastaId.take(50)}...` is ${fastaId.length} characters long, " +
+                    "but at most $MAX_FASTA_ID_LENGTH characters are allowed.",
+            )
         }
     }
 

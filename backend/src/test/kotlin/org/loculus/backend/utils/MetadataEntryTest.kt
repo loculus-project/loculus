@@ -4,6 +4,7 @@ import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.containsString
 import org.hamcrest.Matchers.equalTo
 import org.hamcrest.Matchers.hasSize
+import org.hamcrest.Matchers.not
 import org.hamcrest.Matchers.nullValue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -30,6 +31,54 @@ class MetadataEntryTest {
         assertThat(entries, hasSize(1))
         assertThat(entries[0].submissionId, equalTo("foo"))
         assertThat(entries[0].metadata["Country"], equalTo("bar"))
+    }
+
+    @Test
+    fun `NUL character in metadata value is rejected`() {
+        val str = "submissionId\tCountry\nfoo\tbar\nfoo2\tSwitzer\u0000land\n"
+        val exception = assertThrows<UnprocessableEntityException> {
+            metadataEntryStreamAsSequence(ByteArrayInputStream(str.toByteArray())).toList()
+        }
+        assertThat(exception.message, containsString("Record #2"))
+        assertThat(exception.message, containsString("'Country'"))
+        assertThat(exception.message, containsString("Switzer<NUL>land"))
+        assertThat(exception.message, not(containsString("\u0000")))
+    }
+
+    @Test
+    fun `NUL character in submission ID is rejected with NUL error`() {
+        val str = "submissionId\tCountry\nfo\u0000o\tbar\n"
+        val exception = assertThrows<UnprocessableEntityException> {
+            metadataEntryStreamAsSequence(ByteArrayInputStream(str.toByteArray())).toList()
+        }
+        assertThat(exception.message, containsString("NUL character"))
+        assertThat(exception.message, containsString("'submissionId'"))
+    }
+
+    @Test
+    fun `NUL character in metadata header is rejected`() {
+        val str = "submissionId\tCoun\u0000try\nfoo\tbar\n"
+        val exception = assertThrows<UnprocessableEntityException> {
+            metadataEntryStreamAsSequence(ByteArrayInputStream(str.toByteArray())).toList()
+        }
+        assertThat(exception.message, containsString("'Coun<NUL>try'"))
+    }
+
+    @Test
+    fun `NUL character in revision metadata value is rejected`() {
+        val str = "submissionId\taccession\tCountry\nfoo\t1\tbar\u0000\n"
+        val exception = assertThrows<UnprocessableEntityException> {
+            revisionEntryStreamAsSequence(ByteArrayInputStream(str.toByteArray())).toList()
+        }
+        assertThat(exception.message, containsString("NUL character"))
+        assertThat(exception.message, containsString("'Country'"))
+    }
+
+    @Test
+    fun `non-ASCII metadata values are accepted`() {
+        val str = "submissionId\tCountry\nfoo\tÖsterreich_ü\n"
+        val entries = metadataEntryStreamAsSequence(ByteArrayInputStream(str.toByteArray())).toList()
+        assertThat(entries[0].metadata["Country"], equalTo("Österreich_ü"))
     }
 
     @Test
