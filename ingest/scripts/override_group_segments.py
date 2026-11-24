@@ -181,20 +181,30 @@ def group_records(
     config: Config,
     different_values_log: dict[str, int],
 ) -> None:
+    def reject_group(msg: str) -> None:
+        logger.error(msg)
+        full_msg = (
+            f"Ingest for {config.organism} failed with: {msg} "
+            "- this indicates the grouping override file needs to be changed"
+        )
+        notify(config, full_msg)
+        orjsonl.append(ERROR_FILE, record_list)
+
+    accessions = ", ".join(record["id"] for record in record_list)
+    segments = [record["metadata"]["segment"] for record in record_list]
+
+    # Assert that all records are from a known segment
+    unknown_segments = sorted(set(segments) - set(config.nucleotide_sequences))
+    if unknown_segments:
+        reject_group(
+            f"Cannot group records with unknown segment(s) {unknown_segments}: {accessions}"
+        )
+        return
+
     # Assert that all records are from a different segment
-    for segment in config.nucleotide_sequences:
-        if len([record for record in record_list if record["metadata"]["segment"] == segment]) > 1:
-            msg = "Cannot group multiple records from the same segment" + ", ".join(
-                [record["id"] for record in record_list]
-            )
-            logger.error(msg)
-            full_msg = (
-                f"Ingest for {config.organism} failed with: {msg} "
-                "- this indicates the grouping override file needs to be changed"
-            )
-            notify(config, full_msg)
-            orjsonl.append(ERROR_FILE, record_list)
-            return
+    if len(segments) != len(set(segments)):
+        reject_group(f"Cannot group multiple records from the same segment: {accessions}")
+        return
     # Sort records by segment order so that, when segments disagree on a shared field,
     # the chosen value does not depend on the order of records in the input file
     # (which can change between NCBI downloads and would otherwise change the hash)
