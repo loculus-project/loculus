@@ -28,13 +28,17 @@ If everything looks in order you can approve the PR and merge it yourself. If yo
 
 ### CI is red
 
-Read the failing workflow's logs. If the failure looks transient (ghcr timeout, github issue, test flake, ...), rerun the failed jobs and then review as above if everything is green afterwards.
+Read the failing workflow's logs. If the failure looks transient (ghcr timeout, github issue, test flake, ...), rerun the failed jobs (except in the case of `ena-submission-workflow-tests`, see below) and then review as above if everything is green afterwards.
 
 If the update itself causes tests to fail, add a fix to the PR branch. Some tips:
 
 - Check the release notes for a migration guide.
 - For failing integration tests, grab the Playwright report: failed check → *View details* → *Summary* → *Artifacts* → `playwright-report-<browser>` (kept 30 days), then `npx playwright show-report ./playwright-report-firefox.zip` (works best in Chrome).
 - LLMs are quite helpful for this class of problem.
+
+#### Failing `ena-submission-workflow-tests`
+
+The `ena-submission-workflow-tests` action _will_ fail when dependabot opens a PR updating a dependency in `ena-submission`. This is because dependabot itself does not have access to the ENA secrets required to run this action successfully. Re-running the failed job, or commenting `@dependabot rebase` / `@dependabot recreate`, will not help as these runs still won't have the ENA secrets (dependabot is still the [GitHub 'actor'](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/re-run-workflows-and-jobs) running the workflow). To run this action with ENA secrets, you can either choose to 'Update branch' if the branch is behind `main`, push commits to the branch, or create your own PR with the changes. See https://github.com/loculus-project/loculus/pull/7860 as an example of this.
 
 ### Can't be merged
 
