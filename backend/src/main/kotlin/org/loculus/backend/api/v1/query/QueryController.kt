@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.tags.Tag
 import org.loculus.backend.auth.HiddenParam
 import org.loculus.backend.auth.User
 import org.loculus.backend.config.V1_API_VERSION
+import org.loculus.backend.service.query.QueryNode
 import org.loculus.backend.service.query.QueryParams
 import org.loculus.backend.service.query.QueryService
 import org.loculus.backend.service.query.Sort
@@ -34,7 +35,7 @@ class QueryController(private val queryService: QueryService) {
     fun metadata(
         @HiddenParam user: User,
         @RequestParam organism: Organism,
-        @RequestParam(required = false) q: String?,
+        @RequestParam(required = false) q: QueryNode?,
         @RequestParam(required = false) limit: Int?,
         @RequestParam(required = false) offset: Int?,
         @RequestParam(required = false) sort: Sort?,

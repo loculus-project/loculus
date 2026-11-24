@@ -2,6 +2,7 @@ package org.loculus.backend.errors
 
 import jakarta.validation.ConstraintViolationException
 import mu.KotlinLogging
+import org.springframework.beans.TypeMismatchException
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.HttpStatusCode
@@ -159,6 +160,18 @@ class ExceptionHandler : ResponseEntityExceptionHandler() {
         request: WebRequest,
     ): ResponseEntity<Any>? {
         val body = createProblemDetail(ex, status, ex.message ?: "Failed to read request", null, null, request)
+        return handleExceptionInternal(ex, body, headers, status, request)
+    }
+
+    override fun handleTypeMismatch(
+        ex: TypeMismatchException,
+        headers: HttpHeaders,
+        status: HttpStatusCode,
+        request: WebRequest,
+    ): ResponseEntity<Any>? {
+        val badRequest = ex.rootCause as? BadRequestException
+            ?: return super.handleTypeMismatch(ex, headers, status, request)
+        val body = createProblemDetail(ex, status, badRequest.message ?: "Invalid parameter", null, null, request)
         return handleExceptionInternal(ex, body, headers, status, request)
     }
 }
