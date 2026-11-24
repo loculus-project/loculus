@@ -41,6 +41,7 @@ disableRawReadsProcessingService: true
 readOnlyMode: false
 backendExtraJvmOpts: []
 website:
+  logRequests: true
   websiteConfig:
     enableLoginNavigationItem: true
     enableSubmissionNavigationItem: true

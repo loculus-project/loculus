@@ -1559,6 +1559,12 @@
             }
           }
         },
+        "logRequests": {
+          "groups": ["website"],
+          "type": "boolean",
+          "default": true,
+          "description": "Log every HTTP request the website makes (server side and in the browser) to the website logs."
+        },
         "runtimeConfig": {
           "type": "object",
           "additionalProperties": false,
