@@ -30,6 +30,7 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Profile
 import org.springframework.scheduling.annotation.EnableScheduling
 import org.springframework.stereotype.Component
+import org.springframework.web.client.RestClient
 import org.springframework.web.filter.CommonsRequestLoggingFilter
 import java.io.File
 import javax.sql.DataSource
@@ -99,6 +100,9 @@ class BackendSpringConfig {
         objectMapper: ObjectMapper,
         @Value("\${${BackendSpringProperty.BACKEND_CONFIG_PATH}}") configPath: String,
     ): BackendConfig = readBackendConfig(objectMapper, configPath)
+
+    @Bean
+    fun restClient(): RestClient = RestClient.create()
 
     @Bean
     fun openApi(backendConfig: BackendConfig) = buildOpenApiSchema(backendConfig)
