@@ -21,6 +21,8 @@ class LapisQueryConnector(
     private val restClient: RestClient,
     private val objectMapper: ObjectMapper,
 ) : QueryConnector {
+    private val renderer = LapisQueryRenderer()
+
     override fun metadata(params: QueryParams): StreamedResponse {
         val body = buildRequestBody(params)
         return post(params.organism, "/sample/details", body)
@@ -29,6 +31,7 @@ class LapisQueryConnector(
     private fun buildRequestBody(params: QueryParams): Map<String, Any> = buildMap {
         put("versionStatus", "LATEST_VERSION")
         put("isRevocation", false)
+        params.q?.let { put("advancedQuery", renderer.render(it)) }
         params.limit?.let { put("limit", it) }
         params.offset?.let { put("offset", it) }
         params.sort?.let {

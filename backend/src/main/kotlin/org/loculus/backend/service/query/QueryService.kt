@@ -41,9 +41,6 @@ class QueryService(
         // Validate query parameters
         validateQueryParams(params)
 
-        // Parse q into AST
-        if (params.q != null) throw UnprocessableEntityException("q: not supported yet")
-
         // Return results
         val response = queryConnector.metadata(params)
         return ResponseEntity(response.body, response.headers, HttpStatus.OK)
