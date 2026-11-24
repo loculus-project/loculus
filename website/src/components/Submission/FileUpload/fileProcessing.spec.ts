@@ -117,6 +117,8 @@ describe('fileProcessing', () => {
         const dummyFile = new File(['>id\nACGTNRYKMSWBDHV-acgtn\n'], 'example.fasta');
         const result = await PLAIN_SEGMENT_KIND.processRawFile(dummyFile);
         expect(result.isOk()).toBe(true);
+    });
+
     test('Plain segment file with Windows (CRLF) line endings is accepted', async () => {
         const dummyFile = new File(['>fooid description\r\nACTG\r\n\r\nACTG\r\nACTG\r\n'], 'example.fasta', {
             type: 'text/plain',
