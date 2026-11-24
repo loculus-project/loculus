@@ -1,0 +1,112 @@
+# Source: loculus/templates/silo-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: loculus-silo-service-cchf
+spec:
+  type: ClusterIP
+  selector:
+    app: loculus
+    component: silo-cchf
+  ports:
+    - port: 8081
+      targetPort: 8081
+      protocol: TCP
+      name: http
+---
+# Source: loculus/templates/silo-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: loculus-silo-service-dummy-organism
+spec:
+  type: ClusterIP
+  selector:
+    app: loculus
+    component: silo-dummy-organism
+  ports:
+    - port: 8081
+      targetPort: 8081
+      protocol: TCP
+      name: http
+---
+# Source: loculus/templates/silo-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: loculus-silo-service-dummy-organism-with-files
+spec:
+  type: ClusterIP
+  selector:
+    app: loculus
+    component: silo-dummy-organism-with-files
+  ports:
+    - port: 8081
+      targetPort: 8081
+      protocol: TCP
+      name: http
+---
+# Source: loculus/templates/silo-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: loculus-silo-service-ebola-sudan
+spec:
+  type: ClusterIP
+  selector:
+    app: loculus
+    component: silo-ebola-sudan
+  ports:
+    - port: 8081
+      targetPort: 8081
+      protocol: TCP
+      name: http
+---
+# Source: loculus/templates/silo-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: loculus-silo-service-enteroviruses
+spec:
+  type: ClusterIP
+  selector:
+    app: loculus
+    component: silo-enteroviruses
+  ports:
+    - port: 8081
+      targetPort: 8081
+      protocol: TCP
+      name: http
+---
+# Source: loculus/templates/silo-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: loculus-silo-service-not-aligned-organism
+spec:
+  type: ClusterIP
+  selector:
+    app: loculus
+    component: silo-not-aligned-organism
+  ports:
+    - port: 8081
+      targetPort: 8081
+      protocol: TCP
+      name: http
+---
+# Source: loculus/templates/silo-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: loculus-silo-service-west-nile
+spec:
+  type: ClusterIP
+  selector:
+    app: loculus
+    component: silo-west-nile
+  ports:
+    - port: 8081
+      targetPort: 8081
+      protocol: TCP
+      name: http
+---
