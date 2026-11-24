@@ -1009,13 +1009,6 @@ CREATE INDEX sepd_unprocessed_claim_idx ON public.sequence_entries_preprocessed_
 
 
 --
--- Name: seqset_records_accession_focal_idx; Type: INDEX; Schema: public; Owner: postgres
---
-
-CREATE INDEX seqset_records_accession_focal_idx ON public.seqset_records USING btree (accession text_pattern_ops, is_focal);
-
-
---
 -- Name: seqset_records_accession_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
