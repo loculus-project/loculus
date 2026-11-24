@@ -2,6 +2,7 @@
 import '../styles/base.css';
 import '../styles/custom-colors.css';
 
+import ClientRequestLogger from '../components/ClientRequestLogger.astro';
 import Navigation from '../components/Navigation/Navigation.astro';
 import OrganismSubmenu from '../components/Navigation/OrganismSubmenu.astro';
 import { cleanOrganism } from '../components/Navigation/cleanOrganism';
@@ -11,6 +12,7 @@ import { getWebsiteConfig } from '../config';
 import { navigationItems } from '../routes/navigationItems';
 import { createBackendClient } from '../services/backendClientFactory';
 import { getRemoteBannerMessage } from '../services/bannerMessageService';
+import { isRequestLoggingEnabled } from '../utils/outgoingRequestLogger';
 
 const websiteConfig = getWebsiteConfig();
 const {
@@ -62,6 +64,7 @@ const lastTimeBannerWasClosed = Astro.cookies.get('lastTimeBannerWasClosed')?.va
         <meta property='twitter:title' content={websiteName + ' | ' + title} />
         <title>{title} | {websiteName}</title>
         <Fragment set:html={additionalHeadHTML} />
+        {isRequestLoggingEnabled() && <ClientRequestLogger />}
     </head>
     <body>
         {backendIsInDebugMode && <div class='bg-red-500 text-white text-center p-2'>Backend is in debug mode</div>}
