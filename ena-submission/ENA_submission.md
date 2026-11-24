@@ -90,7 +90,7 @@ In contrast to ENA, Pathoplexus has no hierarchy of study/sample/sequence. There
    </SUBMISSION>
    ```
 
-   `HoldUntilDate` controls when the study (and all data associated with it) becomes public. The pipeline sets it to the current date (`get_submission_dict` in `ena_submission_helper.py`), so data is released immediately.
+   `HoldUntilDate` controls when the study (and all data associated with it) becomes public. The pipeline sets it to the current date (`get_submission_dict` in `ena_builders.py`), so data is released immediately.
 
 3. Submit with e.g. `curl`:
 
@@ -269,7 +269,7 @@ In contrast to ENA, Pathoplexus has no hierarchy of study/sample/sequence. There
 
    Topology (`linear` or `circular`) comes from the organism config.
 
-3. Create the EMBL flatfile (`create_flatfile` in `ena_submission_helper.py`), see the [flatfile example](https://ena-docs.readthedocs.io/en/latest/submit/fileprep/flat-file-example.html). Each sequence gets a `source` feature with `mol_type`, `organism`, `geo_loc_name` (country), `collection_date`, and `authors` (reformatted as the INSDC expects) as a reference. The flatfile does not yet contain gene or CDS annotations, see section 4 and [#3739](https://github.com/loculus-project/loculus/issues/3739).
+3. Create the EMBL flatfile (`create_flatfile` in `ena_builders.py`), see the [flatfile example](https://ena-docs.readthedocs.io/en/latest/submit/fileprep/flat-file-example.html). Each sequence gets a `source` feature with `mol_type`, `organism`, `geo_loc_name` (country), `collection_date`, and `authors` (reformatted as the INSDC expects) as a reference. The flatfile does not yet contain gene or CDS annotations, see section 4 and [#3739](https://github.com/loculus-project/loculus/issues/3739).
 
    ENA also accepts a plain FASTA file instead.
 
