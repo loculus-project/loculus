@@ -202,7 +202,7 @@ def group_records(
         record_list,
         key=lambda record: config.nucleotide_sequences.index(record["metadata"]["segment"]),
     )
-    segment_map ={record["metadata"]["segment"]: record["metadata"] for record in record_list}
+    segment_map = {record["metadata"]["segment"]: record["metadata"] for record in record_list}
 
     grouped_metadata = get_metadata_of_group(record_list, config, different_values_log, segment_map)
     joint_key = grouped_metadata["id"]
