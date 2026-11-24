@@ -26,24 +26,23 @@ Example output for a single isolate with 3 segments:
     "id": "KJ682796.1.L/KJ682809.1.M/KJ682819.1.S"
 }}"""
 
+import dataclasses
 import hashlib
 import json
 import logging
 import os
 import pathlib
-import dataclasses
 from dataclasses import dataclass
 from typing import Any, Final
 
 import click
-from prepare_metadata import resolve_host_information
 import orjsonl  # type: ignore
 import requests
 import yaml
+from prepare_metadata import resolve_host_information
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
-    encoding="utf-8",
     level=logging.DEBUG,
     format="%(asctime)s %(levelname)8s (%(filename)20s:%(lineno)4d) - %(message)s ",
     datefmt="%H:%M:%S",
@@ -196,7 +195,14 @@ def group_records(
             notify(config, full_msg)
             orjsonl.append(ERROR_FILE, record_list)
             return
-    segment_map = {record["metadata"]["segment"]: record["metadata"] for record in record_list}
+    # Sort records by segment order so that, when segments disagree on a shared field,
+    # the chosen value does not depend on the order of records in the input file
+    # (which can change between NCBI downloads and would otherwise change the hash)
+    record_list = sorted(
+        record_list,
+        key=lambda record: config.nucleotide_sequences.index(record["metadata"]["segment"]),
+    )
+    segment_map ={record["metadata"]["segment"]: record["metadata"] for record in record_list}
 
     grouped_metadata = get_metadata_of_group(record_list, config, different_values_log, segment_map)
     joint_key = grouped_metadata["id"]
