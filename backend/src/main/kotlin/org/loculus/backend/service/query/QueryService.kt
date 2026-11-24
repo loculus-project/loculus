@@ -16,7 +16,7 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
 data class QueryParams(
     @field:Valid
     val organism: Organism,
-    val q: String?,
+    val q: QueryNode?,
     @field:Min(0)
     val limit: Int?,
     @field:Min(0)
