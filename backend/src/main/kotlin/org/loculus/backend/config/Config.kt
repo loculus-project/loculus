@@ -10,6 +10,7 @@ data class BackendConfig(
     val name: String = PROJECT_NAME,
     val websiteUrl: String,
     val backendUrl: String,
+    val lapisUrls: Map<String, String> = emptyMap(),
     val organisms: Map<String, InstanceConfig>,
     val accessionPrefix: String,
     val dataUseTerms: DataUseTerms,
@@ -20,6 +21,10 @@ data class BackendConfig(
 ) {
     fun getInstanceConfig(organism: Organism) = organisms[organism.name] ?: throw IllegalArgumentException(
         "Organism: ${organism.name} not found in backend config. Available organisms: ${organisms.keys}",
+    )
+
+    fun getLapisUrl(organism: Organism) = lapisUrls[organism.name] ?: throw IllegalArgumentException(
+        "Organism: ${organism.name} has no LAPIS URL in backend config. Available organisms: ${lapisUrls.keys}",
     )
 
     fun consensusSequencesEnabled(organism: Organism): Boolean =
