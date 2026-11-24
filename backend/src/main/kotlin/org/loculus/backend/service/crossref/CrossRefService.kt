@@ -1,5 +1,6 @@
 package org.loculus.backend.service.crossref
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import mu.KotlinLogging
 import org.jsoup.Jsoup
 import org.jsoup.parser.Parser
@@ -25,6 +26,10 @@ import java.time.format.DateTimeFormatter
 import java.util.UUID
 
 private val log = KotlinLogging.logger { }
+
+private val objectMapper = ObjectMapper()
+
+private const val CROSSREF_REST_API_ENDPOINT = "https://api.crossref.org"
 
 @ConfigurationProperties(prefix = "crossref")
 data class CrossRefServiceProperties(
@@ -84,7 +89,17 @@ class CrossRefService(
         }
     }
 
-    fun parseCrossRefCitedByXML(citedByXML: String): CrossRefCitedByResult {
+    /**
+     * Parses a CrossRef Cited-by forward links response.
+     *
+     * [postedContentServerResolver] is called with the DOI of each `postedcontent_cite` citation and should return the
+     * name of the preprint server hosting it (or null if unknown). The forward links schema carries no field for this,
+     * so it has to be looked up elsewhere; see [fetchPostedContentServer].
+     */
+    fun parseCrossRefCitedByXML(
+        citedByXML: String,
+        postedContentServerResolver: (String) -> String? = { null },
+    ): CrossRefCitedByResult {
         val parser = Parser.xmlParser().setTrackErrors(1)
         val doc = Jsoup.parse(citedByXML, "", parser)
 
@@ -166,7 +181,11 @@ class CrossRefService(
                     CitationContributor(givenName, surname)
                 }
             }
+            // postedcontent_cite only carries title, contributors, year and doi, so the preprint server
+            // (bioRxiv, medRxiv, ...) has to be resolved separately from the DOI.
             val journal = citationElement.selectFirst("journal_title")?.text()?.takeIf { it.isNotBlank() }
+                ?: citationElement.takeIf { it.tagName() == "postedcontent_cite" }
+                    ?.let { postedContentServerResolver(sourceDOI) }?.takeIf { it.isNotBlank() }
 
             SeqSetCitationSource(
                 source = CitationSource(
@@ -211,10 +230,58 @@ class CrossRefService(
             connection.disconnect()
         }
 
+        // The same preprint can cite several SeqSets, so cache lookups for the duration of this request
+        val postedContentServers = mutableMapOf<String, String?>()
+
         return try {
-            parseCrossRefCitedByXML(response)
+            parseCrossRefCitedByXML(response) { sourceDOI ->
+                postedContentServers.getOrPut(sourceDOI) { fetchPostedContentServer(sourceDOI) }
+            }
         } catch (e: Exception) {
             throw RuntimeException("Failed to parse CrossRef citedBy response for DOI $doiPrefix", e)
+        }
+    }
+
+    /**
+     * Looks up the preprint server hosting a posted content DOI, e.g. "bioRxiv" for a 10.1101 preprint.
+     *
+     * The Cited-by forward links schema has no field for this (see crossref_query_output3.0.xsd), so we ask the
+     * public CrossRef REST API, which exposes the hosting service as `message.institution[].name`.
+     * Failures are logged and treated as "unknown" so that a single bad lookup doesn't fail the whole citation update.
+     */
+    fun fetchPostedContentServer(doi: String): String? {
+        val encodedDOI = URLEncoder.encode(doi, "UTF-8")
+        val mailtoParameter = properties.email
+            ?.takeIf { it.isNotBlank() }
+            ?.let { "?mailto=${URLEncoder.encode(it, "UTF-8")}" }
+            .orEmpty()
+        val connection = URI("$CROSSREF_REST_API_ENDPOINT/works/$encodedDOI$mailtoParameter")
+            .toURL()
+            .openConnection() as HttpURLConnection
+        connection.connectTimeout = 10_000
+        connection.readTimeout = 30_000
+        connection.requestMethod = "GET"
+
+        return try {
+            val responseCode = connection.responseCode
+            if (responseCode != HttpURLConnection.HTTP_OK) {
+                log.warn { "CrossRef REST request for posted content $doi returned $responseCode" }
+                return null
+            }
+            val body = connection.inputStream.use { String(it.readAllBytes()) }
+            objectMapper.readTree(body)
+                .path("message")
+                .path("institution")
+                .firstOrNull()
+                ?.path("name")
+                ?.takeIf { it.isTextual }
+                ?.asText()
+                ?.takeIf { it.isNotBlank() }
+        } catch (e: Exception) {
+            log.warn(e) { "Failed to look up the posted content server for $doi" }
+            null
+        } finally {
+            connection.disconnect()
         }
     }
 
