@@ -49,5 +49,9 @@ alter table seqset_records
     add constraint seqset_records_accession_has_no_version
         check (position('.' in accession) = 0);
 
+-- Prefix matching on accession is no longer needed now that versions live in their own column;
+-- seqset_records_accession_idx below covers the exact-match lookups.
+drop index seqset_records_accession_focal_idx;
+
 create index seqset_records_seqset_idx on seqset_records (seqset_id, seqset_version);
 create index seqset_records_accession_idx on seqset_records (accession);
