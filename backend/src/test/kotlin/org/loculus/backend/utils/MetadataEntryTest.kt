@@ -56,6 +56,17 @@ class MetadataEntryTest {
     }
 
     @Test
+    fun `huge metadata value with NUL character is truncated in the error message`() {
+        val hugeValue = "\u0000" + "x".repeat(100_000)
+        val str = "submissionId\tCountry\nfoo\t$hugeValue\n"
+        val exception = assertThrows<UnprocessableEntityException> {
+            metadataEntryStreamAsSequence(ByteArrayInputStream(str.toByteArray())).toList()
+        }
+        assertThat(exception.message, containsString("'<NUL>${"x".repeat(99)}...'"))
+        assertThat(exception.message!!.length < 500, equalTo(true))
+    }
+
+    @Test
     fun `NUL character in metadata header is rejected`() {
         val str = "submissionId\tCoun\u0000try\nfoo\tbar\n"
         val exception = assertThrows<UnprocessableEntityException> {

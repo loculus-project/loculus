@@ -13,3 +13,14 @@ fun String.containsNulCharacter(): Boolean = contains(NUL_CHARACTER)
 
 /** Makes NUL characters visible (and safe to include) in error messages. */
 fun String.withVisibleNulCharacters(): String = replace(NUL_CHARACTER.toString(), NUL_PLACEHOLDER)
+
+/**
+ * Prepares user input for inclusion in an error message: makes NUL characters visible and truncates it.
+ * The input may be the content of a whole binary file, so it must not be echoed in full
+ * (it would end up in the response and in the logs).
+ */
+fun String.forErrorMessage(max: Int = 100): String = if (length > max) {
+    take(max).withVisibleNulCharacters() + "..."
+} else {
+    withVisibleNulCharacters()
+}

@@ -99,6 +99,14 @@ class FastaReaderTest {
     }
 
     @Test
+    fun `fasta id length is counted in code points`() {
+        // 200 emoji = 400 UTF-16 chars but 200 code points
+        val id = "🦠".repeat(200)
+        val parsed = FastaReader(">$id\nACGT\n".byteInputStream()).toList()
+        assertThat(parsed[0].fastaId, equalTo(id))
+    }
+
+    @Test
     fun `binary file content after a FASTA header is rejected`() {
         // Start of a .docx (zip) file, as produced when a Word document is uploaded as a sequence
         val zipHeader = byteArrayOf(0x50, 0x4b, 0x03, 0x04, 0x14, 0x00, 0x06, 0x00)

@@ -210,7 +210,7 @@ private fun getValueAndValidateNoWhitespace(record: CSVRecord, fieldName: String
 private fun validateHeadersContainNoNul(headerNames: List<String>) {
     val invalidHeader = headerNames.firstOrNull { it.containsNulCharacter() } ?: return
     throw UnprocessableEntityException(
-        "In metadata file: the header '${invalidHeader.withVisibleNulCharacters()}' contains a NUL character, " +
+        "In metadata file: the header '${invalidHeader.forErrorMessage()}' contains a NUL character, " +
             "which is not allowed. Please make sure the metadata file is a plain-text TSV file.",
     )
 }
@@ -219,10 +219,10 @@ private fun validateRecordContainsNoNul(record: CSVRecord, recordNumber: Int) {
     val headerNames = record.parser.headerNames
     record.toList().forEachIndexed { index, value ->
         if (value.containsNulCharacter()) {
-            val column = headerNames.getOrNull(index)?.let { "'$it'" } ?: "#${index + 1}"
+            val column = headerNames.getOrNull(index)?.let { "'${it.forErrorMessage()}'" } ?: "#${index + 1}"
             throw UnprocessableEntityException(
                 "Record #$recordNumber in the metadata file: the value for $column contains a NUL character, " +
-                    "which is not allowed: '${value.withVisibleNulCharacters()}'. " +
+                    "which is not allowed: '${value.forErrorMessage()}'. " +
                     "Please make sure the metadata file is a plain-text TSV file.",
             )
         }

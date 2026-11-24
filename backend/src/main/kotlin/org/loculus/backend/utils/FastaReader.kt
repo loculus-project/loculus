@@ -71,13 +71,14 @@ class FastaReader(inputStream: InputStream) :
     private fun validateFastaId(fastaId: String) {
         if (fastaId.containsNulCharacter()) {
             throw UnprocessableEntityException(
-                "FASTA header `${fastaId.withVisibleNulCharacters()}` contains a NUL character, which is not " +
+                "FASTA header `${fastaId.forErrorMessage(50)}` contains a NUL character, which is not " +
                     "allowed. This can happen if a binary file was uploaded instead of a FASTA file.",
             )
         }
-        if (fastaId.length > MAX_FASTA_ID_LENGTH) {
+        val length = fastaId.codePointCount(0, fastaId.length)
+        if (length > MAX_FASTA_ID_LENGTH) {
             throw UnprocessableEntityException(
-                "FASTA id `${fastaId.take(50)}...` is ${fastaId.length} characters long, " +
+                "FASTA id `${fastaId.forErrorMessage(50)}` is $length characters long, " +
                     "but at most $MAX_FASTA_ID_LENGTH characters are allowed.",
             )
         }
