@@ -38,7 +38,7 @@ If the update itself causes tests to fail, add a fix to the PR branch. Some tips
 
 #### Failing `ena-submission-workflow-tests`
 
-The `ena-submission-workflow-tests` action _will_ fail when dependabot opens a PR updating a dependency in `ena-submission`. This is because dependabot itself does not have access to the ENA secrets required to run this action successfully. Re-running the failed job, or commenting `@dependabot rebase` / `@dependabot recreate`, will not help as these runs still won't have the ENA secrets (dependabot is still the [GitHub 'actor'](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/re-run-workflows-and-jobs) running the workflow). To run this action with ENA secrets, you can either choose to 'Update branch' if the branch is behind `main`, push commits to the branch, or create your own PR with the changes. See https://github.com/loculus-project/loculus/pull/7860 as an example of this.
+The `ena-submission-workflow-tests` action _will_ fail when dependabot opens a PR that touches `ena-submission` or the workflow file itself. This is because dependabot itself does not have access to the ENA secrets required to run this action successfully. Re-running the failed job, or commenting `@dependabot rebase` / `@dependabot recreate`, will not help as these runs still won't have the ENA secrets (dependabot is still the [GitHub 'actor'](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/re-run-workflows-and-jobs) running the workflow). To run this action with ENA secrets, you can either choose to 'Update branch' if the branch is behind `main`, push commits to the branch, or create your own PR with the changes. See https://github.com/loculus-project/loculus/pull/7860 as an example of this.
 
 ### Can't be merged
 
