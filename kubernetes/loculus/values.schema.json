@@ -1559,11 +1559,12 @@
             }
           }
         },
-        "logRequests": {
+        "logLevel": {
           "groups": ["website"],
-          "type": "boolean",
-          "default": true,
-          "description": "Log every HTTP request the website makes (server side and in the browser) to the website logs."
+          "type": "string",
+          "enum": ["error", "warn", "info", "http", "verbose", "debug", "silly"],
+          "default": "info",
+          "description": "Log level of the website server. `info` logs one line per incoming request, auth events and errors; `debug` additionally logs every call the website server makes to the backend, LAPIS and Keycloak."
         },
         "runtimeConfig": {
           "type": "object",
@@ -1813,6 +1814,19 @@
       "type": "boolean",
       "default": true,
       "description": "TODO"
+    },
+    "traefikAccessLogs": {
+      "groups": ["general"],
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Per-ingress toggle for Traefik access logs (sets the traefik.ingress.kubernetes.io/router.observability.accesslogs annotation). Only takes effect if access logs are enabled globally in the cluster's Traefik static configuration.",
+      "properties": {
+        "website": { "type": "boolean", "default": true },
+        "backend": { "type": "boolean", "default": true },
+        "lapis": { "type": "boolean", "default": true },
+        "keycloak": { "type": "boolean", "default": false },
+        "minio": { "type": "boolean", "default": false }
+      }
     },
     "traefikVersion": {
       "groups": ["general"],

@@ -314,7 +314,7 @@ const createRedirectWithModifiableHeaders = (url: string) => {
 const redirectToAuth = (context: APIContext) => {
     const redirectUrl = context.url.toString();
 
-    logger.debug(`Redirecting to auth with redirect url: ${redirectUrl}`);
+    logger.info(`Redirecting to login`, { path: context.url.pathname });
     const authUrl = new URL(getLoginUrl(redirectUrl, context.url.origin), context.url.origin).toString();
 
     deleteCookie(context);
@@ -322,8 +322,8 @@ const redirectToAuth = (context: APIContext) => {
 };
 
 async function refreshTokenViaKeycloak(token: TokenCookie, client: BaseClient): Promise<TokenCookie | undefined> {
-    const refreshedTokenSet = await client.refresh(token.refreshToken).catch(() => {
-        logger.info(`Failed to refresh token`);
+    const refreshedTokenSet = await client.refresh(token.refreshToken).catch((error: unknown) => {
+        logger.info(`Failed to refresh token: ${error instanceof Error ? error.message : String(error)}`);
         return undefined;
     });
     return extractTokenCookieFromTokenSet(refreshedTokenSet);

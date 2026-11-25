@@ -41,7 +41,7 @@ disableRawReadsProcessingService: true
 readOnlyMode: false
 backendExtraJvmOpts: []
 website:
-  logRequests: true
+  logLevel: info
   websiteConfig:
     enableLoginNavigationItem: true
     enableSubmissionNavigationItem: true
@@ -2986,6 +2986,14 @@ runDevelopmentS3: true
 developmentDatabasePersistence: false
 enforceHTTPS: true
 traefikVersion: 3
+# Per-ingress opt-in for Traefik access logs. Only has an effect if access logs are
+# enabled globally on the cluster's Traefik (see kubernetes/traefik/access-logs-helmchartconfig.yaml).
+traefikAccessLogs:
+  website: true
+  backend: true
+  lapis: true
+  keycloak: false
+  minio: false
 registrationTermsMessage: >
   You must agree to the <a href="http://main.loculus.org/terms">terms of use</a>.
 

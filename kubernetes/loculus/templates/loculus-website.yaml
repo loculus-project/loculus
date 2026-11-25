@@ -31,8 +31,8 @@ spec:
           imagePullPolicy: "{{ $.Values.images.website.pullPolicy | default $.Values.imagePullPolicy }}"
           {{- include "loculus.resources" (list "website" .Values) | nindent 10 }}
           env:
-            - name: LOG_REQUESTS
-              value: {{ $.Values.website.logRequests | default false | quote }}
+            - name: LOG_LEVEL
+              value: {{ $.Values.website.logLevel | default "info" | quote }}
           ports:
             - containerPort: 3000
           volumeMounts:

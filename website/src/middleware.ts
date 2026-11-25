@@ -1,18 +1,17 @@
 import { sequence } from 'astro:middleware';
 
 import { safeGetWebsiteConfig } from './config.ts';
+import { accessLogMiddleware } from './middleware/accessLogMiddleware.ts';
 import { authMiddleware } from './middleware/authMiddleware.ts';
 import { catchErrorMiddleware } from './middleware/catchErrorMiddleware.ts';
 import { organismValidatorMiddleware } from './middleware/organismValidatorMiddleware.ts';
 import { submissionPagesDisablingMiddleware } from './middleware/submissionPagesDisablingMiddleware.ts';
-import { installOutgoingRequestLogging, isRequestLoggingEnabled } from './utils/outgoingRequestLogger.ts';
+import { installOutgoingRequestLogging } from './utils/outgoingRequestLogger.ts';
 
-if (isRequestLoggingEnabled()) {
-    installOutgoingRequestLogging();
-}
+installOutgoingRequestLogging();
 
 const websiteConfig = safeGetWebsiteConfig();
-const middlewares = [catchErrorMiddleware, organismValidatorMiddleware, authMiddleware];
+const middlewares = [accessLogMiddleware, catchErrorMiddleware, organismValidatorMiddleware, authMiddleware];
 if (!(websiteConfig?.enableSubmissionPages ?? false) || (websiteConfig?.readOnlyMode ?? false)) {
     middlewares.push(submissionPagesDisablingMiddleware);
 }

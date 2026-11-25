@@ -74,6 +74,7 @@ metadata:
   name: loculus-website-ingress
   annotations:
     traefik.ingress.kubernetes.io/router.middlewares: "{{ join "," $middlewareListForWebsite }}"
+    traefik.ingress.kubernetes.io/router.observability.accesslogs: {{ $.Values.traefikAccessLogs.website | default false | quote }}
 spec:
   rules:
     - host: "{{ .Values.host }}"
@@ -107,6 +108,7 @@ metadata:
   name: loculus-backend-ingress
   annotations:
     traefik.ingress.kubernetes.io/router.middlewares: "{{ join "," $middlewareList }}"
+    traefik.ingress.kubernetes.io/router.observability.accesslogs: {{ $.Values.traefikAccessLogs.backend | default false | quote }}
 spec:
   rules:
     - host: "{{ $backendHost }}"
@@ -129,6 +131,7 @@ metadata:
   name: loculus-keycloak-ingress
   annotations:
     traefik.ingress.kubernetes.io/router.middlewares: "{{ join "," $middlewareListForKeycloak }}"
+    traefik.ingress.kubernetes.io/router.observability.accesslogs: {{ $.Values.traefikAccessLogs.keycloak | default false | quote }}
 spec:
   rules:
     - host: "{{ $keycloakHost }}"
@@ -152,6 +155,7 @@ metadata:
   name: minio-ingress
   annotations:
     traefik.ingress.kubernetes.io/router.middlewares: "{{ join "," $middlewareList }}"
+    traefik.ingress.kubernetes.io/router.observability.accesslogs: {{ $.Values.traefikAccessLogs.minio | default false | quote }}
 spec:
   rules:
     - host: "{{ $minioHost }}"

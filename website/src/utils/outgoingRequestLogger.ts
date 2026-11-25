@@ -3,13 +3,7 @@ import type { ClientRequest, IncomingMessage } from 'node:http';
 
 import { getInstanceLogger } from '../logger.ts';
 
-/**
- * Request logging is opt-in via the LOG_REQUESTS=true environment variable.
- * It is read from process.env (not import.meta.env) so it can be toggled at runtime without rebuilding.
- */
-export const isRequestLoggingEnabled = () => process.env.LOG_REQUESTS === 'true';
-
-const logger = getInstanceLogger('outgoingRequest');
+const logger = getInstanceLogger('OutgoingRequest');
 let installed = false;
 
 type UndiciRequest = { method: string; origin: string; path: string };
@@ -22,12 +16,30 @@ const httpUrl = (request: ClientRequest) => {
 
 const elapsedMs = (starts: WeakMap<object, number>, key: object) => {
     const start = starts.get(key);
-    return start === undefined ? '?' : Math.round(performance.now() - start).toString();
+    return start === undefined ? undefined : Math.round(performance.now() - start);
+};
+
+const logResponse = (method: string, url: string, status: number, durationMs: number | undefined) => {
+    const message = `${method} ${url} ${status}`;
+    const metadata = { method, url, status, durationMs };
+    if (status >= 500) {
+        logger.error(message, metadata);
+    } else if (status >= 400) {
+        logger.warn(message, metadata);
+    } else {
+        logger.debug(message, metadata);
+    }
+};
+
+const logFailure = (method: string, url: string, error: Error, durationMs: number | undefined) => {
+    logger.error(`${method} ${url} failed: ${error.message}`, { method, url, durationMs, error: error.message });
 };
 
 /**
- * Logs every outgoing HTTP request made by the website server, using Node's built-in diagnostics channels.
- * Covers node:http(s) (axios, Zodios, openid-client, ...) and native fetch (undici) without patching any client.
+ * Logs every outgoing HTTP request made by the website server (to the backend, LAPIS, Keycloak, ...),
+ * using Node's built-in diagnostics channels. Covers node:http(s) (axios, Zodios, openid-client, ...)
+ * and native fetch (undici) without patching any client.
+ * Successful calls are logged at debug, 4xx at warn, 5xx and network errors at error.
  */
 export function installOutgoingRequestLogging() {
     if (installed) {
@@ -42,15 +54,11 @@ export function installOutgoingRequestLogging() {
     });
     diagnosticsChannel.subscribe('http.client.response.finish', (message) => {
         const { request, response } = message as { request: ClientRequest; response: IncomingMessage };
-        logger.info(
-            `${request.method} ${httpUrl(request)} -> ${response.statusCode} (${elapsedMs(httpStarts, request)}ms)`,
-        );
+        logResponse(request.method, httpUrl(request), response.statusCode ?? 0, elapsedMs(httpStarts, request));
     });
     diagnosticsChannel.subscribe('http.client.request.error', (message) => {
         const { request, error } = message as { request: ClientRequest; error: Error };
-        logger.error(
-            `${request.method} ${httpUrl(request)} failed after ${elapsedMs(httpStarts, request)}ms: ${error.message}`,
-        );
+        logFailure(request.method, httpUrl(request), error, elapsedMs(httpStarts, request));
     });
 
     const fetchStarts = new WeakMap<object, number>();
@@ -60,16 +68,15 @@ export function installOutgoingRequestLogging() {
     });
     diagnosticsChannel.subscribe('undici:request:headers', (message) => {
         const { request, response } = message as { request: UndiciRequest; response: { statusCode: number } };
-        logger.info(
-            `${request.method} ${request.origin}${request.path} -> ${response.statusCode} (${elapsedMs(fetchStarts, request)}ms) [fetch]`,
+        logResponse(
+            request.method,
+            `${request.origin}${request.path}`,
+            response.statusCode,
+            elapsedMs(fetchStarts, request),
         );
     });
     diagnosticsChannel.subscribe('undici:request:error', (message) => {
         const { request, error } = message as { request: UndiciRequest; error: Error };
-        logger.error(
-            `${request.method} ${request.origin}${request.path} failed after ${elapsedMs(fetchStarts, request)}ms: ${error.message} [fetch]`,
-        );
+        logFailure(request.method, `${request.origin}${request.path}`, error, elapsedMs(fetchStarts, request));
     });
-
-    logger.info('Outgoing request logging enabled');
 }
