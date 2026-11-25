@@ -265,7 +265,9 @@ export const Table: FC<TableProps> = ({
     return (
         <div className='text-sm'>
             <ScrollContainer>
-                <Tooltip id='table-tip' className='z-10' />
+                {/* Cap the width: react-tooltip uses max-content, and an over-wide tooltip widens the
+                    page, which makes mobile browsers zoom out. */}
+                <Tooltip id='table-tip' className='z-10 max-w-[min(36rem,calc(100vw-2rem))] wrap-anywhere' />
                 {data.length !== 0 ? (
                     <table className='min-w-full text-left border-collapse'>
                         <thead>

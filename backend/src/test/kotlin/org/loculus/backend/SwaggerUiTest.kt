@@ -6,6 +6,7 @@ import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import org.hamcrest.core.StringContains.containsString
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.loculus.backend.config.V1_API_VERSION
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.test.web.servlet.MockMvc
@@ -64,12 +65,14 @@ class SwaggerUiTest(@Autowired val mockMvc: MockMvc) {
 
     @Test
     fun `v1 API docs only contain v1 endpoints`() {
-        mockMvc.perform(get("/api-docs/v1"))
+        mockMvc.perform(get("/api-docs/$V1_API_VERSION"))
             .andExpect(status().isOk)
-            .andExpect(jsonPath("\$.paths./v1/groups").exists())
+            .andExpect(jsonPath("\$.paths./$V1_API_VERSION/groups").exists())
             .andExpect(jsonPath("\$.paths./{organism}/submit").doesNotExist())
             .andExpect(jsonPath("\$.info.title").value("Loculus API Documentation"))
-            .andExpect(jsonPath("\$.info.version").value("v1"))
-            .andExpect(jsonPath("\$.paths./v1/groups.get.parameters[?(@.name == 'x-request-id')]").exists())
+            .andExpect(jsonPath("\$.info.version").value(V1_API_VERSION))
+            .andExpect(
+                jsonPath("\$.paths./$V1_API_VERSION/groups.get.parameters[?(@.name == 'x-request-id')]").exists(),
+            )
     }
 }
