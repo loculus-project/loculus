@@ -69,7 +69,6 @@ const val V1_API_VERSION = "v1alpha"
 private val logger = mu.KotlinLogging.logger {}
 
 @Configuration
-@EnableScheduling
 @ImportAutoConfiguration(
     value = [ExposedAutoConfiguration::class],
     exclude = [DataSourceTransactionManagerAutoConfiguration::class],
@@ -241,3 +240,13 @@ fun readBackendConfig(objectMapper: ObjectMapper, configPath: String): BackendCo
     }
     return config
 }
+
+/**
+ * Enables scheduled tasks only when not running tests.
+ * This prevents scheduled tasks from running during test execution and trying to access
+ * database connections after the test context has shut down.
+ */
+@Configuration
+@EnableScheduling
+@Profile("!test & !with-database")
+class SchedulingConfig
