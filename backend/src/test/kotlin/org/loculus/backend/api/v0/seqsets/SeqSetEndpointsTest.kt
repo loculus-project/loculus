@@ -40,7 +40,7 @@ class SeqSetEndpointsTest(@Autowired private val client: SeqSetCitationsControll
     @ParameterizedTest
     @MethodSource("authorizationTestCases")
     fun `GIVEN invalid authorization token WHEN performing action THEN returns 401 Unauthorized`(scenario: Scenario) {
-        expectUnauthorizedResponse(isModifyingRequest = scenario.isModifying) {
+        expectUnauthorizedResponse {
             scenario.testFunction(it, client)
         }
     }
@@ -96,10 +96,36 @@ class SeqSetEndpointsTest(@Autowired private val client: SeqSetCitationsControll
             .andExpect(jsonPath("\$").isArray)
             .andExpect(jsonPath("\$").isNotEmpty)
             .andExpect(jsonPath("\$[0].accession").value("mock-sequence-accession.1"))
-            .andExpect(jsonPath("\$[0].type").value("loculus"))
+            .andExpect(jsonPath("\$[0].isFocal").value(true))
 
         client.deleteSeqSet(seqSetId)
             .andExpect(status().isOk)
+    }
+
+    @Test
+    fun `WHEN calling get seqSet records THEN returns focal records first, then by accession ascending`() {
+        val records = """[
+            { "accession": "ACC_D.1", "type": "loculus", "isFocal": false },
+            { "accession": "ACC_C.1", "type": "loculus", "isFocal": true },
+            { "accession": "ACC_B.1", "type": "loculus", "isFocal": false },
+            { "accession": "ACC_A.1", "type": "loculus", "isFocal": true }
+        ]"""
+        val result = client.createSeqSet(seqSetRecords = records)
+            .andExpect(status().isOk)
+            .andReturn()
+        val seqSetId = JsonPath.read<String>(result.response.contentAsString, "$.seqSetId")
+
+        client.getSeqSetRecords(seqSetId, 1)
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("\$.length()").value(4))
+            .andExpect(jsonPath("\$[0].accession").value("ACC_A.1"))
+            .andExpect(jsonPath("\$[0].isFocal").value(true))
+            .andExpect(jsonPath("\$[1].accession").value("ACC_C.1"))
+            .andExpect(jsonPath("\$[1].isFocal").value(true))
+            .andExpect(jsonPath("\$[2].accession").value("ACC_B.1"))
+            .andExpect(jsonPath("\$[2].isFocal").value(false))
+            .andExpect(jsonPath("\$[3].accession").value("ACC_D.1"))
+            .andExpect(jsonPath("\$[3].isFocal").value(false))
     }
 
     @Test
@@ -233,27 +259,15 @@ class SeqSetEndpointsTest(@Autowired private val client: SeqSetCitationsControll
     }
 
     companion object {
-        data class Scenario(
-            val testFunction: (String?, SeqSetCitationsControllerClient) -> ResultActions,
-            val isModifying: Boolean,
-        )
+        data class Scenario(val testFunction: (String?, SeqSetCitationsControllerClient) -> ResultActions)
 
         @JvmStatic
         fun authorizationTestCases(): List<Scenario> = listOf(
-            Scenario({ jwt, client -> client.createSeqSet(MOCK_SEQSET_NAME, jwt = jwt) }, true),
-            Scenario({ jwt, client -> client.updateSeqSet(MOCK_SEQSET_ID, MOCK_SEQSET_NAME, jwt = jwt) }, true),
-            Scenario({ jwt, client -> client.getSeqSetsOfUser(jwt = jwt) }, false),
-            Scenario({ jwt, client -> client.deleteSeqSet(MOCK_SEQSET_ID, jwt = jwt) }, true),
-            Scenario(
-                { jwt, client ->
-                    client.createSeqSetDOI(
-                        MOCK_SEQSET_ID,
-                        MOCK_SEQSET_VERSION,
-                        jwt = jwt,
-                    )
-                },
-                true,
-            ),
+            Scenario { jwt, client -> client.createSeqSet(MOCK_SEQSET_NAME, jwt = jwt) },
+            Scenario { jwt, client -> client.updateSeqSet(MOCK_SEQSET_ID, MOCK_SEQSET_NAME, jwt = jwt) },
+            Scenario { jwt, client -> client.getSeqSetsOfUser(jwt = jwt) },
+            Scenario { jwt, client -> client.deleteSeqSet(MOCK_SEQSET_ID, jwt = jwt) },
+            Scenario { jwt, client -> client.createSeqSetDOI(MOCK_SEQSET_ID, MOCK_SEQSET_VERSION, jwt = jwt) },
         )
     }
 }

@@ -1,6 +1,7 @@
 package org.loculus.backend.config
 
 import org.loculus.backend.api.v0.v0AccessRules
+import org.loculus.backend.api.v1.v1AccessRules
 import org.loculus.backend.auth.KeycloakAuthenticationConverter
 import org.loculus.backend.auth.LoggingAccessDeniedHandler
 import org.loculus.backend.auth.LoggingAuthenticationEntryPoint
@@ -13,19 +14,13 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.oauth2.server.resource.web.BearerTokenAuthenticationEntryPoint
 import org.springframework.security.oauth2.server.resource.web.access.BearerTokenAccessDeniedHandler
 import org.springframework.security.web.SecurityFilterChain
-import org.springframework.security.web.access.AccessDeniedHandlerImpl
-import org.springframework.security.web.access.DelegatingAccessDeniedHandler
-import org.springframework.security.web.csrf.CsrfException
 
 @Configuration
 @EnableWebSecurity
 class SecurityConfig {
 
     // This is the preconfigured default that we want to wrap in a logger
-    private val defaultAccessDeniedHandler = DelegatingAccessDeniedHandler(
-        linkedMapOf(CsrfException::class.java to AccessDeniedHandlerImpl()),
-        BearerTokenAccessDeniedHandler(),
-    )
+    private val defaultAccessDeniedHandler = BearerTokenAccessDeniedHandler()
 
     private val debugEndpoints = arrayOf(
         "/debug/*",
@@ -36,17 +31,23 @@ class SecurityConfig {
         httpSecurity: HttpSecurity,
         keycloakAuthoritiesConverter: KeycloakAuthenticationConverter,
     ): SecurityFilterChain = httpSecurity
+        // The backend only accepts bearer tokens, which browsers never attach automatically, so CSRF protection isn't needed
+        .csrf { it.disable() }
         .authorizeHttpRequests { auth ->
             auth.requestMatchers(
                 "/",
                 "/favicon.ico",
+                "/liveness",
+                "/readiness",
                 "/error/**",
                 "/actuator/**",
                 "/api-docs**",
                 "/api-docs/**",
+                "/api-docs.yaml/**",
                 "/swagger-ui/**",
             ).permitAll()
             auth.requestMatchers(HttpMethod.OPTIONS).permitAll()
+            v1AccessRules(auth)
             v0AccessRules(auth)
             auth.requestMatchers(*debugEndpoints).hasAuthority(SUPER_USER)
             auth.anyRequest().authenticated()

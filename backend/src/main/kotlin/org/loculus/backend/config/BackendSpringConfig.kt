@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import io.swagger.v3.oas.models.headers.Header
+import io.swagger.v3.oas.models.info.Info
 import io.swagger.v3.oas.models.media.StringSchema
 import io.swagger.v3.oas.models.parameters.HeaderParameter
 import org.flywaydb.core.Flyway
@@ -17,7 +18,8 @@ import org.loculus.backend.api.LoculusCustomHeaders
 import org.loculus.backend.log.REQUEST_ID_HEADER_DESCRIPTION
 import org.loculus.backend.service.submission.dbtables.CurrentProcessingPipelineTable
 import org.loculus.backend.utils.DateProvider
-import org.springdoc.core.customizers.OperationCustomizer
+import org.springdoc.core.customizers.GlobalOperationCustomizer
+import org.springdoc.core.models.GroupedOpenApi
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration
@@ -38,6 +40,8 @@ object BackendSpringProperty {
     const val CLEAN_UP_RUN_EVERY_SECONDS = "loculus.cleanup.task.run-every-seconds"
     const val PIPELINE_VERSION_UPGRADE_CHECK_INTERVAL_SECONDS =
         "loculus.pipeline-version-upgrade-check.interval-seconds"
+    const val ENQUEUE_MISSING_PREPROCESSING_ENTRIES_EVERY_SECONDS =
+        "loculus.preprocessing-queue.enqueue-missing-every-seconds"
     const val STREAM_BATCH_SIZE = "loculus.stream.batch-size"
     const val DEBUG_MODE = "loculus.debug-mode"
     const val ENABLE_SEQSETS = "loculus.enable-seqsets"
@@ -59,6 +63,8 @@ object BackendSpringProperty {
 
 const val DEBUG_MODE_ON_VALUE = "true"
 const val ENABLE_SEQSETS_TRUE_VALUE = "true"
+
+const val V1_API_VERSION = "v1alpha"
 
 private val logger = mu.KotlinLogging.logger {}
 
@@ -97,6 +103,23 @@ class BackendSpringConfig {
     @Bean
     fun openApi(backendConfig: BackendConfig) = buildOpenApiSchema(backendConfig)
 
+    fun apiInfo(backendConfig: BackendConfig, apiVersion: String): Info =
+        Info().title("${backendConfig.name} API Documentation").version(apiVersion)
+
+    @Bean
+    fun v0Api(backendConfig: BackendConfig): GroupedOpenApi = GroupedOpenApi.builder()
+        .group("v0")
+        .pathsToExclude("/$V1_API_VERSION/**")
+        .addOpenApiCustomizer { it.info(apiInfo(backendConfig, "v0")) }
+        .build()
+
+    @Bean
+    fun v1Api(backendConfig: BackendConfig): GroupedOpenApi = GroupedOpenApi.builder()
+        .group(V1_API_VERSION)
+        .pathsToMatch("/$V1_API_VERSION/**")
+        .addOpenApiCustomizer { it.info(apiInfo(backendConfig, V1_API_VERSION)) }
+        .build()
+
     @Bean
     fun s3Config(
         @Value("\${${BackendSpringProperty.S3_ENABLED}}") enabled: Boolean = false,
@@ -117,7 +140,7 @@ class BackendSpringConfig {
     }
 
     @Bean
-    fun headerCustomizer() = OperationCustomizer { operation, _ ->
+    fun headerCustomizer() = GlobalOperationCustomizer { operation, _ ->
         val foundRequestIdHeaderParameter = operation.parameters?.any { it.name == LoculusCustomHeaders.REQUEST_ID }
         if (foundRequestIdHeaderParameter == false || foundRequestIdHeaderParameter == null) {
             operation.addParametersItem(

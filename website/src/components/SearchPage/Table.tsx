@@ -5,7 +5,7 @@ import { Tooltip } from 'react-tooltip';
 
 import ScrollContainer from './ScrollContainer.jsx';
 import { routes } from '../../routes/routes.ts';
-import type { Schema } from '../../types/config.ts';
+import type { CustomDisplayType, Schema } from '../../types/config.ts';
 import type { FileEntry, Metadatum, OrderBy, OrderDirection } from '../../types/lapis.ts';
 import { deduplicateSemicolonSeparated } from '../../utils/deduplicateSemicolonSeparated';
 import { formatNumberWithDefaultLocale } from '../../utils/formatNumber.tsx';
@@ -173,7 +173,7 @@ export const Table: FC<TableProps> = ({
         })
         .sort((a, b) => a.order - b.order);
 
-    const isSortable = (column: { field: string; customDisplayType?: string }) => {
+    const isSortable = (column: { field: string; customDisplayType?: CustomDisplayType }) => {
         // File list columns return JSON but display file names,
         // so having sorting enabled would confuse users; the sort doesn't correspond
         // to what is displayed in the table.
@@ -265,7 +265,9 @@ export const Table: FC<TableProps> = ({
     return (
         <div className='text-sm'>
             <ScrollContainer>
-                <Tooltip id='table-tip' className='z-10' />
+                {/* Cap the width: react-tooltip uses max-content, and an over-wide tooltip widens the
+                    page, which makes mobile browsers zoom out. */}
+                <Tooltip id='table-tip' className='z-10 max-w-[min(36rem,calc(100vw-2rem))] wrap-anywhere' />
                 {data.length !== 0 ? (
                     <table className='min-w-full text-left border-collapse'>
                         <thead>

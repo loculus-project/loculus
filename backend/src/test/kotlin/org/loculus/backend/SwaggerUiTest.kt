@@ -6,11 +6,13 @@ import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import org.hamcrest.core.StringContains.containsString
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.loculus.backend.config.V1_API_VERSION
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.forwardedUrl
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
@@ -27,17 +29,30 @@ class SwaggerUiTest(@Autowired val mockMvc: MockMvc) {
     }
 
     @Test
-    fun `JSON API docs are available`() {
+    fun `GIVEN the default API docs paths THEN they forward to the v0 docs`() {
         mockMvc.perform(get("/api-docs"))
+            .andExpect(forwardedUrl("/api-docs/v0"))
+        mockMvc.perform(get("/api-docs.yaml"))
+            .andExpect(forwardedUrl("/api-docs.yaml/v0"))
+    }
+
+    @Test
+    fun `JSON API docs are available`() {
+        mockMvc.perform(get("/api-docs/v0"))
             .andExpect(status().isOk)
             .andExpect(content().contentType("application/json"))
             .andExpect(jsonPath("\$.openapi").exists())
             .andExpect(jsonPath("\$.paths./{organism}/submit").exists())
+            .andExpect(jsonPath("\$.info.title").value("Loculus API Documentation"))
+            .andExpect(jsonPath("\$.info.version").value("v0"))
+            .andExpect(
+                jsonPath("\$.paths./{organism}/submit.post.parameters[?(@.name == 'x-request-id')]").exists(),
+            )
     }
 
     @Test
     fun `YAML API docs are available`() {
-        val result = mockMvc.perform(get("/api-docs.yaml"))
+        val result = mockMvc.perform(get("/api-docs.yaml/v0"))
             .andExpect(status().isOk)
             .andExpect(content().contentType("application/vnd.oai.openapi"))
             .andReturn()
@@ -46,5 +61,18 @@ class SwaggerUiTest(@Autowired val mockMvc: MockMvc) {
         val yaml = objectMapper.readTree(result.response.contentAsString)
         assertTrue(yaml.has("openapi"))
         assertTrue(yaml.get("paths").has("/{organism}/submit"))
+    }
+
+    @Test
+    fun `v1 API docs only contain v1 endpoints`() {
+        mockMvc.perform(get("/api-docs/$V1_API_VERSION"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("\$.paths./$V1_API_VERSION/groups").exists())
+            .andExpect(jsonPath("\$.paths./{organism}/submit").doesNotExist())
+            .andExpect(jsonPath("\$.info.title").value("Loculus API Documentation"))
+            .andExpect(jsonPath("\$.info.version").value(V1_API_VERSION))
+            .andExpect(
+                jsonPath("\$.paths./$V1_API_VERSION/groups.get.parameters[?(@.name == 'x-request-id')]").exists(),
+            )
     }
 }

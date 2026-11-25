@@ -94,6 +94,13 @@ export const FASTA_FILE_KIND: FileKind<ProcessedFile> = {
 };
 
 /**
+ * Matches any character that cannot appear in a plain-text sequence (anything outside printable ASCII and tab).
+ * Binary files such as Word documents decode to text containing NUL and U+FFFD characters, which this catches.
+ * Keep in sync with FastaReader in the backend.
+ */
+const INVALID_SEQUENCE_CHARACTER_REGEX = /[^\t\x20-\x7E]/;
+
+/**
  * For files that contain only a single segment.
  * Can have a FASTA header, but it will be ignored.
  * Can be multiple lines, the lines will be concatenated, and whitespace stripped on both ends.
@@ -105,7 +112,7 @@ export const PLAIN_SEGMENT_KIND: FileKind<ProcessedPlainSegmentFile> = {
     supportedExtensions: ['sequence'],
     processRawFile: async (file: File) => {
         const text = await file.text();
-        const lines = text.split('\n');
+        const lines = text.split(/\r?\n/);
         const firstUntrimmedLine = lines.findIndex((l) => l.trim() !== l);
         if (firstUntrimmedLine >= 0) {
             return err(
@@ -132,6 +139,16 @@ export const PLAIN_SEGMENT_KIND: FileKind<ProcessedPlainSegmentFile> = {
             .join('');
         if (segmentData.length === 0) {
             return err(new Error('Uploaded file does not appear to contain any sequence data.'));
+        }
+        const invalidCharacterIndex = segmentData.search(INVALID_SEQUENCE_CHARACTER_REGEX);
+        if (invalidCharacterIndex >= 0) {
+            return err(
+                new Error(
+                    'Uploaded file does not appear to be a plain-text sequence file: it contains an invalid ' +
+                        `character at position ${invalidCharacterIndex + 1}. ` +
+                        'Please upload the sequence as plain text or FASTA, not e.g. a Word document.',
+                ),
+            );
         }
         return ok({
             inner: () => {

@@ -7,6 +7,7 @@ import org.loculus.backend.types.Organism
 const val PROJECT_NAME = "Loculus"
 
 data class BackendConfig(
+    val name: String = PROJECT_NAME,
     val websiteUrl: String,
     val backendUrl: String,
     val organisms: Map<String, InstanceConfig>,
