@@ -26,7 +26,7 @@ Use the Keycloak admin password that you have configured previously
 
 ### Restricting the admin console to cluster administrators
 
-By default the admin console is reachable from the internet, protected only by the admin password. We recommend restricting it so that it is only reachable via `kubectl`:
+By default, the admin console is open to the internet behind only the admin password. We recommend restricting it so it is only reachable via `kubectl`:
 
 ```yaml
 adminAllowedSourceRanges:
@@ -34,27 +34,27 @@ adminAllowedSourceRanges:
   - ::1/128
 ```
 
-With this set, requests to `/admin` (the admin console and admin REST API) and `/realms/master` (where admins log in) on the authentication host are rejected with `403 Forbidden` unless they come from an allowed source range. Logging in to and using Loculus itself (the `loculus` realm) is unaffected, as are Loculus services, which reach Keycloak inside the cluster.
+Requests to `/admin` (admin console and admin REST API) and `/realms/master` (admin login) on the authentication host from outside the listed ranges get `403 Forbidden`. Normal Loculus use (`loculus` realm) and Loculus services talking to Keycloak inside the cluster are unaffected.
 
-To use the admin console, tunnel to Traefik with `kubectl` and point the authentication hostname at your own machine. The browser then connects with the real hostname and a valid TLS certificate, and Traefik sees the request as coming from localhost:
+To access the console, tunnel to Traefik with `kubectl` and resolve the authentication hostname locally so your browser uses the real hostname and a valid TLS certificate while Traefik sees the connection from localhost:
 
-1. Forward local port 443 to Traefik (binding to port 443 typically requires root on Linux). On k3s Traefik runs in the `kube-system` namespace; adjust the namespace and service name to your cluster:
+1. Forward local port 443 to Traefik (binding to port 443 typically needs root on Linux). On k3s Traefik runs in `kube-system`; adjust the namespace and service name for your cluster:
 
    ```bash
    sudo kubectl --kubeconfig "$HOME/.kube/config" -n kube-system port-forward svc/traefik 443:443
    ```
 
-2. Temporarily add a line to `/etc/hosts` for your authentication host:
+2. Temporarily add your authentication host to `/etc/hosts`:
 
    ```
    127.0.0.1 authentication.mywebsite.com
    ```
 
-3. Open `https://authentication.mywebsite.com/admin/master/console/` and log in as usual.
+3. Open `https://authentication.mywebsite.com/admin/master/console/` and log in.
 
-4. When you are done, remove the `/etc/hosts` line and stop the port-forward.
+4. Remove the `/etc/hosts` line and stop the port-forward when done.
 
-Traefik must see the real client IP address for the allowlist to work. Requests via `kubectl port-forward` arrive from localhost; you can check this in the Traefik access log. You can also list other ranges, such as a VPN's egress IP, instead of or in addition to localhost.
+You can also list other ranges, such as a VPN egress IP, instead of or alongside localhost. The allowlist requires Traefik to see the real client IP (`kubectl port-forward` requests arrive from localhost; check the Traefik access log to verify).
 
 ## Ensure you're using the right realm
 

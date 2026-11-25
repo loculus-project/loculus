@@ -1667,7 +1667,7 @@
       "groups": ["auth"],
       "type": "array",
       "default": [],
-      "description": "If non-empty, the Keycloak admin console and admin API (`/admin`) and the master realm (`/realms/master`) are only reachable from these source IP ranges (CIDR notation) via a Traefik IP allowlist; all other clients get a 403. Set to `[\"127.0.0.1/32\", \"::1/128\"]` to allow access only through `kubectl port-forward` to Traefik (see the user administration docs). Requires Traefik to see the real client IP. Empty (the default) leaves these paths publicly reachable.",
+      "description": "Source IP ranges (CIDR notation) allowed to reach the Keycloak admin console/API (`/admin`) and master realm (`/realms/master`) via a Traefik IP allowlist; other requests get 403. Empty leaves both paths public. Set to `[\"127.0.0.1/32\", \"::1/128\"]` to allow access only via `kubectl port-forward` to Traefik (see user administration docs). Traefik must see the real client IP.",
       "items": {
         "type": "string"
       }
