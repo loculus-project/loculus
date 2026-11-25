@@ -38,21 +38,62 @@ Requests to `/admin` (admin console and admin REST API) and `/realms/master` (ad
 
 To access the console, tunnel to Traefik with `kubectl` and resolve the authentication hostname locally so your browser uses the real hostname and a valid TLS certificate while Traefik sees the connection from localhost:
 
-1. Forward local port 443 to Traefik (binding to port 443 typically needs root on Linux). On k3s Traefik runs in `kube-system`; adjust the namespace and service name for your cluster:
+1. Forward local port 443 to Traefik. It must be port 443: on any other local port, the HTTPS redirect sends the browser back to the public URL. On k3s Traefik runs in `kube-system`; adjust the namespace and service name for your cluster.
+
+   **macOS** (no `sudo` needed):
+
+   ```bash
+   kubectl -n kube-system port-forward svc/traefik 443:443
+   ```
+
+   **Linux** (binding port 443 needs root):
 
    ```bash
    sudo kubectl --kubeconfig "$HOME/.kube/config" -n kube-system port-forward svc/traefik 443:443
    ```
 
-2. Temporarily add your authentication host to `/etc/hosts`:
+   **Windows** (PowerShell; fails if something else on the machine is already using port 443):
 
+   ```powershell
+   kubectl -n kube-system port-forward svc/traefik 443:443
    ```
-   127.0.0.1 authentication.mywebsite.com
+
+   Leave this running.
+
+2. In another terminal, start a separate Chrome instance that resolves your authentication host to `127.0.0.1`. The separate `--user-data-dir` is required; without it, Chrome hands the URL to an existing window and ignores `--host-resolver-rules`. Your normal browser profile is unaffected.
+
+   **macOS**:
+
+   ```bash
+   open -na "Google Chrome" --args \
+     --user-data-dir=/tmp/kc-admin-chrome \
+     --host-resolver-rules="MAP authentication.mywebsite.com 127.0.0.1" \
+     https://authentication.mywebsite.com/admin/master/console/
    ```
 
-3. Open `https://authentication.mywebsite.com/admin/master/console/` and log in.
+   **Linux** (use `chromium` instead of `google-chrome` if needed):
 
-4. Remove the `/etc/hosts` line and stop the port-forward when done.
+   ```bash
+   google-chrome \
+     --user-data-dir=/tmp/kc-admin-chrome \
+     --host-resolver-rules="MAP authentication.mywebsite.com 127.0.0.1" \
+     https://authentication.mywebsite.com/admin/master/console/
+   ```
+
+   **Windows** (PowerShell):
+
+   ```powershell
+   & "C:\Program Files\Google\Chrome\Application\chrome.exe" `
+     --user-data-dir="$env:TEMP\kc-admin-chrome" `
+     --host-resolver-rules="MAP authentication.mywebsite.com 127.0.0.1" `
+     https://authentication.mywebsite.com/admin/master/console/
+   ```
+
+3. Log in with the Keycloak admin credentials. Opening the same URL in your normal browser should return `403 Forbidden`.
+
+4. When done, close that Chrome window and stop the port-forward (`Ctrl-C`).
+
+Other browsers can use a temporary `/etc/hosts` entry (`127.0.0.1 authentication.mywebsite.com`) instead of step 2, removed afterwards.
 
 You can also list other ranges, such as a VPN egress IP, instead of or alongside localhost. The allowlist requires Traefik to see the real client IP (`kubectl port-forward` requests arrive from localhost; check the Traefik access log to verify).
 
