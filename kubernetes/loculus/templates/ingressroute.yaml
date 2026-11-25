@@ -145,6 +145,56 @@ spec:
   - hosts:
     - "{{ $keycloakHost }}"
 ---
+{{- $adminAllowedSourceRanges := $.Values.adminAllowedSourceRanges | default list }}
+{{- if $adminAllowedSourceRanges }}
+{{- /*
+  Restrict the Keycloak admin console / admin REST API (/admin) and the master
+  realm (/realms/master, where admin logins and admin-cli token requests happen)
+  to the given source ranges. These are separate, more specific routers on the
+  same host, so Traefik prefers them over the catch-all "/" route above.
+  Loculus services talk to Keycloak via the in-cluster service, so they are not
+  affected.
+*/}}
+apiVersion: {{ $traefikApiVersion }}
+kind: Middleware
+metadata:
+  name: keycloak-admin-allowlist
+spec:
+  {{- if eq (int $.Values.traefikVersion) 3 }}
+  ipAllowList:
+  {{- else }}
+  ipWhiteList:
+  {{- end }}
+    sourceRange:
+      {{- range $adminAllowedSourceRanges }}
+      - {{ . | quote }}
+      {{- end }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: loculus-keycloak-admin-ingress
+  annotations:
+    traefik.ingress.kubernetes.io/router.middlewares: "{{ join "," (append $middlewareListForKeycloak (printf "%s-keycloak-admin-allowlist@kubernetescrd" $.Release.Namespace)) }}"
+spec:
+  rules:
+    - host: "{{ $keycloakHost }}"
+      http:
+        paths:
+          {{- range list "/admin" "/realms/master" }}
+          - path: {{ . }}
+            pathType: Prefix
+            backend:
+              service:
+                name: loculus-keycloak-service
+                port:
+                  number: 8083
+          {{- end }}
+  tls:
+  - hosts:
+    - "{{ $keycloakHost }}"
+---
+{{- end }}
 {{- if and .Values.s3.enabled .Values.runDevelopmentS3 }}
 apiVersion: networking.k8s.io/v1
 kind: Ingress

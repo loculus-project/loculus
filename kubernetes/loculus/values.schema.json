@@ -1663,6 +1663,15 @@
       "default": false,
       "description": "Allow exact http://localhost:3000/auth/callback and /logout redirects for local Astro development. Enable for previews or local development, not production. Independent of insecureCookies. Applies on realm creation; existing Keycloak realms require manual allowlist updates."
     },
+    "adminAllowedSourceRanges": {
+      "groups": ["auth"],
+      "type": "array",
+      "default": [],
+      "description": "If non-empty, the Keycloak admin console and admin API (`/admin`) and the master realm (`/realms/master`) are only reachable from these source IP ranges (CIDR notation) via a Traefik IP allowlist; all other clients get a 403. Set to `[\"127.0.0.1/32\", \"::1/128\"]` to allow access only through `kubectl port-forward` to Traefik (see the user administration docs). Requires Traefik to see the real client IP. Empty (the default) leaves these paths publicly reachable.",
+      "items": {
+        "type": "string"
+      }
+    },
     "insecureCookies": {
       "groups": ["auth"],
       "type": "boolean",
