@@ -2987,7 +2987,7 @@ developmentDatabasePersistence: false
 enforceHTTPS: true
 traefikVersion: 3
 # Per-ingress opt-in for Traefik access logs. Only has an effect if access logs are
-# enabled globally on the cluster's Traefik (see kubernetes/traefik/access-logs-helmchartconfig.yaml).
+# enabled globally on the cluster's Traefik
 traefikAccessLogs:
   website: true
   backend: true
