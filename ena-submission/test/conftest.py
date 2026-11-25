@@ -26,8 +26,7 @@ def _tag_logs_with_test_name(request: pytest.FixtureRequest):
     _test_context["name"] = "no-test"
 
 
-@pytest.fixture
-def ena_dev_only(monkeypatch: pytest.MonkeyPatch):
+def install_ena_dev_guard(monkeypatch: pytest.MonkeyPatch) -> None:
     """Require ENA dev routing, including redirects, and no subprocess but ena-webin-cli -test."""
     original_send = requests.Session.send
     original_popen = subprocess.Popen
@@ -59,3 +58,8 @@ def ena_dev_only(monkeypatch: pytest.MonkeyPatch):
 
     monkeypatch.setattr(requests.Session, "send", send)
     monkeypatch.setattr(subprocess, "Popen", popen)
+
+
+@pytest.fixture(autouse=True)
+def ena_dev_only(monkeypatch: pytest.MonkeyPatch):
+    install_ena_dev_guard(monkeypatch)

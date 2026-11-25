@@ -7,6 +7,7 @@ from unittest.mock import MagicMock, Mock
 
 import pytest
 import requests
+from conftest import install_ena_dev_guard
 from ena_deposition.config import Config, get_config, secure_ena_connection
 from ena_deposition.ena_client import post_webin_cli, post_webin_with_retry
 
@@ -24,7 +25,7 @@ def config(monkeypatch: pytest.MonkeyPatch) -> Config:
 
 
 @pytest.fixture
-def guarded_transports(monkeypatch: pytest.MonkeyPatch, request: pytest.FixtureRequest):
+def guarded_transports(monkeypatch: pytest.MonkeyPatch):
     """Install mocks underneath the same guard used by the live integration suite."""
     response = requests.Response()
     response.status_code = 200
@@ -37,7 +38,7 @@ def guarded_transports(monkeypatch: pytest.MonkeyPatch, request: pytest.FixtureR
     popen = Mock(return_value=process)
     monkeypatch.setattr(requests.Session, "send", send)
     monkeypatch.setattr(subprocess, "Popen", popen)
-    request.getfixturevalue("ena_dev_only")
+    install_ena_dev_guard(monkeypatch)
     return send, popen
 
 
@@ -147,9 +148,7 @@ def test_public_read_only_lookup_is_allowed(guarded_transports):
     send.assert_called_once()
 
 
-def test_redirect_to_production_stops_before_send(
-    monkeypatch: pytest.MonkeyPatch, request: pytest.FixtureRequest
-):
+def test_redirect_to_production_stops_before_send(monkeypatch: pytest.MonkeyPatch):
     redirect = requests.Response()
     redirect.status_code = 307
     redirect.headers["Location"] = PROD_SUBMISSION_URL
@@ -157,7 +156,6 @@ def test_redirect_to_production_stops_before_send(
     redirect._content = b""
     send = Mock(return_value=redirect)
     monkeypatch.setattr(requests.adapters.HTTPAdapter, "send", send)
-    request.getfixturevalue("ena_dev_only")
     with pytest.raises(RuntimeError, match="HTTPS wwwdev"):
         requests.post(DEV_SUBMISSION_URL, data="test", timeout=1)
     send.assert_called_once()

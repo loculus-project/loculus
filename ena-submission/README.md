@@ -335,7 +335,7 @@ python scripts/deposition_dry_run.py --log-level=DEBUG --data-to-submit=results/
 
 You can also run the integration tests locally, these will submit sequences to ENA dev. Be careful when modifying these tests to always set `test=true`.
 
-Before live submissions, CI runs `test/test_ena_test_mode.py` with mocked transports to verify the development configuration, actual Webin-CLI arguments for reads and assemblies, and XML request URLs. The integration suite also installs the `ena_dev_only` fixture: it blocks every subprocess call except `ena-webin-cli` with an explicit `-test` (any other tool, for example `samtools`, needs an explicit allowance in `test/conftest.py`) and blocks HTTP writes or submission/report requests outside HTTPS `wwwdev.ebi.ac.uk`, including redirects. Public, read-only API lookups remain available. These checks do not require ENA credentials and do not submit anything.
+Before live submissions, CI runs `test/test_ena_test_mode.py` with mocked transports to verify the development configuration, actual Webin-CLI arguments for reads and assemblies, and XML request URLs. The `ena_dev_only` fixture is active in every test under `test/`: it blocks every subprocess call except `ena-webin-cli` with an explicit `-test` (any other tool, for example `samtools`, needs an explicit allowance in `test/conftest.py`) and blocks HTTP writes or submission/report requests outside HTTPS `wwwdev.ebi.ac.uk`, including redirects. Public, read-only API lookups remain available. These checks do not require ENA credentials and do not submit anything.
 
 You also need to set the environment variables `ENA_USERNAME` and `ENA_PASSWORD` to your ENA test account credentials. You can use the `.env` file in the root of this repository to set these variables.
 
