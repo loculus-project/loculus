@@ -1,4 +1,4 @@
-import type { APIContext, MiddlewareNext } from 'astro';
+import type { APIContext } from 'astro';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
@@ -33,7 +33,7 @@ describe('catchErrorMiddleware', () => {
     test('passes the response through and logs nothing when there is no error', async () => {
         const response = new Response('ok');
 
-        const result = await catchErrorMiddleware(context, (() => Promise.resolve(response)) as MiddlewareNext);
+        const result = await catchErrorMiddleware(context, () => Promise.resolve(response));
 
         expect(result).toBe(response);
         expect(mocks.error).not.toHaveBeenCalled();
@@ -43,7 +43,7 @@ describe('catchErrorMiddleware', () => {
     test('logs the error with its stack trace and request context, then redirects to /500', async () => {
         const error = new Error('LAPIS exploded');
 
-        const result = await catchErrorMiddleware(context, (() => Promise.reject(error)) as MiddlewareNext);
+        const result = await catchErrorMiddleware(context, () => Promise.reject(error));
 
         expect(result).toBe(redirectResponse);
         expect(redirect).toHaveBeenCalledWith('/500');
@@ -57,7 +57,8 @@ describe('catchErrorMiddleware', () => {
     });
 
     test('handles thrown values that are not Errors', async () => {
-        await catchErrorMiddleware(context, (() => Promise.reject('just a string')) as MiddlewareNext);
+        // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors -- testing a non-Error rejection
+        await catchErrorMiddleware(context, () => Promise.reject('just a string'));
 
         expect(mocks.error).toHaveBeenCalledWith(
             'Unhandled error for GET /ebola-zaire/search: just a string',

@@ -32,7 +32,7 @@ const createContext = (options: ContextOptions = {}) => {
     return {
         request: new Request(`https://loculus.test${path}`, {
             method: options.method ?? 'GET',
-            headers: { 'user-agent': options.userAgent ?? 'Mozilla/5.0' },
+            headers: [['user-agent', options.userAgent ?? 'Mozilla/5.0']],
         }),
         url: new URL(`https://loculus.test${path}`),
         params: { organism },
