@@ -2986,8 +2986,11 @@ runDevelopmentS3: true
 developmentDatabasePersistence: false
 enforceHTTPS: true
 traefikVersion: 3
-# Per-ingress opt-in for Traefik access logs. Only has an effect if access logs are
-# enabled globally on the cluster's Traefik
+# Per-ingress switch for Traefik access logs (router.observability.accesslogs annotation, Traefik >= 3.1).
+# Only has an effect if access logs are enabled on the cluster's Traefik, which is not installed by this
+# chart. On k3s, set `logs.access.enabled: true` (and ideally `format: json` and drop ClientHost/ClientAddr
+# and all headers except User-Agent/Referer) in the HelmChartConfig `traefik` in kube-system.
+# Once enabled there, ingresses without this annotation (including non-Loculus ones) log by default.
 traefikAccessLogs:
   website: true
   backend: true
