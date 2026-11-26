@@ -40,13 +40,7 @@ To access the console, tunnel to Traefik with `kubectl` and resolve the authenti
 
 1. Forward local port 443 to Traefik. It must be port 443: on any other local port, the HTTPS redirect sends the browser back to the public URL. On k3s Traefik runs in `kube-system`; adjust the namespace and service name for your cluster.
 
-   **macOS** (no `sudo` needed):
-
-   ```bash
-   kubectl -n kube-system port-forward svc/traefik 443:443
-   ```
-
-   **Linux** (binding port 443 needs root):
+   **macOS / Linux** (binding port 443 on localhost needs root; `--kubeconfig` points `sudo` at your own kubeconfig instead of root's):
 
    ```bash
    sudo kubectl --kubeconfig "$HOME/.kube/config" -n kube-system port-forward svc/traefik 443:443
