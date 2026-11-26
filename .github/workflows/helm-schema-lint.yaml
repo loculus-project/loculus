@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - "kubernetes/**"
+      - "docs/src/content/docs/reference/helm-chart-config.mdx"
       - ".github/workflows/helm-schema-lint.yaml"
   push:
     branches:
@@ -21,6 +22,9 @@ jobs:
         uses: azure/setup-helm@v5
         with:
           version: v3.18.3
+
+      - name: Check schema annotations
+        run: python3 kubernetes/utils/check_schema_annotations.py
 
       - name: Run Helm lint on values files
         run: |
