@@ -2,6 +2,12 @@
 
 set -e
 
+mkdir -p kubernetes_logs
+
+# Traefik is in kube-system; --tail=-1 because a selector defaults to 10 lines
+kubectl logs -n kube-system -l app.kubernetes.io/name=traefik --tail=-1 \
+  > kubernetes_logs/traefik.txt 2>/dev/null || true
+
 pods=$(kubectl get pods -l app=loculus -o jsonpath='{.items[*].metadata.name}' || true)
 
 echo "Collecting logs from pods: $pods"
