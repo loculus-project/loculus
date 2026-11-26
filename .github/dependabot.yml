@@ -41,6 +41,9 @@ updates:
     directory: backend/
     schedule:
       interval: weekly
+    ignore:
+      - dependency-name: "org.springdoc:springdoc-openapi-starter-webmvc-ui"
+        versions: [">=3.2.1"] # needs Jackson 3, see https://github.com/loculus-project/loculus/issues/5753
     groups:
       minor:
         update-types:
