@@ -36,6 +36,9 @@ spec:
             - containerPort: 8080
           args:
             - "--silo.url=http://loculus-silo-service-{{ $key }}:8081"
+            # keep max-parameter-count above half the form size, so oversized forms fail instead of being truncated (#7847, #7848)
+            - "--server.tomcat.max-http-form-post-size=4MB"
+            - "--server.tomcat.max-parameter-count=3000000"
           env:
             - name: JVM_OPTS
               value: -XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -XX:+UseG1GC -XX:MaxHeapFreeRatio=5 -XX:MinHeapFreeRatio=2 -XX:MaxGCPauseMillis=100

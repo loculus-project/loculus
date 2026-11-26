@@ -1,6 +1,10 @@
 package org.loculus.backend.utils
 
+import org.hamcrest.MatcherAssert.assertThat
+import org.hamcrest.Matchers.containsString
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
+import org.loculus.backend.errors.UnprocessableEntityException
 
 class FastaReaderTest {
 
@@ -53,5 +57,49 @@ class FastaReaderTest {
         """.trimIndent()
         val parsed = FastaReader(fasta.byteInputStream()).toList()
         assert(parsed.isEmpty())
+    }
+
+    @Test
+    fun `sequence with NUL character is rejected`() {
+        val fasta = ">seq1\nACGT\u0000ACGT\n"
+        val exception = assertThrows<UnprocessableEntityException> {
+            FastaReader(fasta.byteInputStream()).toList()
+        }
+        assertThat(exception.message, containsString("`seq1`"))
+        assertThat(exception.message, containsString("U+0000"))
+        assertThat(exception.message, containsString("position 5"))
+    }
+
+    @Test
+    fun `binary file content after a FASTA header is rejected`() {
+        // Start of a .docx (zip) file, as produced when a Word document is uploaded as a sequence
+        val zipHeader = byteArrayOf(0x50, 0x4b, 0x03, 0x04, 0x14, 0x00, 0x06, 0x00)
+        val fasta = ">seq1\n".toByteArray() + zipHeader + "\n".toByteArray()
+        val exception = assertThrows<UnprocessableEntityException> {
+            FastaReader(fasta.inputStream()).toList()
+        }
+        assertThat(exception.message, containsString("binary file"))
+    }
+
+    @Test
+    fun `non-ASCII character in sequence is rejected`() {
+        val fasta = ">seq1\nACGT\uFFFDACGT\n"
+        assertThrows<UnprocessableEntityException> {
+            FastaReader(fasta.byteInputStream()).toList()
+        }
+    }
+
+    @Test
+    fun `printable ASCII sequence characters are accepted`() {
+        val fasta = ">seq1\nACGTNRYKMSWBDHV-acgtn*.?\n"
+        val parsed = FastaReader(fasta.byteInputStream()).toList()
+        assert(parsed[0].sequence == "ACGTNRYKMSWBDHV-acgtn*.?")
+    }
+
+    @Test
+    fun `windows line endings are accepted`() {
+        val fasta = ">seq1\r\nACGT\r\nACGT\r\n"
+        val parsed = FastaReader(fasta.byteInputStream()).toList()
+        assert(parsed[0].sequence == "ACGTACGT")
     }
 }

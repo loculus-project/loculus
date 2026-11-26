@@ -64,6 +64,8 @@ object BackendSpringProperty {
 const val DEBUG_MODE_ON_VALUE = "true"
 const val ENABLE_SEQSETS_TRUE_VALUE = "true"
 
+const val V1_API_VERSION = "v1alpha"
+
 private val logger = mu.KotlinLogging.logger {}
 
 @Configuration
@@ -107,15 +109,15 @@ class BackendSpringConfig {
     @Bean
     fun v0Api(backendConfig: BackendConfig): GroupedOpenApi = GroupedOpenApi.builder()
         .group("v0")
-        .pathsToExclude("/v1/**")
+        .pathsToExclude("/$V1_API_VERSION/**")
         .addOpenApiCustomizer { it.info(apiInfo(backendConfig, "v0")) }
         .build()
 
     @Bean
     fun v1Api(backendConfig: BackendConfig): GroupedOpenApi = GroupedOpenApi.builder()
-        .group("v1")
-        .pathsToMatch("/v1/**")
-        .addOpenApiCustomizer { it.info(apiInfo(backendConfig, "v1")) }
+        .group(V1_API_VERSION)
+        .pathsToMatch("/$V1_API_VERSION/**")
+        .addOpenApiCustomizer { it.info(apiInfo(backendConfig, V1_API_VERSION)) }
         .build()
 
     @Bean

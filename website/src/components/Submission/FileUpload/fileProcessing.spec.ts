@@ -104,6 +104,21 @@ describe('fileProcessing', () => {
         expect(processedFile.fastaHeader()).toBe('fooid description');
     });
 
+    test('Plain segment file containing binary data is rejected', async () => {
+        // Start of a .docx (zip) file, without any whitespace-adjacent newlines
+        const zipHeader = new Uint8Array([0x50, 0x4b, 0x03, 0x04, 0x14, 0x00, 0x06, 0x00, 0xdf, 0xa4]);
+        const dummyFile = new File([zipHeader], 'Belgium_KUL23_20260831.docx');
+        const result = await PLAIN_SEGMENT_KIND.processRawFile(dummyFile);
+        expect(result.isErr()).toBe(true);
+        expect(result._unsafeUnwrapErr().message).toContain('does not appear to be a plain-text sequence file');
+    });
+
+    test('Plain segment file with IUPAC codes, gaps and lowercase is accepted', async () => {
+        const dummyFile = new File(['>id\nACGTNRYKMSWBDHV-acgtn\n'], 'example.fasta');
+        const result = await PLAIN_SEGMENT_KIND.processRawFile(dummyFile);
+        expect(result.isOk()).toBe(true);
+    });
+
     test('Plain segment file with Windows (CRLF) line endings is accepted', async () => {
         const dummyFile = new File(['>fooid description\r\nACTG\r\n\r\nACTG\r\nACTG\r\n'], 'example.fasta', {
             type: 'text/plain',
