@@ -1564,7 +1564,7 @@
           "type": "string",
           "enum": ["error", "warn", "info", "http", "verbose", "debug", "silly"],
           "default": "info",
-          "description": "Log level of the website server. `info` logs one line per incoming request, auth events and errors; `debug` additionally logs every call the website server makes to the backend, LAPIS and Keycloak."
+          "description": "Log level of the website server. `info` logs one line per auth events and errors; `debug` additionally logs every call the website server makes to the backend, LAPIS and Keycloak."
         },
         "runtimeConfig": {
           "type": "object",
