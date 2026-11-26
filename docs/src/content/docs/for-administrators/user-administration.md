@@ -103,7 +103,7 @@ Other browsers can use a temporary `/etc/hosts` entry (`127.0.0.1 authentication
 - **`403 Forbidden` in the tunnelled window**: the request did not go through the port-forward. Check that the port-forward is still running and shows `Handling connection` lines when you reload. Check that the `MAP` hostname exactly matches the hostname in the URL. Chrome only reads the flags when the instance starts: if the `kc-admin-chrome` instance was already running (for example from an earlier attempt with a different hostname), rerunning the command reuses it with the old flags. Fully quit it (`Cmd-Q` on macOS; closing the window is not enough) and run the command again.
 - **`bind: permission denied` when starting the port-forward**: you ran it without `sudo` on macOS or Linux.
 - **`bind: address already in use`**: something else on your machine is using port 443. Stop it while you use the console.
-You can also list other ranges, such as a VPN egress IP, instead of or alongside localhost. The allowlist requires Traefik to see the real client IP (`kubectl port-forward` requests arrive from localhost; check the Traefik access log to verify).
+  You can also list other ranges, such as a VPN egress IP, instead of or alongside localhost. The allowlist requires Traefik to see the real client IP (`kubectl port-forward` requests arrive from localhost; check the Traefik access log to verify).
 
 ## Ensure you're using the right realm
 
