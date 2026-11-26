@@ -66,6 +66,11 @@ spec:
 {{ $middlewareListForKeycloak = append $middlewareListForKeycloak (printf "%s-basic-auth@kubernetescrd" $.Release.Namespace) }}
 {{ end }}
 
+{{- $adminAllowedSourceRanges := $.Values.adminAllowedSourceRanges | default list }}
+{{- if $adminAllowedSourceRanges }}
+{{- $middlewareListForKeycloak = append $middlewareListForKeycloak (printf "%s-keycloak-reject-matrix-params@kubernetescrd" $.Release.Namespace) }}
+{{- end }}
+
 {{ $middlewareListForWebsite = append $middlewareListForWebsite (printf "%s-redirect-www-middleware@kubernetescrd" $.Release.Namespace) }}
 
 apiVersion: networking.k8s.io/v1
@@ -145,6 +150,72 @@ spec:
   - hosts:
     - "{{ $keycloakHost }}"
 ---
+{{- if $adminAllowedSourceRanges }}
+{{- /*
+  Restrict the Keycloak admin console / admin REST API (/admin) and the master
+  realm (/realms/master, where admin logins and admin-cli token requests happen)
+  to the given source ranges. These are separate, more specific routers on the
+  same host, so Traefik prefers them over the catch-all "/" route above.
+  Loculus services talk to Keycloak via the in-cluster service, so they are not
+  affected.
+*/}}
+apiVersion: {{ $traefikApiVersion }}
+kind: Middleware
+metadata:
+  name: keycloak-admin-allowlist
+spec:
+  {{- if eq (int $.Values.traefikVersion) 3 }}
+  ipAllowList:
+  {{- else }}
+  ipWhiteList:
+  {{- end }}
+    sourceRange:
+      {{- range $adminAllowedSourceRanges }}
+      - {{ . | quote }}
+      {{- end }}
+---
+{{- /*
+  Keycloak (RESTEasy) ignores matrix parameters in path segments, so
+  /realms;x/master/... is served as the master realm. Traefik matches the raw
+  path, so such a request misses the /realms/master prefix above and lands on
+  the public "/" router. Loculus never uses matrix parameters, so any Keycloak
+  path containing ";" (or its encoding %3B) is rewritten to a path Keycloak
+  answers with 404.
+*/}}
+apiVersion: {{ $traefikApiVersion }}
+kind: Middleware
+metadata:
+  name: keycloak-reject-matrix-params
+spec:
+  replacePathRegex:
+    regex: "^.*(;|%3[bB]).*$"
+    replacement: "/matrix-parameters-not-supported"
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: loculus-keycloak-admin-ingress
+  annotations:
+    traefik.ingress.kubernetes.io/router.middlewares: "{{ join "," (append $middlewareListForKeycloak (printf "%s-keycloak-admin-allowlist@kubernetescrd" $.Release.Namespace)) }}"
+spec:
+  rules:
+    - host: "{{ $keycloakHost }}"
+      http:
+        paths:
+          {{- range list "/admin" "/realms/master" }}
+          - path: {{ . }}
+            pathType: Prefix
+            backend:
+              service:
+                name: loculus-keycloak-service
+                port:
+                  number: 8083
+          {{- end }}
+  tls:
+  - hosts:
+    - "{{ $keycloakHost }}"
+---
+{{- end }}
 {{- if and .Values.s3.enabled .Values.runDevelopmentS3 }}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
