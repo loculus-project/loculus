@@ -848,6 +848,10 @@ def multi_segment_submission(
 class TestSubmission:
     def setup_method(self) -> None:
         self.config: Config = get_config(CONFIG_FILE)
+        assert not self.config.submit_to_ena_prod, "Production submissions must be disabled."
+        assert (
+            self.config.ena_reports_service_url == "https://wwwdev.ebi.ac.uk/ena/submit/report"
+        ), "ENA reports must use the development endpoint."
         self.config.submitting_time_threshold_min = 0
         self.db_engine = db_init(
             self.config.db_password, self.config.db_username, self.config.db_url
