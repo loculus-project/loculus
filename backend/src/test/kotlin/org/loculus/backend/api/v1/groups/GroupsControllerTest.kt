@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 import org.keycloak.representations.idm.UserRepresentation
+import org.loculus.backend.config.V1_API_VERSION
 import org.loculus.backend.service.KeycloakAdapter
 import org.loculus.backend.testutil.ALTERNATIVE_DEFAULT_USER_NAME
 import org.loculus.backend.testutil.DEFAULT_USER_NAME
@@ -126,7 +127,7 @@ class GroupsControllerTest(
             .andExpect(jsonPath("\$.contactEmail").value(V1_NEW_GROUP.contactEmail))
         val groupId = result.andGetGroupId()
 
-        result.andExpect(header().string("Location", "/v1/groups/$groupId"))
+        result.andExpect(header().string("Location", "/$V1_API_VERSION/groups/$groupId"))
     }
 
     @Test
