@@ -2,14 +2,12 @@ import winston, { type Logger } from 'winston';
 
 let _logger: Logger | undefined;
 
-// Read from process.env first so the values can be set on the running container (e.g. via Helm) without a rebuild.
-// import.meta.env is kept as a fallback for values from .env files during local development.
-const readEnv = (name: 'LOG_DIR' | 'LOG_LEVEL'): string | undefined =>
-    (typeof process !== 'undefined' ? process.env[name] : undefined) ?? (import.meta.env[name] as string | undefined);
-
 const getLogger = (): Logger => {
     if (_logger === undefined) {
-        const logPath = readEnv('LOG_DIR');
+        // process.env so the values can be overridden at runtime (e.g. via Helm);
+        // import.meta.env is inlined from .env at build time and serves as fallback (e.g. for local dev).
+        const logPath = process.env.LOG_DIR ?? import.meta.env.LOG_DIR;
+        const logLevel = process.env.LOG_LEVEL ?? import.meta.env.LOG_LEVEL ?? 'info';
         const serverLogFile = `${logPath}/website.log`;
         const transports: winston.transport[] = [];
 
@@ -19,7 +17,7 @@ const getLogger = (): Logger => {
 
         transports.push(new winston.transports.Console());
         _logger = winston.createLogger({
-            level: readEnv('LOG_LEVEL') ?? 'info',
+            level: logLevel,
             format: winston.format.combine(winston.format.timestamp(), winston.format.json()),
             transports,
         });
