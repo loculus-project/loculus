@@ -1,6 +1,6 @@
 import { AxiosError } from 'axios';
 import { capitalCase } from 'change-case';
-import { type FC, type FormEvent, useState, useEffect } from 'react';
+import { type FC, type FormEvent, useState } from 'react';
 import { toast } from 'react-toastify';
 
 import { getClientLogger } from '../../clientLogger';
@@ -33,29 +33,12 @@ export const SeqSetForm: FC<SeqSetFormProps> = ({ clientConfig, accessToken, edi
     );
     const [seqSetRecordValidation, setSeqSetRecordValidation] = useState('');
 
-    const { createSeqSet, updateSeqSet, validateSeqSetRecords, isPending } = useActionHooks(
-        clientConfig,
-        accessToken,
-        (message) => toast.error(message, { position: 'top-center', autoClose: false }),
-        setSeqSetRecordValidation,
+    const { createSeqSet, updateSeqSet, isPending } = useActionHooks(clientConfig, accessToken, (message) =>
+        toast.error(message, { position: 'top-center', autoClose: false }),
     );
 
-    useEffect(() => {
-        const validationDelay = setTimeout(() => {
-            const seqSetRecords = [
-                ...deserializeAccessionInput(focalAccessionsInput, true),
-                ...deserializeAccessionInput(backgroundAccessionsInput, false),
-            ];
-            if (seqSetRecords.length === 0) {
-                setSeqSetRecordValidation('');
-                return;
-            }
-            validateSeqSetRecords(seqSetRecords);
-        }, 1000);
-        return () => clearTimeout(validationDelay);
-    }, [focalAccessionsInput, backgroundAccessionsInput, validateSeqSetRecords]);
-
     const setAccessionInput = (accessionInput: string, isFocal: boolean) => {
+        setSeqSetRecordValidation('');
         if (isFocal) {
             setFocalAccessionsInput(accessionInput);
         } else {
@@ -214,12 +197,7 @@ export const SeqSetForm: FC<SeqSetFormProps> = ({ clientConfig, accessToken, edi
     );
 };
 
-function useActionHooks(
-    clientConfig: ClientConfig,
-    accessToken: string,
-    openErrorFeedback: (message: string) => void,
-    setSeqSetRecordValidation: (message: string) => void,
-) {
+function useActionHooks(clientConfig: ClientConfig, accessToken: string, openErrorFeedback: (message: string) => void) {
     const hooks = seqSetCitationClientHooks(clientConfig);
     const create = hooks.useCreateSeqSet(
         { headers: createAuthorizationHeader(accessToken) },
@@ -259,26 +237,9 @@ function useActionHooks(
             },
         },
     );
-    const validateRecords = hooks.useValidateSeqSetRecords(
-        { headers: createAuthorizationHeader(accessToken) },
-        {
-            onSuccess: () => {
-                setSeqSetRecordValidation('');
-            },
-            onError: async (error) => {
-                await logger.info(`Failed to validate seqSet records. Error: '${JSON.stringify(error)})}'`);
-                if (error instanceof AxiosError && error.response?.data !== undefined) {
-                    const responseData = error.response.data as ProblemDetail;
-                    const message = `${responseData.title}. ${responseData.detail}`;
-                    setSeqSetRecordValidation(message);
-                }
-            },
-        },
-    );
     return {
         createSeqSet: create.mutate,
         updateSeqSet: update.mutate,
-        validateSeqSetRecords: validateRecords.mutate,
         isPending: create.isPending || update.isPending,
     };
 }

@@ -54,8 +54,16 @@ export class SeqSetPage {
         }
     }
 
+    getSaveButton() {
+        return this.page.getByRole('button', { name: 'Save' });
+    }
+
+    async fillFocalAccessions(accessions: string[]) {
+        await this.page.locator('#loculus-focal-accession-input').fill(accessions.join(', '));
+    }
+
     async submitSeqSetForm() {
-        await this.page.getByRole('button', { name: 'Save' }).click();
+        await this.getSaveButton().click();
     }
 
     async expectAccessionMatchesUrl() {

@@ -51,4 +51,36 @@ test.describe('SeqSet management', () => {
         await expect(seqSetPage.getCreateButton()).toBeVisible();
         await expect(seqSetPage.page.getByRole('cell', { name: updatedSeqSetName })).toHaveCount(0);
     });
+
+    test('invalid accessions are rejected on save and the seqset can be saved once they are fixed', async ({
+        page,
+        groupId,
+    }) => {
+        test.setTimeout(90_000);
+        void groupId;
+        const searchPage = new SearchPage(page);
+        await searchPage.ebolaSudan();
+        const [accession] = await collectAccessibleAccessions(searchPage);
+
+        const seqSetPage = new SeqSetPage(page);
+        const seqSetName = `SeqSet ${randomUUID().slice(0, 8)}`;
+        const seqSetDescription = 'Playwright seqset saved after fixing invalid accessions';
+
+        await seqSetPage.gotoList();
+        await seqSetPage.openCreateDialog();
+        await seqSetPage.fillSeqSetForm({
+            name: seqSetName,
+            description: seqSetDescription,
+            focalAccessions: [accession, accession],
+        });
+        await seqSetPage.submitSeqSetForm();
+        await expect(page.getByText(/must not contain duplicate accessions/)).toBeVisible();
+
+        await seqSetPage.fillFocalAccessions([accession]);
+        await expect(seqSetPage.getSaveButton()).toBeEnabled();
+        await seqSetPage.submitSeqSetForm();
+        await seqSetPage.expectDetailLayout(seqSetName, seqSetDescription, '1');
+
+        await seqSetPage.deleteSeqSet();
+    });
 });

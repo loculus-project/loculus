@@ -63,32 +63,6 @@ const getSeqSetRecordsEndpoint = makeEndpoint({
     errors: [notAuthorizedError],
 });
 
-const validateSeqSetRecords = makeEndpoint({
-    method: 'post',
-    path: '/validate-seqset-records',
-    alias: 'validateSeqSetRecords',
-    parameters: [
-        authorizationHeader,
-        {
-            name: 'data',
-            type: 'Body',
-            schema: z
-                .array(
-                    z.object({
-                        accession: z.string().optional(),
-                        type: z.string().optional(),
-                        isFocal: z.boolean(),
-                    }),
-                )
-                .optional(),
-        },
-    ],
-    response: z.object({
-        valid: z.boolean(),
-    }),
-    errors: [notAuthorizedError],
-});
-
 const createSeqSetEndpoint = makeEndpoint({
     method: 'post',
     path: '/create-seqset',
@@ -186,7 +160,6 @@ export const seqSetCitationApi = makeApi([
     getSeqSetEndpoint,
     getSeqSetVersionsEndpoint,
     getSeqSetRecordsEndpoint,
-    validateSeqSetRecords,
     createSeqSetEndpoint,
     createSeqSetDOIEndpoint,
     updateSeqSetEndpoint,
