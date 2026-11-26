@@ -103,6 +103,19 @@ describe('outgoingRequestLogger', () => {
                 expect.objectContaining({ durationMs: undefined }),
             );
         });
+
+        test('does not log the query string', () => {
+            const request = { ...createHttpRequest(), path: '/ebola-zaire/get-sequences?token=secret&groupId=1' };
+            publish('http.client.response.finish', { request, response: { statusCode: 404 } });
+            publish('http.client.request.error', { request, error: new Error('socket hang up') });
+
+            expect(mocks.warn).toHaveBeenCalledWith(`POST ${httpUrl} 404`, expect.objectContaining({ url: httpUrl }));
+            expect(mocks.error).toHaveBeenCalledWith(
+                `POST ${httpUrl} failed: socket hang up`,
+                expect.objectContaining({ url: httpUrl }),
+            );
+            expect(JSON.stringify([mocks.warn.mock.calls, mocks.error.mock.calls])).not.toContain('secret');
+        });
     });
 
     describe('fetch (undici) requests', () => {
@@ -140,6 +153,19 @@ describe('outgoingRequestLogger', () => {
                 `GET ${fetchUrl} failed: fetch failed`,
                 expect.objectContaining({ error: 'fetch failed' }),
             );
+        });
+
+        test('does not log the query string', () => {
+            const request = { ...createFetchRequest(), path: `${createFetchRequest().path}?access_token=secret` };
+            publish('undici:request:headers', { request, response: { statusCode: 401 } });
+            publish('undici:request:error', { request, error: new Error('fetch failed') });
+
+            expect(mocks.warn).toHaveBeenCalledWith(`GET ${fetchUrl} 401`, expect.objectContaining({ url: fetchUrl }));
+            expect(mocks.error).toHaveBeenCalledWith(
+                `GET ${fetchUrl} failed: fetch failed`,
+                expect.objectContaining({ url: fetchUrl }),
+            );
+            expect(JSON.stringify([mocks.warn.mock.calls, mocks.error.mock.calls])).not.toContain('secret');
         });
     });
 

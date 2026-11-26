@@ -8,11 +8,17 @@ let installed = false;
 
 type UndiciRequest = { method: string; origin: string; path: string };
 
+// request.path includes the query string. It is dropped so that secrets or user input passed as query
+// parameters never end up in the logs, independent of how callers build their requests.
+const stripQuery = (path: string) => path.split('?', 1)[0];
+
 const httpUrl = (request: ClientRequest) => {
     const hostHeader = request.getHeader('host');
     const host = typeof hostHeader === 'string' ? hostHeader : request.host;
-    return `${request.protocol}//${host}${request.path}`;
+    return `${request.protocol}//${host}${stripQuery(request.path)}`;
 };
+
+const fetchUrl = (request: UndiciRequest) => `${request.origin}${stripQuery(request.path)}`;
 
 const elapsedMs = (starts: WeakMap<object, number>, key: object) => {
     const start = starts.get(key);
@@ -39,6 +45,7 @@ const logFailure = (method: string, url: string, error: Error, durationMs: numbe
  * Logs every outgoing HTTP request made by the website server (to the backend, LAPIS, Keycloak, ...),
  * using Node's built-in diagnostics channels. Covers node:http(s) (axios, Zodios, openid-client, ...)
  * and native fetch (undici) without patching any client.
+ * Only scheme, host and path are logged, never the query string.
  * Successful calls are logged at debug, 4xx at warn, 5xx and network errors at error.
  */
 export function installOutgoingRequestLogging() {
@@ -68,15 +75,10 @@ export function installOutgoingRequestLogging() {
     });
     diagnosticsChannel.subscribe('undici:request:headers', (message) => {
         const { request, response } = message as { request: UndiciRequest; response: { statusCode: number } };
-        logResponse(
-            request.method,
-            `${request.origin}${request.path}`,
-            response.statusCode,
-            elapsedMs(fetchStarts, request),
-        );
+        logResponse(request.method, fetchUrl(request), response.statusCode, elapsedMs(fetchStarts, request));
     });
     diagnosticsChannel.subscribe('undici:request:error', (message) => {
         const { request, error } = message as { request: UndiciRequest; error: Error };
-        logFailure(request.method, `${request.origin}${request.path}`, error, elapsedMs(fetchStarts, request));
+        logFailure(request.method, fetchUrl(request), error, elapsedMs(fetchStarts, request));
     });
 }
