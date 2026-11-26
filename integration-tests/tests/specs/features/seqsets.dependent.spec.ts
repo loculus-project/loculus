@@ -52,7 +52,7 @@ test.describe('SeqSet management', () => {
         await expect(seqSetPage.page.getByRole('cell', { name: updatedSeqSetName })).toHaveCount(0);
     });
 
-    test('invalid accessions are rejected on save and the seqset can be saved once they are fixed', async ({
+    test('invalid accessions are reported and the seqset can be saved once they are fixed', async ({
         page,
         groupId,
     }) => {
@@ -68,13 +68,24 @@ test.describe('SeqSet management', () => {
 
         await seqSetPage.gotoList();
         await seqSetPage.openCreateDialog();
+
+        // Duplicates are detected in the browser and block saving
         await seqSetPage.fillSeqSetForm({
             name: seqSetName,
             description: seqSetDescription,
             focalAccessions: [accession, accession],
         });
-        await seqSetPage.submitSeqSetForm();
         await expect(page.getByText(/must not contain duplicate accessions/)).toBeVisible();
+        await expect(seqSetPage.getSaveButton()).toBeDisabled();
+
+        // Accessions that don't exist are rejected by the backend when saving
+        const unknownAccession = `LOC_DOES_NOT_EXIST_${randomUUID().slice(0, 8)}`;
+        await seqSetPage.fillFocalAccessions([unknownAccession]);
+        await expect(page.getByText(/must not contain duplicate accessions/)).toHaveCount(0);
+        await seqSetPage.submitSeqSetForm();
+        await expect(
+            page.getByText(new RegExp(`${unknownAccession}.* do not exist`)),
+        ).toBeVisible();
 
         await seqSetPage.fillFocalAccessions([accession]);
         await expect(seqSetPage.getSaveButton()).toBeEnabled();

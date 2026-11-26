@@ -10,7 +10,11 @@ import type { ProblemDetail } from '../../types/backend.ts';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import { type SeqSet, type SeqSetRecord } from '../../types/seqSetCitation';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
-import { deserializeAccessionInput, serializeSeqSetRecords } from '../../utils/parseAccessionInput';
+import {
+    deserializeAccessionInput,
+    findDuplicateAccessions,
+    serializeSeqSetRecords,
+} from '../../utils/parseAccessionInput';
 import { Button } from '../common/Button';
 import { Spinner } from '../common/Spinner';
 
@@ -46,14 +50,22 @@ export const SeqSetForm: FC<SeqSetFormProps> = ({ clientConfig, accessToken, edi
         }
     };
 
+    const records = [
+        ...deserializeAccessionInput(focalAccessionsInput, true),
+        ...deserializeAccessionInput(backgroundAccessionsInput, false),
+    ];
+    // The backend rejects duplicates too, but we can tell the user right away without asking it
+    const duplicateAccessions = findDuplicateAccessions(records);
+    const recordValidationMessage =
+        duplicateAccessions.length > 0
+            ? `SeqSet must not contain duplicate accessions. The following accessions appear at least twice: ${duplicateAccessions.join(', ')}`
+            : seqSetRecordValidation;
+
     const getSeqSetFromInput = () => {
         return {
             name: seqSetName,
             description: seqSetDescription,
-            records: [
-                ...deserializeAccessionInput(focalAccessionsInput, true),
-                ...deserializeAccessionInput(backgroundAccessionsInput, false),
-            ],
+            records,
         };
     };
 
@@ -106,7 +118,7 @@ export const SeqSetForm: FC<SeqSetFormProps> = ({ clientConfig, accessToken, edi
                     </label>
                     <textarea
                         id={`loculus-${isFocalStr}-accession-input`}
-                        className={getTextAreaStyles(seqSetRecordValidation)}
+                        className={getTextAreaStyles(recordValidationMessage)}
                         value={accessionsInput}
                         onChange={(event) => {
                             setAccessionInput(event.target.value, isFocal);
@@ -171,8 +183,8 @@ export const SeqSetForm: FC<SeqSetFormProps> = ({ clientConfig, accessToken, edi
                 {renderAccessionInputField(true)}
                 {renderAccessionInputField(false)}
                 <div className='max-w-md w-full'>
-                    {seqSetRecordValidation !== '' ? (
-                        <p className='pb-4 text-red-500 text-sm italic'>{seqSetRecordValidation}</p>
+                    {recordValidationMessage !== '' ? (
+                        <p className='pb-4 text-red-500 text-sm italic'>{recordValidationMessage}</p>
                     ) : null}
                 </div>
                 <div className='pb-4'>
@@ -188,7 +200,7 @@ export const SeqSetForm: FC<SeqSetFormProps> = ({ clientConfig, accessToken, edi
             <Button
                 variant='primary'
                 className='flex items-center'
-                disabled={isPending || seqSetRecordValidation !== '' || seqSetNameValidation !== ''}
+                disabled={isPending || recordValidationMessage !== '' || seqSetNameValidation !== ''}
                 onClick={handleSubmit}
             >
                 {isPending ? <Spinner size='sm' className='mr-2 relative top-1' /> : 'Save'}

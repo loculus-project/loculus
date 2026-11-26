@@ -23,3 +23,16 @@ export const serializeSeqSetRecords = (records?: SeqSetRecord[], isFocal = true,
     }
     return filteredRecords.map((record) => record.accession).join(`${delimiter} `);
 };
+
+/** Accessions that appear more than once, in order of first appearance. Like the backend, this compares exact strings. */
+export const findDuplicateAccessions = (records: { accession: string }[]) => {
+    const seen = new Set<string>();
+    const duplicates = new Set<string>();
+    for (const { accession } of records) {
+        if (seen.has(accession)) {
+            duplicates.add(accession);
+        }
+        seen.add(accession);
+    }
+    return [...duplicates];
+};

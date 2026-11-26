@@ -1,6 +1,6 @@
 import { expect, test, describe } from 'vitest';
 
-import { serializeSeqSetRecords, deserializeAccessionInput } from './parseAccessionInput';
+import { serializeSeqSetRecords, deserializeAccessionInput, findDuplicateAccessions } from './parseAccessionInput';
 import { SeqSetRecordType } from '../types/seqSetCitation';
 
 describe('parseAccessionInput', () => {
@@ -59,6 +59,24 @@ describe('parseAccessionInput', () => {
                 { accession: 'A123', type: SeqSetRecordType.loculus, isFocal: false },
                 { accession: 'B456', type: SeqSetRecordType.loculus, isFocal: false },
             ]);
+        });
+    });
+
+    describe('findDuplicateAccessions', () => {
+        test('returns nothing when all accessions are unique', () => {
+            expect(findDuplicateAccessions(deserializeAccessionInput('A123, B456', true))).toEqual([]);
+        });
+
+        test('returns each duplicate once, also across focal and background accessions', () => {
+            const records = [
+                ...deserializeAccessionInput('A123, B456, A123, A123', true),
+                ...deserializeAccessionInput('B456 C789', false),
+            ];
+            expect(findDuplicateAccessions(records)).toEqual(['A123', 'B456']);
+        });
+
+        test('treats an accession with and without a version as different, like the backend', () => {
+            expect(findDuplicateAccessions(deserializeAccessionInput('A123, A123.1', true))).toEqual([]);
         });
     });
 });
