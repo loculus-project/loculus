@@ -54,8 +54,16 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation "org.springframework.boot:spring-boot-starter-validation"
     runtimeOnly    "io.micrometer:micrometer-registry-prometheus"
+
+    // Spring boot setup for Jackson 2
+    implementation "org.springframework.boot:spring-boot-jackson2"
+    // Kotlin module for Jackson 2
     implementation "com.fasterxml.jackson.module:jackson-module-kotlin"
-    implementation "org.springframework.boot:spring-boot-jackson2" // Jackson 2 compatibility bridge
+    // Kotlin module for Jackson 3 - used by springdoc 3.2.1+ to document Kotlin classes correctly
+    // Jackson 3 is already in the classpath and depended on by flyway, springdoc
+    // But Jackson 3 is not used by Spring yet - see exclusion above and issue #5753
+    implementation "tools.jackson.module:jackson-module-kotlin"
+
     implementation "org.jetbrains.kotlin:kotlin-reflect"
     implementation "io.github.microutils:kotlin-logging-jvm:3.0.5"
     implementation "org.postgresql:postgresql"
