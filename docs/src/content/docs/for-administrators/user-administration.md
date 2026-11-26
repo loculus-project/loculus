@@ -54,34 +54,43 @@ To access the console, tunnel to Traefik with `kubectl` and resolve the authenti
 
    Leave this running.
 
-2. In another terminal, start a separate Chrome instance that resolves your authentication host to `127.0.0.1`. The separate `--user-data-dir` is required; without it, Chrome hands the URL to an existing window and ignores `--host-resolver-rules`. Your normal browser profile is unaffected.
+2. In another terminal, start a separate Chrome instance that resolves your authentication host to `127.0.0.1`. Only that hostname goes through the tunnel; every other site in this window loads normally.
+
+   First set `KC_HOST` to your authentication hostname: `authentication`, then your `subdomainSeparator` (`.` by default), then your `host`. For example, `authentication.mywebsite.com`, or `authentication-mywebsite.com` with `subdomainSeparator: "-"`. It is the hostname part of the Keycloak URL your site already uses for login.
 
    **macOS**:
 
    ```bash
+   KC_HOST=authentication.mywebsite.com
    open -na "Google Chrome" --args \
      --user-data-dir=/tmp/kc-admin-chrome \
-     --host-resolver-rules="MAP authentication.mywebsite.com 127.0.0.1" \
-     https://authentication.mywebsite.com/admin/master/console/
+     --host-resolver-rules="MAP $KC_HOST 127.0.0.1" \
+     "https://$KC_HOST/admin/master/console/"
    ```
 
    **Linux** (use `chromium` instead of `google-chrome` if needed):
 
    ```bash
+   KC_HOST=authentication.mywebsite.com
    google-chrome \
      --user-data-dir=/tmp/kc-admin-chrome \
-     --host-resolver-rules="MAP authentication.mywebsite.com 127.0.0.1" \
-     https://authentication.mywebsite.com/admin/master/console/
+     --host-resolver-rules="MAP $KC_HOST 127.0.0.1" \
+     "https://$KC_HOST/admin/master/console/"
    ```
 
    **Windows** (PowerShell):
 
    ```powershell
+   $KcHost = "authentication.mywebsite.com"
    & "C:\Program Files\Google\Chrome\Application\chrome.exe" `
      --user-data-dir="$env:TEMP\kc-admin-chrome" `
-     --host-resolver-rules="MAP authentication.mywebsite.com 127.0.0.1" `
-     https://authentication.mywebsite.com/admin/master/console/
+     --host-resolver-rules="MAP $KcHost 127.0.0.1" `
+     "https://$KcHost/admin/master/console/"
    ```
+
+   The separate `--user-data-dir` is required. Without it, Chrome hands the URL to an already-running Chrome and ignores `--host-resolver-rules`. Your normal browser profile is unaffected. Chrome shows a banner saying `--host-resolver-rules` is an unsupported command-line flag; this is expected and the flag still works.
+
+   Quote the URL if you add a fragment such as `#/loculus` (to open the `loculus` realm directly); otherwise some shells treat `#` as the start of a comment.
 
 3. Log in with the Keycloak admin credentials. Opening the same URL in your normal browser should return `403 Forbidden`.
 
@@ -89,6 +98,11 @@ To access the console, tunnel to Traefik with `kubectl` and resolve the authenti
 
 Other browsers can use a temporary `/etc/hosts` entry (`127.0.0.1 authentication.mywebsite.com`) instead of step 2, removed afterwards.
 
+**Troubleshooting**
+
+- **`403 Forbidden` in the tunnelled window**: the request did not go through the port-forward. Check that the port-forward is still running and shows `Handling connection` lines when you reload. Check that the `MAP` hostname exactly matches the hostname in the URL. Chrome only reads the flags when the instance starts: if the `kc-admin-chrome` instance was already running (for example from an earlier attempt with a different hostname), rerunning the command reuses it with the old flags. Fully quit it (`Cmd-Q` on macOS; closing the window is not enough) and run the command again.
+- **`bind: permission denied` when starting the port-forward**: you ran it without `sudo` on macOS or Linux.
+- **`bind: address already in use`**: something else on your machine is using port 443. Stop it while you use the console.
 You can also list other ranges, such as a VPN egress IP, instead of or alongside localhost. The allowlist requires Traefik to see the real client IP (`kubectl port-forward` requests arrive from localhost; check the Traefik access log to verify).
 
 ## Ensure you're using the right realm
