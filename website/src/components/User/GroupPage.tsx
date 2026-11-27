@@ -8,6 +8,7 @@ import type { Organism } from '../../config.ts';
 import { useGroupPageHooks } from '../../hooks/useGroupOperations.ts';
 import { routes } from '../../routes/routes.ts';
 import type { ContinueSubmissionIntent } from '../../routes/routes.ts';
+import { getErrorMessage } from '../../services/apiRequest.ts';
 import { GROUP_ID_FIELD, IS_REVOCATION_FIELD, VERSION_STATUS_FIELD } from '../../settings.ts';
 import type { Address, Group, GroupDetails } from '../../types/backend.ts';
 import { versionStatuses } from '../../types/lapis.ts';
@@ -332,7 +333,7 @@ async function fetchSequenceCounts(groupId: number, clientConfig: ClientConfig, 
                 const count = (response.data as { data?: { count?: number }[] }).data?.[0]?.count ?? 0;
                 counts[key] = count;
             } catch (error) {
-                void logger.error(`Failed to fetch sequence count for ${key}: ${JSON.stringify(error)}`);
+                void logger.error(`Failed to fetch sequence count for ${key}: ${getErrorMessage(error)}`);
                 counts[key] = 0;
             }
         }),
@@ -370,7 +371,7 @@ async function fetchTimeSeriesData(
                     }))
                     .sort((a, b) => a.date.localeCompare(b.date));
             } catch (error) {
-                void logger.error(`Failed to fetch time series data for ${key}: ${JSON.stringify(error)}`);
+                void logger.error(`Failed to fetch time series data for ${key}: ${getErrorMessage(error)}`);
                 data[key] = [];
             }
         }),
