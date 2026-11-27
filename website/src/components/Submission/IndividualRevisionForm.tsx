@@ -2,8 +2,9 @@ import { type FC, type FormEvent, useMemo, useState } from 'react';
 
 import { InputModeTabs } from './DataUploadForm.tsx';
 import { getLapisUrl } from '../../config.ts';
+import { useLapisQuery } from '../../hooks/useLapis.ts';
 import { routes } from '../../routes/routes.ts';
-import { backendClientHooks, useSequenceEntryHistory } from '../../services/serviceHooks.ts';
+import { backendClientHooks } from '../../services/serviceHooks.ts';
 import { type Group } from '../../types/backend.ts';
 import type { FileSharingConfig, InputField, SubmissionDataTypes } from '../../types/config.ts';
 import { getLatestAccessionVersionForRevision } from '../../types/lapis.ts';
@@ -116,7 +117,12 @@ const InnerIndividualRevisionForm: FC<IndividualRevisionFormProps> = ({
         data: sequenceEntryHistory,
         error: sequenceEntryHistoryError,
         isFetching: isSequenceEntryHistoryFetching,
-    } = useSequenceEntryHistory(getLapisUrl(clientConfig, organism), accessionVersion?.accession);
+    } = useLapisQuery(
+        getLapisUrl(clientConfig, organism),
+        'getSequenceEntryHistory',
+        { accession: accessionVersion?.accession ?? '' },
+        { enabled: accessionVersion !== undefined },
+    );
 
     const { sequenceEntry, sequenceEntryError } = useMemo(() => {
         if (sequenceEntryHistory === undefined) return { sequenceEntry: undefined, sequenceEntryError: undefined };
