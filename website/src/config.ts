@@ -67,7 +67,10 @@ export function getWebsiteConfig(): WebsiteConfig {
         const config = readWebsiteConfigFromDir(getConfigDir());
         const validationErrors = validateWebsiteConfig(config);
         if (validationErrors.length > 0) {
-            throw new AggregateError(validationErrors, 'There were validation errors in the website_config.json');
+            throw new AggregateError(
+                validationErrors,
+                `There were validation errors in the website_config.json: ${validationErrors.map((e) => e.message).join('; ')}`,
+            );
         }
         _config = config;
     }
