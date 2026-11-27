@@ -16,5 +16,5 @@ dependencies:
   - uvicorn=0.54.0
   - pyyaml=6.0.3
   - deacon=0.19.1
-  - openjdk=25.0.2
+  - openjdk=27.0.1.1
   - xopen=2.1.0
