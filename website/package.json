@@ -70,7 +70,7 @@
         "@iconify/json": "^2.2.560",
         "@tailwindcss/forms": "^0.5.11",
         "@tailwindcss/vite": "^4.3.5",
-        "@tanstack/eslint-plugin-query": "^5.105.0",
+        "@tanstack/eslint-plugin-query": "^5.108.4",
         "@testing-library/dom": "^10.4.2",
         "@testing-library/jest-dom": "^8.0.0",
         "@testing-library/react": "^16.3.3",
@@ -81,7 +81,7 @@
         "@types/papaparse": "^5.5.2",
         "@types/react": "^18.3.12",
         "@types/react-dom": "^18.3.1",
-        "@typescript-eslint/parser": "^8.72.1",
+        "@typescript-eslint/parser": "^8.74.0",
         "@vitejs/plugin-react": "^6.1.2",
         "astro-eslint-parser": "^1.4.0",
         "eslint": "^9.34.0",
@@ -92,14 +92,14 @@
         "happy-dom": "^21.0.4",
         "jsdom-testing-mocks": "^1.16.0",
         "msw": "^3.0.7",
-        "prettier": "3.9.10",
+        "prettier": "3.10.1",
         "prettier-plugin-astro": "^1.1.2",
         "resize-observer-polyfill": "^1.5.1",
         "tailwindcss": "^4.3.0",
         "typescript": "~6.0.3",
-        "typescript-eslint": "^8.72.1",
+        "typescript-eslint": "^8.74.0",
         "vite": "^8.3.5",
-        "vitest": "5.0.5"
+        "vitest": "5.1.1"
     },
     "comments": {
         "vite": "Keep the explicit Vite dev dependency aligned with Astro's Vite major. npm ci --omit=dev can otherwise resolve Astro's optional vitefu peer independently from the root Vite version."
