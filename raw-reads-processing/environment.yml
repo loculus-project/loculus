@@ -4,17 +4,17 @@ channels:
   - bioconda
 dependencies:
   - biopython=1.88
-  - fastapi=0.163.1
-  - pydantic=2.14.3
+  - fastapi=0.165.0
+  - pydantic=2.14.4
   - pytest=9.2.0
   - python=3.15.2
-  - ca-certificates=2026.10.23 # >=2026.10.19 drops distrusted emSign ECC Root CA - G3
-  - certifi=2026.10.23
+  - ca-certificates=2026.11.20 # >=2026.10.19 drops distrusted emSign ECC Root CA - G3
+  - certifi=2026.11.20
   - requests=2.34.2
-  - ruff=0.17.5
-  - uv=0.13.8
+  - ruff=0.17.6
+  - uv=0.13.10
   - uvicorn=0.54.0
   - pyyaml=6.0.3
-  - deacon=0.19.1
+  - deacon=0.20.0
   - openjdk=25.0.2
   - xopen=2.1.0
