@@ -58,6 +58,7 @@ export const getSequenceDetailsTableData = async (
             sequenceEntryHistory,
             dataUseTermsHistory,
             segmentReferences: tableData.segmentReferences,
+            nextcladeDatasets: tableData.nextcladeDatasets,
             isRevocation: tableData.isRevocation,
         }),
     );

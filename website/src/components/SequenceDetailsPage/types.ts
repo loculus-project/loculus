@@ -22,10 +22,19 @@ export const tableDataEntrySchema = z.object({
 });
 export type TableDataEntry = z.infer<typeof tableDataEntrySchema>;
 
+export const nextcladeDatasetInfoSchema = z.object({
+    segment: z.string(),
+    name: z.string(),
+    tag: z.string().optional(),
+    server: z.string().optional(),
+});
+export type NextcladeDatasetInfo = z.infer<typeof nextcladeDatasetInfoSchema>;
+
 export type SequenceData = {
     tableData: TableDataEntry[];
     sequenceEntryHistory: SequenceEntryHistory;
     dataUseTermsHistory: DataUseTermsHistoryEntry[];
     segmentReferences?: SegmentReferenceSelections;
+    nextcladeDatasets?: NextcladeDatasetInfo[];
     isRevocation: boolean;
 };
