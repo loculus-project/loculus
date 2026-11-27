@@ -18,7 +18,7 @@ dependencies:
   - requests=2.34.2
   - pandas=3.1.1
   - ruff=0.17.6
-  - types-pyyaml=6.0.12.20261113
+  - types-pyyaml=6.0.12.20261122
   - types-requests=2.33.0.20261030
   - types-python-dateutil=2.9.0.20261104
   - types-pytz=2026.6.0.20261031
