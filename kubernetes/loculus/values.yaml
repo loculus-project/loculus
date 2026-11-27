@@ -41,6 +41,7 @@ disableRawReadsProcessingService: true
 readOnlyMode: false
 backendExtraJvmOpts: []
 website:
+  logLevel: info
   websiteConfig:
     enableLoginNavigationItem: true
     enableSubmissionNavigationItem: true
@@ -2985,6 +2986,17 @@ runDevelopmentS3: true
 developmentDatabasePersistence: false
 enforceHTTPS: true
 traefikVersion: 3
+# Per-ingress switch for Traefik access logs (router.observability.accesslogs annotation, Traefik >= 3.1).
+# Only has an effect if access logs are enabled on the cluster's Traefik, which is not installed by this
+# chart. On k3s, set `logs.access.enabled: true` (and ideally `format: json` and drop ClientHost/ClientAddr
+# and all headers except User-Agent/Referer) in the HelmChartConfig `traefik` in kube-system.
+# Once enabled there, ingresses without this annotation (including non-Loculus ones) log by default.
+traefikAccessLogs:
+  website: true
+  backend: true
+  lapis: true
+  keycloak: false
+  minio: false
 registrationTermsMessage: >
   You must agree to the <a href="http://main.loculus.org/terms">terms of use</a>.
 
