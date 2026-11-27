@@ -4,7 +4,7 @@ import ErrorBox from '../../../components/common/ErrorBox.tsx';
 import { getConfiguredOrganisms, getRuntimeConfig, getSchema, getWebsiteConfig } from '../../../config';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import type { ContinueSubmissionIntent } from '../../../routes/routes';
-import { GroupManagementClient } from '../../../services/groupManagementClient';
+import { serverBackendApi } from '../../../services/serverApi.ts';
 import { getAccessToken } from '../../../utils/getAccessToken';
 import { getLoginUrl } from '../../../utils/getLoginUrl';
 
@@ -34,9 +34,9 @@ if (isNaN(groupId)) {
     });
 }
 
-const groupManagementClient = GroupManagementClient.create();
-const groupDetailsResult = await groupManagementClient.getGroupDetails(groupId, accessToken);
-const userGroupsResponse = await groupManagementClient.getGroupsOfUser(accessToken);
+const backendApi = serverBackendApi(accessToken);
+const groupDetailsResult = await backendApi.getGroupDetails({ groupId });
+const userGroupsResponse = await backendApi.getGroupsOfUser();
 const userGroups = userGroupsResponse.match(
     (groups) => groups,
     () => [],
