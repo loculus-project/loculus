@@ -71,7 +71,7 @@ dependencies {
     implementation "org.jetbrains.kotlinx:kotlinx-datetime:0.8.0-0.6.x-compat"
     implementation "org.keycloak:keycloak-admin-client:26.0.13"
     implementation("io.minio:minio:9.0.4")
-    implementation("software.amazon.awssdk:s3:2.59.4")
+    implementation("software.amazon.awssdk:s3:2.59.8")
 
     implementation "org.springframework.boot:spring-boot-starter-security-oauth2-resource-server"
     implementation "org.springframework.boot:spring-boot-starter-security"
