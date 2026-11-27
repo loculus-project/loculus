@@ -2,7 +2,7 @@
 import { err, type Result } from 'neverthrow';
 
 import { ErrorFeedback } from '../../components/ErrorFeedback';
-import { SeqSetItem } from '../../components/SeqSetCitations/SeqSetItem';
+import { SEQSET_RECORDS_PER_PAGE, SeqSetItem } from '../../components/SeqSetCitations/SeqSetItem';
 import { SeqSetItemActions } from '../../components/SeqSetCitations/SeqSetItemActions';
 import { getSeqSetStatistics } from '../../components/SeqSetCitations/getSeqSetStatistics.ts';
 import { getRuntimeConfig, seqSetsAreEnabled, getWebsiteConfig } from '../../config';
@@ -115,7 +115,8 @@ const secondaryErrors = (
                 accessToken={accessToken}
                 seqSetAccessionVersion={seqSetAccessionVersion}
                 seqSet={seqSetResponse.value}
-                seqSetRecords={seqSetRecordsResponse.value}
+                seqSetRecordCount={seqSetRecordsResponse.value.length}
+                firstPageSeqSetRecords={seqSetRecordsResponse.value.slice(0, SEQSET_RECORDS_PER_PAGE)}
                 seqSetCitations={seqSetCitations}
                 seqSetGraphs={seqSetGraphs}
                 seqSetGraphsData={seqSetGraphsData}
