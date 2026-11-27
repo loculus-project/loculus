@@ -1,7 +1,7 @@
 import { DateTime, FixedOffsetZone } from 'luxon';
 
 import { getSchema } from '../../config.ts';
-import { LapisClient } from '../../services/lapisClient.ts';
+import { serverLapisApi } from '../../services/serverApi.ts';
 import {
     EARLIEST_RELEASE_DATE_FIELD,
     RELEASED_AT_FIELD,
@@ -53,9 +53,9 @@ const withTimeout = <T>(promise: Promise<T>, ms: number, defaultValue: T): Promi
 const getTotalAndLastUpdatedAt = async (
     organism: string,
 ): Promise<{ total: number; lastUpdatedAt: DateTime | undefined }> => {
-    const client = LapisClient.createForOrganism(organism);
+    const client = serverLapisApi(organism);
     return (
-        await client.call('aggregated', {
+        await client.aggregated({
             [VERSION_STATUS_FIELD]: versionStatuses.latestVersion,
             [IS_REVOCATION_FIELD]: 'false',
         })
@@ -100,9 +100,9 @@ const getRecentFilter = (organism: string, numberDaysAgo: number): Record<string
  */
 const getRecent = async (organism: string, numberDaysAgo: number): Promise<number> => {
     const recentFilter = getRecentFilter(organism, numberDaysAgo);
-    const client = LapisClient.createForOrganism(organism);
+    const client = serverLapisApi(organism);
     const recentlyReleasedTotal = (
-        await client.call('aggregated', {
+        await client.aggregated({
             ...recentFilter,
             version: 1,
         })
@@ -110,7 +110,7 @@ const getRecent = async (organism: string, numberDaysAgo: number): Promise<numbe
         .map((x) => x.data[0].count)
         .unwrapOr(0);
     const recentlyReleasedThenRevokedTotal = (
-        await client.call('aggregated', {
+        await client.aggregated({
             ...recentFilter,
             version: 1,
             [VERSION_STATUS_FIELD]: versionStatuses.revoked,

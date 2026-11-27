@@ -16,7 +16,7 @@ export const seqSet = z.object({
     seqSetDOI: z.string().nullish(),
     seqSetVersion: z.number(),
     name: z.string(),
-    description: z.string().optional(),
+    description: z.string().nullish(),
     createdAt: z.string(),
     createdBy: z.string(),
 });
@@ -84,3 +84,33 @@ export const addSeqSetCitationRequest = z.object({
     seqSetAccessionVersions: z.array(z.string()),
 });
 export type AddSeqSetCitationRequest = z.infer<typeof addSeqSetCitationRequest>;
+
+export const seqSetIdAndVersion = z.object({
+    seqSetId: z.string(),
+    seqSetVersion: z.number(),
+});
+export type SeqSetIdAndVersion = z.infer<typeof seqSetIdAndVersion>;
+
+const seqSetRecordInput = z.object({
+    accession: z.string(),
+    type: z.string(),
+    isFocal: z.boolean(),
+});
+
+export const createSeqSetRequest = z.object({
+    name: z.string(),
+    description: z.string().optional(),
+    records: z.array(seqSetRecordInput),
+});
+export type CreateSeqSetRequest = z.infer<typeof createSeqSetRequest>;
+
+export const updateSeqSetRequest = z.object({
+    seqSetId: z.string(),
+    name: z.string(),
+    description: z.string().optional(),
+    records: z.array(seqSetRecordInput).optional(),
+});
+export type UpdateSeqSetRequest = z.infer<typeof updateSeqSetRequest>;
+
+export const validateSeqSetRecordsRequest = z.array(seqSetRecordInput.partial({ accession: true, type: true }));
+export type ValidateSeqSetRecordsRequest = z.infer<typeof validateSeqSetRecordsRequest>;

@@ -1,7 +1,7 @@
 import { err, ok, type Result } from 'neverthrow';
 
 import { getAccessToken } from './getAccessToken.ts';
-import { GroupManagementClient } from '../services/groupManagementClient.ts';
+import { serverBackendApi } from '../services/serverApi.ts';
 import type { Group } from '../types/backend.ts';
 
 export type GetGroupsResult = Result<Group[], GetGroupsError>;
@@ -31,7 +31,7 @@ export const getGroups = async (session: Session | undefined): Promise<GetGroups
         });
     }
 
-    const groupsResult = await GroupManagementClient.create().getGroupsOfUser(accessToken);
+    const groupsResult = await serverBackendApi(accessToken).getGroupsOfUser();
     if (groupsResult.isErr()) {
         return err({
             type: 'could_not_load_groups',

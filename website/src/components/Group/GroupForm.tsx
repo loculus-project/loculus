@@ -14,7 +14,7 @@ import {
     StateInput,
     groupFromFormData,
 } from './Inputs';
-import { type GetGroupsResult } from '../../hooks/useGroupOperations.ts';
+import { getErrorMessage } from '../../services/apiRequest.ts';
 import { type Group, type NewGroup } from '../../types/backend';
 import { ErrorFeedback } from '../ErrorFeedback.tsx';
 import { Button } from '../common/Button';
@@ -52,28 +52,17 @@ interface GroupFormProps {
     /**
      * A handler to call when the button is clicked (i.e. create or update a group).
      * @param group The new group information entered into the form.
-     * @returns A submit success or error.
+     * @returns The URL of the page to go to after submitting. Throws on failure.
      */
-    onSubmit: (group: NewGroup) => Promise<GroupSubmitResult>;
+    onSubmit: (group: NewGroup) => Promise<string>;
     /**
      * Handler that can be used to check if the name of the group being created is
      * already in use by another group in the database.
      * @param groupName Group name to filter the results by
-     * @returns A result object where the `groups` property
-     *          is an array of existing Groups
+     * @returns The existing groups with that name. Throws on failure.
      */
-    getGroups: (groupName?: string) => Promise<GetGroupsResult>;
+    getGroups: (groupName: string) => Promise<Group[]>;
 }
-
-export type GroupSubmitSuccess = {
-    succeeded: true;
-    nextPageHref: string;
-};
-export type GroupSubmitError = {
-    succeeded: false;
-    errorMessage: string;
-};
-export type GroupSubmitResult = GroupSubmitSuccess | GroupSubmitError;
 
 export const GroupForm: FC<GroupFormProps> = ({
     title,
@@ -94,13 +83,10 @@ export const GroupForm: FC<GroupFormProps> = ({
 
         setIsSubmitting(true);
         try {
-            const result = await onSubmit(group);
-
-            if (result.succeeded) {
-                window.location.href = result.nextPageHref;
-            } else {
-                setErrorMessage(result.errorMessage);
-            }
+            window.location.href = await onSubmit(group);
+        } catch (error) {
+            const action = editingGroupId === undefined ? 'create' : 'edit';
+            setErrorMessage(`Failed to ${action} group: ${getErrorMessage(error)}`);
         } finally {
             setIsSubmitting(false);
         }
@@ -117,18 +103,20 @@ export const GroupForm: FC<GroupFormProps> = ({
             return;
         }
 
-        const existingGroupsResult = await getGroups(group.groupName);
-        if (existingGroupsResult.succeeded) {
-            const existingGroups = existingGroupsResult.groups.filter((group) => group.groupId !== editingGroupId);
-            if (existingGroups.length === 0) {
-                await submitGroup(group);
-                return;
-            }
-            setExistingGroups(existingGroups);
-            setIsExistingGroupModalOpen(true);
-        } else {
-            setErrorMessage(existingGroupsResult.errorMessage);
+        let groupsWithSameName: Group[];
+        try {
+            groupsWithSameName = await getGroups(group.groupName);
+        } catch (error) {
+            setErrorMessage(`Failed to query existing groups: ${getErrorMessage(error)}`);
+            return;
         }
+        const existingGroups = groupsWithSameName.filter((group) => group.groupId !== editingGroupId);
+        if (existingGroups.length === 0) {
+            await submitGroup(group);
+            return;
+        }
+        setExistingGroups(existingGroups);
+        setIsExistingGroupModalOpen(true);
     };
 
     const submitFromModal = async (group: NewGroup) => {

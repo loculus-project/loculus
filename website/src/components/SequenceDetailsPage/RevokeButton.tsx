@@ -2,11 +2,10 @@ import { type FC, useState } from 'react';
 import { confirmAlert } from 'react-confirm-alert';
 import { toast } from 'react-toastify';
 
-import { backendClientHooks } from '../../services/serviceHooks';
+import { useBackendMutation } from '../../hooks/useBackend.ts';
+import { getErrorMessage } from '../../services/apiRequest.ts';
 import { approveAllDataScope } from '../../types/backend';
 import type { ClientConfig } from '../../types/runtimeConfig';
-import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
-import { stringifyMaybeAxiosError } from '../../utils/stringifyMaybeAxiosError';
 import { Button } from '../common/Button';
 import { ModalBox } from '../common/ModalBox';
 import { withQueryProvider } from '../common/withQueryProvider';
@@ -22,72 +21,52 @@ type RevokeSequenceEntryProps = {
 
 const REVOCATION_TOAST_ID = 'revocation-toast';
 
-const InnerRevokeButton: FC<RevokeSequenceEntryProps> = ({
-    organism,
-    accessToken,
-    clientConfig,
-    accession,
-    groupId,
-    onRevokeSuccess,
-}) => {
-    const hooks = backendClientHooks(clientConfig);
+const InnerRevokeButton: FC<RevokeSequenceEntryProps> = ({ organism, accession, groupId, onRevokeSuccess }) => {
+    const useApproveProcessedData = useBackendMutation('approveProcessedData', {
+        onSuccess: () => {
+            toast.update(REVOCATION_TOAST_ID, {
+                render: 'Sequence revoked successfully. This may take several minutes to become visible on the website.',
+                type: 'success',
+                isLoading: false,
+                autoClose: 4000,
+            });
+            onRevokeSuccess?.();
+        },
+        onError: (error) => {
+            toast.update(REVOCATION_TOAST_ID, {
+                render: getApproveRevocationErrorMessage(error),
+                type: 'error',
+                isLoading: false,
+                autoClose: false,
+            });
+        },
+    });
 
-    const useApproveProcessedData = hooks.useApproveProcessedData(
-        {
-            headers: createAuthorizationHeader(accessToken),
-            params: { organism },
+    const useRevokeSequenceEntries = useBackendMutation('revoke', {
+        onSuccess: (data) => {
+            useApproveProcessedData.mutate({
+                organism,
+                accessionVersionsFilter: data.map(({ accession, version }) => ({ accession, version })),
+                groupIdsFilter: [groupId],
+                scope: approveAllDataScope.value,
+            });
         },
-        {
-            onSuccess: () => {
-                toast.update(REVOCATION_TOAST_ID, {
-                    render: 'Sequence revoked successfully. This may take several minutes to become visible on the website.',
-                    type: 'success',
-                    isLoading: false,
-                    autoClose: 4000,
-                });
-                onRevokeSuccess?.();
-            },
-            onError: (error) => {
-                toast.update(REVOCATION_TOAST_ID, {
-                    render: getApproveRevocationErrorMessage(error),
-                    type: 'error',
-                    isLoading: false,
-                    autoClose: false,
-                });
-            },
+        onError: (error) => {
+            toast.update(REVOCATION_TOAST_ID, {
+                render: getRevokeSequenceEntryErrorMessage(error),
+                type: 'error',
+                isLoading: false,
+                autoClose: false,
+            });
         },
-    );
-
-    const useRevokeSequenceEntries = hooks.useRevokeSequences(
-        {
-            headers: createAuthorizationHeader(accessToken),
-            params: { organism },
-        },
-        {
-            onSuccess: (data) => {
-                useApproveProcessedData.mutate({
-                    accessionVersionsFilter: data.map(({ accession, version }) => ({ accession, version })),
-                    groupIdsFilter: [groupId],
-                    scope: approveAllDataScope.value,
-                });
-            },
-            onError: (error) => {
-                toast.update(REVOCATION_TOAST_ID, {
-                    render: getRevokeSequenceEntryErrorMessage(error),
-                    type: 'error',
-                    isLoading: false,
-                    autoClose: false,
-                });
-            },
-        },
-    );
+    });
 
     const handleRevokeSequenceEntry = (inputValue: string) => {
         toast.loading('Revoking sequence...', {
             toastId: REVOCATION_TOAST_ID,
             position: 'top-center',
         });
-        useRevokeSequenceEntries.mutate({ accessions: [accession], versionComment: inputValue });
+        useRevokeSequenceEntries.mutate({ organism, accessions: [accession], versionComment: inputValue });
     };
 
     return (
@@ -177,9 +156,9 @@ const RevocationDialog: FC<RevocationDialogProps> = ({ dialogText, onConfirmatio
 export const RevokeButton = withQueryProvider(InnerRevokeButton);
 
 function getRevokeSequenceEntryErrorMessage(error: unknown) {
-    return 'Failed to revoke sequence entry: ' + stringifyMaybeAxiosError(error);
+    return 'Failed to revoke sequence entry: ' + getErrorMessage(error);
 }
 
 function getApproveRevocationErrorMessage(error: unknown) {
-    return 'Failed to approve revocation: ' + stringifyMaybeAxiosError(error);
+    return 'Failed to approve revocation: ' + getErrorMessage(error);
 }

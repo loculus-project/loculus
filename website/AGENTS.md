@@ -10,3 +10,7 @@ Inside the Codex filesystem sandbox, run `CHOKIDAR_USEPOLLING=true npm run check
 ## Website Codemods
 
 Inspiration for writing codemods can be found in [codemods/AGENTS.md](./codemods/AGENTS.md).
+
+## Calling the backend and LAPIS
+
+Follow [src/services/README.md](./src/services/README.md) when adding or calling endpoints: define each endpoint once in `src/services/backendApi.ts` or `src/services/lapisApi.ts`, use `serverBackendApi` / `serverLapisApi` server-side and the hooks in `src/hooks/useBackend.ts` / `src/hooks/useLapis.ts` client-side, and show errors with `getErrorMessage`.

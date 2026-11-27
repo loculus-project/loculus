@@ -6,10 +6,10 @@ import { AuthorDetails } from './AuthorDetails.tsx';
 import { ExportSeqSet } from './ExportSeqSet';
 import { SeqSetForm } from './SeqSetForm';
 import { getClientLogger } from '../../clientLogger';
-import { seqSetCitationClientHooks, seqSetRecordsQueryOptions } from '../../services/serviceHooks';
+import { useBackendMutation, useBackendQueryOptions } from '../../hooks/useBackend.ts';
+import { getErrorMessage } from '../../services/apiRequest.ts';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import type { AuthorProfile, SeqSet } from '../../types/seqSetCitation';
-import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
 import { getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { BaseDialog } from '../common/BaseDialog.tsx';
@@ -40,8 +40,6 @@ type SeqSetItemActionsProps = {
 };
 
 const SeqSetItemActionsInner: FC<SeqSetItemActionsProps> = ({
-    clientConfig,
-    accessToken,
     seqSet,
     seqSetAuthor,
     isAdminView = false,
@@ -57,20 +55,19 @@ const SeqSetItemActionsInner: FC<SeqSetItemActionsProps> = ({
     const [creatorInfoVisible, setCreatorInfoVisible] = useState(false);
 
     // Only edit and export need the full record list: edit fetches it when opened, export when downloading.
-    const recordsQueryOptions = seqSetRecordsQueryOptions(clientConfig, seqSet.seqSetId, seqSet.seqSetVersion);
+    const recordsQueryOptions = {
+        ...useBackendQueryOptions('getSeqSetRecords', { seqSetId: seqSet.seqSetId, version: seqSet.seqSetVersion }),
+        staleTime: Infinity,
+    };
     const seqSetRecords = useQuery({ ...recordsQueryOptions, enabled: editModalVisible });
     const queryClient = useQueryClient();
 
-    const { mutate: deleteSeqSet } = useDeleteSeqSetAction(
-        clientConfig,
-        accessToken,
-        seqSet.seqSetId,
-        seqSet.seqSetVersion,
-        (message) => toast.error(message, { position: 'top-center', autoClose: false }),
+    const { mutate: deleteSeqSet } = useDeleteSeqSetAction(seqSet.seqSetId, seqSet.seqSetVersion, (message) =>
+        toast.error(message, { position: 'top-center', autoClose: false }),
     );
 
     const handleDeleteSeqSet = () => {
-        deleteSeqSet(undefined);
+        deleteSeqSet({ seqSetId: seqSet.seqSetId, version: seqSet.seqSetVersion });
     };
 
     const formatDate = (date?: string) => {
@@ -145,12 +142,7 @@ const SeqSetItemActionsInner: FC<SeqSetItemActionsProps> = ({
             >
                 <div className='min-w-[1000px]'></div>
                 {seqSetRecords.data !== undefined ? (
-                    <SeqSetForm
-                        clientConfig={clientConfig}
-                        accessToken={accessToken}
-                        editSeqSet={seqSet}
-                        editSeqSetRecords={seqSetRecords.data}
-                    />
+                    <SeqSetForm editSeqSet={seqSet} editSeqSetRecords={seqSetRecords.data} />
                 ) : (
                     <div className='flex justify-center py-16'>
                         {seqSetRecords.isError ? (
@@ -192,27 +184,18 @@ const SeqSetItemActionsInner: FC<SeqSetItemActionsProps> = ({
     );
 };
 
-function useDeleteSeqSetAction(
-    clientConfig: ClientConfig,
-    accessToken: string,
-    seqSetId: string,
-    seqSetVersion: number,
-    onError: (message: string) => void,
-) {
-    return seqSetCitationClientHooks(clientConfig).useDeleteSeqSet(
-        { headers: createAuthorizationHeader(accessToken), params: { seqSetId, seqSetVersion } },
-        {
-            onSuccess: async () => {
-                await logger.info(`Successfully deleted seqSet with seqSetId: ${seqSetId}, version ${seqSetVersion}`);
-                window.location.href = '/seqsets';
-            },
-            onError: async (error) => {
-                const message = `Failed to delete seqSet with error: '${JSON.stringify(error)})}'`;
-                await logger.info(message);
-                onError(message);
-            },
+function useDeleteSeqSetAction(seqSetId: string, seqSetVersion: number, onError: (message: string) => void) {
+    return useBackendMutation('deleteSeqSet', {
+        onSuccess: async () => {
+            await logger.info(`Successfully deleted seqSet with seqSetId: ${seqSetId}, version ${seqSetVersion}`);
+            window.location.href = '/seqsets';
         },
-    );
+        onError: async (error) => {
+            const message = `Failed to delete seqSet: ${getErrorMessage(error)}`;
+            await logger.info(message);
+            onError(message);
+        },
+    });
 }
 
 export const SeqSetItemActions = withQueryProvider(SeqSetItemActionsInner);

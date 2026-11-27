@@ -2,10 +2,11 @@ import { noCase } from 'change-case';
 import { type FC } from 'react';
 
 import { SequenceActionButtons } from './SequenceActionButtons.tsx';
-import { getLapisUrl } from '../../../config.ts';
-import { lapisClientHooks } from '../../../services/serviceHooks.ts';
-import type { ClientConfig } from '../../../types/runtimeConfig.ts';
-import { type SequenceType } from '../../../utils/sequenceTypeHelpers.ts';
+import { useLapisQuery } from '../../../hooks/useLapis.ts';
+import { getErrorMessage } from '../../../services/apiRequest.ts';
+import type { SequenceEndpoint } from '../../../services/lapisApi.ts';
+import { fastaEntries } from '../../../utils/parseFasta.ts';
+import { isAlignedSequence, isUnalignedSequence, type SequenceType } from '../../../utils/sequenceTypeHelpers.ts';
 import { FixedLengthTextViewer } from '../../common/FixedLengthTextViewer.tsx';
 import { Spinner } from '../../common/Spinner';
 
@@ -14,7 +15,6 @@ const LINE_LENGTH = 100;
 type Props = {
     organism: string;
     accessionVersion: string;
-    clientConfig: ClientConfig;
     sequenceType: SequenceType;
     useLapisMultiSegmentedEndpoint: boolean;
 };
@@ -22,11 +22,11 @@ type Props = {
 export const SequencesViewer: FC<Props> = ({
     organism,
     accessionVersion,
-    clientConfig,
     sequenceType,
     useLapisMultiSegmentedEndpoint,
 }) => {
-    const { data, error, isLoading } = lapisClientHooks(getLapisUrl(clientConfig, organism)).useGetSequence(
+    const { data, error, isLoading } = useSequence(
+        organism,
         accessionVersion,
         sequenceType,
         useLapisMultiSegmentedEndpoint,
@@ -36,7 +36,7 @@ export const SequencesViewer: FC<Props> = ({
         return (
             <div className='text-error'>
                 Failed to load {noCase(sequenceType.type)} sequence {sequenceType.name.lapisName}:{' '}
-                {JSON.stringify(error)}
+                {getErrorMessage(error)}
             </div>
         );
     }
@@ -63,3 +63,43 @@ export const SequencesViewer: FC<Props> = ({
         </div>
     );
 };
+
+function useSequence(
+    organism: string,
+    accessionVersion: string,
+    sequenceType: SequenceType,
+    useLapisMultiSegmentedEndpoint: boolean,
+) {
+    const { data, error, isLoading } = useLapisQuery(organism, 'sequencesFasta', {
+        request: { accessionVersion },
+        endpoint: sequenceEndpoint(sequenceType, useLapisMultiSegmentedEndpoint),
+    });
+    return parseSequenceResult(data, error, isLoading);
+}
+
+function sequenceEndpoint(sequenceType: SequenceType, isMultiSegmented: boolean): SequenceEndpoint {
+    const name = sequenceType.name.lapisName;
+    if (isUnalignedSequence(sequenceType)) {
+        return { kind: 'unalignedNucleotide', name: isMultiSegmented ? name : undefined };
+    }
+    if (isAlignedSequence(sequenceType)) {
+        return { kind: 'alignedNucleotide', name: isMultiSegmented ? name : undefined };
+    }
+    return { kind: 'alignedAminoAcid', name };
+}
+
+function parseSequenceResult(data: string | undefined, error: Error | null, isLoading: boolean) {
+    if (data === undefined) {
+        return { data, error, isLoading };
+    }
+
+    const parseResult = fastaEntries.safeParse(data);
+    if (parseResult.success) {
+        return {
+            data: parseResult.data.length > 0 ? parseResult.data[0] : null,
+            error,
+            isLoading,
+        };
+    }
+    return { data: undefined, error: parseResult.error, isLoading };
+}

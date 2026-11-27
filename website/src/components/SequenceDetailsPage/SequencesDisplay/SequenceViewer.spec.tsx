@@ -1,9 +1,8 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { SequencesViewer } from './SequenceViewer.tsx';
-import { mockRequest, testConfig, testOrganism } from '../../../../vitest.setup.ts';
+import { mockRequest, testConfig, TestIsland, testOrganism } from '../../../../vitest.setup.ts';
 import { type ClientConfig } from '../../../types/runtimeConfig.ts';
 import { type SequenceType } from '../../../utils/sequenceTypeHelpers.ts';
 
@@ -11,7 +10,6 @@ vi.mock('../../config', () => ({
     getLapisUrl: vi.fn().mockReturnValue('http://lapis.dummy'),
 }));
 
-const queryClient = new QueryClient();
 const accessionVersion = 'accession';
 
 const singleSegmentedSequenceType: SequenceType = {
@@ -33,15 +31,14 @@ function renderSequenceViewer(
     clientConfig: ClientConfig = testConfig.public,
 ) {
     render(
-        <QueryClientProvider client={queryClient}>
+        <TestIsland clientConfig={clientConfig}>
             <SequencesViewer
                 organism={testOrganism}
                 accessionVersion={accessionVersion}
-                clientConfig={clientConfig}
                 sequenceType={sequenceType}
                 useLapisMultiSegmentedEndpoint={useLapisMultiSegmentedEndpoint}
             />
-        </QueryClientProvider>,
+        </TestIsland>,
     );
 }
 

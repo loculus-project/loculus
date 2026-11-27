@@ -1,11 +1,9 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { type InnerSearchFullUIProps, SearchFullUI } from './SearchFullUI';
 import { testConfig, testOrganism } from '../../../vitest.setup.ts';
-import { lapisClientHooks } from '../../services/serviceHooks.ts';
 import type { FieldValues, MetadataFilter, Schema } from '../../types/config.ts';
 import {
     SINGLE_SEG_MULTI_REF_REFERENCEGENOMES,
@@ -26,10 +24,6 @@ vi.mock('../../config', () => ({
     getLapisUrl: vi.fn().mockReturnValue('http://lapis.dummy.url'),
 }));
 
-vi.mock('../../services/serviceHooks.ts', () => ({
-    lapisClientHooks: vi.fn(),
-}));
-
 vi.mock('../../clientLogger.ts', () => ({
     getClientLogger: () => ({
         error: vi.fn(),
@@ -38,10 +32,10 @@ vi.mock('../../clientLogger.ts', () => ({
 
 const mockUseAggregated = vi.fn();
 const mockUseDetails = vi.fn();
-(lapisClientHooks as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
-    useAggregated: mockUseAggregated,
-    useDetails: mockUseDetails,
-});
+vi.mock('../../hooks/useLapis.ts', () => ({
+    useLapisMutation: (_organism: string, endpoint: string): unknown =>
+        endpoint === 'details' ? mockUseDetails() : mockUseAggregated(),
+}));
 
 const defaultSearchFormFilters: MetadataFilter[] = [
     {
@@ -107,11 +101,7 @@ function renderSearchFullUI({
         isReleasedPage: true,
     } satisfies InnerSearchFullUIProps;
 
-    render(
-        <QueryClientProvider client={new QueryClient()}>
-            <SearchFullUI {...props} />
-        </QueryClientProvider>,
-    );
+    render(<SearchFullUI {...props} />);
 }
 
 describe('SearchFullUI', () => {

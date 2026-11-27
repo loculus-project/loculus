@@ -1,4 +1,3 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import { act } from 'react';
 import { describe, expect, test, vi } from 'vitest';
@@ -18,7 +17,6 @@ vi.mock('../../config', () => ({
     getLapisUrl: vi.fn().mockReturnValue('http://lapis.dummy'),
 }));
 
-const queryClient = new QueryClient();
 const accessionVersion = 'accession';
 
 // CSS Classes
@@ -37,16 +35,14 @@ function renderSequenceViewer(
     segmentReferences: SegmentReferenceSelections,
 ) {
     render(
-        <QueryClientProvider client={queryClient}>
-            <SequencesContainer
-                organism={testOrganism}
-                accessionVersion={accessionVersion}
-                clientConfig={testConfig.public}
-                referenceGenomesInfo={referenceGenomesInfo}
-                loadSequencesAutomatically={false}
-                segmentReferences={segmentReferences}
-            />
-        </QueryClientProvider>,
+        <SequencesContainer
+            organism={testOrganism}
+            accessionVersion={accessionVersion}
+            clientConfig={testConfig.public}
+            referenceGenomesInfo={referenceGenomesInfo}
+            loadSequencesAutomatically={false}
+            segmentReferences={segmentReferences}
+        />,
     );
 }
 

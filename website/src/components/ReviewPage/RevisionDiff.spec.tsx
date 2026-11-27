@@ -1,11 +1,17 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { expect, test, vi } from 'vitest';
 
 import { ReviewCard } from './ReviewCard';
-import { defaultReviewData, testAccessToken, testConfig, testOrganism, testServer } from '../../../vitest.setup';
+import {
+    defaultReviewData,
+    TestIsland,
+    testAccessToken,
+    testConfig,
+    testOrganism,
+    testServer,
+} from '../../../vitest.setup';
 import { processedStatus, receivedStatus, type SequenceEntryStatus } from '../../types/backend';
 import type { Metadata } from '../../types/config';
 import {
@@ -62,21 +68,18 @@ function renderCard(
     status = { ...revision, reviewData: reviewData() } as SequenceEntryStatus,
     referenceGenomesInfo = SINGLE_SEG_SINGLE_REF_REFERENCEGENOMES,
 ) {
-    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     return render(
-        <QueryClientProvider client={queryClient}>
+        <TestIsland clientConfig={testConfig.public} accessToken={testAccessToken}>
             <ReviewCard
                 sequenceEntryStatus={status}
                 metadataSchema={metadataSchema}
-                clientConfig={testConfig.public}
                 organism={testOrganism}
-                accessToken={testAccessToken}
                 referenceGenomesInfo={referenceGenomesInfo}
                 approveAccessionVersion={vi.fn()}
                 deleteAccessionVersion={vi.fn()}
                 editAccessionVersion={vi.fn()}
             />
-        </QueryClientProvider>,
+        </TestIsland>,
     );
 }
 

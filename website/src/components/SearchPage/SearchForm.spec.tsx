@@ -1,11 +1,9 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { SearchForm } from './SearchForm';
-import { testConfig, testOrganism } from '../../../vitest.setup.ts';
-import { lapisClientHooks } from '../../services/serviceHooks.ts';
+import { testConfig, TestIsland, testOrganism } from '../../../vitest.setup.ts';
 import type { MetadataFilter } from '../../types/config.ts';
 import {
     SINGLE_SEG_MULTI_REF_REFERENCEGENOMES,
@@ -15,7 +13,6 @@ import { type ReferenceGenomesInfo } from '../../types/referencesGenomes.ts';
 import type { ReferenceSelection } from '../../utils/referenceSelection.ts';
 import { MetadataFilterSchema, MetadataVisibility } from '../../utils/search.ts';
 
-vi.mock('../../services/serviceHooks.ts');
 vi.mock('../../clientLogger.ts', () => ({
     getClientLogger: () => ({
         error: vi.fn(),
@@ -28,19 +25,15 @@ const mockUseAggregated = vi.fn().mockReturnValue({
     error: null,
     mutate: vi.fn(),
 });
-// @ts-expect-error mock implementation for test double
-// eslint-disable-next-line @typescript-eslint/no-unsafe-call
-lapisClientHooks.mockReturnValue({
-    useAggregated: mockUseAggregated,
-});
+vi.mock('../../hooks/useLapis.ts', () => ({
+    useLapisMutation: (): unknown => mockUseAggregated(),
+}));
 
 global.ResizeObserver = class FakeResizeObserver implements ResizeObserver {
     observe() {}
     disconnect() {}
     unobserve() {}
 };
-
-const queryClient = new QueryClient();
 
 const defaultSearchFormFilters: MetadataFilter[] = [
     {
@@ -88,7 +81,6 @@ const renderSearchForm = ({
         clientConfig: testConfig.public,
         fieldValues,
         setSomeFieldValues,
-        lapisUrl: 'http://lapis.dummy.url',
         searchVisibilities,
         setASearchVisibility,
         referenceGenomesInfo: referenceGenomesInfo,
@@ -98,9 +90,9 @@ const renderSearchForm = ({
     };
 
     return render(
-        <QueryClientProvider client={queryClient}>
+        <TestIsland clientConfig={testConfig.public}>
             <SearchForm {...props} />
-        </QueryClientProvider>,
+        </TestIsland>,
     );
 };
 
@@ -180,7 +172,7 @@ describe('SearchForm', () => {
         });
 
         render(
-            <QueryClientProvider client={queryClient}>
+            <TestIsland clientConfig={testConfig.public}>
                 <SearchForm
                     organism={testOrganism}
                     filterSchema={
@@ -189,7 +181,6 @@ describe('SearchForm', () => {
                     clientConfig={testConfig.public}
                     fieldValues={{}}
                     setSomeFieldValues={setSomeFieldValues}
-                    lapisUrl='http://lapis.dummy.url'
                     searchVisibilities={defaultSearchVisibilities}
                     setASearchVisibility={setASearchVisibility}
                     referenceGenomesInfo={SINGLE_SEG_MULTI_REF_REFERENCEGENOMES}
@@ -200,7 +191,7 @@ describe('SearchForm', () => {
                         selectedReferences: {},
                     }}
                 />
-            </QueryClientProvider>,
+            </TestIsland>,
         );
 
         const referenceInput = await screen.findByLabelText('My genotype');

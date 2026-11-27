@@ -1,9 +1,9 @@
 import { useCallback } from 'react';
 
-import { lapisClientHooks } from '../../../services/serviceHooks.ts';
+import { useLapisMutation, useLapisQuery } from '../../../hooks/useLapis.ts';
+import { getErrorMessage } from '../../../services/apiRequest.ts';
 import type { LineageDefinition } from '../../../types/lapis.ts';
 import { NULL_QUERY_VALUE } from '../../../utils/search.ts';
-import { stringifyMaybeAxiosError } from '../../../utils/stringifyMaybeAxiosError.ts';
 import type { LapisSearchParameters } from '../DownloadDialog/SequenceFilters.tsx';
 
 export type Option = {
@@ -15,7 +15,7 @@ export type Option = {
 /* Fetch options as all possible unique values for `fieldName` */
 type GenericOptionsProvider = {
     type: 'generic';
-    lapisUrl: string;
+    organism: string;
     lapisSearchParameters: LapisSearchParameters;
     fieldName: string;
 };
@@ -23,7 +23,7 @@ type GenericOptionsProvider = {
 /* Fetch options from the lineage definition for `fieldName` */
 type LineageOptionsProvider = {
     type: 'lineage';
-    lapisUrl: string;
+    organism: string;
     lapisSearchParameters: LapisSearchParameters;
     fieldName: string;
     includeSublineages: boolean;
@@ -49,7 +49,7 @@ export type AutocompleteOptionsHook = () => {
 };
 
 const createGenericOptionsHook = (
-    lapisUrl: string,
+    organism: string,
     fieldName: string,
     lapisSearchParameters: LapisSearchParameters,
 ): AutocompleteOptionsHook => {
@@ -65,7 +65,7 @@ const createGenericOptionsHook = (
     const lapisParams = { fields: [fieldName], ...otherFields };
 
     return function hook() {
-        const { data, isPending, error, mutate } = lapisClientHooks(lapisUrl).useAggregated();
+        const { data, isPending, error, mutate } = useLapisMutation(organism, 'aggregated');
 
         const options: Option[] = (data?.data ?? [])
             .filter(
@@ -90,9 +90,7 @@ const createGenericOptionsHook = (
         return {
             options,
             isPending,
-            error: error
-                ? `Error while loading options for field "${fieldName}": ${stringifyMaybeAxiosError(error)}`
-                : null,
+            error: error ? `Error while loading options for field "${fieldName}": ${getErrorMessage(error)}` : null,
             load: () => mutate(lapisParams),
         };
     };
@@ -163,7 +161,7 @@ function aggregateCounts(
 }
 
 const createLineageOptionsHook = (
-    lapisUrl: string,
+    organism: string,
     fieldName: string,
     lapisSearchParameters: LapisSearchParameters,
     includeSublineages: boolean,
@@ -187,20 +185,13 @@ const createLineageOptionsHook = (
             isPending: aggregatedEndpointIsPending,
             error: aggregatedEndpointError,
             mutate,
-        } = lapisClientHooks(lapisUrl).useAggregated();
+        } = useLapisMutation(organism, 'aggregated');
 
         const {
             data: lineageDefinition,
             isLoading: definitionIsLoading,
             error: definitionEndpointError,
-        } = lapisClientHooks(lapisUrl).useLineageDefinition(
-            {
-                params: {
-                    column: fieldName,
-                },
-            },
-            {},
-        );
+        } = useLapisQuery(organism, 'lineageDefinition', { column: fieldName });
 
         const unaggregatedCounts = new Map<string, number>();
 
@@ -237,9 +228,8 @@ const createLineageOptionsHook = (
         options.sort((a, b) => (a.option.toLowerCase() < b.option.toLowerCase() ? -1 : 1));
 
         const errors = [
-            aggregatedEndpointError && `aggregated endpoint: ${stringifyMaybeAxiosError(aggregatedEndpointError)}`,
-            definitionEndpointError &&
-                `lineage definition endpoint: ${stringifyMaybeAxiosError(definitionEndpointError)}`,
+            aggregatedEndpointError && `aggregated endpoint: ${getErrorMessage(aggregatedEndpointError)}`,
+            definitionEndpointError && `lineage definition endpoint: ${getErrorMessage(definitionEndpointError)}`,
         ].filter(Boolean);
 
         return {
@@ -247,7 +237,7 @@ const createLineageOptionsHook = (
             isPending: aggregatedEndpointIsPending || definitionIsLoading,
             error:
                 errors.length > 0
-                    ? `Error while loading lineage autocomplete options for field "${fieldName}" from ${lapisUrl}: ${errors.join('; ')}`
+                    ? `Error while loading lineage autocomplete options for field "${fieldName}": ${errors.join('; ')}`
                     : null,
             load: () => mutate(lapisParams),
         };
@@ -259,7 +249,7 @@ export const createOptionsProviderHook = (optionsProvider: OptionsProvider): Aut
         case 'generic': {
             return useCallback(
                 createGenericOptionsHook(
-                    optionsProvider.lapisUrl,
+                    optionsProvider.organism,
                     optionsProvider.fieldName,
                     optionsProvider.lapisSearchParameters,
                 ),
@@ -269,7 +259,7 @@ export const createOptionsProviderHook = (optionsProvider: OptionsProvider): Aut
         case 'lineage':
             return useCallback(
                 createLineageOptionsHook(
-                    optionsProvider.lapisUrl,
+                    optionsProvider.organism,
                     optionsProvider.fieldName,
                     optionsProvider.lapisSearchParameters,
                     optionsProvider.includeSublineages,

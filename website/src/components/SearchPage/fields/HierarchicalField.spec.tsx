@@ -4,11 +4,9 @@ import { useState } from 'react';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 import { HierarchicalField } from './HierarchicalField.tsx';
-import { lapisClientHooks } from '../../../services/serviceHooks.ts';
 import type { MetadataFilter } from '../../../types/config.ts';
 import { Button } from '../../common/Button.tsx';
 
-vi.mock('../../../services/serviceHooks.ts');
 vi.mock('../../../clientLogger.ts', () => ({
     getClientLogger: () => ({
         error: vi.fn(),
@@ -17,17 +15,15 @@ vi.mock('../../../clientLogger.ts', () => ({
 
 const mockUseAggregated = vi.fn();
 const mockUseLineageDefinition = vi.fn();
-// @ts-expect-error because mockReturnValue is not defined in the type definition
-// eslint-disable-next-line @typescript-eslint/no-unsafe-call
-lapisClientHooks.mockReturnValue({
-    useAggregated: mockUseAggregated,
-    useLineageDefinition: mockUseLineageDefinition,
-});
+vi.mock('../../../hooks/useLapis.ts', () => ({
+    useLapisMutation: (): unknown => mockUseAggregated(),
+    useLapisQuery: (): unknown => mockUseLineageDefinition(),
+}));
 
 describe('HierarchicalField - lineage mode', () => {
     const field: MetadataFilter = { name: 'lineage', displayName: 'My Lineage', type: 'string' };
     const setSomeFieldValues = vi.fn();
-    const lapisUrl = 'https://example.com/api';
+    const organism = 'dummy-organism';
     const lapisSearchParameters = {};
 
     beforeEach(() => {
@@ -80,7 +76,7 @@ describe('HierarchicalField - lineage mode', () => {
                 field={field}
                 fieldValue='initialValue'
                 setSomeFieldValues={setSomeFieldValues}
-                lapisUrl={lapisUrl}
+                organism={organism}
                 lapisSearchParameters={lapisSearchParameters}
                 mode='lineage'
             />,
@@ -99,7 +95,7 @@ describe('HierarchicalField - lineage mode', () => {
                 field={field}
                 fieldValue='A.1'
                 setSomeFieldValues={setSomeFieldValues}
-                lapisUrl={lapisUrl}
+                organism={organism}
                 lapisSearchParameters={lapisSearchParameters}
                 mode='lineage'
             />,
@@ -118,7 +114,7 @@ describe('HierarchicalField - lineage mode', () => {
                 field={field}
                 fieldValue='A.1'
                 setSomeFieldValues={setSomeFieldValues}
-                lapisUrl={lapisUrl}
+                organism={organism}
                 lapisSearchParameters={lapisSearchParameters}
                 mode='lineage'
             />,
@@ -140,7 +136,7 @@ describe('HierarchicalField - lineage mode', () => {
                 field={field}
                 fieldValue='A.1'
                 setSomeFieldValues={setSomeFieldValues}
-                lapisUrl={lapisUrl}
+                organism={organism}
                 lapisSearchParameters={lapisSearchParameters}
                 mode='lineage'
             />,
@@ -165,7 +161,7 @@ describe('HierarchicalField - lineage mode', () => {
                 field={field}
                 fieldValue='A.1'
                 setSomeFieldValues={setSomeFieldValues}
-                lapisUrl={lapisUrl}
+                organism={organism}
                 lapisSearchParameters={lapisSearchParameters}
                 mode='lineage'
             />,
@@ -191,7 +187,7 @@ describe('HierarchicalField - lineage mode', () => {
                 field={field}
                 fieldValue='value*'
                 setSomeFieldValues={setSomeFieldValues}
-                lapisUrl={lapisUrl}
+                organism={organism}
                 lapisSearchParameters={lapisSearchParameters}
                 mode='lineage'
             />,
@@ -215,7 +211,7 @@ describe('HierarchicalField - lineage mode', () => {
                         field={field}
                         fieldValue={value}
                         setSomeFieldValues={setSomeFieldValues}
-                        lapisUrl={lapisUrl}
+                        organism={organism}
                         lapisSearchParameters={lapisSearchParameters}
                         mode='lineage'
                     />
@@ -245,7 +241,7 @@ describe('HierarchicalField - default mode', () => {
         hierarchicalSearchLabel: 'include subtaxa',
     };
     const setSomeFieldValues = vi.fn();
-    const lapisUrl = 'https://example.com/api';
+    const organism = 'dummy-organism';
     const lapisSearchParameters = {};
 
     beforeEach(() => {
@@ -299,7 +295,7 @@ describe('HierarchicalField - default mode', () => {
                 field={field}
                 fieldValue=''
                 setSomeFieldValues={setSomeFieldValues}
-                lapisUrl={lapisUrl}
+                organism={organism}
                 lapisSearchParameters={lapisSearchParameters}
             />,
         );
@@ -313,7 +309,7 @@ describe('HierarchicalField - default mode', () => {
                 field={field}
                 fieldValue=''
                 setSomeFieldValues={setSomeFieldValues}
-                lapisUrl={lapisUrl}
+                organism={organism}
                 lapisSearchParameters={lapisSearchParameters}
             />,
         );
@@ -331,7 +327,7 @@ describe('HierarchicalField - default mode', () => {
                 field={field}
                 fieldValue='Rodentia'
                 setSomeFieldValues={setSomeFieldValues}
-                lapisUrl={lapisUrl}
+                organism={organism}
                 lapisSearchParameters={lapisSearchParameters}
             />,
         );
@@ -345,7 +341,7 @@ describe('HierarchicalField - default mode', () => {
                 field={field}
                 fieldValue=''
                 setSomeFieldValues={setSomeFieldValues}
-                lapisUrl={lapisUrl}
+                organism={organism}
                 lapisSearchParameters={lapisSearchParameters}
             />,
         );
@@ -369,7 +365,7 @@ describe('HierarchicalField - default mode', () => {
                 field={field}
                 fieldValue=''
                 setSomeFieldValues={setSomeFieldValues}
-                lapisUrl={lapisUrl}
+                organism={organism}
                 lapisSearchParameters={lapisSearchParameters}
             />,
         );
@@ -388,7 +384,7 @@ describe('HierarchicalField - default mode', () => {
                 field={field}
                 fieldValue='Mus musculus*'
                 setSomeFieldValues={setSomeFieldValues}
-                lapisUrl={lapisUrl}
+                organism={organism}
                 lapisSearchParameters={lapisSearchParameters}
             />,
         );
@@ -402,7 +398,7 @@ describe('HierarchicalField - default mode', () => {
                 field={field}
                 fieldValue=''
                 setSomeFieldValues={setSomeFieldValues}
-                lapisUrl={lapisUrl}
+                organism={organism}
                 lapisSearchParameters={lapisSearchParameters}
             />,
         );

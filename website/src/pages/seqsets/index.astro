@@ -6,7 +6,7 @@ import { SeqSetListActions } from '../../components/SeqSetCitations/SeqSetListAc
 import NeedToLogin from '../../components/common/NeedToLogin.astro';
 import { getRuntimeConfig, seqSetsAreEnabled } from '../../config';
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { SeqSetCitationClient } from '../../services/seqSetCitationClient.ts';
+import { serverBackendApi } from '../../services/serverApi.ts';
 import { getAccessToken } from '../../utils/getAccessToken';
 import { getUrlForKeycloakAccountPage } from '../../utils/getAuthUrl.ts';
 
@@ -19,10 +19,10 @@ const accessToken = getAccessToken(session)!;
 
 const username = session.user?.username ?? '';
 const clientConfig = getRuntimeConfig().public;
-const seqSetClient = SeqSetCitationClient.create();
+const backendApi = serverBackendApi(accessToken);
 
-const seqSetsResponse = await seqSetClient.getSeqSetsOfUser(accessToken);
-const authorResponse = await seqSetClient.getAuthor(username);
+const seqSetsResponse = await backendApi.getSeqSetsOfUser();
+const authorResponse = await backendApi.getAuthor({ username });
 const editAccountUrl = (await getUrlForKeycloakAccountPage()) + '/#/personal-info';
 ---
 

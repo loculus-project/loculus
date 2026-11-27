@@ -3,8 +3,9 @@ import { type ChangeEvent, type FC, useState } from 'react';
 import { toast } from 'react-toastify';
 
 import { ReviewCard } from './ReviewCard.tsx';
-import { useSubmissionOperations } from '../../hooks/useSubmissionOperations.ts';
+import { useSubmissionOperations } from './useSubmissionOperations.ts';
 import { routes } from '../../routes/routes.ts';
+import { getErrorMessage } from '../../services/apiRequest.ts';
 import {
     approveAllDataScope,
     deleteAllDataScope,
@@ -77,17 +78,15 @@ const NumberAndVisibility = ({
 };
 
 const InnerReviewPage: FC<ReviewPageProps> = ({
-    clientConfig,
     organism,
     group,
-    accessToken,
     metadataSchema,
     outputFileCategories,
     referenceGenomesInfo,
 }) => {
     const [pageQuery, setPageQuery] = useState<PageQuery>({ pageOneIndexed: 1, size: pageSizeOptions[2] });
 
-    const hooks = useSubmissionOperations(organism, group, clientConfig, accessToken, toast.error, pageQuery);
+    const hooks = useSubmissionOperations(organism, group, toast.error, pageQuery);
 
     const showNoIssues = hooks.includedProcessingResults.includes(noIssuesProcessingResult);
     const showWarnings = hooks.includedProcessingResults.includes(warningsProcessingResult);
@@ -129,7 +128,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({
     const sequencesData = hooks.getSequences.data;
 
     if (hooks.getSequences.isError) {
-        return <div>Error: {hooks.getSequences.error.message}</div>;
+        return <div>Failed to load sequences: {getErrorMessage(hooks.getSequences.error)}</div>;
     }
     if (sequencesData === undefined) {
         return <div>Loading..</div>;
@@ -363,9 +362,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({
                             editAccessionVersion={() => {
                                 window.location.href = routes.editPage(organism, sequence);
                             }}
-                            clientConfig={clientConfig}
                             organism={organism}
-                            accessToken={accessToken}
                             outputFileCategories={outputFileCategories}
                             referenceGenomesInfo={referenceGenomesInfo}
                         />

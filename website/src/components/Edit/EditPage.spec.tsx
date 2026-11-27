@@ -1,4 +1,3 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ToastContainer } from 'react-toastify';
@@ -21,8 +20,6 @@ import {
 import type { InputField } from '../../types/config.ts';
 import type { SequenceEntryHistory, SequenceEntryHistoryEntry } from '../../types/lapis.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
-
-const queryClient = new QueryClient();
 
 const dummyConfig = { backendUrl: 'dummy' } as ClientConfig;
 const groupedInputFields = new Map<string, InputField[]>([
@@ -68,7 +65,7 @@ function renderEditPage({
     sequenceEntryHistory = undefined as SequenceEntryHistory | undefined,
 } = {}) {
     render(
-        <QueryClientProvider client={queryClient}>
+        <>
             <EditPage
                 organism={testOrganism}
                 dataToEdit={editedData}
@@ -83,7 +80,7 @@ function renderEditPage({
                 fileSharingConfig={{ disableStrictFilenameValidation: false }}
             />
             <ToastContainer />
-        </QueryClientProvider>,
+        </>,
     );
 }
 

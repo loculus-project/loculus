@@ -1,4 +1,3 @@
-import { AxiosError } from 'axios';
 import { type FC, useState } from 'react';
 import { toast } from 'react-toastify';
 
@@ -7,12 +6,11 @@ import { DatePlot, CategoryPlot } from './SeqSetPlots.tsx';
 import { SeqSetRecordsTableWithMetadata } from './SeqSetRecordsTableWithMetadata';
 import type { AggregateRow } from './getSeqSetStatistics.ts';
 import { getClientLogger } from '../../clientLogger';
-import { seqSetCitationClientHooks } from '../../services/serviceHooks';
-import type { ProblemDetail } from '../../types/backend.ts';
+import { useBackendMutation } from '../../hooks/useBackend.ts';
+import { getErrorMessage } from '../../services/apiRequest.ts';
 import type { SeqSetGraph } from '../../types/config.ts';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import { type SeqSet, type SeqSetCitation, type SeqSetRecord } from '../../types/seqSetCitation';
-import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
 import { getThemeColor } from '../../utils/getThemeColor';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { Button } from '../common/Button.tsx';
@@ -63,7 +61,6 @@ type SeqSetItemProps = {
 
 const SeqSetItemInner: FC<SeqSetItemProps> = ({
     clientConfig,
-    accessToken,
     seqSetAccessionVersion,
     seqSet,
     seqSetRecords,
@@ -78,16 +75,12 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
     const [wideGraphs, setWideGraphs] = useState(false);
     const sequencesPerPage = 10;
 
-    const { mutate: createSeqSetDOI } = useCreateSeqSetDOIAction(
-        clientConfig,
-        accessToken,
-        seqSet.seqSetId,
-        seqSet.seqSetVersion,
-        (message) => toast.error(message, { position: 'top-center', autoClose: false }),
+    const { mutate: createSeqSetDOI } = useCreateSeqSetDOIAction(seqSet.seqSetId, seqSet.seqSetVersion, (message) =>
+        toast.error(message, { position: 'top-center', autoClose: false }),
     );
 
     const handleCreateDOI = () => {
-        createSeqSetDOI(undefined);
+        createSeqSetDOI({ seqSetId: seqSet.seqSetId, version: seqSet.seqSetVersion });
     };
 
     const getCrossRefUrl = () => {
@@ -226,33 +219,18 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
     );
 };
 
-function useCreateSeqSetDOIAction(
-    clientConfig: ClientConfig,
-    accessToken: string,
-    seqSetId: string,
-    seqSetVersion: number,
-    onError: (message: string) => void,
-) {
-    return seqSetCitationClientHooks(clientConfig).useCreateSeqSetDOI(
-        { headers: createAuthorizationHeader(accessToken), params: { seqSetId, seqSetVersion } },
-        {
-            onSuccess: async () => {
-                await logger.info(
-                    `Successfully created seqSet DOI for seqSetId: ${seqSetId}, version ${seqSetVersion}`,
-                );
-                location.reload();
-            },
-            onError: async (error) => {
-                await logger.info(`Failed to create seqSet DOI with error: '${JSON.stringify(error)})}'`);
-                if (error instanceof AxiosError) {
-                    const responseData = error.response?.data as ProblemDetail | undefined;
-                    if (error.response?.data !== undefined) {
-                        onError(`Failed to update seqSet. ${responseData?.title}. ${responseData?.detail}`);
-                    }
-                }
-            },
+function useCreateSeqSetDOIAction(seqSetId: string, seqSetVersion: number, onError: (message: string) => void) {
+    return useBackendMutation('createSeqSetDOI', {
+        onSuccess: async () => {
+            await logger.info(`Successfully created seqSet DOI for seqSetId: ${seqSetId}, version ${seqSetVersion}`);
+            location.reload();
         },
-    );
+        onError: async (error) => {
+            const message = `Failed to create seqSet DOI: ${getErrorMessage(error)}`;
+            await logger.info(message);
+            onError(message);
+        },
+    });
 }
 
 export const SeqSetItem = withQueryProvider(SeqSetItemInner);

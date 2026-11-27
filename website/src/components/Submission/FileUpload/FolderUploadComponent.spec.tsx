@@ -1,6 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { err, ok } from 'neverthrow';
 import { useEffect, useState, type ComponentProps } from 'react';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 
@@ -13,15 +12,12 @@ const mockRequestMultipartUpload = vi.fn();
 const mockCompleteMultipartUpload = vi.fn();
 const mockOnError = vi.fn();
 
-vi.mock('../../../services/backendClient', () => {
-    return {
-        // eslint-disable-next-line @typescript-eslint/naming-convention
-        BackendClient: class {
-            requestMultipartUpload = mockRequestMultipartUpload;
-            completeMultipartUpload = mockCompleteMultipartUpload;
-        },
-    };
-});
+vi.mock('../../../services/backendApi', () => ({
+    backendApi: () => ({
+        requestMultipartUpload: mockRequestMultipartUpload,
+        completeMultipartUpload: mockCompleteMultipartUpload,
+    }),
+}));
 
 // Only mock uploadPart (external HTTP calls), keep real implementations of pure functions
 vi.mock('../../../utils/multipartUpload', async () => {
@@ -90,8 +86,8 @@ const mappingOf = (files: [path: string, fileId: string][]) => new Map([['extraF
 describe('FolderUploadComponent', () => {
     beforeEach(() => {
         vi.clearAllMocks();
-        mockRequestMultipartUpload.mockReturnValue(ok([]));
-        mockCompleteMultipartUpload.mockReturnValue(ok(undefined));
+        mockRequestMultipartUpload.mockResolvedValue([]);
+        mockCompleteMultipartUpload.mockResolvedValue(undefined);
         vi.mocked(multipartUpload.uploadPart).mockResolvedValue('"etag"');
     });
 
@@ -119,7 +115,7 @@ describe('FolderUploadComponent', () => {
         });
 
         it('displays files after selection', async () => {
-            mockRequestMultipartUpload.mockReturnValue(ok([{ fileId: 'file-1', urls: ['http://test.com/url1'] }]));
+            mockRequestMultipartUpload.mockResolvedValue([{ fileId: 'file-1', urls: ['http://test.com/url1'] }]);
 
             render(<FolderUploadComponentWithState {...defaultProps} />);
 
@@ -136,9 +132,9 @@ describe('FolderUploadComponent', () => {
 
         it('shows progress during multipart upload', async () => {
             // 20 MB file will be split into 2 parts (10 MB each) by real calculatePartSizeAndCount
-            mockRequestMultipartUpload.mockReturnValue(
-                ok([{ fileId: 'file-1', urls: ['http://test.com/url1', 'http://test.com/url2'] }]),
-            );
+            mockRequestMultipartUpload.mockResolvedValue([
+                { fileId: 'file-1', urls: ['http://test.com/url1', 'http://test.com/url2'] },
+            ]);
             mockCompleteMultipartUpload.mockReturnValue(new Promise(() => {}));
 
             let uploadCount = 0;
@@ -167,14 +163,12 @@ describe('FolderUploadComponent', () => {
 
         it('calls requestMultipartUpload with correct parameters', async () => {
             // 30 MB file will be split into 3 parts (10 MB each)
-            mockRequestMultipartUpload.mockReturnValue(
-                ok([
-                    {
-                        fileId: 'file-1',
-                        urls: ['http://test.com/url1', 'http://test.com/url2', 'http://test.com/url3'],
-                    },
-                ]),
-            );
+            mockRequestMultipartUpload.mockResolvedValue([
+                {
+                    fileId: 'file-1',
+                    urls: ['http://test.com/url1', 'http://test.com/url2', 'http://test.com/url3'],
+                },
+            ]);
 
             render(<FolderUploadComponentWithState {...defaultProps} />);
 
@@ -186,14 +180,16 @@ describe('FolderUploadComponent', () => {
             });
 
             await userEvent.upload(input, file);
-            await waitFor(() => expect(mockRequestMultipartUpload).toHaveBeenCalledWith('test-token', 1, 1, 3));
+            await waitFor(() =>
+                expect(mockRequestMultipartUpload).toHaveBeenCalledWith({ groupId: 1, numberFiles: 1, numberParts: 3 }),
+            );
         });
 
         it('calls completeMultipartUpload with ETags', async () => {
             // 20 MB file will be split into 2 parts
-            mockRequestMultipartUpload.mockReturnValue(
-                ok([{ fileId: 'file-1', urls: ['http://test.com/url1', 'http://test.com/url2'] }]),
-            );
+            mockRequestMultipartUpload.mockResolvedValue([
+                { fileId: 'file-1', urls: ['http://test.com/url1', 'http://test.com/url2'] },
+            ]);
             vi.mocked(multipartUpload.uploadPart).mockResolvedValueOnce('"etag1"').mockResolvedValueOnce('"etag2"');
 
             render(<FolderUploadComponentWithState {...defaultProps} />);
@@ -207,14 +203,14 @@ describe('FolderUploadComponent', () => {
 
             await userEvent.upload(input, file);
             await waitFor(() => {
-                expect(mockCompleteMultipartUpload).toHaveBeenCalledWith('test-token', [
+                expect(mockCompleteMultipartUpload).toHaveBeenCalledWith([
                     { fileId: 'file-1', etags: ['"etag1"', '"etag2"'] },
                 ]);
             });
         });
 
         it('shows success state after upload completes', async () => {
-            mockRequestMultipartUpload.mockReturnValue(ok([{ fileId: 'file-1', urls: ['http://test.com/url1'] }]));
+            mockRequestMultipartUpload.mockResolvedValue([{ fileId: 'file-1', urls: ['http://test.com/url1'] }]);
 
             render(<FolderUploadComponentWithState {...defaultProps} />);
 
@@ -230,7 +226,7 @@ describe('FolderUploadComponent', () => {
         });
 
         it('filters out dot files', async () => {
-            mockRequestMultipartUpload.mockReturnValue(ok([{ fileId: 'file-1', urls: ['http://test.com/url1'] }]));
+            mockRequestMultipartUpload.mockResolvedValue([{ fileId: 'file-1', urls: ['http://test.com/url1'] }]);
 
             render(<FolderUploadComponentWithState {...defaultProps} />);
 
@@ -325,7 +321,7 @@ describe('FolderUploadComponent', () => {
         });
 
         it('allows a file within maxFileSizeBytes', async () => {
-            mockRequestMultipartUpload.mockReturnValue(ok([{ fileId: 'file-1', urls: ['http://test.com/url1'] }]));
+            mockRequestMultipartUpload.mockResolvedValue([{ fileId: 'file-1', urls: ['http://test.com/url1'] }]);
 
             render(
                 <FolderUploadComponentWithState
@@ -395,8 +391,8 @@ describe('FolderUploadComponent', () => {
 
         it('files are discarded by path, not by name', async () => {
             mockRequestMultipartUpload
-                .mockReturnValueOnce(ok([{ fileId: 'file-1', urls: ['http://test.com/url1'] }]))
-                .mockReturnValueOnce(ok([{ fileId: 'file-2', urls: ['http://test.com/url2'] }]));
+                .mockResolvedValueOnce([{ fileId: 'file-1', urls: ['http://test.com/url1'] }])
+                .mockResolvedValueOnce([{ fileId: 'file-2', urls: ['http://test.com/url2'] }]);
 
             const onMapping = vi.fn();
             render(<FolderUploadComponentWithState {...defaultProps} onMapping={onMapping} />);
@@ -435,7 +431,7 @@ describe('FolderUploadComponent', () => {
         });
 
         it('disables the individual discard buttons while an upload is in progress', async () => {
-            mockRequestMultipartUpload.mockReturnValue(ok([{ fileId: 'added-id', urls: ['http://test.com/url1'] }]));
+            mockRequestMultipartUpload.mockResolvedValue([{ fileId: 'added-id', urls: ['http://test.com/url1'] }]);
             // Keep the upload pending so the component stays in the uploadInProgress state.
             vi.mocked(multipartUpload.uploadPart).mockReturnValue(new Promise(() => {}));
 
@@ -450,7 +446,7 @@ describe('FolderUploadComponent', () => {
 
     describe('adding additional files', () => {
         it('keeps existing files when adding additional ones', async () => {
-            mockRequestMultipartUpload.mockReturnValue(ok([{ fileId: 'added-id', urls: ['http://test.com/url1'] }]));
+            mockRequestMultipartUpload.mockResolvedValue([{ fileId: 'added-id', urls: ['http://test.com/url1'] }]);
 
             render(<FolderUploadComponentWithState {...defaultPropsWithFiles} />);
 
@@ -469,9 +465,9 @@ describe('FolderUploadComponent', () => {
         });
 
         it('confirms before overwriting an existing file with the same name', async () => {
-            mockRequestMultipartUpload.mockReturnValue(
-                ok([{ fileId: 'replacement-id', urls: ['http://test.com/url1'] }]),
-            );
+            mockRequestMultipartUpload.mockResolvedValue([
+                { fileId: 'replacement-id', urls: ['http://test.com/url1'] },
+            ]);
 
             const onMapping = vi.fn();
             render(<FolderUploadComponentWithState {...defaultPropsWithFiles} onMapping={onMapping} />);
@@ -504,8 +500,7 @@ describe('FolderUploadComponent', () => {
             let deliverUploadUrls = () => {};
             mockRequestMultipartUpload.mockReturnValue(
                 new Promise((resolve) => {
-                    deliverUploadUrls = () =>
-                        resolve(ok([{ fileId: 'replacement-id', urls: ['http://test.com/url1'] }]));
+                    deliverUploadUrls = () => resolve([{ fileId: 'replacement-id', urls: ['http://test.com/url1'] }]);
                 }),
             );
 
@@ -528,9 +523,9 @@ describe('FolderUploadComponent', () => {
         });
 
         it('leaves the existing files alone when the overwrite is cancelled', async () => {
-            mockRequestMultipartUpload.mockReturnValue(
-                ok([{ fileId: 'replacement-id', urls: ['http://test.com/url1'] }]),
-            );
+            mockRequestMultipartUpload.mockResolvedValue([
+                { fileId: 'replacement-id', urls: ['http://test.com/url1'] },
+            ]);
 
             render(<FolderUploadComponentWithState {...defaultPropsWithFiles} />);
 
@@ -550,7 +545,7 @@ describe('FolderUploadComponent', () => {
         });
 
         it('disables the additional files button while an upload is in progress', async () => {
-            mockRequestMultipartUpload.mockReturnValue(ok([{ fileId: 'added-id', urls: ['http://test.com/url1'] }]));
+            mockRequestMultipartUpload.mockResolvedValue([{ fileId: 'added-id', urls: ['http://test.com/url1'] }]);
             // Keep the upload pending so the component stays in the uploadInProgress state.
             vi.mocked(multipartUpload.uploadPart).mockReturnValue(new Promise(() => {}));
 
@@ -619,8 +614,8 @@ describe('FolderUploadComponent', () => {
         });
 
         it('discard all files is not disabled during upload or file upload failure', async () => {
-            mockRequestMultipartUpload.mockReturnValue(ok([{ fileId: 'failed-id', urls: ['http://test.com/url1'] }]));
-            mockCompleteMultipartUpload.mockReturnValue(err({ detail: 'Could not complete upload' }));
+            mockRequestMultipartUpload.mockResolvedValue([{ fileId: 'failed-id', urls: ['http://test.com/url1'] }]);
+            mockCompleteMultipartUpload.mockRejectedValue(new Error('Could not complete upload'));
 
             render(<FolderUploadComponentWithState {...defaultProps} />);
 

@@ -54,8 +54,30 @@ export class SeqSetPage {
         }
     }
 
+    getSaveButton() {
+        return this.page.getByRole('button', { name: 'Save' });
+    }
+
     async submitSeqSetForm() {
-        await this.page.getByRole('button', { name: 'Save' }).click();
+        await this.getSaveButton().click();
+    }
+
+    /**
+     * The form validates the accessions 1 s after the last change. Call this before filling the form, and await the
+     * returned promise to wait until that validation request has finished and the form had time to handle it.
+     */
+    async waitForRecordValidation(accession: string) {
+        const response = await this.page.waitForResponse(
+            (response) =>
+                response.url().includes('/validate-seqset-records') &&
+                (response.request().postData() ?? '').includes(accession),
+        );
+        await response.finished();
+        // When validation fails, the form logs the error (another request) before it shows it and disables Save.
+        // When it succeeds, nothing changes in the UI, so there is nothing to wait for: give the form time instead,
+        // like a user who pauses before clicking Save.
+        await this.page.waitForTimeout(3000);
+        return response;
     }
 
     async expectAccessionMatchesUrl() {
