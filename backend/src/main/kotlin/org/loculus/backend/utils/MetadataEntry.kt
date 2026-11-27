@@ -206,6 +206,29 @@ private fun getValueAndValidateNoWhitespace(record: CSVRecord, fieldName: String
     return fieldValue
 }
 
+/** Metadata is stored as `jsonb`, which cannot contain NUL characters, see [NUL_CHARACTER]. */
+private fun validateHeadersContainNoNul(headerNames: List<String>) {
+    val invalidHeader = headerNames.firstOrNull { it.containsNulCharacter() } ?: return
+    throw UnprocessableEntityException(
+        "In metadata file: the header '${invalidHeader.forErrorMessage()}' contains a NUL character, " +
+            "which is not allowed. Please make sure the metadata file is a plain-text TSV file.",
+    )
+}
+
+private fun validateRecordContainsNoNul(record: CSVRecord, recordNumber: Int) {
+    val headerNames = record.parser.headerNames
+    record.toList().forEachIndexed { index, value ->
+        if (value.containsNulCharacter()) {
+            val column = headerNames.getOrNull(index)?.let { "'${it.forErrorMessage()}'" } ?: "#${index + 1}"
+            throw UnprocessableEntityException(
+                "Record #$recordNumber in the metadata file: the value for $column contains a NUL character, " +
+                    "which is not allowed: '${value.forErrorMessage()}'. " +
+                    "Please make sure the metadata file is a plain-text TSV file.",
+            )
+        }
+    }
+}
+
 private fun validateMetadataNotEmpty(metadata: Map<String, String>, submissionId: String, recordNumber: Int) {
     if (metadata.isEmpty()) {
         throw UnprocessableEntityException(
@@ -227,6 +250,7 @@ fun metadataEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<Me
     val csvParser = setUpCsvParser(metadataInputStream)
 
     val headerNames = csvParser.headerNames
+    validateHeadersContainNoNul(headerNames)
     val submissionIdHeader = findAndValidateSubmissionIdHeader(headerNames)
     val fileHeaders = findAndValidateFileHeaders(headerNames)
 
@@ -234,6 +258,7 @@ fun metadataEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<Me
         try {
             csvParser.asSequence().withIndex().forEach { (index, record) ->
                 val recordNumber = index + 1 // First data record is #1 (header not counted)
+                validateRecordContainsNoNul(record, recordNumber)
 
                 val submissionId = getValueAndValidateNoWhitespace(record, submissionIdHeader, recordNumber)
 
@@ -268,6 +293,7 @@ fun revisionEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<Re
     val csvParser = setUpCsvParser(metadataInputStream)
 
     val headerNames = csvParser.headerNames
+    validateHeadersContainNoNul(headerNames)
     val submissionIdHeader = findAndValidateSubmissionIdHeader(headerNames)
     val fileHeaders = findAndValidateFileHeaders(headerNames)
 
@@ -281,6 +307,7 @@ fun revisionEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<Re
         try {
             csvParser.asSequence().withIndex().forEach { (index, record) ->
                 val recordNumber = index + 1 // First data record is #1 (header not counted)
+                validateRecordContainsNoNul(record, recordNumber)
 
                 val submissionId = getValueAndValidateNoWhitespace(record, submissionIdHeader, recordNumber)
                 val accession = getValueAndValidateNoWhitespace(record, ACCESSION_HEADER, recordNumber)

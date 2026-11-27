@@ -2,6 +2,8 @@ package org.loculus.backend.utils
 
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.containsString
+import org.hamcrest.Matchers.equalTo
+import org.hamcrest.Matchers.not
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.loculus.backend.errors.UnprocessableEntityException
@@ -68,6 +70,40 @@ class FastaReaderTest {
         assertThat(exception.message, containsString("`seq1`"))
         assertThat(exception.message, containsString("U+0000"))
         assertThat(exception.message, containsString("position 5"))
+    }
+
+    @Test
+    fun `fasta id with NUL character is rejected`() {
+        val fasta = ">seq\u00001\nACGT\n"
+        val exception = assertThrows<UnprocessableEntityException> {
+            FastaReader(fasta.byteInputStream()).toList()
+        }
+        assertThat(exception.message, containsString("`seq<NUL>1`"))
+        assertThat(exception.message, not(containsString("\u0000")))
+    }
+
+    @Test
+    fun `fasta id longer than 255 characters is rejected`() {
+        val fasta = ">${"a".repeat(256)}\nACGT\n"
+        val exception = assertThrows<UnprocessableEntityException> {
+            FastaReader(fasta.byteInputStream()).toList()
+        }
+        assertThat(exception.message, containsString("256 characters long"))
+    }
+
+    @Test
+    fun `fasta id with 255 characters and non-ASCII characters is accepted`() {
+        val id = "Zürich_" + "a".repeat(248)
+        val parsed = FastaReader(">$id description\nACGT\n".byteInputStream()).toList()
+        assertThat(parsed[0].fastaId, equalTo(id))
+    }
+
+    @Test
+    fun `fasta id length is counted in code points`() {
+        // 200 emoji = 400 UTF-16 chars but 200 code points
+        val id = "🦠".repeat(200)
+        val parsed = FastaReader(">$id\nACGT\n".byteInputStream()).toList()
+        assertThat(parsed[0].fastaId, equalTo(id))
     }
 
     @Test
