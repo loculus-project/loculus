@@ -28,4 +28,5 @@ export type SequenceData = {
     dataUseTermsHistory: DataUseTermsHistoryEntry[];
     segmentReferences?: SegmentReferenceSelections;
     isRevocation: boolean;
+    pipelineVersion?: number;
 };

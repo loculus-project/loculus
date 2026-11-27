@@ -5,12 +5,21 @@ import DataTableEntry from './DataTableEntry';
 import { type DataTableData } from './getDataTableData';
 import { type TableDataEntry } from './types';
 import { type DataUseTermsHistoryEntry } from '../../types/backend';
-import { DEFAULT_AA_MUTATION_DETAILS_HEADER, DEFAULT_NUC_MUTATION_DETAILS_HEADER } from '../../types/config';
-import { type ReferenceAccession, type ReferenceGenomesInfo } from '../../types/referencesGenomes';
+import {
+    DEFAULT_AA_MUTATION_DETAILS_HEADER,
+    DEFAULT_NUC_MUTATION_DETAILS_HEADER,
+    type NextcladeDataset,
+} from '../../types/config';
+import {
+    type ReferenceAccession,
+    type ReferenceGenomesInfo,
+    type SegmentNextcladeDataset,
+} from '../../types/referencesGenomes';
 import type { SequenceCitation } from '../../types/seqSetCitation';
 import { deduplicateSemicolonSeparated } from '../../utils/deduplicateSemicolonSeparated';
 import {
     getInsdcAccessionsFromSegmentReferences,
+    getNextcladeDatasetsFromSegmentReferences,
     type SegmentReferenceSelections,
 } from '../../utils/sequenceTypeHelpers';
 import CitationList from '../SeqSetCitations/CitationList';
@@ -21,8 +30,12 @@ interface Props {
     dataUseTermsHistory: DataUseTermsHistoryEntry[];
     referenceGenomesInfo: ReferenceGenomesInfo;
     segmentReferences?: SegmentReferenceSelections;
+    /** Datasets of the pipeline version that processed this entry, keyed by segment and reference. */
+    nextcladeDatasets?: Record<string, Record<string, NextcladeDataset>>;
     sequenceCitations?: SequenceCitation[];
 }
+
+const DEFAULT_NEXTCLADE_DATASET_SERVER = 'https://data.clades.nextstrain.org/v3';
 
 const ReferenceDisplay = ({ reference }: { reference: ReferenceAccession[] }) => {
     const refLength = reference.length;
@@ -40,14 +53,44 @@ const ReferenceDisplay = ({ reference }: { reference: ReferenceAccession[] }) =>
     ));
 };
 
+const NextcladeDatasetDisplay = ({
+    datasets,
+    showSegmentNames,
+}: {
+    datasets: SegmentNextcladeDataset[];
+    showSegmentNames: boolean;
+}) =>
+    datasets.map((dataset, index) => (
+        <React.Fragment key={dataset.segmentName}>
+            <span
+                title={
+                    dataset.server !== undefined && dataset.server !== DEFAULT_NEXTCLADE_DATASET_SERVER
+                        ? `Dataset server: ${dataset.server}`
+                        : undefined
+                }
+            >
+                {showSegmentNames && `${dataset.segmentName}: `}
+                <span className='font-mono'>{dataset.name}</span>
+                {dataset.tag !== undefined && ` (${dataset.tag})`}
+            </span>
+            {index < datasets.length - 2 ? ', ' : index === datasets.length - 2 ? ' & ' : ''}
+        </React.Fragment>
+    ));
+
 const DataTableComponent: React.FC<Props> = ({
     dataTableData,
     dataUseTermsHistory,
     referenceGenomesInfo,
     segmentReferences,
+    nextcladeDatasets,
     sequenceCitations,
 }) => {
     const references = getInsdcAccessionsFromSegmentReferences(referenceGenomesInfo, segmentReferences);
+    const datasets = getNextcladeDatasetsFromSegmentReferences(
+        referenceGenomesInfo,
+        nextcladeDatasets,
+        segmentReferences,
+    );
     const hasReferenceAccession = references.filter((item) => item.insdcAccessionFull !== undefined).length > 0;
 
     const authorSection = dataTableData.table.filter(({ header }) => header.toLowerCase().includes('authors'));
@@ -182,6 +225,16 @@ const DataTableComponent: React.FC<Props> = ({
                                         {references.length > 1 ? 's' : ''}
                                     </h2>
                                 )}
+                            {datasets.length > 0 && header === DEFAULT_NUC_MUTATION_DETAILS_HEADER && (
+                                <h2 className='pt-2 text-xs text-gray-500'>
+                                    <AkarInfo className='inline-block h-4 w-4 mr-1 -mt-0.5' />
+                                    Processed with the Nextclade dataset{datasets.length > 1 ? 's' : ''}{' '}
+                                    <NextcladeDatasetDisplay
+                                        datasets={datasets}
+                                        showSegmentNames={referenceGenomesInfo.isMultiSegmented}
+                                    />
+                                </h2>
+                            )}
                             <div className='mt-4'>
                                 {rows.map((entry: TableDataEntry, index: number) => (
                                     <DataTableEntry

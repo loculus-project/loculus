@@ -30,6 +30,7 @@ export type GetTableDataResult = {
     data: TableDataEntry[];
     isRevocation: boolean;
     segmentReferences?: SegmentReferenceSelections;
+    pipelineVersion?: number;
 };
 
 export async function getTableData(
@@ -89,6 +90,7 @@ export async function getTableData(
                         data: toTableData(schema, referenceGenomesInfo, data),
                         isRevocation: isRevocationEntry(data.details),
                         segmentReferences,
+                        pipelineVersion: getPipelineVersion(data.details),
                     });
                 }),
         );
@@ -96,6 +98,10 @@ export async function getTableData(
 
 function isRevocationEntry(details: Details): boolean {
     return details.isRevocation === true;
+}
+
+function getPipelineVersion(details: Details): number | undefined {
+    return typeof details.pipelineVersion === 'number' ? details.pipelineVersion : undefined;
 }
 
 function validateDetailsAreNotEmpty<T extends [DetailsResponse, ...unknown[]]>(accessionVersion: string) {

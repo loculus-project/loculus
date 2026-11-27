@@ -59,6 +59,7 @@ export const getSequenceDetailsTableData = async (
             dataUseTermsHistory,
             segmentReferences: tableData.segmentReferences,
             isRevocation: tableData.isRevocation,
+            pipelineVersion: tableData.pipelineVersion,
         }),
     );
 };
