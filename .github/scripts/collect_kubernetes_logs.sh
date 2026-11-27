@@ -15,3 +15,7 @@ for pod in $pods; do
     kubectl logs "$pod" -c "$container" >> "$file" 2>/dev/null || true
   done
 done
+
+mkdir "kubernetes_logs" -p
+kubectl logs deployment/kubernetes-secret-generator > kubernetes_logs/kubernetes-secret-generator.txt 2>&1 || true
+kubectl get stringsecrets -o yaml > kubernetes_logs/stringsecrets.yaml 2>&1 || true
