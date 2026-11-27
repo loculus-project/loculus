@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import { type FC, useMemo } from 'react';
 
+import { type SeqSetField, getSeqSetOrganismField } from '../../types/config';
 import { versionStatuses } from '../../types/lapis';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import type { SeqSetRecord } from '../../types/seqSetCitation';
@@ -13,15 +14,10 @@ type RecordMetadata = {
     [key: string]: unknown;
 };
 
-type FieldToDisplay = {
-    field: string;
-    displayName: string;
-};
-
 type SeqSetRecordsTableWithMetadataProps = {
     seqSetRecords: SeqSetRecord[];
     clientConfig: ClientConfig;
-    fieldsToDisplay?: FieldToDisplay[];
+    seqSetFields: SeqSetField[];
     sortByKey?: keyof SeqSetRecord;
     organismDisplayNames?: Record<string, string>;
 };
@@ -47,7 +43,7 @@ async function queryLapisDetails(
 const fetchRecordsMetadata = async (
     records: SeqSetRecord[],
     clientConfig: ClientConfig,
-    fieldsToDisplay: FieldToDisplay[],
+    seqSetFields: SeqSetField[],
 ): Promise<Map<string, RecordMetadata>> => {
     const accessions = records.map((record) => record.accession);
 
@@ -59,20 +55,17 @@ const fetchRecordsMetadata = async (
     const versionedAccessions = accessions.filter((acc) => acc.includes('.'));
     const bareAccessions = accessions.filter((acc) => !acc.includes('.'));
 
-    // Extract just the field names for the API request
-    const fields = fieldsToDisplay.map((f) => f.field);
-
-    // filter out "organism" as substring in lapisUrls as a hack to remove the dummy organisms
-    // #TODO: do this better, in a less hacky way
-    // But if we do try to query something that doesn't have the field its no huge problem it will just lead to a console error
-    const lapisUrlsWithoutDummies = Object.fromEntries(
-        Object.entries(clientConfig.lapisUrls).filter(([organism]) => !organism.includes('organism')),
-    );
-
     const metadataMap = new Map<string, RecordMetadata>();
 
     // Query all LAPIS instances in parallel
-    const lapisPromises = Object.entries(lapisUrlsWithoutDummies).map(async ([organism, lapisUrl]) => {
+    const lapisPromises = Object.entries(clientConfig.lapisUrls).map(async ([organism, lapisUrl]) => {
+        // Map each displayed field to this organism's field name, skipping fields the organism doesn't have
+        const organismFields = seqSetFields.flatMap((seqSetField) => {
+            const organismField = getSeqSetOrganismField(seqSetField, organism);
+            return organismField === null ? [] : [{ field: seqSetField.field, organismField }];
+        });
+        const fields = organismFields.map((f) => f.organismField);
+
         const queries: Promise<{ data: Record<string, unknown>[]; keyField: string }>[] = [];
 
         // Query versioned accessions by accessionVersion
@@ -104,8 +97,8 @@ const fetchRecordsMetadata = async (
                     accession: key,
                     organism,
                 };
-                for (const field of fields) {
-                    metadata[field] = record[field];
+                for (const { field, organismField } of organismFields) {
+                    metadata[field] = record[organismField];
                 }
                 metadataMap.set(key, metadata);
             }
@@ -130,17 +123,18 @@ const SeqSetRecordsTableCell: FC<{ title: string; children: React.ReactNode }> =
 export const SeqSetRecordsTableWithMetadata: FC<SeqSetRecordsTableWithMetadataProps> = ({
     seqSetRecords,
     clientConfig,
-    fieldsToDisplay = [
-        { field: 'geoLocCountry', displayName: 'Country' },
-        { field: 'sampleCollectionDate', displayName: 'Collection date' },
-        { field: 'authors', displayName: 'Authors' },
-    ],
+    seqSetFields,
     sortByKey = 'isFocal',
     organismDisplayNames = {},
 }) => {
     const { data: metadataMap, isLoading } = useQuery({
-        queryKey: ['seqset-records-metadata', seqSetRecords, clientConfig, fieldsToDisplay],
-        queryFn: () => fetchRecordsMetadata(seqSetRecords, clientConfig, fieldsToDisplay),
+        queryKey: ['seqset-records-metadata', seqSetRecords, clientConfig, seqSetFields],
+        queryFn: () =>
+            fetchRecordsMetadata(
+                seqSetRecords,
+                clientConfig,
+                seqSetFields.filter((seqSetField) => seqSetField.column !== undefined),
+            ),
         staleTime: 5 * 60 * 1000, // 5 minutes
     });
 
@@ -163,9 +157,11 @@ export const SeqSetRecordsTableWithMetadata: FC<SeqSetRecordsTableWithMetadataPr
                     <SeqSetRecordsTableHeader title='Accession' />
                     <SeqSetRecordsTableHeader title='Organism' />
                     <SeqSetRecordsTableHeader title='Context' />
-                    {fieldsToDisplay.map((fieldConfig) => (
-                        <SeqSetRecordsTableHeader key={fieldConfig.field} title={fieldConfig.displayName} />
-                    ))}
+                    {seqSetFields.map((seqSetField, columnIndex) =>
+                        seqSetField.column === undefined ? null : (
+                            <SeqSetRecordsTableHeader key={columnIndex} title={seqSetField.column.displayName} />
+                        ),
+                    )}
                 </tr>
             </thead>
             <tbody className='bg-white'>
@@ -201,22 +197,24 @@ export const SeqSetRecordsTableWithMetadata: FC<SeqSetRecordsTableWithMetadataPr
                             <SeqSetRecordsTableCell title={seqSetRecord.isFocal ? 'Focal' : 'Background'}>
                                 {seqSetRecord.isFocal ? 'Focal' : 'Background'}
                             </SeqSetRecordsTableCell>
-                            {fieldsToDisplay.map((fieldConfig) => (
-                                <SeqSetRecordsTableCell
-                                    key={fieldConfig.field}
-                                    title={
-                                        // eslint-disable-next-line @typescript-eslint/no-base-to-string
-                                        String(metadata?.[fieldConfig.field] ?? '')
-                                    }
-                                >
-                                    {isLoading ? (
-                                        <Spinner size='xs' />
-                                    ) : (
-                                        // eslint-disable-next-line @typescript-eslint/no-base-to-string
-                                        String(metadata?.[fieldConfig.field] ?? '')
-                                    )}
-                                </SeqSetRecordsTableCell>
-                            ))}
+                            {seqSetFields.map((seqSetField, columnIndex) =>
+                                seqSetField.column === undefined ? null : (
+                                    <SeqSetRecordsTableCell
+                                        key={columnIndex}
+                                        title={
+                                            // eslint-disable-next-line @typescript-eslint/no-base-to-string
+                                            String(metadata?.[seqSetField.field] ?? '')
+                                        }
+                                    >
+                                        {isLoading ? (
+                                            <Spinner size='xs' />
+                                        ) : (
+                                            // eslint-disable-next-line @typescript-eslint/no-base-to-string
+                                            String(metadata?.[seqSetField.field] ?? '')
+                                        )}
+                                    </SeqSetRecordsTableCell>
+                                ),
+                            )}
                         </tr>
                     );
                 })}

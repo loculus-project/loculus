@@ -229,11 +229,8 @@ enableSubmissionNavigationItem: {{ $.Values.website.websiteConfig.enableSubmissi
 enableSubmissionPages: {{ $.Values.website.websiteConfig.enableSubmissionPages }}
 readOnlyMode: {{ $.Values.readOnlyMode | default false }}
 enableSeqSets: {{ $.Values.seqSets.enabled }}
-{{- if $.Values.seqSets.fieldsToDisplay }}
-seqSetsFieldsToDisplay: {{ $.Values.seqSets.fieldsToDisplay | toJson }}
-{{- end }}
-{{- if $.Values.seqSets.graphs }}
-seqSetsGraphs: {{ $.Values.seqSets.graphs | toJson }}
+{{- if $.Values.seqSets.fields }}
+seqSetsFields: {{ $.Values.seqSets.fields | toJson }}
 {{- end }}
 enableDataUseTerms: {{ $.Values.dataUseTerms.enabled }}
 {{ if $.Values.dataUseTerms.agreementHTML }}
