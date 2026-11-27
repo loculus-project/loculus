@@ -310,13 +310,13 @@ export function backendApi(backendUrl: string, accessToken?: string) {
                 responseSchema: seqSetIdAndVersion,
             }),
 
+        /** Succeeds with an empty body if the records are valid, fails with a problem detail otherwise */
         validateSeqSetRecords: (records: ValidateSeqSetRecordsRequest) =>
             sendRequest(backendUrl, {
                 method: 'post',
                 path: '/validate-seqset-records',
                 data: records,
                 headers,
-                responseSchema: z.object({ valid: z.boolean() }),
             }),
 
         createSeqSetDOI: ({ seqSetId, version }: SeqSetVersion) =>
