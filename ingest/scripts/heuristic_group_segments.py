@@ -27,9 +27,9 @@ from dataclasses import dataclass
 from typing import Final
 
 import click
-from prepare_metadata import resolve_host_information
 import orjsonl
 import yaml
+from prepare_metadata import resolve_host_information
 
 FASTA_IDS_SEPARATOR = " "
 
@@ -191,17 +191,21 @@ def main(
     if number_of_groups < group_lower_bound:
         raise ValueError(
             {
-                "There are too few groups after merging, indicating a problem with the data. "
-                f"Expected at least {group_lower_bound} groups (all merged), "
-                f"but found {number_of_groups}"
+                (
+                    "There are too few groups after merging, indicating a problem with the data. "
+                    f"Expected at least {group_lower_bound} groups (all merged), "
+                    f"but found {number_of_groups}"
+                )
             }
         )
     if number_of_groups > group_upper_bound:
         raise ValueError(
             {
-                "There are too many groups after merging, indicating a problem with the data. "
-                f"Expected at most {group_upper_bound} groups (all separate), "
-                f"but found {number_of_groups}"
+                (
+                    "There are too many groups after merging, indicating a problem with the data. "
+                    f"Expected at most {group_upper_bound} groups (all separate), "
+                    f"but found {number_of_groups}"
+                )
             }
         )
 

@@ -15,7 +15,6 @@ from loculus_client import Config, get_submitted
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
-    encoding="utf-8",
     level=logging.DEBUG,
     format="%(asctime)s %(levelname)8s (%(filename)20s:%(lineno)4d) - %(message)s ",
     datefmt="%H:%M:%S",
@@ -101,13 +100,20 @@ def calculate_metadata_diff(
         return {}
     previous_metadata = previous_metadata_list[0].get("submittedMetadata", {})
 
+    def normalize(value: Any) -> str | None:
+        # Mirror the hashing logic: None and "" are treated as equivalent (field absent)
+        return None if value is None or not str(value) else str(value)
+
+    # Fields that are not part of the hash and only add noise to the diff
+    ignored_keys = {"id", "submissionId", "fastaIds"}
+
     return {
         key: {
             "old": previous_metadata.get(key),
             "new": new_metadata.get(key),
         }
-        for key in new_metadata.keys() | previous_metadata.keys()
-        if new_metadata.get(key) != previous_metadata.get(key)
+        for key in (new_metadata.keys() | previous_metadata.keys()) - ignored_keys
+        if normalize(new_metadata.get(key)) != normalize(previous_metadata.get(key))
     }
 
 
