@@ -10,7 +10,7 @@ dependencies:
   - biopython=1.88
   - nextclade=3.24.0
   - pip=25.2
-  - uv=0.13.9
+  - uv=0.13.10
   - pyyaml=6.0.3
   - pyjwt=2.15.1
   - python-dateutil=4.0.0
