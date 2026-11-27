@@ -70,6 +70,14 @@ object SubmitFiles {
             return metadataFileWith(content = revisedLines.joinToString("\n"))
         }
 
+        fun getSequencesFileFor(submissionIds: Collection<String>): MockMultipartFile {
+            val entries = getFileContent(DEFAULT_SEQUENCES_FILE_NAME)
+                .split(">")
+                .filter { it.isNotBlank() && it.substringBefore('\n').trim() in submissionIds }
+
+            return sequenceFileWith(content = entries.joinToString("") { ">$it" })
+        }
+
         val metadataFiles = CompressionAlgorithm.entries.associateWith {
             metadataFileWith(
                 content = TestResource(DEFAULT_METADATA_FILE_NAME).content,
