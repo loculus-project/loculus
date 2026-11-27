@@ -3,7 +3,7 @@ import { type FC, useState, useRef, useEffect, useMemo } from 'react';
 import { FilesDialog } from './FilesDialog.tsx';
 import { RevisionDiff } from './RevisionDiff.tsx';
 import { SequencesDialog } from './SequencesDialog.tsx';
-import { backendClientHooks } from '../../services/serviceHooks.ts';
+import { useBackendQuery } from '../../hooks/useBackend.ts';
 import {
     type DataUseTerms,
     processedStatus,
@@ -21,7 +21,6 @@ import type { FileCategory, Metadata } from '../../types/config.ts';
 import type { ReferenceGenomesInfo } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { CustomTooltip } from '../../utils/CustomTooltip.tsx';
-import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
 import { displayMetadataField } from '../../utils/displayMetadataField.ts';
 import { getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';
 import { Button } from '../common/Button';
@@ -73,11 +72,10 @@ export const ReviewCard: FC<ReviewCardProps> = ({
         [metadataSchema],
     );
     const data = sequenceEntryStatus.reviewData;
-    const sequencePreview = backendClientHooks(clientConfig).useGetDataToEdit(
-        {
-            headers: createAuthorizationHeader(accessToken),
-            params: { organism, accession: sequenceEntryStatus.accession, version: sequenceEntryStatus.version },
-        },
+    const sequencePreview = useBackendQuery(
+        { clientConfig, accessToken },
+        'getDataToEdit',
+        { organism, accession: sequenceEntryStatus.accession, version: sequenceEntryStatus.version },
         {
             enabled: isSequencesDialogOpen && data !== undefined && sequenceEntryStatus.status === processedStatus,
             retry: false,
