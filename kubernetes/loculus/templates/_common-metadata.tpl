@@ -502,6 +502,7 @@ fileSharing:
 {{- end }}
 websiteUrl: {{ include "loculus.websiteUrl" . }}
 backendUrl: {{ include "loculus.backendUrl" . }}
+lapisUrls: {{ include "loculus.generateInternalLapisUrls" . | fromYaml | toJson }}
 organisms:
   {{- range $_, $item := (include "loculus.enabledOrganisms" . | fromJson).organisms }}
 {{- $key := $item.key }}
