@@ -16,7 +16,11 @@ class ProcessedDataPostprocessor(
         .let { processedMetadataPostprocessor.stripNullValuesFromMetadata(it) }
 
     fun retrieveFromStoredValue(storedValue: ProcessedData<CompressedSequence>, organism: Organism) = storedValue
-        .let { processedMetadataPostprocessor.filterOutExtraFieldsAndAddNulls(it, organism) }
+        .let { retrieveCompressedFromStoredValue(it, organism) }
         .let { compressionService.decompressSequencesInProcessedData(it) }
-        .let { processedSequencesPostprocessor.filterOutExtraSequencesAndAddNulls(it, organism) }
+
+    fun retrieveCompressedFromStoredValue(storedValue: ProcessedData<CompressedSequence>, organism: Organism) =
+        storedValue
+            .let { processedMetadataPostprocessor.filterOutExtraFieldsAndAddNulls(it, organism) }
+            .let { processedSequencesPostprocessor.filterOutExtraSequencesAndAddNulls(it, organism) }
 }

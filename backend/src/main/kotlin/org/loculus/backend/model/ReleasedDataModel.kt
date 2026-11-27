@@ -19,6 +19,8 @@ import org.loculus.backend.config.FileUrlType
 import org.loculus.backend.service.datauseterms.DATA_USE_TERMS_TABLE_NAME
 import org.loculus.backend.service.files.S3Service
 import org.loculus.backend.service.groupmanagement.GROUPS_TABLE_NAME
+import org.loculus.backend.service.submission.CompressedSequence
+import org.loculus.backend.service.submission.CompressionService
 import org.loculus.backend.service.submission.METADATA_UPLOAD_AUX_TABLE_NAME
 import org.loculus.backend.service.submission.RawProcessedData
 import org.loculus.backend.service.submission.SEQUENCE_ENTRIES_PREPROCESSED_DATA_TABLE_NAME
@@ -34,7 +36,9 @@ import org.loculus.backend.types.FileCategoryFilesMap
 import org.loculus.backend.types.FileIdAndNameAndReadUrl
 import org.loculus.backend.types.MetadataMap
 import org.loculus.backend.types.Organism
+import org.loculus.backend.types.ProcessedData
 import org.loculus.backend.types.ReleasedData
+import org.loculus.backend.types.ReleasedDataWithHash
 import org.loculus.backend.types.VersionStatus
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.DateProvider
@@ -45,7 +49,11 @@ import org.loculus.backend.utils.toUtcDateString
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.util.UriUtils.encodePathSegment
+import java.io.OutputStream
 import java.nio.charset.StandardCharsets
+import java.security.DigestOutputStream
+import java.security.MessageDigest
+import java.util.HexFormat
 
 private val log = KotlinLogging.logger { }
 
@@ -66,9 +74,23 @@ open class ReleasedDataModel(
     private val dateProvider: DateProvider,
     private val s3Service: S3Service,
     private val objectMapper: ObjectMapper,
+    private val compressionService: CompressionService,
 ) {
     @Transactional(readOnly = true)
-    open fun getReleasedData(organism: Organism): Sequence<ReleasedData> {
+    open fun getReleasedData(organism: Organism): Sequence<ReleasedData> =
+        getReleasedDataWithStoredSequences(organism).map { decompress(it) }
+
+    @Transactional(readOnly = true)
+    open fun getReleasedDataChanges(
+        organism: Organism,
+        knownHashes: Map<String, String>,
+    ): Sequence<ReleasedDataWithHash> = getReleasedDataWithStoredSequences(organism).mapNotNull { data ->
+        hash(data)
+            .takeIf { it != knownHashes[data.metadata["accessionVersion"]!!.textValue()] }
+            ?.let { ReleasedDataWithHash(it, decompress(data)) }
+    }
+
+    private fun getReleasedDataWithStoredSequences(organism: Organism): Sequence<ProcessedData<CompressedSequence>> {
         log.info { "Fetching released submissions from database for organism $organism" }
 
         val latestVersions = submissionDatabaseService.getLatestVersions(organism)
@@ -169,7 +191,7 @@ open class ReleasedDataModel(
         latestRevocationVersions: Map<Accession, Version>,
         earliestReleaseDateFinder: EarliestReleaseDateFinder?,
         organism: Organism,
-    ): ReleasedData {
+    ): ProcessedData<CompressedSequence> {
         val versionStatus = computeVersionStatus(rawProcessedData, latestVersions, latestRevocationVersions)
 
         val currentDataUseTerms = computeDataUseTerm(rawProcessedData)
@@ -248,15 +270,26 @@ open class ReleasedDataModel(
                 },
             )
 
-        return ReleasedData(
-            metadata = metadata,
-            unalignedNucleotideSequences = rawProcessedData.processedData.unalignedNucleotideSequences,
-            alignedNucleotideSequences = rawProcessedData.processedData.alignedNucleotideSequences,
-            nucleotideInsertions = rawProcessedData.processedData.nucleotideInsertions,
-            aminoAcidInsertions = rawProcessedData.processedData.aminoAcidInsertions,
-            alignedAminoAcidSequences = rawProcessedData.processedData.alignedAminoAcidSequences,
-        )
+        return rawProcessedData.processedData.copy(metadata = metadata)
     }
+
+    private fun hash(processedData: ProcessedData<CompressedSequence>): String {
+        val digest = MessageDigest.getInstance("SHA-256")
+        objectMapper.writeValue(DigestOutputStream(OutputStream.nullOutputStream(), digest), processedData)
+        return HexFormat.of().formatHex(digest.digest(), 0, 16)
+    }
+
+    private fun decompress(processedData: ProcessedData<CompressedSequence>): ReleasedData =
+        compressionService.decompressSequencesInProcessedData(processedData).let {
+            ReleasedData(
+                metadata = it.metadata,
+                unalignedNucleotideSequences = it.unalignedNucleotideSequences,
+                alignedNucleotideSequences = it.alignedNucleotideSequences,
+                nucleotideInsertions = it.nucleotideInsertions,
+                aminoAcidInsertions = it.aminoAcidInsertions,
+                alignedAminoAcidSequences = it.alignedAminoAcidSequences,
+            )
+        }
 
     private fun buildFileUrls(
         accession: Accession,

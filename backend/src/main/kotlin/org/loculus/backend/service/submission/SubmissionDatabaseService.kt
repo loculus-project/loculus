@@ -1086,7 +1086,7 @@ class SubmissionDatabaseService(
                 submissionId = it[SequenceEntriesView.submissionIdColumn],
                 processedData = when (val processedData = it[SequenceEntriesView.jointDataColumn]) {
                     null -> emptyProcessedDataProvider.provide(organism)
-                    else -> processedDataPostprocessor.retrieveFromStoredValue(processedData, organism)
+                    else -> processedDataPostprocessor.retrieveCompressedFromStoredValue(processedData, organism)
                 },
                 pipelineVersion = it[SequenceEntriesView.pipelineVersionColumn]!!,
                 submittedAtTimestamp = it[SequenceEntriesView.submittedAtTimestampColumn],
@@ -1932,7 +1932,7 @@ data class RawProcessedData(
     val submittedAtTimestamp: LocalDateTime,
     val releasedAtTimestamp: LocalDateTime,
     val submissionId: String,
-    val processedData: ProcessedData<GeneticSequence>,
+    val processedData: ProcessedData<CompressedSequence>,
     val pipelineVersion: Long,
     val dataUseTerms: DataUseTerms,
     val dataUseTermsChangeDate: LocalDateTime?,

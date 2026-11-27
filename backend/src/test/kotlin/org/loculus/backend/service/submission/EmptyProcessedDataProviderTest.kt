@@ -55,7 +55,7 @@ class EmptyProcessedDataProviderTest {
 
     @Test
     fun `GIVEN backend config for schema THEN returns processed data with all fields and sequences empty`() {
-        val result = underTest.provide(organism = Organism(DEFAULT_ORGANISM))
+        val result = underTest.provide<String>(organism = Organism(DEFAULT_ORGANISM))
 
         val expectedMetadata = mapOf(
             FIRST_METADATA_FIELD to NullNode.instance,
