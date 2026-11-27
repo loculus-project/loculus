@@ -97,6 +97,18 @@ We compare the results against two configured thresholds:
 
 Exceeding either threshold is a hard error (`DEACON_ERROR_PROMPT`).
 
+### Host breadth (diagnostic)
+
+`deacon_max_host_bp` counts depth: 50 reads from one locus score the same as 50 reads from
+50 loci. With `deacon_measure_host_breadth: true` the service also logs how many distinct
+host-index minimizers the matched reads contain, which tracks how much of the host genome
+they cover. It builds an index from the matched reads and intersects it with the host index
+(`deacon index build`, `deacon index intersect`). The number is only logged; it does not
+affect whether a submission passes.
+
+It is off by default because `deacon index intersect` loads the host index a second time,
+outside the deacon server, so the pod needs memory headroom for that.
+
 The index is expected at `/data/deacon.idx` by default; set `DEACON_INDEX_PATH` to point at a
 different location, e.g. for local development:
 
