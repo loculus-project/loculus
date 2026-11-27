@@ -1,14 +1,12 @@
 import { err, ok } from 'neverthrow';
 
 import { getConfiguredOrganisms } from '../../../config.ts';
-import { LapisClient } from '../../../services/lapisClient.ts';
+import { serverLapisApi } from '../../../services/serverApi.ts';
 
 export const getVersionsData = async (accession: string) => {
     const organisms = getConfiguredOrganisms();
     const promises = organisms.map(async ({ key }) => {
-        const lapisClient = LapisClient.createForOrganism(key);
-
-        const versionListResult = (await lapisClient.getAllSequenceEntryHistoryForAccession(accession))
+        const versionListResult = (await serverLapisApi(key).getSequenceEntryHistory({ accession }))
             .mapErr((error) => error.detail)
             .andThen((result) => (result.length > 0 ? ok(result) : err('Sequence not found')));
         return {

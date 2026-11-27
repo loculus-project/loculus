@@ -4,8 +4,7 @@ import { getTableData } from '../../../components/SequenceDetailsPage/getTableDa
 import type { SequenceData } from '../../../components/SequenceDetailsPage/types.ts';
 import { getReferenceGenomes, getSchema } from '../../../config.ts';
 import { routes } from '../../../routes/routes.ts';
-import { LapisClient } from '../../../services/lapisClient.ts';
-import { serverBackendApi } from '../../../services/serverApi.ts';
+import { serverBackendApi, serverLapisApi } from '../../../services/serverApi.ts';
 import type { ProblemDetail } from '../../../types/backend.ts';
 import { parseAccessionVersionFromString } from '../../../utils/extractAccessionVersion.ts';
 
@@ -31,10 +30,10 @@ export const getSequenceDetailsTableData = async (
 ): SequenceDetailsTableDataResult => {
     const { accession, version } = parseAccessionVersionFromString(accessionVersion);
 
-    const lapisClient = LapisClient.createForOrganism(organism);
+    const lapisApi = serverLapisApi(organism);
 
     if (version === undefined) {
-        const latestVersionResult = await lapisClient.getLatestAccessionVersion(accession);
+        const latestVersionResult = await lapisApi.getLatestAccessionVersion({ accession });
         return latestVersionResult.map((latestVersion) => ({
             type: SequenceDetailsTableResultType.REDIRECT,
             redirectUrl: routes.sequenceEntryDetailsPage(latestVersion),
@@ -45,8 +44,8 @@ export const getSequenceDetailsTableData = async (
     const referenceGenomesInfo = getReferenceGenomes(organism);
 
     const [tableDataResult, sequenceEntryHistoryResult, dataUseHistoryResult] = await Promise.all([
-        getTableData(accessionVersion, schema, referenceGenomesInfo, lapisClient),
-        lapisClient.getAllSequenceEntryHistoryForAccession(accession),
+        getTableData(accessionVersion, schema, referenceGenomesInfo, lapisApi),
+        lapisApi.getSequenceEntryHistory({ accession }),
         serverBackendApi().getDataUseTermsHistory({ accession }),
     ]);
 
