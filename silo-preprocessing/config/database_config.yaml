@@ -1,0 +1,116 @@
+schema:
+  instanceName: Ebola Zaire
+  metadata:
+    - name: accession
+      type: string
+    - name: version
+      type: int
+    - name: submissionId
+      type: string
+    - name: accessionVersion
+      type: string
+    - name: isRevocation
+      type: string
+    - name: submitter
+      type: string
+    - name: group
+      type: string
+    - name: submittedAt
+      type: int
+    - name: releasedAt
+      type: int
+    - name: dataUseTerms
+      type: string
+      generateIndex: true
+    - name: versionStatus
+      type: string
+    - name: collection_date
+      type: date
+    - name: ncbi_release_date
+      type: date
+    - name: country
+      type: string
+      generateIndex: true
+    - name: isolate_name
+      type: string
+    - name: author_affiliation
+      type: string
+      generateIndex: true
+    - name: authors
+      type: string
+    - name: submitter_country
+      type: string
+      generateIndex: true
+    - name: division
+      type: string
+      generateIndex: true
+    - name: insdc_accession_base
+      type: string
+    - name: insdc_version
+      type: string
+    - name: insdc_accession_full
+      type: string
+    - name: bioprojects
+      type: string
+    - name: biosample_accession
+      type: string
+    - name: ncbi_completeness
+      type: string
+      generateIndex: true
+    - name: ncbi_host_name
+      type: string
+      generateIndex: true
+    - name: ncbi_host_tax_id
+      type: string
+      generateIndex: true
+    - name: ncbi_is_lab_host
+      type: string
+      generateIndex: true
+    - name: ncbi_length
+      type: string
+    - name: ncbi_protein_count
+      type: string
+    - name: ncbi_update_date
+      type: date
+    - name: ncbi_sourcedb
+      type: string
+      generateIndex: true
+    - name: ncbi_virus_name
+      type: string
+      generateIndex: true
+    - name: ncbi_virus_tax_id
+      type: string
+      generateIndex: true
+    - name: isolate_source
+      type: string
+      generateIndex: true
+    - name: sra_accessions
+      type: string
+    - name: total_snps
+      type: string
+    - name: total_inserted_nucs
+      type: string
+    - name: total_deleted_nucs
+      type: string
+    - name: total_ambiguous_nucs
+      type: string
+    - name: total_unknown_nucs
+      type: string
+    - name: total_frame_shifts
+      type: string
+    - name: frame_shifts
+      type: string
+    - name: completeness
+      type: string
+    - name: total_stop_codons
+      type: string
+    - name: stop_codons
+      type: string
+    - name: metadata_hash
+      type: string
+    - name: nucleotideInsertions
+      type: insertion
+    - name: aminoAcidInsertions
+      type: aaInsertion
+  primaryKey: accessionVersion
+  dateToSortBy: collection_date
