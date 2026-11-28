@@ -12,8 +12,10 @@ import org.junit.jupiter.api.Test
 import org.loculus.backend.api.v0.submission.PreparedProcessedData
 import org.loculus.backend.api.v0.submission.SubmissionControllerClient
 import org.loculus.backend.api.v0.submission.SubmissionConvenienceClient
+import org.loculus.backend.api.v0.submission.SubmitFiles.DefaultFiles
 import org.loculus.backend.service.scheduler.TASK_LOCK_TABLE_NAME
 import org.loculus.backend.service.submission.dbtables.CurrentProcessingPipelineTable
+import org.loculus.backend.service.submission.dbtables.PreprocessingQueueVersionsTable
 import org.loculus.backend.testutil.DEFAULT_ORGANISM
 import org.loculus.backend.testutil.EndpointTest
 import org.loculus.backend.testutil.ORGANISM_WITHOUT_CONSENSUS_SEQUENCES
@@ -171,6 +173,17 @@ class UseNewerProcessingPipelineVersionTaskTest(
             // check that v1 for DEFAULT_ORGANISM is deleted, but not for OTHER_ORGANISM
             assertThat(getExistingPipelineVersions(DEFAULT_ORGANISM), `is`(listOf(2L, 3L)))
             assertThat(getExistingPipelineVersions(OTHER_ORGANISM), `is`(listOf(1L)))
+            assertThat(getActivePipelineVersions(DEFAULT_ORGANISM), `is`(listOf(3L)))
+            assertThat(getActivePipelineVersions(OTHER_ORGANISM), `is`(listOf(1L)))
+        }
+
+        // New entries are queued for the current version only.
+        val oldQueueSize = transaction { getQueueSize(DEFAULT_ORGANISM, 2) }
+        val currentQueueSize = transaction { getQueueSize(DEFAULT_ORGANISM, 3) }
+        convenienceClient.submitDefaultFiles()
+        transaction {
+            assertThat(getQueueSize(DEFAULT_ORGANISM, 2), `is`(oldQueueSize))
+            assertThat(getQueueSize(DEFAULT_ORGANISM, 3), `is`(currentQueueSize + DefaultFiles.NUMBER_OF_SEQUENCES))
         }
     }
 
@@ -188,4 +201,18 @@ class UseNewerProcessingPipelineVersionTaskTest(
         .orderBy(SequenceEntriesPreprocessedDataTable.pipelineVersionColumn)
         .groupBy(SequenceEntriesPreprocessedDataTable.pipelineVersionColumn)
         .map { it[SequenceEntriesPreprocessedDataTable.pipelineVersionColumn] }
+
+    private fun getActivePipelineVersions(organism: String) = PreprocessingQueueVersionsTable
+        .select(PreprocessingQueueVersionsTable.pipelineVersionColumn)
+        .where { PreprocessingQueueVersionsTable.organismColumn eq organism }
+        .orderBy(PreprocessingQueueVersionsTable.pipelineVersionColumn)
+        .map { it[PreprocessingQueueVersionsTable.pipelineVersionColumn] }
+
+    private fun getQueueSize(organism: String, pipelineVersion: Long) = SequenceEntriesPreprocessedDataTable
+        .select(SequenceEntriesPreprocessedDataTable.accessionColumn)
+        .where {
+            (SequenceEntriesPreprocessedDataTable.organismColumn eq organism) and
+                (SequenceEntriesPreprocessedDataTable.pipelineVersionColumn eq pipelineVersion)
+        }
+        .count()
 }

@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.validation.Valid
 import jakarta.validation.constraints.Max
+import jakarta.validation.constraints.Min
 import mu.KotlinLogging
 import org.apache.commons.compress.compressors.zstandard.ZstdCompressorOutputStream
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
@@ -38,6 +39,7 @@ import org.loculus.backend.model.SubmissionParams
 import org.loculus.backend.model.SubmitModel
 import org.loculus.backend.service.datauseterms.DataUseTermsPreconditionValidator
 import org.loculus.backend.service.groupmanagement.GroupManagementPreconditionValidator
+import org.loculus.backend.service.submission.PreprocessingQueueState
 import org.loculus.backend.service.submission.SubmissionDatabaseService
 import org.loculus.backend.types.AccessionVersion
 import org.loculus.backend.types.AccessionVersionsFilterWithApprovalScope
@@ -230,9 +232,20 @@ open class SubmissionController(
             return ResponseEntity.status(HttpStatus.NOT_MODIFIED).eTag(lastDatabaseWriteETag).build()
         }
 
+        // Register the version and fill its queue in separate transactions.
+        val queueState = submissionDatabaseService.registerPreprocessingQueueVersion(organism, pipelineVersion)
+        if (queueState == PreprocessingQueueState.NEEDS_BACKFILL) {
+            submissionDatabaseService.backfillPreprocessingQueue(organism, pipelineVersion)
+        }
+
         val headers = HttpHeaders()
         headers.contentType = MediaType.parseMediaType(MediaType.APPLICATION_NDJSON_VALUE)
-        headers.eTag = lastDatabaseWriteETag
+        // A backfill changes the etag, so the response carries the value from after it.
+        headers.eTag = if (queueState == PreprocessingQueueState.NEEDS_BACKFILL) {
+            releasedDataModel.getLastDatabaseWriteETag(organism = organism, pipelineVersion = pipelineVersion)
+        } else {
+            lastDatabaseWriteETag
+        }
         val streamBody = streamTransactioned(
             endpoint = EXTRACT_UNPROCESSED_DATA_ENDPOINT,
             organism = organism,
@@ -436,6 +449,11 @@ open class SubmissionController(
             "Part of pagination parameters. Number of sequences per page. " +
                 "If page or size are not provided, all sequences are returned.",
         ) @RequestParam(required = false) size: Int?,
+        @Parameter(
+            deprecated = true,
+            description = "Include compact review data and revision comparisons, without sequence strings. " +
+                "Requires page >= 0 and size between 0 and 100.",
+        ) @RequestParam(defaultValue = "false") includeReviewData: Boolean,
     ): GetSequenceResponse = submissionDatabaseService.getSequences(
         authenticatedUser,
         organism,
@@ -444,6 +462,36 @@ open class SubmissionController(
         processingResultFilter,
         page,
         size,
+        includeReviewData,
+    )
+
+    @Operation(description = GET_REVIEW_DATA_DESCRIPTION)
+    @GetMapping("/review-data", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun getReviewData(
+        @PathVariable @Valid organism: Organism,
+        @Parameter(description = "Filter by group ids. If not provided, all groups are considered.")
+        @RequestParam(required = false) groupIdsFilter: List<Int>?,
+        @Parameter(description = "Filter by status. If not provided, all statuses are considered.")
+        @RequestParam(required = false) statusesFilter: List<Status>?,
+        @Parameter(description = "Filter by processing result of entries in the PROCESSED status.")
+        @RequestParam(required = false) processingResultFilter: List<ProcessingResult>?,
+        @HiddenParam authenticatedUser: AuthenticatedUser,
+        @Parameter(description = "Page number, starting from 0.")
+        @RequestParam
+        @Min(0) page: Int,
+        @Parameter(description = "Number of entries per page, between 0 and 100. Use 0 to only retrieve the counts.")
+        @RequestParam
+        @Min(0)
+        @Max(100) size: Int,
+    ): GetSequenceResponse = submissionDatabaseService.getSequences(
+        authenticatedUser,
+        organism,
+        groupIdsFilter,
+        statusesFilter,
+        processingResultFilter,
+        page,
+        size,
+        includeReviewData = true,
     )
 
     @Operation(description = "Retrieve unprocessed metadata of submitted accession versions.")

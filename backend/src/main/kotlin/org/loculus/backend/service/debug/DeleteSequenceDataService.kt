@@ -8,6 +8,7 @@ import org.loculus.backend.service.submission.SequenceEntriesPreprocessedDataTab
 import org.loculus.backend.service.submission.SequenceEntriesTable
 import org.loculus.backend.service.submission.SequenceUploadAuxTable
 import org.loculus.backend.service.submission.dbtables.CurrentProcessingPipelineTable
+import org.loculus.backend.service.submission.dbtables.PreprocessingQueueVersionsTable
 import org.loculus.backend.utils.DateProvider
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
@@ -21,6 +22,7 @@ class DeleteSequenceDataService(private val dateProvider: DateProvider, private 
         MetadataUploadAuxTable.deleteAll()
         SequenceUploadAuxTable.deleteAll()
         DataUseTermsTable.deleteAll()
+        PreprocessingQueueVersionsTable.deleteAll()
         CurrentProcessingPipelineTable.deleteAll()
         CurrentProcessingPipelineTable.setV1ForOrganismsIfNotExist(
             config.organisms.keys,

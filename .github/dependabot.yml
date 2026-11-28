@@ -24,6 +24,12 @@ updates:
         versions: [">=4.0.0"] #https://github.com/loculus-project/loculus/issues/3295
       - dependency-name: "react"
         versions: [">=19.0.0"] #https://github.com/loculus-project/loculus/issues/3452
+      - dependency-name: "react-dom"
+        versions: [">=19.0.0"] #https://github.com/loculus-project/loculus/issues/3452
+      - dependency-name: "@types/react"
+        versions: [">=19.0.0"] #https://github.com/loculus-project/loculus/issues/3452
+      - dependency-name: "@types/react-dom"
+        versions: [">=19.0.0"] #https://github.com/loculus-project/loculus/issues/3452
     groups:
       minor:
         update-types:
@@ -35,6 +41,9 @@ updates:
     directory: backend/
     schedule:
       interval: weekly
+    ignore:
+      - dependency-name: "org.springdoc:springdoc-openapi-starter-webmvc-ui"
+        versions: [">=3.2.1"] # needs Jackson 3, see https://github.com/loculus-project/loculus/issues/5753
     groups:
       minor:
         update-types:
@@ -91,6 +100,8 @@ updates:
     directory: preprocessing/nextclade
     schedule:
       interval: monthly
+    ignore:
+      - dependency-name: "nextclade"  # https://github.com/loculus-project/loculus/issues/7784
     groups:
       minorAndPatch:
         update-types:
@@ -109,6 +120,8 @@ updates:
     directory: ingest
     schedule:
       interval: monthly
+    ignore:
+      - dependency-name: "nextclade"  # https://github.com/loculus-project/loculus/issues/7784
     groups:
       minorAndPatch:
         update-types:

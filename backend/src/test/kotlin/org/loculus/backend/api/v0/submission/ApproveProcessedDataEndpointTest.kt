@@ -50,7 +50,7 @@ class ApproveProcessedDataEndpointTest(
 
     @Test
     fun `GIVEN invalid authorization token THEN returns 401 Unauthorized`() {
-        expectUnauthorizedResponse(isModifyingRequest = true) {
+        expectUnauthorizedResponse {
             client.approveProcessedSequenceEntries(
                 scope = ALL,
                 emptyList(),
@@ -433,6 +433,7 @@ class ApproveProcessedDataEndpointTest(
             SubmittedProcessedData(
                 accession = it.accession,
                 version = it.version,
+                processingAttemptId = it.processingAttemptId,
                 data = defaultProcessedData.copy(
                     files = it.data.files!!.map {
                         it.key to it.value.map { x -> x.toFileIdAndName() }

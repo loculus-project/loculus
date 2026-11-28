@@ -1,5 +1,6 @@
 package org.loculus.backend.types
 
+import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonValue
 import com.fasterxml.jackson.core.JsonParser
@@ -16,6 +17,7 @@ import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.Version
 import org.springframework.core.convert.converter.Converter
 import org.springframework.stereotype.Component
+import java.util.UUID
 
 data class Accessions(val accessions: List<Accession>)
 
@@ -120,6 +122,8 @@ data class AccessionVersionsFilterWithApprovalScope(
 data class SubmittedProcessedData(
     override val accession: Accession,
     override val version: Version,
+    @Schema(description = "The id returned by extract-unprocessed-data when this accession version was claimed")
+    val processingAttemptId: UUID,
     val data: ProcessedData<GeneticSequence>,
     @Schema(description = "The processing failed due to these errors.")
     val errors: List<PreprocessingAnnotation>? = null,
@@ -303,7 +307,26 @@ data class SequenceEntryStatus(
     val isRevocation: Boolean = false,
     val submissionId: String,
     val dataUseTerms: DataUseTerms,
+    @get:JsonInclude(JsonInclude.Include.NON_NULL)
+    val reviewData: SequenceReviewData? = null,
 ) : AccessionVersionInterface
+
+data class SequenceReviewData(
+    val metadata: MetadataMap,
+    val errors: List<PreprocessingAnnotation>?,
+    val warnings: List<PreprocessingAnnotation>?,
+    val files: FileCategoryFilesMap?,
+    val revision: RevisionReviewData?,
+)
+
+data class RevisionReviewData(
+    val previousVersion: Version?,
+    // Null when no processed baseline is available.
+    val previousMetadata: MetadataMap?,
+    val nucleotideChanges: Map<SegmentName, NucleotideSequenceReview>,
+)
+
+data class NucleotideSequenceReview(val changed: Boolean, val previousLength: Int?, val currentLength: Int?)
 
 data class EditedSequenceEntryData(
     @Schema(example = "LOC_000S01D") override val accession: Accession,
@@ -314,6 +337,10 @@ data class EditedSequenceEntryData(
 data class UnprocessedData(
     @Schema(example = "LOC_000S01D") override val accession: Accession,
     @Schema(example = "1") override val version: Version,
+    @Schema(description = "Identifies this claim. Processing results must be submitted with the same id.")
+    val processingAttemptId: UUID,
+    @Schema(example = "1720305313", description = "Unix timestamp in seconds until which this claim is held")
+    val leaseUntil: Long,
     val data: SubmittedContentWithFileUrls<GeneticSequence>,
     @Schema(description = "The submission id that was used in the upload to link metadata and sequences")
     val submissionId: String,
@@ -423,6 +450,7 @@ enum class ProcessingResult {
 }
 
 enum class PreprocessingStatus {
+    UNPROCESSED,
     IN_PROCESSING,
     PROCESSED,
 }

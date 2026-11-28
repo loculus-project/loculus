@@ -1,7 +1,12 @@
+dateFieldForGroupGraph: earliestReleaseDate
 enableServiceMonitor: true
 createTestAccounts: true
 # Support local Astro development against preview Keycloak.
 allowLocalhostAuthRedirects: true
+# Keycloak admin console only reachable via kubectl port-forward to Traefik.
+adminAllowedSourceRanges:
+  - 127.0.0.1/32
+  - ::1/128
 backendExtraJvmOpts: ["-XX:MaxRAMPercentage=25"]
 secrets:
   smtp-password:

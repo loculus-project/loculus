@@ -105,6 +105,21 @@ test_case_definitions = [
         group_id=1,
     ),
     Case(
+        name="insdc_ingest group can submit names starting or ending with a hyphen",
+        input_metadata={
+            "name_required": "name",
+            "authors": "Smith-, Anna; Perez, -Tom",
+        },
+        accession_id="24",
+        expected_metadata={
+            "name_required": "name",
+            "concatenated_string": "LOC_24.1",
+            "required_collection_date": None,
+            "authors": "Smith-, Anna; Perez, -Tom",
+        },
+        group_id=1,
+    ),
+    Case(
         name="invalid_option",
         input_metadata={
             "continent": "Afrika",
@@ -214,8 +229,8 @@ test_case_definitions = [
                     ["sequenced_timestamp"],
                     ["sequenced_timestamp"],
                     (
-                        "Timestamp is  2022-11-01Europe which is not in parseable YYYY-MM-DD. "
-                        "Parsing error: Unknown string format:  2022-11-01Europe"
+                        "Timestamp is 2022-11-01Europe which is not in parseable YYYY-MM-DD. "
+                        "Parsing error: Unknown string format: 2022-11-01Europe"
                     ),
                 ),
             ]
@@ -491,6 +506,61 @@ test_case_definitions = [
         ),
     ),
     Case(
+        name="warn_spaced_hyphen_in_authors",
+        input_metadata={
+            "name_required": "name",
+            "ncbi_required_collection_date": "2022-11-01",
+            "authors": "Smith- Jones, Anna; Perez, Tom -Juan; Xu - Li, X.; Lee, Tom - J",
+        },
+        accession_id="12",
+        expected_metadata={
+            "name_required": "name",
+            "required_collection_date": "2022-11-01",
+            "concatenated_string": "LOC_12.1/2022-11-01",
+            "authors": "Smith-Jones, Anna; Perez, Tom-Juan; Xu-Li, X.; Lee, Tom-J.",
+        },
+        expected_errors=[],
+        expected_warnings=build_processing_annotations(
+            [
+                ProcessingAnnotationHelper(
+                    ["authors"],
+                    ["authors"],
+                    (
+                        "Authors list contains spaces around hyphens: "
+                        "'Smith- Jones', 'Tom -Juan', 'Xu - Li', 'Tom - J'. Hyphenated names "
+                        "should not "
+                        "contain spaces around the hyphen, e.g. `Smith-Jones, Anna-Maria`. "
+                        "Spaces around these hyphens have been removed automatically."
+                    ),
+                ),
+            ]
+        ),
+    ),
+    Case(
+        name="error_name_starting_or_ending_with_hyphen_in_authors",
+        input_metadata={
+            "name_required": "name",
+            "ncbi_required_collection_date": "2022-11-01",
+            "authors": "Smith-, Anna; Perez, - Tom; Xu, X.",
+        },
+        accession_id="12",
+        expected_metadata={
+            "name_required": "name",
+            "required_collection_date": "2022-11-01",
+            "concatenated_string": "LOC_12.1/2022-11-01",
+        },
+        expected_errors=build_processing_annotations(
+            [
+                ProcessingAnnotationHelper(
+                    ["authors"],
+                    ["authors"],
+                    "Invalid name(s): 'Smith-', '-Tom'. Names must not start or end with a hyphen.",
+                ),
+            ]
+        ),
+        expected_warnings=[],
+    ),
+    Case(
         name="non_latin_characters_authors",
         input_metadata={
             "name_required": "name",
@@ -690,6 +760,10 @@ accepted_authors = {
     "McGregor, Ewan": "McGregor, Ewan",
     "'t Hooft, Gerard": "'t Hooft, Gerard",
     "Tandoc, A. 3rd": "Tandoc, A. 3rd",
+    "Perez, J-P": "Perez, J.-P.",
+    "Perez, J.-P.": "Perez, J.-P.",
+    "Perez, Anna-Maria": "Perez, Anna-Maria",
+    "Perez, Tom-J": "Perez, Tom-J.",
 }
 # Only accepted for the INSDC ingest group
 accepted_authors_all_ascii = [
@@ -1351,10 +1425,11 @@ date_range_cases = [
         submitted_at=ts_from_ymd(2021, 12, 16),
     ),
     DateRangeCase(
-        name="dateRangeString: invalid date should be returned as None.",
+        name="dateRangeString: invalid date is reported as an error.",
         date="not.date",
         field_type="dateRangeString",
         submitted_at=ts_from_ymd(2021, 12, 16),
+        expected_error="Metadata field field_name: Date not.date could not be parsed.",
     ),
     DateRangeCase(
         name="dateRangeLower: empty date should be returned as None.",
@@ -1489,6 +1564,26 @@ date_range_cases = [
         submitted_at=ts_from_ymd(2021, 6, 15),
         expected_datum="2021-06-15",
     ),
+    DateRangeCase(
+        name="dateRangeString: leading and trailing whitespace is ignored.",
+        date="  2021-05-03 ",
+        field_type="dateRangeString",
+        submitted_at=ts_from_ymd(2022, 1, 1),
+        expected_datum="2021-05-03",
+    ),
+    DateRangeCase(
+        name="dateRangeLower: leading whitespace is ignored for partial dates.",
+        date=" 2021-05",
+        field_type="dateRangeLower",
+        submitted_at=ts_from_ymd(2022, 1, 1),
+        expected_datum="2021-05-01",
+    ),
+    DateRangeCase(
+        name="dateRangeString: whitespace-only date is treated as empty.",
+        date="   ",
+        field_type="dateRangeString",
+        submitted_at=ts_from_ymd(2022, 1, 1),
+    ),
 ]
 
 
@@ -1510,7 +1605,37 @@ def test_parse_date_into_range(case: DateRangeCase) -> None:
     if case.expected_error is not None:
         assert result.errors[0] == case.expected_error, case.name
     else:
+        assert result.errors == [], case.name
         assert result.datum == case.expected_datum, case.name
+
+
+@pytest.mark.parametrize(
+    ("function_name", "input_key", "raw_value", "expected_datum"),
+    [
+        ("check_date", "date", " 2021-05-03", "2021-05-03"),
+        ("check_date", "date", "2021-05-03\t", "2021-05-03"),
+        ("check_date", "date", "   ", None),
+        ("parse_and_assert_past_date", "date", " 2021-05-03 ", "2021-05-03"),
+        ("parse_and_assert_past_date", "date", " 2021-05", "2021-05-01"),
+        ("parse_and_assert_past_date", "date", "   ", None),
+        ("parse_timestamp", "timestamp", " 2022-11-01T00:00:00Z ", "2022-11-01"),
+        ("parse_timestamp", "timestamp", "   ", None),
+    ],
+)
+def test_date_functions_ignore_surrounding_whitespace(
+    function_name: str, input_key: str, raw_value: str, expected_datum: str | None
+) -> None:
+    result = getattr(ProcessingFunctions, function_name)(
+        {input_key: raw_value},
+        "field_name",
+        ["field_name"],
+        {},
+        DEFAULT_TEST_CONTEXT,
+        DEFAULT_EXTERNAL_SERVICES,
+    )
+
+    assert result.errors == []
+    assert result.datum == expected_datum
 
 
 @dataclass

@@ -162,7 +162,9 @@ def post_webin_with_retry(config: Config, xml: dict[str, Any]) -> requests.Respo
         # The only change is removing response.raise_for_status()
         return requests.post(
             config.ena_submission_url,
-            auth=HTTPBasicAuth(config.ena_submission_username, config.ena_submission_password),
+            auth=HTTPBasicAuth(
+                config.ena_submission_username, config.ena_submission_password.get_secret_value()
+            ),
             files=xml,
             timeout=config.ena_http_timeout_seconds,
         )
@@ -182,7 +184,9 @@ def ena_http_get_with_retry(config: Config, url: str) -> requests.Response:
     def _do_get():
         return requests.get(
             url,
-            auth=HTTPBasicAuth(config.ena_submission_username, config.ena_submission_password),
+            auth=HTTPBasicAuth(
+                config.ena_submission_username, config.ena_submission_password.get_secret_value()
+            ),
             timeout=config.ena_http_timeout_seconds,
         )
 
@@ -217,7 +221,7 @@ def post_webin_cli(
         f"-manifest={manifest_filename}",
         f"-outputdir={tmpdir.name}",
         "-test" if config.test else "",
-        f"-password={config.ena_submission_password}",
+        f"-password={config.ena_submission_password.get_secret_value()}",
     ]
     # Remove empty strings from the list
     subprocess_args = [arg for arg in subprocess_args_with_emtpy_strings if arg]
@@ -272,6 +276,30 @@ def _extract_accessions(
                 )
 
     return result if len(result) == len(patterns) else None
+
+
+_BINARY_SNIFF_BYTES: Final = 8192
+
+
+def _log_webin_cli_output_files(output_dir: str) -> None:
+    """
+    Log the contents of the files webin-cli wrote to its output directory.
+    Only text files are logged, binary files are skipped.
+    """
+    for file_path in glob.glob(f"{output_dir}/**", recursive=True, include_hidden=True):
+        path = Path(file_path)
+        if not path.is_file():
+            continue
+        try:
+            raw = path.read_bytes()
+        except OSError as e:
+            logger.warning(f"Reading webin-cli log file {file_path} failed: {e}")
+            continue
+        if b"\x00" in raw[:_BINARY_SNIFF_BYTES]:
+            logger.debug(f"Skipping binary webin-cli output file {file_path}")
+            continue
+        contents = raw.decode("utf-8", errors="replace")
+        logger.info(f"webin-cli log file {file_path} contents:\n{contents}")
 
 
 def _run_webin_cli_submission(
@@ -330,13 +358,7 @@ def _run_webin_cli_submission(
     except Exception as e:
         logger.warning(f"Reading manifest from {manifest_filename} failed: {e}")
 
-    for file_path in glob.glob(f"{output_tmpdir.name}/**", recursive=True, include_hidden=True):
-        logger.info(f"Attempting to print webin-cli log file: {file_path}")
-        try:
-            contents = Path(file_path).read_text(encoding="utf-8")
-            logger.info(f"webin-cli log file {file_path} contents:\n{contents}")
-        except Exception as e:
-            logger.warning(f"Reading webin-cli log file {file_path} failed: {e}")
+    _log_webin_cli_output_files(output_tmpdir.name)
     return CreationResult(errors=[error_message], warnings=[])
 
 
